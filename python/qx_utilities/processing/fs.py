@@ -23,13 +23,14 @@ from the command line using `gmri` command. Help is available through:
 - `gmri -o` for a list of relevant arguments and options
 """
 
-# TODO -- the four commands here still leave `remove=` at its default of True
-# at all 41 external call sites, so their comlogs are deleted on success --
-# now with a runlog record and an error-scan veto (`processing.core.close_log`),
-# but still deleted, and against `--log`'s documented default of `keep`. Three
-# of the 41 are `recon-all`, whose comlog is the most useful thing the command
-# produces. Whether that should change is one judgement about these four
-# commands and it is still open.
+# TODO -- the four commands here still leave `remove=` at its default of True,
+# so their comlogs are deleted on success -- now with a runlog record and an
+# error-scan veto (`processing.core.close_log`), but still deleted, and against
+# `--log`'s documented default of `keep`. Three of the 41 external calls are
+# `recon-all`, whose comlog is the most useful thing the command produces.
+# Whether that should change is one judgement about these four commands and it
+# is still open; since every call now goes through `_run_external`, acting on it
+# is one line there rather than 41.
 #
 # The other half of this note is settled: the file used to opt out of
 # `do_options_check` entirely, so `--comlog_folders=session|hcp|<path>` was
@@ -52,11 +53,56 @@ from qx_utilities.general.log import ReportLog
 from qx_utilities.processing.core import (
     ExternalFailed,
     NoSourceFolder,
+    action,
     do_options_check,
     get_file_names,
     get_session_folders,
     root4dfp,
 )
+
+
+def _run_external(log, sinfo, options, overwrite, checkfile, command, description):
+    """
+    Run one external command, or -- under ``--test`` -- report it and stop.
+
+    All 41 external calls in this file pass the same four arguments: the
+    session as the thread, the study comlog folder and the run's log tag. They
+    are spelled here once instead of at every call site.
+
+    The underlying call's ``(endlog, status, failed)`` is dropped, because no
+    caller in this file has ever read it -- a failure arrives as
+    ``ExternalFailed``, which the commands catch.
+    """
+    if options["run"] != "run":
+        log.raw("\n\n%s" % description)
+        log.detail("test, not run: %s" % command, depth=1)
+        return
+
+    log.run_external(
+        checkfile,
+        command,
+        description,
+        overwrite=overwrite,
+        thread=sinfo["id"],
+        logfolder=options["comlogs"],
+        logtags=options["logtag"],
+    )
+
+
+def _copy(log, options, source, target, ifh=False):
+    """
+    Copy a file, or -- under ``--test`` -- report the copy and change nothing.
+
+    `ifh` also copies the 4dfp header that sits beside the image, which is what
+    every 4dfp copy in this file does.
+    """
+    if options["run"] != "run":
+        log.detail("test, not copied: %s" % os.path.basename(source))
+        return
+
+    shutil.copy2(source, target)
+    if ifh:
+        shutil.copy2(source.replace(".img", ".ifh"), target.replace(".img", ".ifh"))
 
 
 def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0):
@@ -100,7 +146,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     log.info(
         f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
     )
-    log.info("Running basic structural segmentation ...")
+    log.info(f"{action('Running', options['run'])} basic structural segmentation ...")
 
     try:
         # --- copy structurals over
@@ -116,62 +162,50 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
             log.detail(f"copying {f['t1_source']}")
             if options["image_target"] == "4dfp":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                    shutil.copy2(f["t1_source"], f["t1"])
-                    shutil.copy2(
-                        f["t1_source"].replace(".img", ".ifh"),
-                        f["t1"].replace(".img", ".ifh"),
-                    )
+                    _copy(log, options, f["t1_source"], f["t1"], ifh=True)
                 else:
                     tmpfile = f["t1"].replace(
                         ".4dfp.img", gi.get_img_format(f["t1_source"])
                     )
-                    shutil.copy2(f["t1_source"], tmpfile)
-                    endlog, status, failed = log.run_external(
+                    _copy(log, options, f["t1_source"], tmpfile)
+                    _run_external(
+                        log, sinfo, options, overwrite,
                         f["t1"],
                         "g_FlipFormat %s %s"
                         % (tmpfile, f["t1"].replace(".img", ".ifh")),
                         "... converting %s to 4dfp" % (os.path.basename(tmpfile)),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=options["logtag"],
                     )
-                    os.remove(tmpfile)
+                    if options["run"] == "run":
+                        os.remove(tmpfile)
             if options["image_target"] == "nifti":
                 if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
                     tmpimg = f["t1"] + ".4dfp.img"
                     tmpifh = f["t1"] + ".4dfp.ifh"
-                    shutil.copy2(f["t1_source"], tmpimg)
-                    shutil.copy2(f["t1_source"].replace(".img", ".ifh"), tmpifh)
-                    endlog, status, failed = log.run_external(
+                    _copy(log, options, f["t1_source"], tmpimg, ifh=True)
+                    _run_external(
+                        log, sinfo, options, overwrite,
                         f["t1"],
                         "g_FlipFormat %s %s"
                         % (tmpifh, f["t1"].replace(".img", ".ifh")),
                         "... converting %s to NIfTI" % (os.path.basename(tmpimg)),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=options["logtag"],
                     )
-                    os.remove(tmpimg)
-                    os.remove(tmpifh)
+                    if options["run"] == "run":
+                        os.remove(tmpimg)
+                        os.remove(tmpifh)
                 else:
                     if gi.get_img_format(f["t1_source"]) == ".nii.gz":
                         tmpfile = f["t1"] + ".gz"
-                        shutil.copy2(f["t1_source"], tmpfile)
-                        endlog, status, failed = log.run_external(
+                        _copy(log, options, f["t1_source"], tmpfile)
+                        _run_external(
+                            log, sinfo, options, overwrite,
                             f["t1"],
                             "gunzip -f %s" % (tmpfile),
                             "... gunzipping %s" % (os.path.basename(tmpfile)),
-                            overwrite=overwrite,
-                            thread=sinfo["id"],
-                            logfolder=options["comlogs"],
-                            logtags=options["logtag"],
                         )
                         if os.path.exists(tmpfile):
                             os.remove(tmpfile)
                     else:
-                        shutil.copy2(f["t1_source"], f["t1"])
+                        _copy(log, options, f["t1_source"], f["t1"])
 
         else:
             log.detail(f"{f['t1']} file present")
@@ -183,84 +217,63 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 
         if gi.get_img_format(f["t1"]) == ".4dfp.img":
             sfile = sfile.replace(".4dfp.img", ".nii")
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 sfile,
                 "g_FlipFormat %s %s" % (f["t1"].replace(".img", ".ifh"), sfile),
                 "... converting %s to NIfTI" % (os.path.basename(f["t1"])),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
         # --- run BET
         if os.path.exists(tfileb):
             log.detail(f"bet on {os.path.basename(sfile)} already done")
         else:
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 tfileb + ".gz",
                 "bet %s %s %s" % (sfile, tfileb, options["bet"]),
                 "... running BET on %s with options %s"
                 % (os.path.basename(sfile), options["bet"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 tfileb,
                 "gunzip -f %s.gz" % (tfileb),
                 "gunzipping %s.gz" % (os.path.basename(tfileb)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
         # --- run FAST
         if os.path.exists(tfiles):
             log.detail(f"fast on {os.path.basename(tfiles)} already done")
         else:
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 tfiles + ".gz",
                 "fast %s -o %s %s"
                 % (options["fast"], tfiles.replace("_seg.nii", ""), tfileb),
                 "... running FAST on %s with options %s"
                 % (os.path.basename(tfileb), options["fast"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 tfiles,
                 "gunzip -f %s.gz" % (tfiles),
                 "... gunzipping %s.gz" % (os.path.basename(tfiles)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
         # --- convert to 4dfp if needed
         if gi.get_img_format(f["t1"]) == ".4dfp.img":
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["t1_brain"],
                 "g_FlipFormat %s %s" % (tfileb, f["t1_brain"].replace(".img", ".ifh")),
                 "... converting %s to 4dfp" % (os.path.basename(tfileb)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["t1_seg"],
                 "g_FlipFormat %s %s" % (tfiles, f["t1_seg"].replace(".img", ".ifh")),
                 "... converting %s to 4dfp" % (os.path.basename(tfiles)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
     except (ExternalFailed, NoSourceFolder) as errormessage:
@@ -277,7 +290,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         return log.text
 
     log.info(
-        f"Basic structural segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"Basic structural segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.text
@@ -357,7 +370,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
             log.info(
                 f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )
-            log.info("Checking for existing freesurfer data ...")
+            log.info(f"{action('Checking', options['run'])} for existing freesurfer data ...")
 
         # check for freesurfer folder
         if not os.path.exists(f["fs_aseg_mgz"]) or overwrite:
@@ -365,15 +378,23 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                 fspath = options["path_freesurfer"].replace("[sid]", sinfo["id"])
                 log.detail(f"looking for: {fspath}")
                 if os.path.exists(fspath):
-                    if os.path.exists(d["s_fs"]):
-                        shutil.rmtree(d["s_fs"])
-                    try:
-                        shutil.copytree(fspath, d["s_fs"])
-                    except Exception:
-                        log.detail("copy reported an error, please check data!")
-                    log.detail(
-                        f"copied existing FreeSurfer data from {fspath} to target folder"
-                    )
+                    if options["run"] != "run":
+                        # the only destructive step in this file: it removes an
+                        # existing FreeSurfer folder before replacing it, so a
+                        # test run must not reach it
+                        log.detail(
+                            f"test, not copied: existing FreeSurfer data from {fspath}"
+                        )
+                    else:
+                        if os.path.exists(d["s_fs"]):
+                            shutil.rmtree(d["s_fs"])
+                        try:
+                            shutil.copytree(fspath, d["s_fs"])
+                        except Exception:
+                            log.detail("copy reported an error, please check data!")
+                        log.detail(
+                            f"copied existing FreeSurfer data from {fspath} to target folder"
+                        )
             else:
                 log.detail("no freesurfer path in options.")
         else:
@@ -394,48 +415,41 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
                         tf = f[t].replace(
                             gi.get_img_format(f[t]), gi.get_img_format(sf)
                         )
-                        shutil.copy2(sf, tf)
-                        if gi.get_img_format(sf) == ".4dfp.img":
-                            shutil.copy2(
-                                sf.replace(".img", ".ifh"), tf.replace(".img", ".ifh")
-                            )
+                        _copy(
+                            log,
+                            options,
+                            sf,
+                            tf,
+                            ifh=gi.get_img_format(sf) == ".4dfp.img",
+                        )
                         log.detail(
                             f"copied {os.path.basename(sf)} to target folder"
                         )
                         if tf != f[t]:
                             if options["image_target"] == "4dfp":
-                                endlog, status, failed = log.run_external(
+                                _run_external(
+                                    log, sinfo, options, overwrite,
                                     f[t],
                                     "g_FlipFormat %s %s"
                                     % (tf, f[t].replace(".img", ".ifh")),
                                     "... converting %s to 4dfp"
                                     % (os.path.basename(tf)),
-                                    overwrite=overwrite,
-                                    thread=sinfo["id"],
-                                    logfolder=options["comlogs"],
-                                    logtags=options["logtag"],
                                 )
                             elif gi.get_img_format(tf) == ".nii.gz":
-                                endlog, status, failed = log.run_external(
+                                _run_external(
+                                    log, sinfo, options, overwrite,
                                     f[t],
                                     "gunzip -f %s" % (tf),
                                     "... gunzipping %s " % (os.path.basename(tf)),
-                                    overwrite=overwrite,
-                                    thread=sinfo["id"],
-                                    logfolder=options["comlogs"],
-                                    logtags=options["logtag"],
                                 )
                             else:
-                                endlog, status, failed = log.run_external(
+                                _run_external(
+                                    log, sinfo, options, overwrite,
                                     f[t],
                                     "g_FlipFormat %s %s"
                                     % (tf.replace(".img", ".ifh"), f[t]),
                                     "... converting %s to nifti"
                                     % (os.path.basename(tf)),
-                                    overwrite=overwrite,
-                                    thread=sinfo["id"],
-                                    logfolder=options["comlogs"],
-                                    logtags=options["logtag"],
                                 )
 
     except Exception:
@@ -447,7 +461,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, r=False
 
     if verbose:
         log.info(
-            f"Check completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+            f"Check {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
         )
 
     return log.text
@@ -494,7 +508,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         log.info(
             f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
         )
-        log.info("Running Full FreeSurfer segmentation ...")
+        log.info(f"{action('Running', options['run'])} Full FreeSurfer segmentation ...")
 
         # check if any data already exists
         log.raw(
@@ -513,12 +527,13 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         else:
             # --- copy file over
             if not os.path.exists(f["t1"]):
-                shutil.copy2(f["t1_source"], f["t1"])
-                if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                    shutil.copy2(
-                        f["t1_source"].replace(".img", ".ifh"),
-                        f["t1"].replace(".img", ".ifh"),
-                    )
+                _copy(
+                    log,
+                    options,
+                    f["t1_source"],
+                    f["t1"],
+                    ifh=gi.get_img_format(f["t1_source"]) == ".4dfp.img",
+                )
                 log.detail(
                     f"copied {os.path.basename(f['t1_source'])} to target folder"
                 )
@@ -527,70 +542,52 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
             onifti = f["t1"]
             if gi.get_img_format(onifti) == ".4dfp.img":
                 onifti = f["t1"].replace(".4dfp.img", ".nii")
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     onifti,
                     "g_FlipFormat %s %s" % (f["t1"].replace(".img", ".ifh"), onifti),
                     "... converting %s to NIfTI" % (os.path.basename(f["t1"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
             # --- convert to MGZ
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_morig_mgz"],
                 "mri_convert --in_type nii %s %s" % (onifti, f["fs_morig_mgz"]),
                 "... converting %s to MGZ" % (os.path.basename(onifti)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- run FreeSurfer Subcortical
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_mgz"],
                 "recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning"
                 % (d["s_seg"]),
                 "... running subcortical FreeSurfer segmentation",
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- run FreeSurfer surface registration
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aparc+aseg_mgz"],
                 "recon-all -sd %s -subjid freesurfer -maskbfs -normalization2 -segmentation -fill -tessellate -smooth1 -inflate1 -qsphere -fix -finalsurfs -smooth2 -inflate2 -cortribbon -sphere -surfreg -contrasurfreg -avgcurv -cortparc -parcstats -cortparc2 -parcstats2 -aparc2aseg -no-isrunning"
                 % (d["s_seg"]),
                 "... running FreeSurfer surface processing",
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- convert segmentations to nifti
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_nii"],
                 "mri_convert -i %s -ot nii %s" % (f["fs_aseg_mgz"], f["fs_aseg_nii"]),
                 "... converting %s to NIfTI" % (f["fs_aseg_mgz"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aparc+aseg_nii"],
                 "mri_convert -i %s -ot nii %s"
                 % (f["fs_aparc+aseg_mgz"], f["fs_aparc+aseg_nii"]),
                 "... converting %s to NIfTI" % (f["fs_aparc+aseg_mgz"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
         if options["image_target"] == "nifti":
@@ -604,44 +601,35 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
             # --- check for aseg
             if not os.path.exists(f["fs_aseg_t1"]):
                 if not os.path.exists(f["fs_aseg_4dfp"]):
-                    endlog, status, failed = log.run_external(
+                    _run_external(
+                        log, sinfo, options, overwrite,
                         f["fs_aseg_4dfp"],
                         'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s'
                         % (f["fs_aseg_nii"], f["fs_aseg_4dfp"].replace(".img", ".ifh")),
                         "... converting %s to 4dfp"
                         % (os.path.basename(f["fs_aseg_nii"])),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=options["logtag"],
-                        shell=True,
                     )
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_t1"],
                     "t4img_4dfp none %s %s -O111 -@b"
                     % (root4dfp(f["fs_aseg_4dfp"]), root4dfp(f["fs_aseg_t1"])),
                     "... converting %s to 111 space" % (f["fs_aseg_4dfp"]),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_bold"],
                 "t4img_4dfp none %s %s -O333 -n -@b"
                 % (root4dfp(f["fs_aseg_t1"]), root4dfp(f["fs_aseg_bold"])),
                 "... converting %s to 333 space" % (f["fs_aseg_4dfp"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- check for aparc
             if not os.path.exists(f["fs_aparc_t1"]):
                 if not os.path.exists(f["fs_aparc+aseg_4dfp"]):
-                    endlog, status, failed = log.run_external(
+                    _run_external(
+                        log, sinfo, options, overwrite,
                         f["fs_aparc+aseg_4dfp"],
                         'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s'
                         % (
@@ -650,48 +638,35 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         ),
                         "... converting %s to 4dfp"
                         % (os.path.basename(f["fs_aparc+aseg_nii"])),
-                        overwrite=overwrite,
-                        thread=sinfo["id"],
-                        logfolder=options["comlogs"],
-                        logtags=options["logtag"],
-                        shell=True,
                     )
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aparc_t1"],
                     "t4img_4dfp none %s %s -O111 -@b"
                     % (root4dfp(f["fs_aparc+aseg_4dfp"]), root4dfp(f["fs_aparc_t1"])),
                     "... converting %s to 111 space" % (f["fs_aparc+aseg_4dfp"]),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aparc_bold"],
                 "t4img_4dfp none %s %s -O333 -n -@b"
                 % (root4dfp(f["fs_aparc_t1"]), root4dfp(f["fs_aparc_bold"])),
                 "... converting %s to 333 space" % (f["fs_aparc_t1"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- check if we need to convert to nifti
             if options["image_atlas"] == "711" and options["image_target"] == "nifti":
                 # --- convert 111 4dfp to nifti
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_t1"],
                     "g_FlipFormat %s %s"
                     % (f["fs_aseg_111"].replace(".img", ".ifh"), f["fs_aseg_t1"]),
                     "... converting %s to nifti" % (os.path.basename(f["fs_aseg_111"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aparc_t1"],
                     "g_FlipFormat %s %s"
                     % (
@@ -700,24 +675,18 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                     ),
                     "... converting %s to nifti"
                     % (os.path.basename(f["fs_aparc+aseg_111"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
                 # --- convert 333 4dfp to nifti
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_bold"],
                     "g_FlipFormat %s %s"
                     % (f["fs_aseg_333"].replace(".img", ".ifh"), f["fs_aseg_bold"]),
                     "... converting %s to nifti" % (os.path.basename(f["fs_aseg_333"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aparc_bold"],
                     "g_FlipFormat %s %s"
                     % (
@@ -726,16 +695,13 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                     ),
                     "... converting %s to nifti"
                     % (os.path.basename(f["fs_aparc+aseg_333"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
         if options["image_atlas"] != "711" and options["image_target"] == "nifti":
             if os.path.exists(f["bold_template"]):
                 # --- convert t1 segmentation to bold space
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_bold"],
                     "3dresample -rmode NN -master %s -inset %s -prefix %s "
                     % (f["bold_template"], f["fs_aseg_t1"], f["fs_aseg_bold"]),
@@ -744,12 +710,9 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         os.path.basename(f["fs_aseg_t1"]),
                         os.path.basename(f["fs_aseg_bold"]),
                     ),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aparc_bold"],
                     "3dresample -rmode NN -master %s -inset %s -prefix %s "
                     % (f["bold_template"], f["fs_aparc_t1"], f["fs_aparc_bold"]),
@@ -758,10 +721,6 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         os.path.basename(f["fs_aparc_t1"]),
                         os.path.basename(f["fs_aparc_bold"]),
                     ),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
             else:
                 log.raw(
@@ -782,7 +741,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         return log.text
 
     log.info(
-        f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.text
@@ -822,7 +781,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         log.info(
             f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
         )
-        log.info("Running subcortical only FreeSurfer segmentation ...")
+        log.info(f"{action('Running', options['run'])} subcortical only FreeSurfer segmentation ...")
 
         # check if any data already exists
         log.raw(
@@ -839,12 +798,13 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         else:
             # --- copy file over
             if not os.path.exists(f["t1"]):
-                shutil.copy2(f["t1_source"], f["t1"])
-                if gi.get_img_format(f["t1_source"]) == ".4dfp.img":
-                    shutil.copy2(
-                        f["t1_source"].replace(".img", ".ifh"),
-                        f["t1"].replace(".img", ".ifh"),
-                    )
+                _copy(
+                    log,
+                    options,
+                    f["t1_source"],
+                    f["t1"],
+                    ifh=gi.get_img_format(f["t1_source"]) == ".4dfp.img",
+                )
                 log.detail(
                     f"copied {os.path.basename(f['t1_source'])} to target folder"
                 )
@@ -853,48 +813,36 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
             onifti = f["t1"]
             if gi.get_img_format(onifti) == ".4dfp.img":
                 onifti = f["t1"].replace(".4dfp.img", ".nii")
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     onifti,
                     "g_FlipFormat %s %s" % (f["t1"].replace(".img", ".ifh"), onifti),
                     "... converting %s to NIfTI" % (os.path.basename(f["t1"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
             # --- convert to MGZ
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_morig_mgz"],
                 "mri_convert --in_type nii %s %s" % (onifti, f["fs_morig_mgz"]),
                 "... converting %s to MGZ" % (os.path.basename(onifti)),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- run FreeSurfer Subcortical
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_mgz"],
                 "recon-all -sd %s -subjid freesurfer -motioncor -nuintensitycor -talairach -normalization -skullstrip -subcortseg -segstats -no-isrunning"
                 % (d["s_seg"]),
                 "... running subcortical FreeSurfer segmentation",
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- convert segmentations to nifti
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_nii"],
                 "mri_convert -i %s -ot nii %s" % (f["fs_aseg_mgz"], f["fs_aseg_nii"]),
                 "... converting %s to NIfTI" % (f["fs_aseg_mgz"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
         if options["image_target"] == "nifti":
@@ -904,71 +852,56 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         # --- 4dfp path
         if options["image_target"] == "4dfp" or options["image_atlas"] == "711":
             # --- convert to 4dfp
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_4dfp"],
                 'g_FlipFormat -c "129.000 -108.000 -142.000" %s %s'
                 % (f["fs_aseg_nii"], f["fs_aseg_4dfp"].replace(".img", ".ifh")),
                 "... converting %s to 4dfp" % (os.path.basename(f["fs_aseg_nii"])),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
-                shell=True,
             )
 
             # --- convert to 111
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_111"],
                 "t4img_4dfp none %s %s -O111 -@b"
                 % (root4dfp(f["fs_aseg_4dfp"]), root4dfp(f["fs_aseg_111"])),
                 "... converting %s to 111 space" % (f["fs_aseg_4dfp"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             # --- convert to 333
-            endlog, status, failed = log.run_external(
+            _run_external(
+                log, sinfo, options, overwrite,
                 f["fs_aseg_333"],
                 "t4img_4dfp none %s %s -O333 -n -@b"
                 % (root4dfp(f["fs_aseg_4dfp"]), root4dfp(f["fs_aseg_333"])),
                 "... converting %s to 333 space" % (f["fs_aseg_4dfp"]),
-                overwrite=overwrite,
-                thread=sinfo["id"],
-                logfolder=options["comlogs"],
-                logtags=options["logtag"],
             )
 
             if options["image_atlas"] == "711" and options["image_target"] == "nifti":
                 # --- convert 111 4dfp to nifti
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_t1"],
                     "g_FlipFormat %s %s"
                     % (f["fs_aseg_111"].replace(".img", ".ifh"), f["fs_aseg_t1"]),
                     "... converting %s to nifti" % (os.path.basename(f["fs_aseg_111"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
                 # --- convert 333 4dfp to nifti
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_bold"],
                     "g_FlipFormat %s %s"
                     % (f["fs_aseg_333"].replace(".img", ".ifh"), f["fs_aseg_bold"]),
                     "... converting %s to nifti" % (os.path.basename(f["fs_aseg_333"])),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
 
         if options["image_atlas"] != "711" and options["image_target"] == "nifti":
             if os.path.exists(f["bold_template"]):
                 # --- convert t1 segmentation to bold space
-                endlog, status, failed = log.run_external(
+                _run_external(
+                    log, sinfo, options, overwrite,
                     f["fs_aseg_bold"],
                     "3dresample -rmode NN -master %s -inset %s -prefix %s "
                     % (f["bold_template"], f["fs_aseg_t1"], f["fs_aseg_bold"]),
@@ -977,10 +910,6 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
                         os.path.basename(f["fs_aseg_t1"]),
                         os.path.basename(f["fs_aseg_bold"]),
                     ),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
                 )
             else:
                 log.raw(
@@ -1001,7 +930,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         return log.text
 
     log.info(
-        f"FreeSurfer segmentation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.text
