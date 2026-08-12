@@ -1139,15 +1139,22 @@ def merge_options(command, args, header=None):
     if header:
         take("batch file", gcs.check_deprecated_parameters(header, command).items())
 
-    # the command line, where a flag stands for a value
+    # the command line - or the recipe, for a step a recipe started: the
+    # parameters it wrote reach the step as a command line like any other, and
+    # it names them in the environment so that the step can tell them apart
+    from_recipe = set(
+        filter(None, os.environ.get(gcs.RECIPE_PARAMETERS, "").split(","))
+    )
+
     for key, value in args.items():
+        source = "recipe" if key in from_recipe else "command line"
         if key in flist:
             take(
-                "command line",
+                source,
                 [(flist[key][0], value if value is not True else flist[key][1])],
             )
         else:
-            take("command line", [(key, value)])
+            take(source, [(key, value)])
 
     # take care of variable expansion
     for key in options:

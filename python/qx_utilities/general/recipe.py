@@ -373,9 +373,13 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     # so the command line still wins.
     #
     # ponytail: the study tier is read twice per invocation, which is the
-    # price of the recipe file being parsed after the settings are. Branch 69's
-    # merged-options model gives the recipe and batch tiers a real home
-    # (§8.3) and this goes with them.
+    # price of the recipe file being parsed after the settings are. The merged
+    # options are not the fix -- they landed for the batch tier and this stayed
+    # -- because what closes the seam is an ordering: a batch file is named on
+    # the command line and `gmri.runCommand` reads it before it resolves any
+    # logging, while a recipe names its study inside the recipe file, which
+    # only this function opens. Closing it means the recipe file becoming a
+    # tier the front door resolves, the way `--batchfile` now is.
     log_settings = gl.apply_study_settings(
         log_settings or gl.LogSettings(), folders["basefolder"], hints
     )
@@ -720,7 +724,16 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 )
 
             # setup command
-            command = ["qunex"]
+            #
+            # A step re-enters at `gmri`, the dispatcher, rather than at
+            # `qunex`, the shell front end: for a command `gmri` runs, `qunex`
+            # asks it for the list of commands it runs (one python start of
+            # its own), searches the matlab tree for the command's name,
+            # creates a log folder `gmri` then does not use, re-quotes the
+            # arguments and `eval`s the same call. The user facing spelling is
+            # still what the recipe reports, because `qunex <command>` is what
+            # a reader of the log would type.
+            command = ["gmri"]
             command.append(command_name)
             commandr = (
                 "\n--------------------------------------------\n---> Running command:\n\n     qunex "
@@ -782,8 +795,20 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             # the child's output is watched, not read for meaning: what the
             # step did comes back as its status record, and whether it worked
             # comes back as its exit code
+            #
+            # A command line says what a parameter is, never where it came
+            # from, so the tier is named here: everything the recipe puts on a
+            # step's command line reached the step through the recipe,
+            # whatever wrote it -- the recipe file, its global parameters or
+            # the call that started the recipe -- and the step's own banner
+            # reports it as `recipe`. The batch file the step is given it
+            # reads for itself, so that tier still names itself.
             with subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=0,
+                env={**os.environ, gcs.RECIPE_PARAMETERS: ",".join(command_parameters)},
             ) as process:
                 for line in iter(process.stdout.readline, b""):
                     # `readline` keeps the newline it read, so the line is

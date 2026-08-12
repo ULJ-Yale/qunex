@@ -577,6 +577,12 @@ def impute_parameters(options, command):
 PER_SESSION = "batch file (session)"
 RECIPE_RUN = "recipe run"
 
+# How a recipe tells the step it starts which of the parameters on its command
+# line came from the recipe: the names, comma separated, in the step's
+# environment. A command line carries values and not the tier they came from,
+# and the step is a process of its own.
+RECIPE_PARAMETERS = "QX_RECIPE_PARAMETERS"
+
 # The tiers that state parameters for a run rather than for one command: a
 # batch file's header, and everything a recipe states for all of its steps --
 # its global and recipe level parameters and the command line `run_recipe`

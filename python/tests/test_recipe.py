@@ -13,7 +13,7 @@ per external step named by its exit status, the exit code as the verdict, and
 the step's report read from the status record the recipe asked the step to
 write.
 
-QuNex steps are exercised against a fake ``qunex`` on the PATH: the recipe runs
+QuNex steps are exercised against a fake ``gmri`` on the PATH: the recipe runs
 its steps as a subprocess, so a script that records its arguments and writes a
 status record is the whole of the contract on the other side of the boundary.
 """
@@ -162,19 +162,22 @@ def test_a_study_folder_holding_tmp_in_its_name_is_not_corrupted(tmp_path):
 
 
 @pytest.fixture
-def fake_qunex(tmp_path, monkeypatch):
+def fake_gmri(tmp_path, monkeypatch):
     """
-    A ``qunex`` that records its call and writes the status record it is told
-    to -- the child's half of the N7.10 contract, and nothing else.
+    A ``gmri`` that records its call and writes the status record it is told
+    to -- the child's half of the N7.10 contract, and nothing else. A step is
+    started as ``gmri``: the shell front end runs the same dispatcher, after
+    preparation a QuNex step has no use for.
     """
     calls = tmp_path / "calls.txt"
     bin_folder = tmp_path / "bin"
     bin_folder.mkdir()
 
     write_script(
-        bin_folder / "qunex",
+        bin_folder / "gmri",
         """#!/bin/bash
 echo "$@" >> %s
+echo "recipe parameters: ${QX_RECIPE_PARAMETERS}" >> %s
 status=$(echo "$@" | tr ' ' '\\n' | sed -n 's/^--logstatus=//p')
 mkdir -p "$(dirname "$status")"
 cat > "$status" <<EOF
@@ -187,26 +190,26 @@ sessions:
 EOF
 exit ${QX_FAIL:-0}
 """
-        % calls,
+        % (calls, calls),
     )
 
     monkeypatch.setenv("PATH", "%s:%s" % (bin_folder, os.environ["PATH"]))
     return calls
 
 
-def test_a_step_is_told_where_to_log_and_where_to_report(tmp_path, study, fake_qunex):
+def test_a_step_is_told_where_to_log_and_where_to_report(tmp_path, study, fake_gmri):
     gr.run_recipe(
         recipe_file=recipe_file(tmp_path, ["create_study"]),
         recipe="test",
         eargs={"studyfolder": str(study)},
     )
 
-    call = fake_qunex.read_text()
+    call = fake_gmri.read_text()
     assert "--logfolder=%s" % run_folder(study) in call
     assert "--logstatus=%s" % (run_folder(study) / "status" / "01_create_study.yaml") in call
 
 
-def test_the_recipe_report_is_compiled_from_the_step_records(tmp_path, study, fake_qunex):
+def test_the_recipe_report_is_compiled_from_the_step_records(tmp_path, study, fake_gmri):
     gr.run_recipe(
         recipe_file=recipe_file(tmp_path, ["create_study"]),
         recipe="test",
@@ -220,7 +223,7 @@ def test_the_recipe_report_is_compiled_from_the_step_records(tmp_path, study, fa
 
 
 def test_a_failing_step_fails_the_recipe_by_its_exit_code(
-    tmp_path, study, fake_qunex, monkeypatch
+    tmp_path, study, fake_gmri, monkeypatch
 ):
     monkeypatch.setenv("QX_FAIL", "1")
 
@@ -237,11 +240,11 @@ def test_a_failing_step_fails_the_recipe_by_its_exit_code(
 
 
 def test_an_error_in_a_step_s_output_no_longer_fails_the_recipe(
-    tmp_path, study, fake_qunex
+    tmp_path, study, fake_gmri
 ):
     """The stdout grep over-fired on any line containing ERROR (§9.2.2)."""
     write_script(
-        tmp_path / "bin" / "qunex",
+        tmp_path / "bin" / "gmri",
         """#!/bin/bash
 echo "ERROR: one session of many had trouble"
 status=$(echo "$@" | tr ' ' '\\n' | sed -n 's/^--logstatus=//p')
@@ -260,13 +263,13 @@ exit 0
     assert "command create_study ... OK" in runlog(study)
 
 
-def test_a_step_s_output_is_relayed_line_for_line(tmp_path, study, fake_qunex, capsys):
+def test_a_step_s_output_is_relayed_line_for_line(tmp_path, study, fake_gmri, capsys):
     """
     `readline` keeps the newline it read; printing the line added a second one
     and every step's output reached the console double spaced.
     """
     write_script(
-        tmp_path / "bin" / "qunex",
+        tmp_path / "bin" / "gmri",
         """#!/bin/bash
 echo "---> first"
 echo "---> second"
@@ -291,7 +294,7 @@ def test_a_step_that_writes_no_record_is_reported_from_its_exit_code(
 ):
     bin_folder = tmp_path / "bin"
     bin_folder.mkdir()
-    write_script(bin_folder / "qunex", "#!/bin/bash\necho done\nexit 0\n")
+    write_script(bin_folder / "gmri", "#!/bin/bash\necho done\nexit 0\n")
     monkeypatch.setenv("PATH", "%s:%s" % (bin_folder, os.environ["PATH"]))
 
     gr.run_recipe(
@@ -314,7 +317,7 @@ def test_a_failing_step_that_writes_no_record_is_not_reported_as_silent(
     """
     bin_folder = tmp_path / "bin"
     bin_folder.mkdir()
-    write_script(bin_folder / "qunex", "#!/bin/bash\necho boom\nexit 4\n")
+    write_script(bin_folder / "gmri", "#!/bin/bash\necho boom\nexit 4\n")
     monkeypatch.setenv("PATH", "%s:%s" % (bin_folder, os.environ["PATH"]))
 
     with pytest.raises(ge.CommandFailed):
@@ -333,7 +336,7 @@ def test_a_failing_step_that_writes_no_record_is_not_reported_as_silent(
 
 
 def test_a_parameter_a_step_cannot_take_is_named_rather_than_dropped(
-    tmp_path, study, fake_qunex, capsys
+    tmp_path, study, fake_gmri, capsys
 ):
     """
     A parameter written against a command that cannot take it was deleted
@@ -351,11 +354,11 @@ def test_a_parameter_a_step_cannot_take_is_named_rather_than_dropped(
     warning = "hcp_brainsize is not a parameter of create_study"
     assert warning in capsys.readouterr().out
     assert warning in runlog(study)
-    assert "hcp_brainsize" not in fake_qunex.read_text(), "and it is still not passed"
+    assert "hcp_brainsize" not in fake_gmri.read_text(), "and it is still not passed"
 
 
 def test_a_recipe_wide_parameter_a_step_cannot_take_is_dropped_in_silence(
-    tmp_path, study, fake_qunex, capsys
+    tmp_path, study, fake_gmri, capsys
 ):
     """
     The recipe level parameters are stated for every command of the run, the
@@ -371,14 +374,38 @@ def test_a_recipe_wide_parameter_a_step_cannot_take_is_dropped_in_silence(
     )
 
     assert "hcp_brainsize" not in capsys.readouterr().out
-    assert "hcp_brainsize" not in fake_qunex.read_text()
+    assert "hcp_brainsize" not in fake_gmri.read_text()
+
+
+def test_a_step_is_told_which_of_its_parameters_came_from_the_recipe(
+    tmp_path, study, fake_gmri
+):
+    """
+    A command line carries values, never the tier they came from, and a step
+    is a process of its own -- so the recipe names them in its environment and
+    the step's own banner reports them as `recipe`.
+    """
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path, [{"create_study": {"folders": "standard"}}]
+        ),
+        recipe="test",
+        eargs={"studyfolder": str(study)},
+    )
+
+    named = [
+        line for line in fake_gmri.read_text().split("\n")
+        if line.startswith("recipe parameters:")
+    ]
+    assert named and "folders" in named[0], named
+    assert "logstatus" in named[0], "the ones the recipe adds itself are named too"
 
 
 # ------------------------------------------------------- label injection
 
 
 def test_a_label_is_injected_before_the_recipe_deduces_its_own_folders(
-    tmp_path, study, fake_qunex, monkeypatch
+    tmp_path, study, fake_gmri, monkeypatch
 ):
     """
     `{{$VAR}}` used to be injected into each step's parameters only, which is
@@ -402,7 +429,7 @@ def test_a_label_is_injected_before_the_recipe_deduces_its_own_folders(
 
 
 def test_a_step_s_record_is_read_from_where_the_step_was_told_to_write_it(
-    tmp_path, study, fake_qunex, monkeypatch
+    tmp_path, study, fake_gmri, monkeypatch
 ):
     """
     The status path was derived from the uninjected log folder and injected on
@@ -427,7 +454,7 @@ def test_a_step_s_record_is_read_from_where_the_step_was_told_to_write_it(
 # ----------------------------------------------------------------- layout
 
 
-def test_nested_layout_gives_each_step_its_own_folder(tmp_path, study, fake_qunex):
+def test_nested_layout_gives_each_step_its_own_folder(tmp_path, study, fake_gmri):
     gr.run_recipe(
         recipe_file=recipe_file(tmp_path, ["create_study", "create_study"]),
         recipe="test",
@@ -435,13 +462,13 @@ def test_nested_layout_gives_each_step_its_own_folder(tmp_path, study, fake_qune
         log_settings=gl.LogSettings(layout="nested"),
     )
 
-    call = fake_qunex.read_text()
+    call = fake_gmri.read_text()
     assert "--logfolder=%s" % (run_folder(study) / "01_create_study") in call
     assert "--logfolder=%s" % (run_folder(study) / "02_create_study") in call
 
 
 def test_the_study_the_recipe_file_names_supplies_its_settings(
-    tmp_path, study, fake_qunex
+    tmp_path, study, fake_gmri
 ):
     """
     The caller resolved its settings before the recipe file was parsed, so a
@@ -455,7 +482,7 @@ def test_the_study_the_recipe_file_names_supplies_its_settings(
         log_settings=gl.LogSettings(),
     )
 
-    assert "--logfolder=%s" % (run_folder(study) / "01_create_study") in fake_qunex.read_text()
+    assert "--logfolder=%s" % (run_folder(study) / "01_create_study") in fake_gmri.read_text()
 
 
 def test_the_command_line_still_wins_over_the_study_settings(tmp_path, study):
