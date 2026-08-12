@@ -170,9 +170,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt" % (
-                sinfo["id"]
-            ))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         if options["hcp_transmit_mode"] is None:
@@ -194,7 +192,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"
@@ -317,7 +315,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 3,Individual Adjustment",
@@ -329,15 +327,17 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 3,Individual Adjustment",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 3,Individual Adjustment can be run")
@@ -350,11 +350,11 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
-        log.raw(f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"{e}")
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         failed = 1
 
     log.close(pipeline="HCP Transmit Bias Phase 3,Individual Adjustment Preprocessing")

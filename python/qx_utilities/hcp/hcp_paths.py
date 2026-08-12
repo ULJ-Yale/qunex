@@ -98,11 +98,11 @@ def get_hcp_paths(sinfo, options):
     if "hcp" in sinfo:
         hcpbase = os.path.join(sinfo["hcp"], sinfo["id"] + options["hcp_suffix"])
     else:
-        print(
-            "ERROR: HCP path does not exists, check your parameters and the batch file!"
-        )
+        # no log is in scope here and none of the 48 call sites passes one, so
+        # the message rides the exception, which is where the caller reports it
         raise ge.CommandFailed(
             options["command_ran"],
+            "HCP path does not exist, check your parameters and the batch file!",
             "No sufficient input data, perhaps you did not provide the batch file?",
         )
 
@@ -249,7 +249,6 @@ def get_hcp_paths(sinfo, options):
 
                     # check if too many magnitudes
                     if len(d["fieldmap"][fmnum]["magnitude"]) > 2:
-                        print("ERROR: Found more than two FM-Magnitude files!")
                         raise ge.CommandFailed(
                             options["command_ran"],
                             "Too many FM-Magnitude files found!",

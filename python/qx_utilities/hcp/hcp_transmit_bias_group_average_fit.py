@@ -167,8 +167,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             # resolves and validates the session HCP paths
             get_hcp_paths(session, options)
             if "hcp" not in session:
-                log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"]))
+                log.error(f"There is no hcp info for session {session['id']} in batch.txt")
                 run = False
 
             # subject_list
@@ -209,7 +208,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         elif not os.path.isabs(options["hcp_gmwm_template"]) and options["hcp_gmwm_template"][0] != "~":
             log.warning("hcp_gmwm_template parameter is local")
             gmwm_template = os.path.join(study_dir, outgroupname, options["hcp_gmwm_template"])
-            log.raw(f"\n--->    hcp_gmwm_template parameter set to {gmwm_template}")
+            log.step(f"   hcp_gmwm_template parameter set to {gmwm_template}")
         else:
             gmwm_template = options["hcp_gmwm_template"]
 
@@ -220,7 +219,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         elif not os.path.isabs(options["hcp_group_uncorrected_myelin"]) and options["hcp_group_uncorrected_myelin"][0] != "~":
             log.warning("hcp_group_uncorrected_myelin parameter is local")
             group_uncorrected_myelin = os.path.join(study_dir, outgroupname, options["hcp_group_uncorrected_myelin"])
-            log.raw(f"\n--->    hcp_group_uncorrected_myelin parameter set to {group_uncorrected_myelin}")
+            log.step(f"   hcp_group_uncorrected_myelin parameter set to {group_uncorrected_myelin}")
         else:
             group_uncorrected_myelin = options["hcp_group_uncorrected_myelin"]
 
@@ -236,7 +235,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"
@@ -306,7 +305,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                 elif not os.path.isabs(options["hcp_pt_reference_value_file"]) and options["hcp_pt_reference_value_file"][0] != '~':
                     log.warning("hcp_pt_reference_value_file parameter is local")
                     comm += f"                --reference-value-out={os.path.join(study_dir, outgroupname, options['hcp_pt_reference_value_file'])}"
-                    log.raw(f"\n--->    hcp_pt_reference_value_file parameter set to {os.path.join(study_dir, outgroupname, options['hcp_pt_reference_value_file'])}")
+                    log.step(f"   hcp_pt_reference_value_file parameter set to {os.path.join(study_dir, outgroupname, options['hcp_pt_reference_value_file'])}")
                 else:
                     comm += f"                --reference-value-out={options['hcp_pt_reference_value_file']}"
 
@@ -337,7 +336,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 2, Group Average Fit",
@@ -349,6 +348,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 # #Remove soft links
@@ -356,11 +356,12 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 2, Group Average Fit",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 2, Group Average Fit can be run")
@@ -373,11 +374,11 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
-        log.raw(f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"{e}")
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         failed = 1
 
     # remove soft links to prevent clutter, but only if they were created

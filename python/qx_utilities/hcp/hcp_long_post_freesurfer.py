@@ -252,7 +252,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             log.raw(res_report)
             if resolution == 0:
                 run = False
-                log.detail("ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!")
+                log.error("unable to set hcp_prefs_template_res automatically, please set it manually!", depth=1)
             else:
                 options["hcp_prefs_template_res"] = resolution
 
@@ -260,8 +260,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         try:
             float(options["hcp_prefs_template_res"])
         except Exception:
-            log.raw("\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
-                % (options["hcp_prefs_template_res"]))
+            log.error(f"hcp_prefs_template_res  [{options['hcp_prefs_template_res']}] is not a number! It could be that automatic setup did not work, set it manually.")
             run = False
 
         # hcp_prefs_t1template
@@ -482,7 +481,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             tfile = None
 
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Longitudinal Post FS",
@@ -494,6 +493,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed == 0:
@@ -526,7 +526,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "Error"
         failed = 1
     except Exception:

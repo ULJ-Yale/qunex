@@ -108,7 +108,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         for session in sinfo:
             source_dir = os.path.join(session["hcp"], session["id"])
             if not os.path.exists(source_dir):
-                log.raw(f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!")
+                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
                 result["failed"] = session["id"]
 
             target_dir = os.path.join(study_folder, session["id"])
@@ -124,7 +124,7 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         status = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         status = "Error"
         failed = 1
     except Exception:

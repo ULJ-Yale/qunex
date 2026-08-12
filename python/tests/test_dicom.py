@@ -420,8 +420,10 @@ def test_clean_dicom_function_signature():
     sig = inspect.signature(clean_dicom)
     params = list(sig.parameters.keys())
 
+    # `_log` is the log the runner injects; the underscore keeps it off the
+    # command line and out of the registry
     expected_params = ['folder', 'tol_mm', 'min_files', 'verbose',
-                      'move_non_image', 'move_incomplete']
+                      'move_non_image', 'move_incomplete', '_log']
     assert params == expected_params
 
 

@@ -22,11 +22,12 @@ import re
 import shutil
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_archive import _RE_TAR, _RE_ZIP
 from qx_utilities.dicom.dicom_utils import _safe_rmtree, match_all
 
 
-def _import_parse_logfile(logfile):
+def _import_parse_logfile(logfile, _log=None):
     """Parse the ``logfile`` specification into a packet_name -> session map."""
     if logfile is None or logfile == "":
         return None
@@ -57,7 +58,7 @@ def _import_parse_logfile(logfile):
         )
 
     has_session = "session_name" in log
-    print("---> Reading acquisition log [%s]." % (log["path"]))
+    gl.log_or_console(_log).step("Reading acquisition log [%s]." % (log["path"]))
     sessions_info = {}
     with open(log["path"]) as f:
         delimiter = "," if log["path"].split(".")[-1] == "csv" else "\t"
@@ -101,29 +102,31 @@ def _import_extract_session(pname, getid, empty):
     return session
 
 
-def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info):
+def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info, _log=None):
     """Identify packets/session folders to process and bucket them for reporting."""
+    log = gl.log_or_console(_log)
+
     packets = {"ok": [], "nolog": [], "bad": [], "exist": [], "skip": [], "invalid": []}
     empty = {"subjectid": None, "sessionname": None, "sessionid": None, "packetname": None}
 
     if masterinbox:
+        # the "---> " each of these carried is the record's own prefix now
         report_set = [
-            ("ok", "---> Found the following packets to process:"),
-            ("nolog", "---> These packets do not match with the log and they won't be processed"),
-            ("bad", "---> For these packets a packet name could not be identified and they won't be processed:"),
-            ("invalid", "---> For these packets the packet name could not parsed and they won't be processed:"),
-            ("exist", "---> The session folder for these packages already has results:"),
-            ("skip", "---> These packages do not match list of sessions and will be skipped:"),
+            ("ok", "Found the following packets to process:"),
+            ("nolog", "These packets do not match with the log and they won't be processed"),
+            ("bad", "For these packets a packet name could not be identified and they won't be processed:"),
+            ("invalid", "For these packets the packet name could not parsed and they won't be processed:"),
+            ("exist", "The session folder for these packages already has results:"),
+            ("skip", "These packages do not match list of sessions and will be skipped:"),
         ]
         if not os.path.exists(masterinbox):
             raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
         if not os.path.isdir(masterinbox):
             raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
 
-        print(
-            "---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'"
-            % (os.path.abspath(masterinbox), pattern, nameformat)
-        )
+        log.step(f"Checking for packets in {os.path.abspath(masterinbox)}")
+        log.detail(f"using regular expression '{pattern}'")
+        log.detail(f"extracting subject id using regular expression '{nameformat}'")
         try:
             getop = re.compile(pattern)
         except Exception:
@@ -167,11 +170,11 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
 
     else:
         report_set = [
-            ("ok", "---> Found the following folders to process:"),
-            ("invalid", "---> For these folders the folder name could not parsed and they won't be processed:"),
-            ("exist", "---> These folders have existing results:"),
+            ("ok", "Found the following folders to process:"),
+            ("invalid", "For these folders the folder name could not parsed and they won't be processed:"),
+            ("exist", "These folders have existing results:"),
         ]
-        print("---> Checking for folders to process in '%s'" % (os.path.abspath(sessionsfolder)))
+        log.step(f"Checking for folders to process in '{os.path.abspath(sessionsfolder)}'")
         getid = re.compile(nameformat)
 
         sfolders = []
@@ -199,41 +202,45 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
     return packets, report_set
 
 
-def _import_report_packets(packets, report_set, overwrite):
-    """Print the discovery report for each packet bucket."""
+def _import_report_packets(packets, report_set, overwrite, _log=None):
+    """Report the discovery findings for each packet bucket."""
+    log = gl.log_or_console(_log)
+
     for tag, message in report_set:
         if not packets[tag]:
             continue
-        print(f"\n{message}")
-        for afile, session in packets[tag]:
-            base = os.path.basename(afile)
-            if session["sessionname"]:
-                print("     subject: %s, session: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionname"], session["sessionid"], session["packetname"], base))
-            elif session["subjectid"]:
-                print("     subject: %s ... %s <= %s <- %s" % (session["subjectid"], session["sessionid"], session["packetname"], base))
-            elif session["sessionid"]:
-                print("     %s <= %s <- %s" % (session["sessionid"], session["packetname"], base))
-            elif session["packetname"]:
-                print("     %s <= %s <- %s" % ("????", session["packetname"], base))
-            else:
-                print("     %s <= %s <- %s" % ("????", "????", base))
-        if tag == "exist":
-            if overwrite:
-                print(" ... Since overwrite is set the folders will be removed and replaced")
-            else:
-                print(" ... To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
+        with log.section(message):
+            for afile, session in packets[tag]:
+                base = os.path.basename(afile)
+                if session["sessionname"]:
+                    log.info(f'subject: {session["subjectid"]}, session: {session["sessionname"]} ... {session["sessionid"]} <= {session["packetname"]} <- {base}')
+                elif session["subjectid"]:
+                    log.info(f'subject: {session["subjectid"]} ... {session["sessionid"]} <= {session["packetname"]} <- {base}')
+                elif session["sessionid"]:
+                    log.info(f'{session["sessionid"]} <= {session["packetname"]} <- {base}')
+                elif session["packetname"]:
+                    log.info(f'{"????"} <= {session["packetname"]} <- {base}')
+                else:
+                    log.info(f'{"????"} <= {"????"} <- {base}')
+            if tag == "exist":
+                if overwrite:
+                    log.detail("Since overwrite is set the folders will be removed and replaced")
+                else:
+                    log.detail("To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
 
 
-def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite, test):
+def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite, test, _log=None):
     """Apply the check/test/overwrite rules and return the packets to process.
 
     Returns None when the command should stop without processing (test mode).
     Raises CommandFailed/CommandNull when nothing is found, per ``check``.
     """
+    log = gl.log_or_console(_log)
+
     n_to_process = len(packets["ok"]) + (len(packets["exist"]) if overwrite else 0)
 
     if n_to_process and test:
-        print("\n---> To process them, remove the --test option!")
+        log.step("To process them, remove the --test option!")
         return None
 
     if not n_to_process:
@@ -244,14 +251,14 @@ def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overw
         raise ge.CommandNull("import_dicom", "No %s found to process" % what, "No %s were found to be processed in the %s!" % (what, where))
 
     if overwrite and packets["exist"]:
-        print("---> Cleaning existing data in folders:")
+        log.step("Cleaning existing data in folders:")
         for afile, session in packets["exist"]:
             sfolder = os.path.join(sessionsfolder, session["sessionid"])
-            print(" ... %s" % (sfolder))
+            log.detail(sfolder)
             for sub in ("nii", "dicom"):
                 rmfolder = os.path.join(sfolder, sub)
                 if os.path.exists(rmfolder):
-                    _safe_rmtree(rmfolder)
+                    _safe_rmtree(rmfolder, _log=log)
         packets["ok"] += packets["exist"]
 
     return packets["ok"]
@@ -266,8 +273,10 @@ def _resolve_packet_sources(afile, session, masterinbox, sfolder):
     return [os.path.join(sfolder, "inbox")]
 
 
-def _archive_packet(sources, afolder, archive, masterinbox, verbose):
+def _archive_packet(sources, afolder, archive, masterinbox, verbose, _log=None):
     """Move/copy/delete processed packages per the ``archive`` setting."""
+    log = gl.log_or_console(_log)
+
     notes = []
     if archive == "leave":
         return notes
@@ -282,24 +291,24 @@ def _archive_packet(sources, afolder, archive, masterinbox, verbose):
         if archive == "move":
             if os.path.exists(target):
                 notes.append("WARNING: %s already exists in archive and it was not moved!" % os.path.basename(p))
-                print("...  WARNING: %s already exists in archive and it will not be moved!" % os.path.basename(p))
+                log.warning(f"{os.path.basename(p)} already exists in archive and it will not be moved!")
             else:
-                print("...  moving %s to archive" % os.path.basename(p))
+                log.detail(f"moving {os.path.basename(p)} to archive")
                 shutil.move(p, target)
         elif archive == "copy":
             if os.path.exists(target):
                 notes.append("WARNING: %s already exists in archive and it was not copied!" % os.path.basename(p))
-                print("...  WARNING: %s already exists in archive and it will not be copied!" % os.path.basename(p))
+                log.warning(f"{os.path.basename(p)} already exists in archive and it will not be copied!")
             else:
-                print("...  copying %s to archive" % os.path.basename(p))
+                log.detail(f"copying {os.path.basename(p)} to archive")
                 if ptype == "folder":
                     shutil.copytree(p, target)
                 else:
                     shutil.copy2(p, afolder)
         elif archive == "delete":
-            print("...  deleting packet [%s]" % os.path.basename(p))
+            log.detail(f"deleting packet [{os.path.basename(p)}]")
             if ptype == "folder":
-                _safe_rmtree(p)
+                _safe_rmtree(p, _log=log)
             else:
                 os.remove(p)
     return notes
@@ -336,19 +345,24 @@ def _import_normalize_args(sessionsfolder, sessions, masterinbox, pattern, namef
     return sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b
 
 
-def _import_final_report(report):
-    """Print the final success/failure report and raise if any packet failed."""
-    print("\nFinal report\n============")
+def _import_final_report(report, _log=None):
+    """Record the final success/failure report and raise if any packet failed."""
+    log = gl.log_or_console(_log)
+
+    log.blank()
+    log.info("Final report\n============")
     if report["ok"]:
-        print("\nSuccessfully processed:")
+        log.blank()
+        log.step("Successfully processed:")
         for afile, session, notes in report["ok"]:
-            print("... %s [%s]" % (session["sessionid"], afile))
+            log.detail(f'{session["sessionid"]} [{afile}]')
             for note in notes:
-                print("    %s" % (note))
+                log.detail(note, depth=1)
     if report["failed"]:
-        print("\nFailed to process:")
+        log.blank()
+        log.step("Failed to process:")
         for afile, session, notes in report["failed"]:
-            print("... %s [%s]" % (session["sessionid"], afile))
+            log.error(f'{session["sessionid"]} [{afile}]')
             for note in notes:
-                print("    %s" % (note))
+                log.detail(note, depth=1)
         raise ge.CommandFailed("import_dicom", "Some packages failed to process", "Please check report!")

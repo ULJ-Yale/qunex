@@ -181,7 +181,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -195,15 +195,18 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
             reclean_elements = icafix_groups
 
-        log.raw("\n\n%s %d ApplyAutoReclean elements in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ApplyAutoReclean elements in parallel",
+            options["run"],
+            level="info",
+        )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 pars_ok = False
         else:
             if options["hcp_matlab_mode"] == "compiled":
@@ -213,7 +216,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 pars_ok = False
 
         if not pars_ok:
@@ -263,7 +266,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
     except Exception:
         log.unknown_error()
@@ -297,7 +300,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -312,10 +315,12 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
-            boldok = log.check_for_file("%s.nii.gz" % boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s.nii.gz] missing!" % boldimg,
+            boldok = pc.check_for_file(f"{boldimg}.nii.gz",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -348,7 +353,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 run = False
         else:
             if options["hcp_matlab_mode"] == "compiled":
@@ -358,7 +363,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 run = False
 
         matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -418,7 +423,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running ApplyAutoRecleanPipeline",
@@ -430,6 +435,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -445,16 +451,11 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

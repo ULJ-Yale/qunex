@@ -210,7 +210,7 @@ def _get_postfreesurfer_snapshot_paths(hcp):
     }
 
 
-def _prepare_postfreesurfer_snapshot_state(hcp):
+def _prepare_postfreesurfer_snapshot_state(hcp, _log=None):
     """Refresh rollback metadata used before rerunning FreeSurfer after PostFS."""
 
     paths = _get_postfreesurfer_snapshot_paths(hcp)
@@ -240,6 +240,7 @@ def _prepare_postfreesurfer_snapshot_state(hcp):
             "T1w/T2w_acpc_dc_restore_brain.nii.gz",
         ],
         overwrite=True,
+        _log=_log,
     )
 
     return paths
@@ -275,7 +276,7 @@ def check_inline_parameter_use(modality, parameter, options):
     ])
 
 
-def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
+def check_gdc_coeff_file(gdcstring, hcp, sinfo, _log, run=True):
     """
     Function that extract the information on the correct gdc file to be used and tests for its presence;
     """
@@ -292,8 +293,7 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                     device["model"] = dmodel
                     device["serial"] = dserial
                 except Exception:
-                    log.raw("\n---> WARNING: device information for this session is malformed: %s"
-                        % (sinfo.get("device", "---")))
+                    _log.warning(f"device information for this session is malformed: {sinfo.get('device', '---')}")
                     raise
 
                 gdcoptions = [
@@ -315,18 +315,15 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
                             gdcfileused = "%s: %s" % (ginfo, gwhat)
                             break
             except Exception:
-                log.raw("\n---> ERROR: malformed specification of gdcoeffs: %s!" % (
-                    gdcstring
-                ))
+                _log.error(f"malformed specification of gdcoeffs: {gdcstring}!")
                 run = False
                 raise
 
             if gdcfile in ["", "NONE"]:
-                log.warning("Specific gradient distortion coefficients file could not be identified! None will be used.")
+                _log.warning("Specific gradient distortion coefficients file could not be identified! None will be used.")
                 gdcfile = "NONE"
             else:
-                log.raw("\n---> Specific gradient distortion coefficients file identified (%s):\n     %s"
-                    % (gdcfileused, gdcfile))
+                _log.step(f"Specific gradient distortion coefficients file identified ({gdcfileused}):\n     {gdcfile}")
 
         else:
             gdcfile = gdcstring
@@ -335,13 +332,12 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, log, run=True):
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp["hcp_Config"], gdcfile)
                 if not os.path.exists(gdcoeffs):
-                    log.raw("\n---> ERROR: Could not find gradient distortion coefficients file: %s."
-                        % (gdcfile))
+                    _log.error(f"Could not find gradient distortion coefficients file: {gdcfile}.")
                     run = False
                 else:
-                    log.step("Gradient distortion coefficients file present.")
+                    _log.step("Gradient distortion coefficients file present.")
             else:
-                log.step("Gradient distortion coefficients file present.")
+                _log.step("Gradient distortion coefficients file present.")
     else:
         gdcfile = "NONE"
 
@@ -653,7 +649,7 @@ def _nhp_postfs_paths(templates_dir, species):
 #                                                      Shared denoising helpers
 
 
-def parse_icafix_bolds(options, bolds, log, msmall=False):
+def parse_icafix_bolds(options, bolds, _log, msmall=False):
     # --- Use hcp_icafix parameter to determine if a single fix or a multi fix should be used
     single_fix = True
 
@@ -714,8 +710,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                                 if sb == boldtargets[i] or sb == boldtags[i]:
                                     if sb in hcp_bolds:
                                         bolds_ok = False
-                                        log.raw("\n\nERROR: the bold [%s] is specified twice!"
-                                            % b)
+                                        _log.blank()
+                                        _log.error(f"the bold [{b}] is specified twice!")
                                     else:
                                         group_bolds.append(b)
                                         hcp_bolds.append(b)
@@ -726,8 +722,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                     hcp_groups[split[0]] = group_bolds
                 else:
                     bolds_ok = False
-                    log.raw("\n\nERROR: multiple concatenations with the same name [%s]!"
-                        % split[0])
+                    _log.blank()
+                    _log.error(f"multiple concatenations with the same name [{split[0]}]!")
 
         # else we extract bolds and use single fix
         else:
@@ -749,7 +745,8 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
                         if sb == boldtargets[i] or sb == boldtags[i]:
                             if sb in hcp_bolds:
                                 bolds_ok = False
-                                log.raw("\n\nERROR: the bold [%s] is specified twice!" % b)
+                                _log.blank()
+                                _log.error(f"the bold [{b}] is specified twice!")
                             else:
                                 hcp_bolds.append(b)
 
@@ -767,7 +764,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
         # create specified bolds
         specified_bolds = boldtargets
 
-        log.raw("\nConcatenating all bolds\n")
+        _log.info("Concatenating all bolds\n")
 
     # --- Get hcp_icafix data from bolds
     # variable for storing skipped bolds
@@ -775,7 +772,7 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
 
     if hcp_bolds is not bolds:
         # compare
-        log.raw("\n\nComparing bolds with those specifed via parameters\n")
+        _log.raw("\n\nComparing bolds with those specifed via parameters\n")
 
         # single fix
         if single_fix:
@@ -847,21 +844,20 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
     # report that some hcp_icafix_bolds not found in bolds
     if len(bold_skip) > 0 or len(bold_error) > 0:
         for b in bold_skip:
-            log.raw("     ... skipping %s: it is not specified in hcp_icafix_bolds\n" % b)
+            _log.raw(f"     ... skipping {b}: it is not specified in hcp_icafix_bolds\n")
         for b in bold_error:
-            log.raw("     ... ERROR: %s specified in hcp_icafix_bolds but not found in bolds\n"
-                % b)
+            _log.raw(f"     ... ERROR: {b} specified in hcp_icafix_bolds but not found in bolds\n")
     else:
-        log.raw("     ... all bolds specified via hcp_icafix_bolds are present\n")
+        _log.raw("     ... all bolds specified via hcp_icafix_bolds are present\n")
 
     if len(bold_error) > 0:
         bolds_ok = False
 
     # --- Report single fix or multi fix
     if single_fix:
-        log.raw("\nSingle-run HCP ICAFix on %d bolds" % len(hcp_bolds))
+        _log.info(f"Single-run HCP ICAFix on {len(hcp_bolds)} bolds")
     else:
-        log.raw("\nMulti-run HCP ICAFix on %d groups" % len(hcp_groups))
+        _log.info(f"Multi-run HCP ICAFix on {len(hcp_groups)} groups")
 
     # different output for msmall and singlefix
     if msmall and single_fix:
@@ -880,10 +876,10 @@ def parse_icafix_bolds(options, bolds, log, msmall=False):
     return (single_fix, hcp_bolds, hcp_groups, bolds_ok)
 
 
-def parse_msmall_bolds(options, bolds, log):
+def parse_msmall_bolds(options, bolds, _log):
     # parse the same way as with icafix first
     single_run, _, icafix_groups, pars_ok = parse_icafix_bolds(
-        options, bolds, log, True
+        options, bolds, _log, True
     )
 
     msmall_groups = []
@@ -919,7 +915,7 @@ def parse_msmall_bolds(options, bolds, log):
                             break
 
                 if hmb is None:
-                    log.raw(f"\n---> ERROR: bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!")
+                    _log.error(f"bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!")
                     pars_ok = False
                     break
                 else:
@@ -971,10 +967,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.raw("\n---> %s bold ICA %s" % (
-            pc.action("Processing", options["run"]),
-            printica,
-        ))
+        log.action("Processing", f"bold ICA {printica}", options["run"])
 
     else:
         # highpass
@@ -989,19 +982,18 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         printica = "%s_hp%s_clean.nii.gz" % (boldtarget, highpass)
         icaimg = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, printica)
-        log.raw("\n---> %s group ICA %s" % (
-            pc.action("Processing", options["run"]),
-            printica,
-        ))
+        log.action("Processing", f"group ICA {printica}", options["run"])
 
     try:
         boldok = True
 
         # --- check for ICA image
-        boldok = log.check_for_file(icaimg,
-            "\n     ... ICA %s present" % boldtarget,
-            "\n     ... ERROR: ICA [%s] missing!" % icaimg,
+        boldok = pc.check_for_file(icaimg,
+            f"ICA {boldtarget} present",
+            f"ICA [{icaimg}] missing!",
             status=boldok,
+            bad_level="error",
+            _log=log,
         )
 
         # hcp_postfix_reusehighpass
@@ -1030,7 +1022,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -1042,7 +1034,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldok = False
 
         # subject/session
@@ -1081,9 +1073,9 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     checkfile=None,
-                    command=comm,
+                    run=comm,
                     description="Running HCP PostFix",
                     overwrite=False,
                     thread=sinfo["id"],
@@ -1093,6 +1085,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
                     logtags=[options["logtag"], boldtarget],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1102,8 +1095,8 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP PostFix " + boldtarget, overwrite=False
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP PostFix " + boldtarget, overwrite=False, _log=log
                 )
                 if passed is None:
                     log.step("HCP PostFix can be run")
@@ -1122,14 +1115,11 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         log.raw("\n\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}
@@ -1156,7 +1146,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         bolds = group["bolds"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.action("Processing", "DeDriftAndResample", options["run"])
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -1183,10 +1173,12 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            boldok = pc.check_for_file(boldimg,
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -1234,7 +1226,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -1245,7 +1237,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldsok = False
 
         comm = (
@@ -1325,7 +1317,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldsok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
@@ -1337,6 +1329,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], regname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1346,8 +1339,8 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP DeDriftAndResample can be run")
@@ -1363,16 +1356,11 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            "DeDriftAndResample"
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {'DeDriftAndResample'} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(regname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
-            "DeDriftAndResample",
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {'DeDriftAndResample'} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(regname)
 
     return {"r": log.text, "report": report}
@@ -1392,7 +1380,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s DeDriftAndResample" % (pc.action("Processing", options["run"])))
+        log.action("Processing", "DeDriftAndResample", options["run"])
 
         # --- check for bold images and prepare targets parameter
         group_list = []
@@ -1428,9 +1416,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            boldok = pc.check_for_file(boldimg,
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -1447,9 +1437,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         # check if group file exists
         groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
         groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
-        groupok = log.check_for_file(groupimg,
-            "\n     ... ICA %s present" % groupname,
-            "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+        groupok = pc.check_for_file(groupimg,
+            f"ICA {groupname} present",
+            f"ICA [{groupimg}] missing!",
+            bad_level="error",
+            _log=log,
         )
 
         if not groupok:
@@ -1500,7 +1492,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 runok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -1512,7 +1504,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 runok = False
 
         comm = (
@@ -1615,8 +1607,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                         # extract fixname name ok?
                         if fn not in bold_list:
                             runok = False
-                            log.raw("\n---> ERROR: extract fix name [%s], not found in provided fix names!"
-                                % fn)
+                            log.error(f"extract fix name [{fn}], not found in provided fix names!")
 
                     if len(en_split) > 0:
                         boldnames = en_split[1].replace(",", "@")
@@ -1651,8 +1642,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
             # check value
             if extractvolume != "TRUE" and extractvolume != "FALSE":
                 runok = False
-                log.raw("\n---> ERROR: invalid extractvolume parameter [%s], expecting TRUE or FALSE!"
-                    % extractvolume)
+                log.error(f"invalid extractvolume parameter [{extractvolume}], expecting TRUE or FALSE!")
 
             # append to command
             comm += '             --multirun-fix-extract-volume="%s"' % extractvolume
@@ -1667,7 +1657,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         # -- Run
         if run and runok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP DeDriftAndResample",
@@ -1679,6 +1669,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -1688,8 +1679,8 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP DeDriftAndResample can be run")
@@ -1705,16 +1696,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            "DeDriftAndResample"
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {'DeDriftAndResample'} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(grouptargets)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
-            "DeDriftAndResample",
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {'DeDriftAndResample'} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(grouptargets)
 
     return {"r": log.text, "report": report}
@@ -1745,7 +1731,7 @@ def handle_hcp_links(groupfolder, sessions, options, remove=False):
     return
 
 
-def write_transmit_bias_voltages(sessions, options, voltages_file, log):
+def write_transmit_bias_voltages(sessions, options, voltages_file, _log):
     """
     Write one TxRefAmp value per session into ``voltages_file``.
 
@@ -1771,18 +1757,18 @@ def write_transmit_bias_voltages(sessions, options, voltages_file, log):
         )
 
         if not os.path.exists(json_file):
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}")
+            _log.error(f"Cannot create hcp_voltages file. JSON file not found for session {session['id']}: {json_file}")
             return False
 
         try:
             with open(json_file, "r") as f:
                 metadata = json.load(f)
         except Exception as e:
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}")
+            _log.error(f"Cannot create hcp_voltages file. Failed to read JSON file for session {session['id']}: {json_file}. Error: {e}")
             return False
 
         if "TxRefAmp" not in metadata:
-            log.raw(f"\n---> ERROR: Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}")
+            _log.error(f"Cannot create hcp_voltages file. TxRefAmp not found for session {session['id']} in JSON file: {json_file}")
             return False
 
         values.append(str(metadata["TxRefAmp"]))
@@ -1796,8 +1782,8 @@ def write_transmit_bias_voltages(sessions, options, voltages_file, log):
             for value in values:
                 f.write(value + "\n")
     except Exception as e:
-        log.raw(f"\n---> ERROR: Cannot write hcp_voltages file: {voltages_file}. Error: {e}")
+        _log.error(f"Cannot write hcp_voltages file: {voltages_file}. Error: {e}")
         return False
 
-    log.raw(f"\n---> Created hcp_voltages file: {voltages_file}")
+    _log.step(f"Created hcp_voltages file: {voltages_file}")
     return True

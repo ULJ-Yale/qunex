@@ -278,7 +278,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -291,19 +291,19 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw(
-            "\n\n%s %d ICAFix elements in parallel"
-            % (
-                pc.action("Processing", options["run"]),
-                parelements,
-            )
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ICAFix elements in parallel",
+            options["run"],
+            level="info",
         )
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw(
-                    "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                log.error(
+                    "hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
                 )
                 pars_ok = False
         else:
@@ -314,8 +314,8 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 os.environ["FSL_FIX_MATLAB_MODE"] = "2"
             else:
-                log.raw(
-                    "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                log.error(
+                    "unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 )
                 pars_ok = False
 
@@ -365,7 +365,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ICAFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ICAFix failed", 1)
     except Exception:
         log.unknown_error()
@@ -388,24 +388,20 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw(
-            "\n---> %s BOLD image %s"
-            % (
-                pc.action("Processing", options["run"]),
-                printbold,
-            )
-        )
+        log.action("Processing", f"BOLD image {printbold}", options["run"])
         boldok = True
 
         # --- check for bold image
         boldimg = os.path.join(
             hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
         )
-        boldok = log.check_for_file(
+        boldok = pc.check_for_file(
             boldimg,
-            "\n     ... bold image %s present" % boldtarget,
-            "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            f"bold image {boldtarget} present",
+            f"bold image [{boldimg}] missing!",
             status=boldok,
+            bad_level="error",
+            _log=log,
         )
 
         # bold in input format
@@ -467,7 +463,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running single-run HCP ICAFix",
@@ -479,6 +475,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
                     logtags=[options["logtag"], boldtarget],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -501,11 +498,12 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     None,
                     None,
                     "single-run HCP ICAFix " + boldtarget,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("single-run HCP ICAFix can be run")
@@ -521,16 +519,12 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold}\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw(
-            "\n --- Failed during processing of bold %s with error:\n %s\n"
-            % (
-                printbold,
-                traceback.format_exc(),
-            )
+        log.info(
+            f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n"
         )
         report["failed"].append(printbold)
 
@@ -558,9 +552,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
     try:
         log.raw("\n\n------------------------------------------------------------")
-        log.raw(
-            "\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname)
-        )
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -576,11 +568,13 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
             )
-            boldok = log.check_for_file(
-                "%s.nii.gz" % boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s.nii.gz] missing!" % boldimg,
+            boldok = pc.check_for_file(
+                f"{boldimg}.nii.gz",
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}.nii.gz] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -610,8 +604,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw(
-                    "\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+                log.error(
+                    "hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
                 )
                 groupok = False
             else:
@@ -624,8 +618,8 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw(
-                    "\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+                log.error(
+                    "unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
                 )
                 groupok = False
 
@@ -726,38 +720,38 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                         or abs(pixdim1 - pixdim3) > epsilon
                     ):
                         run = False
-                        log.raw(
-                            f"\n     ... ERROR: T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
-                        )
+                        log.error(
+                            f"T1w pixdim mismatch [{pixdim1, pixdim2, pixdim3}], please set hcp_t1wtemplatebrain manually!"
+                        , depth=1)
                     else:
                         # upscale slightly and use the closest that matches
                         pixdim = pixdim1 * 1.05
 
                         if pixdim > 2:
                             run = False
-                            log.raw(
-                                f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
-                            )
+                            log.error(
+                                f"weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                            , depth=1)
                         elif pixdim > 1:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 1.0!"
                             )
                             resolution = 1.0
                         elif pixdim > 0.8:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to 0.8!"
                             )
                             resolution = 0.8
                         elif pixdim > 0.65:
-                            log.raw(
-                                f"\n     ... Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
+                            log.detail(
+                                f"Based on T1w pixdim [{pixdim1, pixdim2, pixdim3}] the hcp_t1wtemplatebrain parameter was set to to 0.7!"
                             )
                             resolution = 0.7
                         else:
                             run = False
-                            log.raw(
-                                f"\n     ... ERROR: weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
-                            )
+                            log.error(
+                                f"weird T1w pixdim found [{pixdim1, pixdim2, pixdim3}], please set the hcp_t1wtemplatebrain parameter manually!"
+                            , depth=1)
 
                     if resolution is not None:
                         t1wtemplatebrain = os.path.join(
@@ -800,7 +794,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
         # -- Run
         if run and groupok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running multi-run HCP ICAFix",
@@ -812,6 +806,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -834,11 +829,12 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     None,
                     None,
                     "multi-run HCP ICAFix " + groupname,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed == "done":
                     log.step("multi-run HCP ICAFix can be run")
@@ -854,19 +850,14 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                 log.error("images missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(
-            "\n\n\n --- Failed during processing of group %s with error:\n"
-            % (groupname)
+        log.raw(
+            f"\n\n\n --- Failed during processing of group {groupname} with error:\n"
         )
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw(
-            "\n --- Failed during processing of group %s with error:\n %s\n"
-            % (
-                groupname,
-                traceback.format_exc(),
-            )
+        log.info(
+            f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n"
         )
         report["failed"].append(groupname)
 

@@ -26,6 +26,7 @@ from datetime import datetime
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
@@ -34,64 +35,9 @@ from qx_utilities.general import extensions
 from qx_utilities.general.parsing import flag, is_none
 from qx_utilities.general.parsing import true_or_false as torf
 
-# =======================================================================
-#                                                                 GLOBALS
-log = []
-stati = []
-logname = ""
-
 
 # =======================================================================
 #                                                       SUPPORT FUNCTIONS
-def writelog(item):
-    """
-    ``writelog(item)``
-
-    Splits the passed item into two parts and appends the first to the
-    global log list, and the second to the global stati list. It also
-    prints the contents to the file specified in the global logname
-    variable.
-
-    Returns the (report, status) pair, so callers do not have to split the
-    item a second time - passing an already split report back in would append
-    a spurious "Unknown" status to stati.
-    """
-    global logname
-    global log
-    global stati
-    r, status = proc_response(item)
-    log.append(r)
-    stati.append(status)
-    with open(logname, "a") as f:
-        print(r, file=f)
-    return r, status
-
-
-def proc_response(r):
-    """
-    ``proc_response(r)``
-
-    It processes the response returned from the utilities functions
-    called. It splits it into the report string and status tuple. If
-    no status tupple is present, it adds an "Unknown" tupple. If the
-    third element is missing, it assumes it ran ok and sets it to
-    0.
-    """
-
-    if type(r) is tuple:
-        if len(r) == 2:
-            if len(r[1]) == 2:
-                return (r[0], (r[1][0], r[1][1], None))
-            elif len(r[1]) == 3:
-                return r
-            else:
-                return ("Unknown", ("Unknown", "Unknown", None))
-        else:
-            return ("Unknown", ("Unknown", "Unknown", None))
-    else:
-        return (r, ("Unknown", "Unknown", None))
-
-
 def update_options(session, options):
     """
     ``update_options(session, options)``
@@ -980,6 +926,9 @@ arglist = [
     ["# --- Processing options"],
     ["run", "run", str],
     ["log", "keep", str],
+    # empty means "take the settings value", so a per-command
+    # --comlog_folders overrides the policy and the policy supplies the default
+    ["comlog_folders", "", str],
     ["# --- mice pipelines"],
     ["voxel_increase", "", is_none],
     ["orientation", "x -y z", str],
@@ -1178,10 +1127,21 @@ for line in flaglist:
 # ==============================================================================
 #                                                               RUNNING COMMANDS
 #
-def run(qx_command, args):
-    global log
-    global stati
-    global logname
+def run(qx_command, args, log_settings=None):
+    """
+    ``run(qx_command, args, log_settings=None)``
+
+    Runs a processing command over the sessions it was given, locally or
+    through a scheduler, and records what happened in the run's runlog.
+
+    Parameters:
+        --qx_command    The registry entry of the command to run.
+        --args          The parsed command line arguments.
+        --log_settings  The resolved logging settings; defaults to logging
+                        everything.
+    """
+    if log_settings is None:
+        log_settings = gl.LogSettings()
 
     # --------------------------------------------------------------------------
     #                                                            Parsing options
@@ -1279,8 +1239,23 @@ def run(qx_command, args):
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
     studyfolders = gc.deduce_folders(options, qx_command.name, timestamp)
-    logfolder = studyfolders["logfolder"]
-    comlogfolder = os.path.join(logfolder, "comlogs")
+
+    # the run's logs: one runlog for the whole invocation, comlogs beside it
+    run_context = gl.RunContext(
+        qx_command.name,
+        args,
+        log_settings,
+        studyfolders,
+        timestamp=timestamp,
+        tag="long" if options["longitudinal"] else None,
+    )
+
+    # the batch file can move the study, so the settings this run logs by are
+    # the context's, not necessarily the ones `gmri` resolved
+    gl.set_active(run_context.settings)
+
+    logfolder = run_context.logfolder
+    comlogfolder = run_context.comlogfolder
     specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")
 
     options["comlogs"] = comlogfolder
@@ -1290,31 +1265,13 @@ def run(qx_command, args):
     # --------------------------------------------------------------------------
     #                                                      start writing the log
     os.makedirs(comlogfolder, exist_ok=True)
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-    if not options["longitudinal"]:
-        logname = os.path.join(logfolder, "Log-%s-%s.log") % (qx_command.name, logstamp)
-    else:
-        logname = os.path.join(logfolder, "Log-%s-long-%s.log") % (
-            qx_command.name,
-            logstamp,
-        )
-
-    log = []
+    # the header goes in first, so a run killed halfway still says what it was
     stati = []
-    sout = gc.print_qunex_header()
-    sout += "#\n"
-    sout += "=================================================================\n"
-    sout += "qunex " + qx_command.name + " \\"
+    header = run_context.header()
 
-    arg_items = list(args.items())
-    for i, (k, v) in enumerate(arg_items):
-        if i < len(arg_items) - 1:
-            sout += '\n  --%s="%s" \\' % (k, v)
-        else:
-            sout += '\n  --%s="%s"' % (k, v)
-
-    sout += "\n=================================================================\n"
+    # `sout` is what follows the header, printed and recorded together
+    sout = ""
 
     # no parsessions for subject and multi-session commands
     if processing_type in ["subject", "study"]:
@@ -1327,8 +1284,8 @@ def run(qx_command, args):
     # check if there are no sessions
     if not sessions or processing_type == "subject" and not subjects:
         sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
-        print(sout)
-        writelog(sout)
+        print(header + "\n" + sout)
+        run_context.write(sout)
         exit()
 
     elif options["run"] == "run":
@@ -1337,18 +1294,18 @@ def run(qx_command, args):
     else:
         sout += "\nRunning test on %s ...\n" % (options["sessions"])
 
-    print(sout)
-    writelog(sout)
+    print(header + "\n" + sout)
+    run_context.write(sout)
 
     # -----------------------------------------------------------------------
     #                                                           print options
     if printoptions:
         print("\nFull list of options:")
-        writelog("\nFull list of options:\n")
+        run_context.write("\nFull list of options:\n")
         for line in arglist:
             if len(line) == 3:
                 print("%-25s :" % (line[0]), options[line[0]])
-                writelog("  %-25s : %s" % (line[0], str(options[line[0]])))
+                run_context.write("  %-25s : %s\n" % (line[0], str(options[line[0]])))
 
     # -----------------------------------------------------------------------
     #                                                              print info
@@ -1370,8 +1327,6 @@ def run(qx_command, args):
     # -----------------------------------------------------------------------
     #                                                             local queue
     if options["scheduler"] == "local":
-        console_log = ""
-
         # testing or processing
         action = "testing" if options["run"] == "test" else "processing"
         pending_actions = qx_command.load_callable()
@@ -1389,13 +1344,12 @@ def run(qx_command, args):
                     soptions = update_options(session, options)
 
                 message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                console_log += message
                 print(message)
 
                 # process and write log
-                r, _ = writelog(pending_actions(sessions, soptions, overwrite, c + 1))
-                console_log += r
-                print(r)
+                log = pending_actions(sessions, soptions, overwrite, c + 1)
+                log.write_to(run_context)
+                stati.append(log.status)
 
             # ------------------------------------------------------------------
             #                                        subject processing commands
@@ -1403,12 +1357,11 @@ def run(qx_command, args):
                 for subject in subjects:
                     session_ids = ", ".join([s["id"] for s in subject])
                     message = f"\nProcessing subject {subject[0]['subject']} with sessions {session_ids} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    console_log += message
                     print(message)
 
-                    r, _ = writelog(pending_actions(subject, options, overwrite, c + 1))
-                    console_log += r
-                    print(r)
+                    log = pending_actions(subject, options, overwrite, c + 1)
+                    log.write_to(run_context)
+                    stati.append(log.status)
                     c += 1
                     if nprocess and c >= nprocess:
                         break
@@ -1419,16 +1372,13 @@ def run(qx_command, args):
                 for session in sessions:
                     if len(session["id"]) > 1:
                         message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        console_log += message
                         print(message)
 
                         soptions = update_options(session, options)
 
-                        r, _ = writelog(
-                            pending_actions(session, soptions, overwrite, c + 1)
-                        )
-                        console_log += r
-                        print(r)
+                        log = pending_actions(session, soptions, overwrite, c + 1)
+                        log.write_to(run_context)
+                        stati.append(log.status)
                         c += 1
                         if nprocess and c >= nprocess:
                             break
@@ -1444,7 +1394,6 @@ def run(qx_command, args):
             if processing_type == "subject":
                 for subject in subjects:
                     message = f"\nAdding processing of subject {subject[0]['subject']} with sessions {', '.join([s['id'] for s in subject])} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                    console_log += message
                     print(message)
 
                     future = process_pool_executor.submit(
@@ -1463,7 +1412,6 @@ def run(qx_command, args):
                     if len(session["id"]) > 1:
                         soptions = update_options(session, options)
                         message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
-                        console_log += message
                         print(message)
 
                         future = process_pool_executor.submit(
@@ -1475,54 +1423,29 @@ def run(qx_command, args):
                             break
 
             for future in as_completed(futures):
-                # result[0] is not the report unless result is a tuple, so take
-                # the report writelog split out rather than indexing the result
-                r, _ = writelog(future.result())
-                console_log += r
-                print(r)
+                # the log comes back through the pickle the pool made of it;
+                # `__getstate__` dropped its streams on the way out, so it
+                # arrives with its text and its counts and nothing to close
+                log = future.result()
+                log.write_to(run_context)
+                stati.append(log.status)
 
-        # print(console log)
-        # print(consoleLog)
+        # the reports were appended as the sessions completed; all that is
+        # left is the digest
+        run_context.final_report(stati)
 
-        # create log
-        f = open(logname, "w")
-        # header
-        gc.print_qunex_header(file=f)
-        # print("# Generated by QuNex %s on %s" % (gc.get_qunex_version(), datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")), file=f)
-        print("#", file=f)
-        print(
-            "\n\n============================= LOG ================================\n",
-            file=f,
-        )
-        for e in log:
-            print(e, file=f)
+        # and, when a parent process asked for it, the same digest as data
+        run_context.write_status(stati)
 
-        print("\n\n---> Final report for command", options["command_ran"])
-        print("\n\n---> Final report for command", options["command_ran"], file=f)
-        failed_total = 0
-
-        for sid, report, failed in stati:
-            if "Unknown" not in sid:
-                print("... %s ---> %s" % (sid, report))
-                print("... %s ---> %s" % (sid, report), file=f)
-                if failed is None:
-                    failed_total = None
-                else:
-                    if failed_total is not None:
-                        failed_total += failed
-        if failed_total is None:
-            print("---> Success status not reported for some or all tasks")
-            print("---> Success status not reported for some or all tasks", file=f)
-        elif failed_total > 0:
-            print("---> Not all tasks completed fully!")
-            print("---> Not all tasks completed fully!", file=f)
-        else:
-            print(f"---> Successful completion of all tasks at {datetime.now()}")
-            print(
-                f"---> Successful completion of all tasks at {datetime.now()}", file=f
+        # a failed session makes the command fail: the caller -- a shell, CI,
+        # or run_recipe -- learns it from the exit code rather than by reading
+        # the report
+        if any(failed for _, _, failed in stati):
+            raise ge.CommandFailed(
+                qx_command.name,
+                "Not all tasks completed fully",
+                "Please check the logs in %s" % (logfolder),
             )
-
-        f.close()
 
     # -----------------------------------------------------------------------
     #                                                  general scheduler code
@@ -1535,6 +1458,5 @@ def run(qx_command, args):
             sessions=sessions,
             args=args,
             parsessions=parsessions,
-            logfolder=os.path.join(logfolder, "batchlogs"),
-            logname=logname,
+            run=run_context,
         )

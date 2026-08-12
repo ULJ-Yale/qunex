@@ -202,7 +202,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -215,10 +215,13 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw("\n\n%s %d ReApplyFixes in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} ReApplyFixes in parallel",
+            options["run"],
+            level="info",
+        )
 
         # --- Execute
         # single fix
@@ -275,7 +278,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP ReApplyFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP ReApplyFix failed", 1)
     except Exception:
         log.unknown_error()
@@ -304,7 +307,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
     try:
         # run HCP hand reclassification
         log.raw("\n------------------------------------------------------------")
-        log.raw("\n---> Executing HCP Hand reclassification for bold: %s\n" % printbold)
+        log.step(f"Executing HCP Hand reclassification for bold: {printbold}\n")
         result = execute_hcp_hand_reclassification(
             sinfo, options, hcp, run, True, boldtarget, printbold
         )
@@ -332,7 +335,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
             matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                     boldok = False
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -344,7 +347,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     boldok = False
 
             comm = (
@@ -415,7 +418,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
             # -- Run
             if run and boldok:
                 if options["run"] == "run":
-                    _, _, failed = log.run_external(
+                    _, _, failed = pc.run_external_for_file(
                         tfile,
                         comm,
                         "Running single-run HCP ReApplyFix",
@@ -427,6 +430,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                         logtags=[options["logtag"], boldtarget],
                         full_test=full_test,
                         shell=True,
+                        _log=log,
                     )
 
                     if failed:
@@ -436,8 +440,8 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
 
                 # -- just checking
                 else:
-                    passed, _, failed = log.check_run(
-                        tfile, full_test, "single-run HCP ReApplyFix " + boldtarget
+                    passed, _, failed = pc.check_run(
+                        tfile, full_test, "single-run HCP ReApplyFix " + boldtarget, _log=log
                     )
                     if passed is None:
                         log.step("single-run HCP ReApplyFix can be run")
@@ -455,19 +459,16 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                 log.raw("\n\n")
 
         else:
-            log.raw("\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold)
+            log.error(f"Hand reclassification failed for bold: {printbold}!")
             report["failed"].append(printbold)
             boldok = False
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}
@@ -491,7 +492,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
     try:
         log.raw("\n------------------------------------------------------------")
-        log.raw("\n---> %s group %s" % (pc.action("Processing", options["run"]), groupname))
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -507,10 +508,12 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            boldok = pc.check_for_file(boldimg,
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -526,7 +529,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
         # run HCP hand reclassification if not longitudinal
         if not options["longitudinal"]:
-            log.raw("\n---> Executing HCP Hand reclassification for group: %s\n" % groupname)
+            log.step(f"Executing HCP Hand reclassification for group: {groupname}\n")
             result = execute_hcp_hand_reclassification(
                 sinfo, options, hcp, run, False, groupname, groupname
             )
@@ -550,7 +553,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             matlabrunmode = None
             if options["hcp_matlab_mode"] is None:
                 if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 else:
                     matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
             else:
@@ -561,7 +564,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     groupok = False
 
             # highpass
@@ -578,7 +581,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             if options["longitudinal"]:
                 studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
-                    log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     groupok = False
                 # replace path
                 path = os.path.join(studyfolder, "subjects", sinfo["subject"])
@@ -684,7 +687,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                     if options["longitudinal"]:
                         logtags.append("long")
 
-                    _, _, failed = log.run_external(
+                    _, _, failed = pc.run_external_for_file(
                         tfile,
                         comm,
                         "Running multi-run HCP ReApplyFix",
@@ -696,6 +699,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                         logtags=logtags,
                         full_test=full_test,
                         shell=True,
+                        _log=log,
                     )
 
                     if failed:
@@ -705,8 +709,8 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
                 # -- just checking
                 else:
-                    passed, _, failed = log.check_run(
-                        tfile, full_test, "multi-run HCP ReApplyFix " + groupname
+                    passed, _, failed = pc.check_run(
+                        tfile, full_test, "multi-run HCP ReApplyFix " + groupname, _log=log
                     )
                     if passed is None:
                         log.step("multi-run HCP ReApplyFix can be run")
@@ -724,19 +728,14 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 log.raw("\n\n")
 
         else:
-            log.raw("\n---> ERROR: Hand reclassification failed for bold: %s!" % printbold)
+            log.error(f"Hand reclassification failed for bold: {printbold}!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}
@@ -757,7 +756,7 @@ def execute_hcp_hand_reclassification(
     }
 
     try:
-        log.raw("\n---> %s ICA %s" % (pc.action("Processing", options["run"]), printbold))
+        log.action("Processing", f"ICA {printbold}", options["run"])
         boldok = True
 
         # load parameters or use default values
@@ -781,10 +780,12 @@ def execute_hcp_hand_reclassification(
             boldtarget,
             "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
         )
-        boldok = log.check_for_file(icaimg,
-            "\n     ... ICA %s present" % boldtarget,
-            "\n     ... ERROR: ICA [%s] missing!" % icaimg,
+        boldok = pc.check_for_file(icaimg,
+            f"ICA {boldtarget} present",
+            f"ICA [{icaimg}] missing!",
             status=boldok,
+            bad_level="error",
+            _log=log,
         )
 
         comm = (
@@ -821,7 +822,7 @@ def execute_hcp_hand_reclassification(
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP HandReclassification",
@@ -833,6 +834,7 @@ def execute_hcp_hand_reclassification(
                     logtags=[options["logtag"], boldtarget],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -842,11 +844,12 @@ def execute_hcp_hand_reclassification(
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     tfile,
                     full_test,
                     "HCP HandReclassification " + boldtarget,
                     overwrite=True,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP HandReclassification can be run")
@@ -865,14 +868,11 @@ def execute_hcp_hand_reclassification(
         log.raw("\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
-        log.capture(str(errormessage))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
+        log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}

@@ -8,6 +8,8 @@ Test suite for session functions: merge_session, merge_sessions_list
 import os
 import tempfile
 
+import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 from qx_utilities.general.sessions import merge_session, merge_sessions_list
 from qx_utilities.general.exceptions import CommandFailed
 import pytest
@@ -616,12 +618,12 @@ def test_merge_sessions_list_partial_failure():
             f.write("joined1: s1, s2\n")  # Should succeed
             f.write("joined2: s3, s4\n")  # Should fail
 
-        result = merge_sessions_list(studyfolder, list_file, sourcefolder,
-                                    targetfolder, 'no', 'leave')
+        with pytest.raises(CommandFailed):
+            merge_sessions_list(studyfolder, list_file, sourcefolder,
+                                targetfolder, 'no', 'leave')
 
-        assert result is False, "Should return False when some operations fail"
-
-        # First join should succeed
+        # First join should succeed -- the raise comes after the loop, so a
+        # failing session does not abort its siblings
         assert os.path.exists(os.path.join(targetfolder, 'joined1', 'session_hcp.txt')), \
             "First join should succeed"
 
@@ -1108,6 +1110,59 @@ def test_merge_session_original_sessions_move_overwrite_clean():
             "New s1 should be in archive"
 
         print("Move correctly replaces sessions with overwrite=clean")
+
+
+def test_merge_sessions_list_failure_is_a_failed_run(tmp_path):
+    """
+    A failing join is a failed run, and the report says so.
+
+    The mechanism is OI-21's ruling: the error is recorded where it happens
+    and raised after the loop, so ``run_with_log`` sees both. Before this the
+    command printed ``ERROR: Not all sessions joined successfully.``, returned
+    normally, and was listed under ``Successful:``.
+    """
+    studyfolder = str(tmp_path)
+    sourcefolder = os.path.join(studyfolder, 'source')
+    targetfolder = os.path.join(studyfolder, 'target')
+    os.makedirs(sourcefolder)
+
+    create_test_session(os.path.join(sourcefolder, 's1'), 's1')
+    create_test_session(os.path.join(sourcefolder, 's2'), 's2')
+
+    list_file = os.path.join(studyfolder, 'joins.txt')
+    with open(list_file, 'w') as f:
+        f.write("joined1: s1, s2\n")   # succeeds
+        f.write("joined2: s3, s4\n")   # s3 and s4 do not exist
+
+    run = gl.RunContext(
+        "merge_sessions_list",
+        {},
+        gl.LogSettings(),
+        {"basefolder": studyfolder},
+        timestamp="2026-08-09_12.00.00.000000",
+    )
+    run.header()
+    outcome = gc.run_with_log(
+        merge_sessions_list,
+        args={
+            "studyfolder": studyfolder,
+            "session_list": list_file,
+            "source_folder": sourcefolder,
+            "target_folder": targetfolder,
+        },
+        run=run,
+        tags=["merge_sessions_list"],
+    )
+
+    assert outcome.failed == 1
+    assert isinstance(outcome.error, CommandFailed)
+    assert os.path.basename(outcome.comlog).startswith("error_")
+
+    with open(outcome.comlog) as f:
+        comlog = f.read()
+    assert "Not all sessions joined successfully." in comlog
+    # the sibling was still joined, and its report is in the same comlog
+    assert "Successfully joined 1/2 sessions: joined1" in comlog
 
 
 if __name__ == '__main__':

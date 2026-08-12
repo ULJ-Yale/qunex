@@ -241,8 +241,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         if options["hcp_transmit_mode"] is None:
@@ -260,7 +259,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"
@@ -375,7 +374,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                 else:
                     log.step("Setting the hcp_pt_fmri_names automatically")
                     # --- Get sorted bold numbers and bold data
-                    bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+                    bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
                     pt_fmri_names = []
                     for boldinfo in bolds:
                         if (
@@ -505,7 +504,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Individual Only",
@@ -517,15 +516,17 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Individual Only",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Individual Only can be run")
@@ -538,10 +539,10 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
+        log.error(f"{e}")
         log.unknown_error()
         failed = 1
 

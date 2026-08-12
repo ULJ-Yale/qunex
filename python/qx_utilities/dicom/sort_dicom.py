@@ -26,6 +26,7 @@ from collections import Counter
 
 import qx_utilities.dicom.sort_records as gds_records
 import qx_utilities.dicom.sort_validate as gds_validate
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_archive import count_import_members, iter_import_members
 from qx_utilities.dicom.dicom_info import _dicom_info_from_dataset, read_par_info
 from qx_utilities.dicom.dicom_utils import clean_name
@@ -153,8 +154,10 @@ def _unique_name(base, used):
     return name
 
 
-def _place_par_rec(par_members, dicom_dir, session_id, verbose):
+def _place_par_rec(par_members, dicom_dir, session_id, verbose, _log=None):
     """Sort buffered PAR/REC pairs into their sequence folders using read_par_info."""
+    log = gl.log_or_console(_log)
+
     for base, parts in par_members.items():
         if "PAR" not in parts:
             continue
@@ -177,7 +180,7 @@ def _place_par_rec(par_members, dicom_dir, session_id, verbose):
         if "REC" in parts:
             _write_bytes(os.path.join(seq_dir, stem + ".REC"), parts["REC"])
         elif verbose:
-            print("---> Warning: no REC file found for %s" % (base))
+            log.warning(f"no REC file found for {base}")
 
 
 def _scan_and_sort_session(
@@ -188,6 +191,7 @@ def _scan_and_sort_session(
     tr_rel_pct=5.0,
     min_images=4,
     verbose=True,
+    _log=None,
 ):
     """
     Single read pass over ``sources`` that sorts and analyses a session's files.
@@ -202,6 +206,8 @@ def _scan_and_sort_session(
 
     Returns a ``sort_records.PackageSummary`` describing the session.
     """
+    log = gl.log_or_console(_log)
+
     if isinstance(sources, (str, bytes, os.PathLike)):
         sources = [sources]
 
@@ -231,11 +237,14 @@ def _scan_and_sort_session(
         total_expected += n
 
     if verbose:
-        print("---> Inspecting and sorting package content for %s" % (session_id), flush=True)
+        log.step(f"Inspecting and sorting package content for {session_id}")
         for source in sources:
-            print("     ... source: %s" % (source), flush=True)
+            log.detail(f"source: {source}")
         if total_expected:
-            print("     ... %d member(s) to inspect" % (total_expected), flush=True)
+            log.detail(f"{total_expected} member(s) to inspect")
+            # the scan bar below redraws itself from column 0 and never emits a
+            # newline of its own, so it needs the line it draws on opened here
+            log.blank()
 
     seen = 0
     step = max(1, (total_expected or 0) // 50)
@@ -246,17 +255,15 @@ def _scan_and_sort_session(
             if verbose:
                 if total_expected:
                     if seen % step == 0:
-                        print(
-                            "\r     ... scanning %s"
-                            % (gds_records.format_progress(seen, total_expected)),
-                            end="",
-                            flush=True,
+                        # `raw`, not `detail`: the bar redraws itself in place
+                        # with a carriage return and no newline, which a record
+                        # -- a whole line, newline first -- cannot express
+                        log.raw(
+                            f"\r     ... scanning {gds_records.format_progress(seen, total_expected)}"
                         )
                 elif seen % _SCAN_PROGRESS_EVERY == 0:
-                    print(
-                        "     ... %d member(s) scanned, %d sequence(s) so far"
-                        % (seen, len(sequence_map)),
-                        flush=True,
+                    log.detail(
+                        f"{seen} member(s) scanned, {len(sequence_map)} sequence(s) so far"
                     )
             bn = os.path.basename(name)
             if bn[:4] in ("XX_0", "PS_0"):
@@ -286,7 +293,7 @@ def _scan_and_sort_session(
             sid = info["seriesNumber"]
             if sid is None:
                 if verbose:
-                    print("---> Skipping file with no series number: %s" % (name))
+                    log.step(f"Skipping file with no series number: {name}")
                 continue
 
             pkg.total_dicom += 1
@@ -321,23 +328,30 @@ def _scan_and_sort_session(
 
     if verbose:
         if total_expected:
-            # close the in-place bar on a full line. `seen` can exceed the count
+            # the last frame of the in-place bar. `seen` can exceed the count
             # when the package holds nested archives, so widen the total rather
-            # than render a bar past 100%
-            print(
-                "\r     ... scanning %s"
-                % (gds_records.format_progress(seen, max(total_expected, seen))),
-                flush=True,
+            # than render a bar past 100%. The record that follows opens with a
+            # newline of its own, which is what closes the line
+            log.raw(
+                f"\r     ... scanning {gds_records.format_progress(seen, max(total_expected, seen))}"
             )
-        print(
-            "---> Inspected %d file(s): %d DICOM in %d sequence(s), %d unreadable"
-            % (pkg.total_members, pkg.total_dicom, len(sequence_map), pkg.parse_errors),
-            flush=True,
+        log.step(
+            f"Inspected {pkg.total_members} file(s): {pkg.total_dicom} DICOM in {len(sequence_map)} sequence(s), {pkg.parse_errors} unreadable"
         )
 
-    _place_par_rec(par_members, dicom_dir, session_id, verbose)
+    _place_par_rec(par_members, dicom_dir, session_id, verbose, _log=log)
 
-    _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms, tr_rel_pct, min_images, verbose)
+    _finalise_sequences(
+        pkg,
+        sequence_map,
+        written_path,
+        orphans_dir,
+        tr_abs_ms,
+        tr_rel_pct,
+        min_images,
+        verbose,
+        _log=log,
+    )
     return pkg
 
 
@@ -358,8 +372,10 @@ def _update_package_metadata(pkg, d):
     )
 
 
-def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms, tr_rel_pct, min_images, verbose):
+def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms, tr_rel_pct, min_images, verbose, _log=None):
     """Analyse completeness, relocate orphaned files, and tally the verdict."""
+    log = gl.log_or_console(_log)
+
     pkg.sequences = sorted(
         sequence_map.values(),
         key=lambda s: (
@@ -387,7 +403,7 @@ def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms,
                 os.makedirs(orphans_dir, exist_ok=True)
                 os.rename(src, dst)
         if orphaned and verbose:
-            print("---> Sequence %s: moved %d orphaned file(s) to orphans/" % (seq.sequence_id, len(orphaned)))
+            log.step(f"Sequence {seq.sequence_id}: moved {len(orphaned)} orphaned file(s) to orphans/")
 
     eval_sequences = [s for s in mr_sequences if not s.non_evaluable]
     statuses = Counter(s.status for s in eval_sequences)
@@ -404,7 +420,7 @@ def _finalise_sequences(pkg, sequence_map, written_path, orphans_dir, tr_abs_ms,
     pkg.error_sequences = sum(1 for s in eval_sequences if s.status == "FAIL")
 
 
-def sort_dicom(folder=".", copy="move", outdir=None, files=None):
+def sort_dicom(folder=".", copy="move", outdir=None, files=None, _log=None):
     """
     ``sort_dicom [folder=.] [outdir=<folder>] [files=<comma-separated list>]``
 
@@ -444,13 +460,15 @@ def sort_dicom(folder=".", copy="move", outdir=None, files=None):
 
             qunex sort_dicom --folder=OP667
     """
-    print("Running sort_dicom\n=================")
+    log = gl.log_or_console(_log)
+
+    log.info("Running sort_dicom\n=================")
     dicom_dir = os.path.join(outdir or folder, "dicom")
     if files:
         sources = [e.strip() for e in files.split(",")]
     else:
         sources = [os.path.join(folder, "inbox")]
     session_id = os.path.basename(os.path.abspath(folder))
-    pkg = _scan_and_sort_session(sources, dicom_dir, session_id, verbose=True)
-    print("---> Done")
+    pkg = _scan_and_sort_session(sources, dicom_dir, session_id, verbose=True, _log=log)
+    log.step("Done")
     return pkg

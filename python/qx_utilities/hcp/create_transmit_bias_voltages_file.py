@@ -92,11 +92,11 @@ def create_transmit_bias_voltages_file(sessions, options, overwrite=True, thread
                     report = "voltages file not created"
                     failed = 1
             else:
-                log.step("voltages file would be created: %s", voltages_file)
+                log.step(f"voltages file would be created: {voltages_file}")
                 report = "voltages file can be created"
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "voltages file not created"
         failed = 1
     except Exception:

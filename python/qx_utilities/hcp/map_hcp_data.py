@@ -24,6 +24,7 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
+import qx_utilities.general.log as gl
 from qx_utilities.general.log import ReportLog
 from qx_utilities.hcp.hcp_utils import session_report_header
 
@@ -228,45 +229,34 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
 
     log = ReportLog()
     log.raw(session_report_header(sinfo))
-    log.raw("\nMapping HCP data ... \n")
-    log.raw("\n   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_nifti_tail and --hcp_cifti_tail specifiy which kind of the nifti and cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameters are not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * %s BOLD files will be copied\n    * '%s' nifti tail will be used\n    * '%s' cifti tail will be used."
-        % (
-            ", ".join(options["bolds"].split("|")),
-            options["hcp_nifti_tail"],
-            options["hcp_cifti_tail"],
-        ))
+    log.info("Mapping HCP data ... \n")
+    log.info(f"   The command will map the results of the HCP preprocessing from sessions's hcp\n   to sessions's images folder. It will map the T1 structural image, aparc+aseg \n   segmentation in both high resolution as well as one downsampled to the \n   resolution of BOLD images. It will map the 32k surface mapping data, BOLD \n   data in volume and cifti representation, and movement correction parameters. \n\n   Please note: when mapping the BOLD data, two parameters are key: \n\n   --bolds parameter defines which BOLD files are mapped based on their\n     specification in batch.txt file. Please see documentation for formatting. \n        If the parameter is not specified the default value is 'all' and all BOLD\n        files will be mapped. \n\n   --hcp_nifti_tail and --hcp_cifti_tail specifiy which kind of the nifti and cifti files will be copied over. \n     The tail is added after the boldname[N] start. If the parameters are not specified \n     explicitly the default is ''.\n\n   Based on settings:\n\n    * {', '.join(options['bolds'].split('|'))} BOLD files will be copied\n    * '{options['hcp_nifti_tail']}' nifti tail will be used\n    * '{options['hcp_cifti_tail']}' cifti tail will be used.")
     if any([options["hcp_suffix"], options["img_suffix"]]):
-        log.raw("\n   Based on --hcp_suffix and --img_suffix parameters, the files will be mapped from hcp/%s%s/MNINonLinear to 'images%s' folder!"
-            % (sinfo["id"], options["hcp_suffix"], options["img_suffix"]))
+        log.info(f"   Based on --hcp_suffix and --img_suffix parameters, the files will be mapped from hcp/{sinfo['id']}{options['hcp_suffix']}/MNINonLinear to 'images{options['img_suffix']}' folder!")
     if any([options["hcp_bold_variant"], options["bold_variant"]]):
-        log.raw("\n   Based on --hcp_bold_variant and --bold_variant parameters, the files will be mapped from MNINonLinear/Results%s to 'images%s/functional%s folder!"
-            % (
-                options["hcp_bold_variant"],
-                options["img_suffix"],
-                options["bold_variant"],
-            ))
+        log.info(f"   Based on --hcp_bold_variant and --bold_variant parameters, the files will be mapped from MNINonLinear/Results{options['hcp_bold_variant']} to 'images{options['img_suffix']}/functional{options['bold_variant']} folder!")
     log.raw("\n\n........................................................")
 
     # --- sanity checks
     if "sessionsfolder" not in options:
-        log.raw("\nERROR: sessionsfolder not specified in options, cannot map HCP data!")
+        log.error("sessionsfolder not specified in options, cannot map HCP data!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters!"
         failed = 1
-        return (log.text, (sinfo["id"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["id"])
 
     session_path = os.path.join(options["sessionsfolder"], sinfo["id"])
     if not os.path.exists(session_path):
-        log.raw(f"\nERROR: session {sinfo['id']} does not exists at {session_path}!")
+        log.error(f"session {sinfo['id']} does not exists at {session_path}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     # --- file/dir structure
     f = pc.get_file_names(sinfo, options)
     d = pc.get_session_folders(sinfo, options)
 
     if "hcp" not in d:
-        log.raw(f"\nERROR: something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!")
+        log.error(f"something went wrong, mapping was unable to get the HCP folder for session {sinfo['id']}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and data!"
         failed = 1
 
@@ -276,13 +266,13 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
         log.raw("\n\ndirectory structure:\n")
         log.raw(pprint.pformat(d))
 
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     if not os.path.exists(d["hcp"]):
-        log.raw(f"\nERROR: HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!")
+        log.error(f"HCP folder for session {sinfo['id']} does not exists at {d['hcp']}!")
         rstatus = f"Mapping {sinfo['id']} failed, check your input parameters and study folder structure!"
         failed = 1
-        return (log.text, (sinfo["session"], rstatus, failed))
+        return log.result(rstatus, failed, sinfo["session"])
 
     #    MNINonLinear/Results/<boldname>/<boldname>.nii.gz -- volume
     #    MNINonLinear/Results/<boldname>/<boldname>_Atlas.dtseries.nii -- cifti
@@ -296,40 +286,40 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
     failed = 0
 
     if "hcp" not in d or "s_images" not in d:
-        log.raw(f"\nERROR: found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"found issues with session {sinfo['id']}\n...................................\n{traceback.format_exc()}...................................\n")
         failed += 1
         rstatus = f"Mapping {sinfo['id']} failed, check your batch file and session processing!"
     else:
         log.raw("\n\nSource folder: " + d["hcp"])
-        log.raw("\nTarget folder: " + d["s_images"])
+        log.info("Target folder: " + d["s_images"])
 
         log.raw("\n\nStructural data: ...")
         status = True
 
         if os.path.exists(f["t1"]) and not overwrite:
-            log.raw("\n ... T1 ready")
+            log.detail("T1 ready")
             report["T1"] = "present"
         else:
-            status = log.link_or_copy(
+            status = gc.link_or_copy(
                 os.path.join(d["hcp"], "MNINonLinear", "T1w.nii.gz"),
                 f["t1"],
                 status,
-                "T1")
+                "T1", _log=log)
             report["T1"] = "copied"
 
         if os.path.exists(f["fs_aparc_t1"]) and not overwrite:
-            log.raw("\n ... highres aseg+aparc ready")
+            log.detail("highres aseg+aparc ready")
             report["hires aseg+aparc"] = "present"
         else:
-            status = log.link_or_copy(
+            status = gc.link_or_copy(
                 os.path.join(d["hcp"], "MNINonLinear", "aparc+aseg.nii.gz"),
                 f["fs_aparc_t1"],
                 status,
-                "highres aseg+aparc")
+                "highres aseg+aparc", _log=log)
             report["hires aseg+aparc"] = "copied"
 
         if os.path.exists(f["fs_aparc_bold"]) and not overwrite:
-            log.raw("\n ... lowres aseg+aparc ready")
+            log.detail("lowres aseg+aparc ready")
             report["lores aseg+aparc"] = "present"
         else:
             if os.path.exists(f["fs_aparc_bold"]):
@@ -345,7 +335,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     sinfo["id"],
                 )
 
-                _, endlog, _, failedcom = pc.run_external_for_file(
+                endlog, _, failedcom = pc.run_external_for_file(
                     f["fs_aparc_bold"],
                     f"flirt -interp nearestneighbour -ref {os.path.join(d['hcp'], 'MNINonLinear', 'T1w_restore.2.nii.gz')} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {options['hcp_bold_res']}",
                     " ... resampling t1 cortical segmentation (%s) to bold space (%s)"
@@ -358,6 +348,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     logfolder=options["comlogs"],
                     logtags=logtags,
                     shell=True,
+                    _log=log,
                 )
                 if failedcom:
                     report["lores aseg+aparc"] = "failed"
@@ -365,14 +356,14 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     report["lores aseg+aparc"] = "generated"
             else:
-                log.raw("\n ... ERROR: could not generate downsampled aseg+aparc, files missing!")
+                log.error("could not generate downsampled aseg+aparc, files missing!", depth=1)
                 report["lores aseg+aparc"] = "failed"
                 status = False
                 failed += 1
 
         report["surface"] = "ok"
         if os.path.exists(os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k")):
-            log.raw("\n ... processing surface files")
+            log.detail("processing surface files")
             sfiles = glob.glob(
                 os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k", "*.*")
             )
@@ -394,43 +385,34 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                         tf = open(tfile, "w")
                         print(s, file=tf)
                         tf.close()
-                        log.raw("\n     -> updated .spec file [%s]" % (sid))
+                        log.info(f"     -> updated .spec file [{sid}]")
                         ncp += 1
                         continue
                     if gc.link_or_copy(sfile, tfile):
                         ncp += 1
                     else:
-                        log.raw("\n     -> ERROR: could not map or copy %s" % (sfile))
+                        log.info(f"     -> ERROR: could not map or copy {sfile}")
                         report["surface"] = "error"
                         failed += 1
             if npre:
-                log.raw("\n     -> %d files already copied" % (npre))
+                log.info(f"     -> {npre} files already copied")
             if ncp:
-                log.raw("\n     -> copied %d surface files" % (ncp))
+                log.info(f"     -> copied {ncp} surface files")
         else:
-            log.raw("\n ... ERROR: missing folder: %s!" % (
-                os.path.join(d["hcp"], "MNINonLinear", "fsaverage_LR32k")
-            ))
+            log.error(f"missing folder: {os.path.join(d['hcp'], 'MNINonLinear', 'fsaverage_LR32k')}!", depth=1)
             status = False
             report["surface"] = "error"
             failed += 1
 
         # ------------------------------------------------------------------------------------------------------------
         #                                                                                          map functional data
-        log.raw("\n\nFunctional data: \n ... mapping %s BOLD files\n ... mapping '%s' hcp nifti tail to '%s' qx nifti tail\n ... mapping '%s' hcp cifti tail to '%s' qx cifti tail\n"
-            % (
-                ", ".join(options["bolds"].split("|")),
-                options["hcp_nifti_tail"],
-                options["qx_nifti_tail"],
-                options["hcp_cifti_tail"],
-                options["qx_cifti_tail"],
-            ))
+        log.raw(f"\n\nFunctional data: \n ... mapping {', '.join(options['bolds'].split('|'))} BOLD files\n ... mapping '{options['hcp_nifti_tail']}' hcp nifti tail to '{options['qx_nifti_tail']}' qx nifti tail\n ... mapping '{options['hcp_cifti_tail']}' hcp cifti tail to '{options['qx_cifti_tail']}' qx cifti tail\n")
 
         report["boldok"] = 0
         report["boldfail"] = 0
         report["boldskipped"] = 0
 
-        bolds, skipped, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, skipped, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # add additional BOLDS
         if options["additional_bolds"] is not None:
@@ -448,7 +430,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 boldnum += 1
 
         for boldinfo in bolds:
-            log.raw("\n ... " + boldinfo["name"])
+            log.detail(boldinfo["name"])
 
             # --- filenames
             if boldinfo["task"] != "additional_bold":
@@ -492,9 +474,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if not os.path.exists(hcp_bold_path):
-                    log.raw("\n     ... ERROR: source folder does not exist [%s]!" % (
-                        hcp_bold_path
-                    ))
+                    log.error(f"source folder does not exist [{hcp_bold_path}]!", depth=1)
                     status = False
 
                 else:
@@ -503,22 +483,21 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                     elif boldinfo["task"] == "additional_bold" and not os.path.exists(
                         hcp_bold_path
                     ):
-                        log.raw(f"\n     ... WARNING: additional bold source does not exist: {f['bold_vol']}")
+                        log.warning(f"additional bold source does not exist: {f['bold_vol']}", depth=1)
                     else:
-                        status = log.link_or_copy(
+                        status = gc.link_or_copy(
                             os.path.join(
                                 hcp_bold_path,
                                 hcp_bold_name + options["hcp_nifti_tail"] + ".nii.gz",
                             ),
                             f["bold_qx_vol"],
                             status,
-                            "volume image",
-                            "\n     ... ")
+                            "volume image", _log=log)
 
                     if os.path.exists(f["bold_qx_dts"]) and not overwrite:
                         log.detail("grayordinate image ready")
                     else:
-                        status = log.link_or_copy(
+                        status = gc.link_or_copy(
                             os.path.join(
                                 hcp_bold_path,
                                 hcp_bold_name
@@ -527,8 +506,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             ),
                             f["bold_qx_dts"],
                             status,
-                            "grayordinate image",
-                            "\n     ... ")
+                            "grayordinate image", _log=log)
 
                     if os.path.exists(f["bold_mov"]) and not overwrite:
                         log.detail("movement data ready")
@@ -545,7 +523,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 os.path.join(hcp_bold_path, movement_regressors_volume)
                             ):
                                 movement_regressors = movement_regressors_volume
-                                log.detail("WARNING: using movement regressors from jcp_fmri_volume, hcp_icafix movement regressors not found")
+                                log.warning("using movement regressors from jcp_fmri_volume, hcp_icafix movement regressors not found", depth=1)
                         if movement_regressors:
                             mdata = [
                                 line.strip().split()
@@ -554,7 +532,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                                 )
                             ]
                             mfile = open(f["bold_mov"], "w")
-                            gc.print_qunex_header(file=mfile)
+                            gl.print_qunex_header(file=mfile)
                             print("#", file=mfile)
                             print(
                                 "#frame     dx(mm)     dy(mm)     dz(mm)     X(deg)     Y(deg)     Z(deg)",
@@ -569,38 +547,22 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                             mfile.close()
                             log.detail("movement data prepared")
                         elif boldinfo["task"] == "additional_bold":
-                            log.raw("\n     ... WARNING: could not prepare movement data for the additional bold, source does not exist: [%s or %s]"
-                                % (
-                                    os.path.join(
-                                        hcp_bold_path, movement_regressors_icafix
-                                    ),
-                                    os.path.join(
-                                        hcp_bold_path, movement_regressors_volume
-                                    ),
-                                ))
+                            log.warning(f"could not prepare movement data for the additional bold, source does not exist: [{os.path.join(hcp_bold_path, movement_regressors_icafix)} or {os.path.join(hcp_bold_path, movement_regressors_volume)}]", depth=1)
                         else:
-                            log.raw("\n     ... ERROR: could not prepare movement data, source does not exist: [%s or %s]"
-                                % (
-                                    os.path.join(
-                                        hcp_bold_path, movement_regressors_icafix
-                                    ),
-                                    os.path.join(
-                                        hcp_bold_path, movement_regressors_volume
-                                    ),
-                                ))
+                            log.error(f"could not prepare movement data, source does not exist: [{os.path.join(hcp_bold_path, movement_regressors_icafix)} or {os.path.join(hcp_bold_path, movement_regressors_volume)}]", depth=1)
                             failed += 1
                             status = False
 
                 if status:
-                    log.raw("\n     ---> Data ready!\n")
+                    log.step("Data ready!\n", depth=1)
                     report["boldok"] += 1
                 else:
-                    log.raw("\n     ---> ERROR: Data missing, please check source!\n")
+                    log.error("Data missing, please check source!\n", depth=1)
                     report["boldfail"] += 1
                     failed += 1
 
             except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                log.capture(str(errormessage))
+                log.raw(str(errormessage))
                 report["boldfail"] += 1
                 failed += 1
             except Exception:
@@ -609,23 +571,18 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 failed += 1
 
         if len(skipped) > 0:
-            log.raw("\nThe following BOLD images were not mapped as they were not specified in\n'--bolds=\"%s\"':\n"
-                % (options["bolds"]))
+            log.info(f"The following BOLD images were not mapped as they were not specified in\n'--bolds=\"{options['bolds']}\"':\n")
             for boldinfo in skipped:
                 if "filename" in boldinfo and options["hcp_filename"] == "userdefined":
-                    log.raw("\n ... %s [task: '%s']" % (
-                        boldinfo["filename"],
-                        boldinfo["task"],
-                    ))
+                    log.detail(f"{boldinfo['filename']} [task: '{boldinfo['task']}']")
                 else:
-                    log.raw("\n ... %s [task: '%s']" % (boldinfo["name"], boldinfo["task"]))
+                    log.detail(f"{boldinfo['name']} [task: '{boldinfo['task']}']")
 
-        log.raw("\n\nHCP data mapping completed on %s\n------------------------------------------------------------\n"
-            % (datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")))
+        log.raw(f"\n\nHCP data mapping completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n------------------------------------------------------------\n")
         rstatus = (
             "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d"
             % (report)
         )
 
     # print r
-    return (log.text, (sinfo["id"], rstatus, failed))
+    return log.result(rstatus, failed, sinfo["id"])

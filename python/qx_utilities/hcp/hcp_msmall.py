@@ -316,7 +316,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
@@ -329,10 +329,13 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         parelements = max(1, min(options["parelements"], len(msmall_groups)))
 
         if parelements > 1:
-            log.raw("\n\n%s %d ICAFix groups in parallel" % (
-                pc.action("Processing", options["run"]),
-                parelements,
-            ))
+            log.blank()
+            log.action(
+                "Processing",
+                f"{parelements} ICAFix groups in parallel",
+                options["run"],
+                level="info",
+            )
 
         # --- Execute
         # create a multiprocessing Pool
@@ -398,7 +401,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP MSMAll failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP MSMAll failed", 1)
     except Exception:
         log.unknown_error()
@@ -434,10 +437,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s MSMAll %s" % (
-            pc.action("Processing", options["run"]),
-            outfmriname,
-        ))
+        log.action("Processing", f"MSMAll {outfmriname}", options["run"])
         boldsok = True
 
         # --- check for bold images and prepare targets parameter
@@ -467,10 +467,12 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            boldok = pc.check_for_file(boldimg,
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -504,7 +506,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 boldsok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -516,7 +518,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldsok = False
 
         comm = (
@@ -650,7 +652,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldsok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -662,6 +664,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], outfmriname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -671,8 +674,8 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP MSMAll " + outfmriname, overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP MSMAll " + outfmriname, overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP MSMAll can be run")
@@ -688,14 +691,11 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bolds %s\n" % (msmall_bolds))
+        log.raw(f"\n\n\n --- Failed during processing of bolds {msmall_bolds}\n")
         log.raw(str(errormessage))
         report["failed"].append(msmall_bolds)
     except Exception:
-        log.raw("\n --- Failed during processing of bolds %s with error:\n %s\n" % (
-            msmall_bolds,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bolds {msmall_bolds} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(msmall_bolds)
 
     return {"r": log.text, "report": report}
@@ -722,10 +722,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         outfmriname = options["hcp_msmall_outfmriname"]
 
         log.raw("\n\n------------------------------------------------------------")
-        log.raw("\n---> %s MSMAll %s" % (
-            pc.action("Processing", options["run"]),
-            outfmriname,
-        ))
+        log.action("Processing", f"MSMAll {outfmriname}", options["run"])
 
         # --- check for bold images and prepare targets parameter
         boldtargets = ""
@@ -756,10 +753,12 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 boldtarget,
                 "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... bold image %s present" % boldtarget,
-                "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+            boldok = pc.check_for_file(boldimg,
+                f"bold image {boldtarget} present",
+                f"bold image [{boldimg}] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
             if not boldok:
@@ -776,10 +775,12 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             # check if group file exists
             groupica = "%s_hp%s_clean.nii.gz" % (groupname, highpass)
             groupimg = os.path.join(hcp["hcp_nonlin"], "Results", groupname, groupica)
-            boldok = log.check_for_file(groupimg,
-                "\n     ... ICA %s present" % groupname,
-                "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+            boldok = pc.check_for_file(groupimg,
+                f"ICA {groupname} present",
+                f"ICA [{groupimg}] missing!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
         if options["hcp_msmall_templates"] is None:
@@ -801,7 +802,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 boldok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -813,7 +814,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldok = False
 
         # fix names to use
@@ -944,7 +945,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         # -- Run
         if run and boldok:
             if options["run"] == "run":
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP MSMAll",
@@ -956,6 +957,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -965,8 +967,8 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "HCP MSMAll " + groupname, overwrite=True
+                passed, _, failed = pc.check_run(
+                    None, None, "HCP MSMAll " + groupname, overwrite=True, _log=log
                 )
                 if passed is None:
                     log.step("HCP MSMAll can be run")
@@ -982,16 +984,11 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of group %s with error:\n" % (
-            groupname
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(groupname)
     except Exception:
-        log.raw("\n --- Failed during processing of group %s with error:\n %s\n" % (
-            groupname,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

@@ -31,7 +31,7 @@ from qx_utilities.dicom.deid_discover import discover_dicom
 DEFAULT_SALT = ''.join(random.choice(string.ascii_uppercase) for i in range(12))
 
 
-def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None):
+def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archive.csv", outputfolder=None, extension="", replacementdate=None, _log=None):
     """
     ``change_dicom_files [folder=.] [paramfile=deidparam.txt] [archivefile=archive.csv] [outputfolder=None] [extension=""] [replacementdate=]``
 
@@ -180,5 +180,8 @@ def change_dicom_files(folder=".", paramfile="deidparam.txt", archivefile="archi
     if outputfolder is not None and not os.path.exists(outputfolder):
             os.mkdir(outputfolder)
 
-    manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate)
-    discover_dicom(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile)
+    # the command has no report of its own -- it declares `_log` so that the
+    # walker's and the de-identification actions' reports do not fall back to a
+    # console stand-in, whose errors cannot fail the run
+    manipulate_file = functools.partial(deid_and_date_removal, param_file=paramfile, archive_file=archivefile, replacement_date=replacementdate, _log=_log)
+    discover_dicom(folder, manipulate_file, outputfolder, renamefiles, extension, save=True, archive_file=archivefile, _log=_log)

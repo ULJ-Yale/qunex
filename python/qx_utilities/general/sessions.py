@@ -12,6 +12,7 @@ import re
 import shutil
 from typing import List, Tuple, Dict, Set
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 
 def merge_session(
@@ -21,7 +22,7 @@ def merge_session(
     overwrite: str = "no",
     raw_data: str = "copy",
     original_sessions: str = "leave",
-    _indent: str = "",
+    _log=None,
 ) -> bool:
     r"""
     ``merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
@@ -33,6 +34,9 @@ def merge_session(
         sequence renumbering, BOLD/BOLDREF indexing, and grouping tags. This is
         useful when data for a subject is split across multiple scanning sessions
         and needs to be combined for processing and analysis.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --source (str):
@@ -196,9 +200,9 @@ def merge_session(
                 overwrite='clean',
                 original_sessions='move:archive/merged_sessions'
             )
-                overwrite='clean'
-            )
     """
+
+    log = gl.log_or_console(_log)
 
     # Validate parameters
     if overwrite not in ["no", "clean", "merge"]:
@@ -322,7 +326,7 @@ def merge_session(
                     "Cannot merge safely. Use overwrite='clean' to replace or choose different target",
                 )
             elif overwrite == "clean":
-                print(f"{_indent}WARNING: Removing existing content from {target_path}")
+                log.warning(f"Removing existing content from {target_path}")
                 shutil.rmtree(target_path)
                 target_exists = False
                 target_has_content = False
@@ -333,8 +337,8 @@ def merge_session(
         has_hcp = os.path.exists(os.path.join(session_path, "hcp"))
 
         if has_images or has_hcp:
-            print(
-                f"{_indent}WARNING: Source session '{source_session_specs[idx]}' contains derivatives "
+            log.warning(
+                f"Source session '{source_session_specs[idx]}' contains derivatives "
                 f"({'images/' if has_images else ''}{'hcp/' if has_hcp else ''}) "
                 f"which will NOT be merged. Derivatives remain in source folder."
             )
@@ -422,8 +426,8 @@ def merge_session(
 
     # If target is a single session being merged into, renumber it first
     if overwrite == "merge" and target_has_content and not target_is_joined:
-        print(
-            f"{_indent}Renumbering existing target session to use base increment {base_increment}"
+        log.step(
+            f"Renumbering existing target session to use base increment {base_increment}"
         )
         target_offset = base_increment  # Target becomes session 1 (prefix 1)
 
@@ -596,9 +600,7 @@ def merge_session(
                     # Nest under session subfolder
                     target_session_folder = os.path.join(target_folder, nest_folder)
                     if os.path.exists(target_session_folder):
-                        print(
-                            f"{_indent}WARNING: {target_session_folder} already exists, skipping"
-                        )
+                        log.warning(f"{target_session_folder} already exists, skipping")
                     else:
                         if raw_data == "move":
                             shutil.move(source_folder, target_session_folder)
@@ -622,9 +624,7 @@ def merge_session(
                         target_file = os.path.join(target_nii, new_name)
 
                         if os.path.exists(target_file):
-                            print(
-                                f"{_indent}WARNING: {target_file} already exists, skipping"
-                            )
+                            log.warning(f"{target_file} already exists, skipping")
                         else:
                             shutil.copy2(source_file, target_file)
 
@@ -641,7 +641,9 @@ def merge_session(
             combined_hcp_lines.extend(processed_hcp_lines)
 
             # Collect metadata from hcp file
-            _merge_metadata(combined_hcp_metadata, session_data["hcp_metadata"])
+            _merge_metadata(
+                combined_hcp_metadata, session_data["hcp_metadata"], _log=log
+            )
 
         # Process session.txt content if it exists
         if "txt_content" in session_data:
@@ -656,7 +658,9 @@ def merge_session(
             combined_txt_lines.extend(processed_txt_lines)
 
             # Collect metadata from txt file
-            _merge_metadata(combined_txt_metadata, session_data["txt_metadata"])
+            _merge_metadata(
+                combined_txt_metadata, session_data["txt_metadata"], _log=log
+            )
 
     # Write combined session files
     _write_session_files(
@@ -669,11 +673,11 @@ def merge_session(
         combined_txt_metadata,
         target_sequences if overwrite == "merge" else [],
         session_metadata,
-        _indent,
+        _log=log,
     )
 
-    print(
-        f"{_indent}Successfully joined {len(source_session_specs)} sessions into {target_path}"
+    log.step(
+        f"Successfully joined {len(source_session_specs)} sessions into {target_path}"
     )
 
     # Handle original sessions if merge was successful
@@ -681,66 +685,65 @@ def merge_session(
         # Remove original source sessions
         for session_path in source_paths:
             if os.path.exists(session_path):
-                print(f"{_indent}Removing original session: {session_path}")
+                log.step(f"Removing original session: {session_path}")
                 shutil.rmtree(session_path)
     elif original_sessions.startswith("move:"):
         # Move original source sessions to specified location
-        # Handle move destination based on overwrite parameter
-        if os.path.exists(move_destination):
-            if os.path.isfile(move_destination):
-                if overwrite != "no":
-                    print(
-                        f"{_indent}Removing existing file at move destination: {move_destination}"
-                    )
-                    os.remove(move_destination)
-                else:
-                    # overwrite='no' - warn and skip moving
-                    print(
-                        f"{_indent}WARNING: Move destination is a file, not a directory: {move_destination}"
-                    )
-                    print(
-                        f"{_indent}         Sessions not moved. Please, resolve manually."
-                    )
-                    return True
-        else:
-            # Destination doesn't exist - create it
-            print(f"{_indent}Creating move destination folder: {move_destination}")
-            os.makedirs(move_destination, exist_ok=True)
-
-        # Move sessions to destination
-        for session_path in source_paths:
-            if os.path.exists(session_path):
-                session_name = os.path.basename(session_path)
-                dest_path = os.path.join(move_destination, session_name)
-
-                # If destination session exists and overwrite is not 'no', remove it first
-                if os.path.exists(dest_path):
+        with log.section(f"Moving original sessions to {move_destination}"):
+            # Handle move destination based on overwrite parameter
+            if os.path.exists(move_destination):
+                if os.path.isfile(move_destination):
                     if overwrite != "no":
-                        print(f"{_indent}Removing existing session at {dest_path}")
-                        shutil.rmtree(dest_path)
-                    elif os.path.isdir(dest_path):
-                        target_content = os.listdir(dest_path)
-                        if target_content:
-                            print(
-                                f"{_indent}WARNING: Session already exists at move destination: {dest_path}"
+                        log.step("Removing the existing file at the move destination")
+                        os.remove(move_destination)
+                    else:
+                        # overwrite='no' - warn and skip moving
+                        log.warning(
+                            "Move destination is a file, not a directory: "
+                            f"{move_destination}"
+                        )
+                        log.detail("Sessions not moved. Please, resolve manually.")
+                        return True
+            else:
+                # Destination doesn't exist - create it
+                log.step("Creating the move destination folder")
+                os.makedirs(move_destination, exist_ok=True)
+
+            # Move sessions to destination
+            for session_path in source_paths:
+                if os.path.exists(session_path):
+                    session_name = os.path.basename(session_path)
+                    dest_path = os.path.join(move_destination, session_name)
+
+                    # If destination session exists and overwrite is not 'no', remove it first
+                    if os.path.exists(dest_path):
+                        if overwrite != "no":
+                            log.step(f"Removing existing session at {dest_path}")
+                            shutil.rmtree(dest_path)
+                        elif os.path.isdir(dest_path):
+                            target_content = os.listdir(dest_path)
+                            if target_content:
+                                log.warning(
+                                    "Session already exists at move destination: "
+                                    f"{dest_path}"
+                                )
+                                log.detail(
+                                    f"Session '{session_name}' not moved. "
+                                    "Please, resolve manually."
+                                )
+                                continue
+                        else:
+                            log.warning(
+                                f"A file exists at move destination: {dest_path}"
                             )
-                            print(
-                                f"{_indent}         Session '{session_name}' not moved. Please, resolve manually."
+                            log.detail(
+                                f"Session '{session_name}' not moved. "
+                                "Please, resolve manually."
                             )
                             continue
-                    else:
-                        print(
-                            f"{_indent}WARNING: A file exists at move destination: {dest_path}"
-                        )
-                        print(
-                            f"{_indent}         Session '{session_name}' not moved. Please, resolve manually."
-                        )
-                        continue
 
-                print(
-                    f"{_indent}Moving original session {session_name} to {move_destination}"
-                )
-                shutil.move(session_path, move_destination)
+                    log.step(f"Moving original session {session_name}")
+                    shutil.move(session_path, move_destination)
 
     return True
 
@@ -753,6 +756,7 @@ def merge_sessions_list(
     overwrite: str = "no",
     raw_data: str = "copy",
     original_sessions: str = "leave",
+    _log=None,
 ) -> bool:
     r"""
     ``merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
@@ -763,6 +767,9 @@ def merge_sessions_list(
         Processes a list file containing multiple session join specifications,
         calling merge_session for each line. This is useful for batch processing
         multiple session merges with a single command.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --studyfolder (str):
@@ -847,6 +854,8 @@ def merge_sessions_list(
             )
     """
 
+    log = gl.log_or_console(_log)
+
     # Validate parameters
     if not os.path.exists(session_list):
         raise ge.CommandFailed(
@@ -866,7 +875,7 @@ def merge_sessions_list(
     # Create target folder if it doesn't exist
     if not os.path.exists(target_folder):
         os.makedirs(target_folder, exist_ok=True)
-        print(f"Created target folder: {target_folder}")
+        log.step(f"Created target folder: {target_folder}")
 
     # Parse session list file
     join_specs = []
@@ -880,7 +889,7 @@ def merge_sessions_list(
 
             # Parse line: target_id: source_id1, source_id2, ...
             if ":" not in line:
-                print(f"WARNING: Skipping malformed line {line_num}: {line}")
+                log.warning(f"Skipping malformed line {line_num}: {line}")
                 continue
 
             target_id, sources_str = line.split(":", 1)
@@ -891,11 +900,11 @@ def merge_sessions_list(
             source_ids = [s for s in source_ids if s]  # Remove empty strings
 
             if not target_id:
-                print(f"WARNING: Skipping line {line_num} with empty target ID")
+                log.warning(f"Skipping line {line_num} with empty target ID")
                 continue
 
             if not source_ids:
-                print(f"WARNING: Skipping line {line_num} with no source IDs")
+                log.warning(f"Skipping line {line_num} with no source IDs")
                 continue
 
             join_specs.append(
@@ -903,17 +912,20 @@ def merge_sessions_list(
             )
 
     if not join_specs:
-        print("WARNING: No valid join specifications found in session list")
+        log.warning("No valid join specifications found in session list")
         return False
 
-    # Print header
-    print("merge_sessions_list")
-    print("==================")
-    print(
-        f"--> Running {len(join_specs)} join operations from source folder: {os.path.basename(source_folder)} to target folder: {os.path.basename(target_folder)}"
+    # Report header. `raw` because a title over its own rule is not a record
+    # shape; it carries no trailing newline, since every record that follows
+    # opens with one.
+    log.raw("\nmerge_sessions_list\n==================")
+    log.step(
+        f"Running {len(join_specs)} join operations from source folder: "
+        f"{os.path.basename(source_folder)} to target folder: "
+        f"{os.path.basename(target_folder)}"
     )
-    print(f"    Raw data: {raw_data}")
-    print(f"    Original sessions: {original_sessions}")
+    log.detail(f"Raw data: {raw_data}")
+    log.detail(f"Original sessions: {original_sessions}")
 
     # Process each join specification
     successful = 0
@@ -935,57 +947,70 @@ def merge_sessions_list(
 
         # Compute relative target path
         target_rel = os.path.relpath(target_path, studyfolder)
-        print(f"\n--> Joining to {target_rel}")
-        print(f"    Sources: {', '.join(source_ids)}")
-        print(f"    Target: {target_id}")
+        log.blank()
+        # the nesting is what `merge_session`'s `_indent` used to spell
+        with log.section(f"Joining to {target_rel}"):
+            log.detail(f"Sources: {', '.join(source_ids)}")
+            log.detail(f"Target: {target_id}")
 
-        try:
-            merge_session(
-                studyfolder=studyfolder,
-                source=source_str,
-                target=target_path,
-                overwrite=overwrite,
-                raw_data=raw_data,
-                original_sessions=original_sessions,
-                _indent="    -> ",
+            try:
+                merge_session(
+                    studyfolder=studyfolder,
+                    source=source_str,
+                    target=target_path,
+                    overwrite=overwrite,
+                    raw_data=raw_data,
+                    original_sessions=original_sessions,
+                    _log=log,
+                )
+                successful += 1
+                successful_ids.append(target_id)
+            except Exception as e:
+                failed += 1
+                failed_ids.append(target_id)
+                log.error(f"Failed joining {target_id}: {str(e)}")
+                # Continue processing remaining specifications
+
+    # Report summary
+    log.blank()
+    with log.section("Summary"):
+        if successful_ids:
+            log.detail(
+                f"Successfully joined {len(successful_ids)}/{len(join_specs)} "
+                f"sessions: {', '.join(successful_ids)}"
             )
-            successful += 1
-            successful_ids.append(target_id)
-        except Exception as e:
-            failed += 1
-            failed_ids.append(target_id)
-            print(f"    -> FAILED: {str(e)}")
-            # Continue processing remaining specifications
+        if failed_ids:
+            log.detail(
+                f"Failed joining {len(failed_ids)}/{len(join_specs)} "
+                f"sessions: {', '.join(failed_ids)}"
+            )
+        if not successful_ids and not failed_ids:
+            log.detail("No operations completed")
 
-    # Print summary
-    print("\n=== Summary ===")
-    if successful_ids:
-        print(
-            f"Successfully joined {len(successful_ids)}/{len(join_specs)} sessions: {', '.join(successful_ids)}"
+    # A failing join is recorded where it happens and raised here, after the
+    # loop, so one failing session does not abort its siblings. The success
+    # line the command used to print is `run_with_log`'s to write.
+    if failed:
+        log.error("Not all sessions joined successfully.")
+        raise ge.CommandFailed(
+            "merge_sessions_list",
+            "Not all sessions joined successfully",
+            f"{failed} of {len(join_specs)} join operations failed: "
+            f"{', '.join(failed_ids)}",
         )
-    if failed_ids:
-        print(
-            f"Failed joining {len(failed_ids)}/{len(join_specs)} sessions: {', '.join(failed_ids)}"
-        )
-    if not successful_ids and not failed_ids:
-        print("No operations completed")
 
-    # Final status message
-    if failed == 0:
-        print("\nSuccessful completion of task.")
-    else:
-        print("\nERROR: Not all sessions joined successfully.")
-
-    return failed == 0
+    return True
 
 
-def _merge_metadata(combined: Dict, new_metadata: Dict) -> None:
+def _merge_metadata(combined: Dict, new_metadata: Dict, _log=None) -> None:
     """Merge new metadata into combined metadata, detecting conflicts.
 
     Args:
         combined: dict with 'additional' as list of (key, value) tuples
         new_metadata: dict with 'additional' as list of (key, value) tuples
     """
+    log = gl.log_or_console(_log)
+
     # Track existing keys for conflict detection
     existing_keys = {}
     for key, value in combined.get("additional", []):
@@ -999,8 +1024,8 @@ def _merge_metadata(combined: Dict, new_metadata: Dict) -> None:
     for key, value in new_metadata.get("additional", []):
         if key in existing_keys:
             if value not in existing_keys[key]:
-                print(
-                    f"WARNING: Metadata conflict for '{key}': "
+                log.warning(
+                    f"Metadata conflict for '{key}': "
                     f"existing='{existing_keys[key]}', new='{value}'. "
                     f"Keeping both values."
                 )
@@ -1440,13 +1465,15 @@ def _write_session_files(
     txt_metadata: Dict,
     existing_target_sequences: List[Dict],
     session_metadata: List[Tuple[str, str]],
-    _indent: str = "",
+    _log=None,
 ) -> None:
     """Write combined session.txt and session_hcp.txt files with proper formatting.
 
     Args:
         session_metadata: List of tuples (session_N, source_id) to add as metadata
     """
+
+    log = gl.log_or_console(_log)
 
     # Add session_N metadata to both hcp and txt metadata
     for key, value in session_metadata:
@@ -1539,7 +1566,7 @@ def _write_session_files(
                 f.write("\n")
                 f.write("\n".join(all_hcp_sequences) + "\n")
 
-        print(f"{_indent}Created {session_hcp_path}")
+        log.step(f"Created {session_hcp_path}")
 
     # Write session.txt if we have txt sequences or metadata
     if txt_sequence_lines or txt_metadata.get("additional"):
@@ -1561,7 +1588,7 @@ def _write_session_files(
                 f.write("\n")
                 f.write("\n".join(txt_sequence_lines) + "\n")
 
-        print(f"{_indent}Created {session_txt_path}")
+        log.step(f"Created {session_txt_path}")
     elif not hcp_sequence_lines:
         # If we have no sequences at all, still create session.txt
         session_txt_path = os.path.join(target_path, "session.txt")
@@ -1570,4 +1597,4 @@ def _write_session_files(
             f.write("\n")
             f.write("\n".join(section2_txt) + "\n")
 
-        print(f"{_indent}Created {session_txt_path}")
+        log.step(f"Created {session_txt_path}")

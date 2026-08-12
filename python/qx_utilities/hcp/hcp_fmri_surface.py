@@ -221,8 +221,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> PostFS results
@@ -239,19 +238,17 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             run = False
 
         # --- Get sorted bold numbers
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         if len(bolds) == 0:
-            log.raw("\n---> ERROR: No BOLD images found for session %s! Check your data or the contents of the batch file."
-                % (sinfo["id"]))
+            log.error(f"No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
             run = False
 
         _build_skipped_report(report, bskip, options)
 
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.raw("\n%s %d BOLD images in parallel" % (
-            pc.action("Running", options["run"]),
-            parelements,
-        ))
+        log.action(
+            "Running", f"{parelements} BOLD images in parallel", options["run"], level="info"
+        )
 
         # create a multiprocessing Pool
         process_pool_executor = ProcessPoolExecutor(parelements)
@@ -282,7 +279,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP fMRI Surface failed", 1)
     except Exception:
         log.unknown_error()
@@ -309,10 +306,8 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
     }
 
     try:
-        log.raw("\n\n---> %s BOLD image %s" % (
-            pc.action("Processing", options["run"]),
-            printbold,
-        ))
+        log.blank()
+        log.action("Processing", f"BOLD image {printbold}", options["run"])
         boldok = True
 
         # --- check for bold image
@@ -320,10 +315,12 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
             )
-            boldok = log.check_for_file(boldimg,
-                "\n     ... fMRIVolume preprocessed bold image present",
-                f"\n     ... ERROR: fMRIVolume preprocessed bold image missing {boldimg}!",
+            boldok = pc.check_for_file(boldimg,
+                "fMRIVolume preprocessed bold image present",
+                f"fMRIVolume preprocessed bold image missing {boldimg}!",
                 status=boldok,
+                bad_level="error",
+                _log=log,
             )
 
         # --- Set up the command
@@ -344,7 +341,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 boldok = False
             # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
@@ -407,7 +404,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP fMRISurface",
@@ -419,6 +416,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
@@ -428,11 +426,12 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
 
             # -- just checking
             else:
-                passed, _, failed = log.check_run(
+                passed, _, failed = pc.check_run(
                     tfile,
                     full_test,
                     "HCP fMRISurface " + boldtarget,
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP fMRISurface can be run")
@@ -448,14 +447,11 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 log.error("something missing, this BOLD would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of bold %s with error:\n" % (printbold))
+        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
         log.raw(str(errormessage))
         report["failed"].append(printbold)
     except Exception:
-        log.raw("\n --- Failed during processing of bold %s with error:\n %s\n" % (
-            printbold,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
         report["failed"].append(printbold)
 
     return {"r": log.text, "report": report}

@@ -87,12 +87,9 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
-    log.raw("\nSession id: %s \n[started on %s]" % (
-        sinfo["id"],
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S"),
-    ))
-    log.raw("\n%s FSL feat [%s] ..." % (pc.action("Running", options["run"]), session))
+    log.raw("\n------------------------------------------------------------")
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.action("Running", f"FSL feat [{session}] ...", options["run"], level="info")
 
     # status variables
     run = True
@@ -113,20 +110,20 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             feat_path = os.path.join(
                 options["sessionsfolder"], session, options["feat_file"]
             )
-            log.raw("\n---> Checking for feat file at %s" % feat_path)
+            log.step(f"Checking for feat file at {feat_path}")
             if os.path.exists(feat_path):
-                log.raw("\n    ... Feat file found")
+                log.detail("Feat file found")
                 feat_file = feat_path
 
         # if feat_file is still none, try absolute path
         if feat_file is None and run:
-            log.raw(f"\n---> Checking for feat file at {options['feat_file']}")
+            log.step(f"Checking for feat file at {options['feat_file']}")
             if os.path.exists(options["feat_file"]):
-                log.raw("\n    ... Feat file found")
+                log.detail("Feat file found")
                 feat_file = options["feat_file"]
 
         if feat_file is None and run:
-            log.raw(f"\n---> ERROR: Could not find the feat file [{options['feat_file']}].")
+            log.error(f"Could not find the feat file [{options['feat_file']}].")
             report = (sinfo["id"], "Not ready for FSL feat", 1)
             run = False
 
@@ -144,7 +141,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL feat",
@@ -156,43 +153,38 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
                 if failed:
-                    log.raw("\n---> FSL feat processing for session %s failed" % session)
+                    log.step(f"FSL feat processing for session {session} failed")
                     report = (sinfo["id"], "FSL feat failed", 1)
                 else:
-                    log.raw("\n---> FSL feat processing for session %s completed" % session)
+                    log.step(f"FSL feat processing for session {session} completed")
                     report = (sinfo["id"], "FSL feat completed", 0)
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "FSL feat " + session, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    None, None, "FSL feat " + session, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
                     log.step("FSL feat can be run")
                     report = (sinfo["id"], "FSL feat ready", 0)
                 else:
-                    log.raw("\n---> FSL feat processing for session %s would be skipped"
-                        % session)
+                    log.step(f"FSL feat processing for session {session} would be skipped")
                     report = (sinfo["id"], "FSL feat would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed during processing of session %s with error:\n" % (
-            session
-        ))
+        log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "FSL feat failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed during processing of session %s with error:\n %s\n" % (
-            session,
-            traceback.format_exc(),
-        ))
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "FSL feat failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
@@ -250,11 +242,9 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     # list of sessions
     sessions_array = sessions.split(",")
 
-    log.capture("\n------------------------------------------------------------")
-    log.raw("\nMelodic: \n[started on %s]" % (
-        datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
-    ))
-    log.raw("\n%s FSL melodic ..." % (pc.action("Running", options["run"])))
+    log.raw("\n------------------------------------------------------------")
+    log.info(f"Melodic: \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.action("Running", "FSL melodic ...", options["run"], level="info")
 
     # status variables
     run = True
@@ -277,10 +267,10 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         if len(sessions_array) > 0:
             log.step("Multiple sessions provided. Will iterate over sessions.")
             for session in sessions_array:
-                log.raw(f"\n---> Working on session {session}")
+                log.step(f"Working on session {session}")
 
                 for path in input_paths:
-                    log.raw(f"\n    ... checking {path}")
+                    log.detail(f"checking {path}")
                     path_candidates = []
                     # check for input file in images functional
                     input_path = os.path.join(
@@ -311,13 +301,13 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     file_found = False
                     for pathc in path_candidates:
                         if os.path.exists(pathc):
-                            log.raw("\n        ... found at %s" % pathc)
+                            log.detail(f"found at {pathc}")
                             input_files.append(pathc)
                             file_found = True
                             break
 
                     if not file_found:
-                        log.raw(f"\n        ... ERROR: Could not find {path} for session {session}.")
+                        log.error(f"Could not find {path} for session {session}.", depth=1)
                         report = (session, "Not ready for FSL melodic", 1)
                         run = False
                         break
@@ -326,9 +316,9 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
         else:
             log.step("No sessions provided. Will use absolute paths.")
             for path in input_paths:
-                log.raw(f"\n---> Working on path {path}")
+                log.step(f"Working on path {path}")
                 if not os.path.exists(path):
-                    log.raw(f"\n    ... ERROR: Could not find {path}.")
+                    log.error(f"Could not find {path}.", depth=1)
                     input_files.append(path)
                     report = ("Study", "Not ready for FSL melodic", 1)
                     run = False
@@ -367,7 +357,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # execute
-                _, _, failed = log.run_external(
+                _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running FSL melodic",
@@ -379,6 +369,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
                 if failed:
                     log.step("FSL melodic processing failed")
@@ -389,8 +380,8 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
 
             # just checking
             else:
-                passed, _, failed = log.check_run(
-                    None, None, "FSL melodic " + sessions, overwrite=overwrite
+                passed, _, failed = pc.check_run(
+                    None, None, "FSL melodic " + sessions, overwrite=overwrite, _log=log
                 )
 
                 if passed is None:
@@ -401,12 +392,12 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
                     report = ("Study", "FSL melodic would be skipped", 1)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture("\n\n\n --- Failed with error:\n")
+        log.raw("\n\n\n --- Failed with error:\n")
         log.raw(str(errormessage))
         report = ("Study", "FSL melodic failed", 1)
 
     except Exception:
-        log.raw("\n --- Failed with error:\n %s\n" % (traceback.format_exc()))
+        log.info(f" --- Failed with error:\n {traceback.format_exc()}\n")
         report = ("Study", "FSL melodic failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
