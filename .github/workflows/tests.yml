@@ -54,9 +54,11 @@ jobs:
 
       # everything the suite imports; pandas (qa/core.py) and pymatreader (the
       # matlab tests) are deliberately left out because nothing that runs here
-      # touches them
+      # touches them. matplotlib is in because the movement and fidl figures
+      # are tested, and without it those tests skip themselves and the figures
+      # become the one part of the tree with no coverage here
       - name: install dependencies
-        run: python -m pip install --upgrade pytest nibabel numpy pydicom pyyaml
+        run: python -m pip install --upgrade pytest nibabel numpy pydicom pyyaml matplotlib
 
       # pytest.ini at the repository root sets testpaths and pythonpath.
       # test_fc_functions.py drives the matlab/octave qx_mri functions against
