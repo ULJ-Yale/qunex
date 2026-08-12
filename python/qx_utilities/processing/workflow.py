@@ -31,6 +31,7 @@ from the command line using `qunex` command. Help is available through:
 
 import os
 import shutil
+import textwrap
 import time
 import traceback
 from concurrent.futures import ProcessPoolExecutor
@@ -58,18 +59,41 @@ else:
     mcommand = os.environ["QUNEXMCOMMAND"]
 
 
-# ------------------------------------------------- create_stats_report's preamble
+# -------------------------------------------------------- the command preambles
+#
+# What each command does, shown once at the head of every session report, and
+# the parameters it quotes back. Dedented blocks rather than lines carrying
+# their own `\n    `: this is prose, it is read as prose, and it should be
+# reviewable as prose. The parameter lists are lists rather than format strings
+# with one interpolation each, so they cannot drift from `options`.
 
-# what the command does, shown once at the head of every session report. A
-# dedented block rather than a line carrying its own `\n    `: this is prose,
-# it is read as prose, and it should be reviewable as prose
+BRAIN_MASKS_PURPOSE = """\
+A mask identifying the actual coverage of the brain is created for each of the
+specified BOLD files, from its first frame. Only the images named by --bolds
+are processed; the default is all of them."""
+
+BOLD_STATS_PURPOSE = """\
+Per frame statistics are computed for each of the specified BOLD files, from
+its movement correction parameter file and an analysis of the image. The
+results are saved as *.bstat and *.bscrub files in the images/movement
+subfolder. Only the images named by --bolds are processed. Note that the NIfTI
+volume image is used even when the target format is CIFTI."""
+
+BOLD_STATS_PARAMETERS = [
+    "mov_radius",
+    "mov_fd",
+    "mov_dvars",
+    "mov_dvarsme",
+    "mov_after",
+    "mov_before",
+    "mov_bad",
+]
+
 STATS_REPORT_PURPOSE = """\
 Movement correction parameters and computed BOLD statistics are used to create
 per session plots, fidl snippets and group reports. Only the images named by
 --bolds are processed; see the documentation for the other parameters."""
 
-# quoted back at the head of the report, in the order it has always had them.
-# A list rather than a format string, so it cannot drift from `options`
 STATS_REPORT_PARAMETERS = [
     "mov_dvars",
     "mov_dvarsme",
@@ -79,6 +103,22 @@ STATS_REPORT_PARAMETERS = [
     "mov_post",
     "mov_pref",
 ]
+
+# the only one of the four that names the files it writes, so it is a template.
+# Wrapped here for review and re-wrapped after substitution -- `nifti_tail` and
+# `img_suffix` are empty as often as not, and a paragraph laid out around their
+# widest form comes out ragged when they are short
+NUISANCE_PURPOSE = """\
+Nuisance signal is extracted from each of the specified BOLD files. The results
+are saved as {boldname}[N]{nifti_tail}.nuisance files in the
+images{img_suffix}/movement subfolder. Only the images named by --bolds are
+processed. Note that the NIfTI volume image is used even when the target format
+is CIFTI."""
+
+NUISANCE_PARAMETERS = ["wbmask", "sessionroi", "nroi", "shrinknsroi"]
+
+# what the preambles are wrapped to
+PURPOSE_WIDTH = 79
 
 
 # --------------------------------------------------------------- the dry run
@@ -382,11 +422,9 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
 
     log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.info("Creating masks for bold runs ... \n")
-    log.raw(f"\n\n   Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
-    log.info(f"   Masks will be saved in 'images{options['img_suffix']}/boldmasks.{options['bold_variant']}.")
-    log.info("   The command will create a mask identifying actual coverage of the brain for\n   each of the specified BOLD files based on its first frame.\n\n   Please note: when mapping the BOLD data, the following parameter is key: \n\n   --bolds parameter defines which BOLD files are processed based on their\n     specification in batch.txt file. Please see documentation for formatting. \n     If the parameter is not specified the default value is 'all' and all BOLD\n     files will be processed.")
-    log.raw("\n\n........................................................")
+    log.action("Creating", "masks for bold runs ...", options["run"], level="info")
+    log.blank()
+    log.info(BRAIN_MASKS_PURPOSE)
 
     pc.do_options_check(options, sinfo, "create_bold_brain_masks")
     d = pc.get_session_folders(sinfo, options)
@@ -396,10 +434,11 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     else:
         ostatus = "will not"
 
-    log.raw("\n\nWorking on BOLD images in: " + d["s_images"])
-    log.info("Resulting masks will be in: " + d["s_boldmasks"])
-    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
-    log.info(f"If already present, existing masks {ostatus} be overwritten (see --overwrite).\n")
+    log.step(f"Working on BOLD images in {d['s_images']}")
+    log.detail(f"images{options['img_suffix']}/functional{options['bold_variant']} will be processed")
+    log.detail(f"the resulting masks will be in {d['s_boldmasks']}")
+    log.detail(f"{', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds)")
+    log.detail(f"existing masks {ostatus} be overwritten (see --overwrite)")
 
     bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
@@ -453,7 +492,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
     log = ReportLog()
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    log.raw("\n\nWorking on: " + boldinfo["name"])
+    log.step("Working on " + boldinfo["name"])
 
     try:
         # --- filenames
@@ -996,12 +1035,9 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
 
     log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw("\n\nComputing BOLD image statistics ...")
-    log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
-    log.raw("\n\n    The command will compute per frame statistics for each of the specified BOLD\n    files based on its movement correction parameter file and BOLD image analysis.\n    The results will be saved as *.bstat and *.bscrub files in the images/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    target format, nifti volume image will be used to compute statistics.")
-    log.raw(f"\n\n    Using parameters:\n\n    --mov_radius: {options['mov_radius']}\n    --mov_fd: {options['mov_fd']}\n    --mov_dvars: {options['mov_dvars']}\n    --mov_dvarsme: {options['mov_dvarsme']}\n    --mov_after: {options['mov_after']}\n    --mov_before: {options['mov_before']}\n    --mov_bad: {options['mov_bad']}")
-    log.raw("\n\n    for computing scrubbing information.")
-    log.raw("\n\n........................................................")
+    log.action("Computing", "BOLD image statistics ...", options["run"], level="info")
+    log.blank()
+    log.info(BOLD_STATS_PURPOSE)
 
     pc.do_options_check(options, sinfo, "compute_bold_stats")
     d = pc.get_session_folders(sinfo, options)
@@ -1011,10 +1047,15 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     else:
         ostatus = "will not"
 
-    log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
-    log.info("Resulting files will be in: " + d["s_bold_mov"])
-    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
-    log.info(f"If already present, existing statistics {ostatus} be overwritten (see --overwrite).")
+    log.step("Using parameters for computing scrubbing information")
+    for name in BOLD_STATS_PARAMETERS:
+        log.detail(f"--{name}: {options[name]}")
+
+    log.step(f"Working on BOLD images in {d['s_bold']}")
+    log.detail(f"images{options['img_suffix']}/functional{options['bold_variant']} will be processed")
+    log.detail(f"the resulting files will be in {d['s_bold_mov']}")
+    log.detail(f"{', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds)")
+    log.detail(f"existing statistics {ostatus} be overwritten (see --overwrite)")
 
     bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
@@ -1069,7 +1110,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
     log = ReportLog()
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    log.raw("\n\nWorking on: " + boldinfo["name"] + " ...")
+    log.step("Working on " + boldinfo["name"] + " ...")
 
     try:
         # --- filenames
@@ -1124,7 +1165,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
             % (mcommand, f["bold_vol"], d["s_bold_mov"], scrub)
         )
         if options["print_command"] == "yes":
-            log.raw("\n\nRunning\n" + comm + "\n")
+            log.pipeline_command(comm, title="Running:")
         runit = True
         if os.path.exists(f["bold_stats"]) and not overwrite:
             report["bolddone"] += 1
@@ -1819,12 +1860,16 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
 
     log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw("\n\nExtracting BOLD nuisance signal ...")
-    log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
-    log.raw(f"\n\n    The command will extract nuisance signal from each of the specified BOLD files.\n    The results will be saved as {options['boldname']}[N]{options['nifti_tail']}.nuisance files in the images{options['img_suffix']}/movement\n    subfolder. Only images specified using --bolds parameter will be\n    processed (see documentation). Do also note that even if cifti is specifed as\n    the target format, nifti volume image will be used to extract nuisance signal.")
-    log.raw(f"\n\n    Using parameters:\n\n    --wbmask: {options['wbmask']}\n    --sessionroi: {options['sessionroi']}\n    --nroi: {options['nroi']}\n    --shrinknsroi: {options['shrinknsroi']}")
-    log.raw("\n\n    when extracting nuisance signal.")
-    log.raw("\n\n........................................................")
+    log.action("Extracting", "BOLD nuisance signal ...", options["run"], level="info")
+    log.blank()
+    log.info(textwrap.fill(
+        NUISANCE_PURPOSE.format(
+            boldname=options["boldname"],
+            nifti_tail=options["nifti_tail"],
+            img_suffix=options["img_suffix"],
+        ),
+        PURPOSE_WIDTH,
+    ))
 
     pc.do_options_check(options, sinfo, "extract_nuisance_signal")
     d = pc.get_session_folders(sinfo, options)
@@ -1834,10 +1879,15 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     else:
         ostatus = "will not"
 
-    log.raw("\n\nWorking on BOLD images in: " + d["s_bold"])
-    log.info("Resulting files will be in: " + d["s_bold_mov"])
-    log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
-    log.info(f"If already present, existing nuisance files {ostatus} be overwritten (see --overwrite).")
+    log.step("Using parameters when extracting nuisance signal")
+    for name in NUISANCE_PARAMETERS:
+        log.detail(f"--{name}: {options[name]}")
+
+    log.step(f"Working on BOLD images in {d['s_bold']}")
+    log.detail(f"images{options['img_suffix']}/functional{options['bold_variant']} will be processed")
+    log.detail(f"the resulting files will be in {d['s_bold_mov']}")
+    log.detail(f"{', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds)")
+    log.detail(f"existing nuisance files {ostatus} be overwritten (see --overwrite)")
 
     bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
@@ -1891,7 +1941,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
     log = ReportLog()
     report = {"bolddone": 0, "boldok": 0, "boldfail": 0, "boldmissing": 0}
 
-    log.raw("\n\nWorking on: " + boldinfo["name"] + " ...")
+    log.step("Working on " + boldinfo["name"] + " ...")
 
     try:
         # --- filenames
@@ -1966,7 +2016,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
         )  # --- verbosity
 
         if options["print_command"] == "yes":
-            log.raw("\n\nRunning\n" + comm + "\n")
+            log.pipeline_command(comm, title="Running:")
 
         runit = True
         if os.path.exists(f["bold_nuisance"]):
