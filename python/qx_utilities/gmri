@@ -148,7 +148,7 @@ def runCommand(command, args):
 
     # -- process extra arguments
     sessions = None
-    if "sessions" in eargs:
+    if "sessions" in eargs or "batchfile" in eargs:
         if command != "run_recipe" and not any(
             [qx_command.has_arg(e) for e in ["sourcefolder", "folder"]]
         ):
@@ -160,12 +160,12 @@ def runCommand(command, args):
         if folders["sessionsfolder"] is None:
             folders["sessionsfolder"] = "."
 
-        sessions_param = eargs["sessions"]
-        sessions, _ = gc.get_sessions_list(
-            sessions_param,
+        sessions, _ = gc.resolve_sessions(
+            batchfile=eargs.get("batchfile"),
+            sessions=eargs.get("sessions"),
             filter=eargs.get("filter"),
-            sessionids=eargs.get("sessionids"),
             sessionsfolder=folders["sessionsfolder"],
+            command=command,
             verbose=False,
         )
 
@@ -208,11 +208,11 @@ def runCommand(command, args):
                     slist = [
                         all_sessions.pop(0) for e in range(parsessions) if all_sessions
                     ]
-                    recipe_args["sessionids"] = ",".join(slist)
+                    recipe_args["sessions"] = ",".join(slist)
 
                     # pass all sessions if in slurm array
                     if "SLURM_ARRAY_TASK_ID" in os.environ:
-                        recipe_args["sessionids"] = (",").join(untouched_all_sessions)
+                        recipe_args["sessions"] = (",").join(untouched_all_sessions)
 
                     # copy recipe args to eargs
                     run_recipe_kwargs = [
@@ -281,33 +281,6 @@ def runCommand(command, args):
     else:
         parsessions = int(eargs.get("parsessions", "1"))
 
-        # if we have sessions and sessionids filter and remove one
-        if "sessions" in args and "sessionids" in args:
-            args_filter = None
-            if "filter" in args:
-                args_filter = args["filter"]
-
-            sessions_dict, _ = gc.get_sessions_list(
-                args["sessions"],
-                filter=args_filter,
-                sessionids=args["sessionids"],
-                verbose=False,
-            )
-
-            sessions_list = []
-            for session in sessions_dict:
-                if "id" in session:
-                    sessions_list.append(session["id"])
-                elif "session" in session:
-                    sessions_list.append(session["session"])
-
-            # store the batchfile
-            if ".txt" in args["sessions"]:
-                args["batchfile"] = args["sessions"]
-            args["sessions"] = ",".join(sessions_list)
-
-            del args["sessionids"]
-
         # -- are we using a scheduler
         if "scheduler" in eargs:
             gs.run_through_scheduler(
@@ -332,8 +305,8 @@ def runCommand(command, args):
                     folders["logfolder"] = "./logs"
 
             suffix = ""
-            if "sessionids" in args:
-                suffix = "_" + args["sessionids"]
+            if "batchfile" in args and "sessions" in args:
+                suffix = "_" + args["sessions"]
 
             logfile = os.path.join(
                 folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
@@ -348,7 +321,9 @@ def runCommand(command, args):
             # run with log
             else:
                 _, result, _, _ = gc.run_with_log(
-                    qx_commands.get(command).load_callable(), args=args, logfile=logfile
+                    qx_commands.get(command).load_callable(),
+                    args=bargs,
+                    logfile=logfile,
                 )
 
         # -- sessions loop

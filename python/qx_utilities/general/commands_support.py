@@ -11,6 +11,9 @@
 Helper code for perarations of commands and their parameters
 """
 
+import os
+
+from qx_utilities.general import exceptions as ge
 from qx_utilities.general import extensions
 
 # ==============================================================================
@@ -262,7 +265,7 @@ deprecated_parameters = {
     "subjectsfolder": "sessionsfolder",
     "subjid": {
         "sessionid": ["dicom2niix", "batch_tag2namekey"],
-        "sessionids": "export_hcp",
+        "sessions": ["export_hcp"],
         "default": "sessionid",
     },
     "sbjroi": "sessionroi",
@@ -336,6 +339,116 @@ towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 
 
 # ==============================================================================
+#                                                     SESSION PARAMETER ENCODING
+#
+# QuNex used to encode "which batch file, which sessions" as `sessions=<path to
+# the batch file>` plus `sessionids=<ids>`. The canonical encoding is
+# `batchfile=<path>` plus `sessions=<ids>`, and the legacy one is mapped onto it
+# here - once, for every entry point.
+#
+# The legacy spelling is a warning rather than an error because run_turnkey.sh
+# hard-codes it in ~30 internal calls. Setting the constant below to True turns
+# it into an error; that is the whole of the change, and it is due when
+# run_turnkey is dropped.
+SESSIONS_AS_BATCHFILE_IS_ERROR = False
+
+
+def is_batchfile_path(sessions):
+    """
+    ``is_batchfile_path(sessions)``
+
+    Checks whether a `sessions` value is a path to a batch file - the legacy
+    spelling of `batchfile` - rather than a specification of sessions.
+
+    A session specification is a comma, pipe or space separated list of session
+    ids or globs, or a single `*.list` file. A path to a batch file is what is
+    left: a single item, not a `*.list` file, that has either a directory
+    component or a file extension.
+    """
+
+    if not isinstance(sessions, str) or not sessions.strip():
+        return False
+
+    sessions = sessions.strip()
+
+    if len(sessions.split()) > 1 or "," in sessions or "|" in sessions:
+        return False
+
+    extension = os.path.splitext(sessions)[1].lower()
+    if extension == ".list":
+        return False
+
+    return os.sep in sessions or extension != ""
+
+
+def normalize_session_parameters(options, command):
+    """
+    ``normalize_session_parameters(options, command)``
+
+    Maps the legacy `sessions=<batch file>` / `sessionids=<ids>` encoding onto
+    the canonical `batchfile=<batch file>` / `sessions=<ids>` one, warning about
+    each of the two legacy spellings, and returns the updated options.
+
+    An empty value is treated as no value at all - the bash entry points pass
+    every parameter they know of, set or not.
+    """
+
+    sessions = options.get("sessions")
+    sessions = sessions.strip() if isinstance(sessions, str) else sessions
+
+    # -- a batch file passed through sessions
+    if is_batchfile_path(sessions):
+        batchfile = sessions
+        sessions = None
+
+        if options.get("batchfile"):
+            raise ge.CommandError(
+                command,
+                "Duplicate batch file",
+                "The batch file was passed both through the sessions and through the batchfile parameter!",
+                "Please pass it through batchfile only!",
+            )
+
+        if SESSIONS_AS_BATCHFILE_IS_ERROR:
+            raise ge.CommandError(
+                command,
+                "Deprecated parameter use",
+                "The sessions parameter no longer takes a path to a batch file [%s]!"
+                % (batchfile),
+                "Please use the batchfile parameter instead!",
+            )
+
+        print(
+            "\nWARNING: Passing the batch file through the sessions parameter is deprecated!"
+        )
+        print("         Please use --batchfile='%s' instead." % (batchfile))
+
+        options["batchfile"] = batchfile
+        del options["sessions"]
+
+    # -- sessionids is a deprecated alias of sessions
+    if "sessionids" in options:
+        sessionids = options.pop("sessionids")
+        sessionids = sessionids.strip() if isinstance(sessionids, str) else sessionids
+
+        if sessionids:
+            if sessions and sessions != sessionids:
+                raise ge.CommandError(
+                    command,
+                    "Duplicate session specification",
+                    "Sessions were specified both through the sessions and through the sessionids parameter!",
+                    "Please specify them through sessions only!",
+                )
+
+            print(
+                "\nWARNING: The sessionids parameter is deprecated, please use sessions instead!"
+            )
+            options["sessions"] = sessionids
+
+    return options
+
+
+# ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
 def check_deprecated_parameters(options, command):
@@ -378,32 +491,8 @@ def check_deprecated_parameters(options, command):
         else:
             new_options[k] = v
 
-    # custom remapping for sessions, sessionids and batchfile
-    sessions = None
-    if "sessions" in new_options:
-        sessions = new_options["sessions"]
-    if "batchfile" in new_options:
-        # if sessions and batchfile both provide a file
-        if sessions is not None and ".txt" in sessions:
-            print(
-                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters or you are passing it both at the command level and at the global level of the recipe file!"
-            )
-            exit(1)
-        elif sessions is not None:
-            # did we provide a list of sessions in sessionsids as well
-            if "sessionids" in new_options:
-                print(
-                    "ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!"
-                )
-                exit(1)
-            # remap so session are sessionids and batchfile is sessions
-            else:
-                new_options["sessionids"] = new_options["sessions"]
-                new_options["sessions"] = new_options["batchfile"]
-                del new_options["batchfile"]
-        else:
-            new_options["sessions"] = new_options["batchfile"]
-            del new_options["batchfile"]
+    # -> map the legacy batch file / sessions encoding onto the canonical one
+    new_options = normalize_session_parameters(new_options, command)
 
     if deprecated:
         print("\nWARNING: Use of deprecated parameters!")

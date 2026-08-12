@@ -707,8 +707,9 @@ def run_through_scheduler(
 
         if test == "run":
             for i in range(parjobs):
-                # ---- set sessionids
-                c_str = c_base + ' --sessionids="%s"' % sessionids_array[i]
+                # ---- set the sessions this job runs; the later value wins over
+                #      the one c_base carries
+                c_str = c_base + ' --sessions="%s"' % sessionids_array[i]
 
                 # ---- set sheduler settings
                 if parjobs > 1:

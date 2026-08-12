@@ -288,7 +288,7 @@ run_turnkey() {
     # -- Specify command variable
     unset QuNexCallToRun
     unset qxutil_command_to_run
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\" --sessionids=\"${CASE}\""
+    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\""
     bash_call_execute
 }
 
@@ -1379,7 +1379,18 @@ if [[ ${setflag} =~ .*-.* ]]; then
 
     # -- Filter sessions if we are inside a SLURM array
     if [[ -n ${SLURM_ARRAY_TASK_ID} ]]; then
-        SESSION_LABELS=`gmri get_sessions_for_slurm_array --sessions="${CASES}" --sessionids="${SESSIONIDS}"`
+        # -- The batch file may still be sitting in CASES, having arrived through
+        #    the deprecated --sessions=<batch file> spelling. Sort that out here:
+        #    gmri warns about the legacy spelling on stdout, and this call
+        #    captures stdout.
+        if [[ -z ${BATCH_FILE} ]] && [[ ${CASES} == *.txt ]]; then
+            BATCH_FILE="${CASES}"
+        fi
+        if [[ -n ${BATCH_FILE} ]]; then
+            SESSION_LABELS=`gmri get_sessions_for_slurm_array --batchfile="${BATCH_FILE}" --sessions="${SESSIONIDS}"`
+        else
+            SESSION_LABELS=`gmri get_sessions_for_slurm_array --sessions="${CASES}"`
+        fi
         echo "---> SLURM array ${SLURM_ARRAY_TASK_ID}, running over sessions: ${SESSION_LABELS}"
         echo ""
         SESSIONS="${SESSION_LABELS}"

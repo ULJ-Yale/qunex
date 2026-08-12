@@ -35,7 +35,7 @@ class QA:
     QA class, stores functions and variables related to Quality Assurance, primarily used
     in the run_qa function.
     """
-    def __init__(self, sessions=None, sessionsfolder='.', configfile=None):
+    def __init__(self, sessions=None, sessionsfolder='.', configfile=None, batchfile=None):
         """
         init function for QA. Sets up internal attributes.
 
@@ -84,7 +84,7 @@ class QA:
         self.report += "\n=========================================="
 
         #List of dictionaries, basically QA slist. Stores sessions that haven't failed QA.
-        self.slist = self.build_slist(sessions)
+        self.slist = self.build_slist(sessions, batchfile)
         #dicts in fail QA must have ID and reason/datatype they failed
         self.failQA = []
 
@@ -92,10 +92,10 @@ class QA:
 
         return
 
-    def build_slist(self, sessions):
+    def build_slist(self, sessions, batchfile=None):
         """
         Creates an slist for use in QA. If sessions=None, will run on all subfolders in the sessionsfolder.
-        If sessions is specified, uses 'get_sessions_list' function from 'general/core.py'. If sessions are
+        If sessions or a batchfile is specified, uses 'resolve_sessions' from 'general/core.py'. If sessions are
         specified but not defined as subfolders of sessionsfolder, they will fail QA.
         """
         #directories that may be found in a sessionsfolder but are not sessions
@@ -103,7 +103,7 @@ class QA:
         non_sessions = ['specs','QC','inbox','archive']
         session_dirs = glob.glob(f"{self.sessionsfolder}/*/")
         #All sessions (None specified)
-        if sessions is None:
+        if sessions is None and batchfile is None:
             print(f"No sessions specified, running on all sessions found in {self.sessionsfolder}")
             slist = []
             #Filter out non-sessions and create an slist
@@ -115,7 +115,9 @@ class QA:
 
         #Specific sessions
         else:
-            slist,gpref =gc.get_sessions_list(sessions)
+            slist, gpref = gc.resolve_sessions(
+                batchfile=batchfile, sessions=sessions, command="run_qa"
+            )
             #Iterating over a copy to allow removal from original list
             #Get only folders that are a specified session
             for s in slist.copy():

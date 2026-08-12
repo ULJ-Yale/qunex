@@ -26,7 +26,6 @@ import sys
 import time
 import traceback
 import types
-import warnings
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 
@@ -110,6 +109,16 @@ def resolve_sessions(
             else:
                 records, header = bio.read_batch(batchfile, verbose=verbose)
 
+        # a `*.list` file is a session specification, so it can also arrive
+        # through sessions: it is the source of the sessions when there is no
+        # batch file, and selects within one when there is
+        if sessions and re.match(r"^\s*\S+\.list\s*$", sessions):
+            list_records = bio.read_list(sessions.strip(), verbose=verbose)
+            if records:
+                sessions = ",".join([e["id"] for e in list_records if "id" in e])
+            else:
+                records, sessions = list_records, None
+
         slist = bio.select_sessions(
             records, sessions=sessions, filter=filter, sessionsfolder=sessionsfolder
         )
@@ -134,59 +143,6 @@ def resolve_sessions(
         slist = slist[slurm_array_ix::slurm_array_size]
 
     return slist, header
-
-
-def get_sessions_list(
-    list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False
-):
-    """
-    ``get_sessions_list(list_string, filter=None, sessionids=None, sessionsfolder=None, verbose=False)``
-
-    Deprecated, use `resolve_sessions` instead. It takes the legacy encoding, in
-    which list_string is either a path to a batch or `*.list` file or a list of
-    session ids, and sessionids selects within a batch file, and maps it onto
-    `resolve_sessions`.
-
-    Note that a batch file that is absent or can not be read is now an error -
-    it no longer falls back to processing sessionids.
-    """
-
-    # no stacklevel: attributing the warning to the caller would make python's
-    # default filter show it, and gmri is still one of the callers - it is for
-    # whoever migrates the remaining ones, not for the user
-    warnings.warn(
-        "get_sessions_list() is deprecated, use resolve_sessions() instead",
-        DeprecationWarning,
-    )
-
-    list_string = list_string.strip() if list_string else ""
-
-    # a path to a batch or a list file?
-    if (
-        os.path.isfile(list_string)
-        or re.match(r".*\.(txt|list)$", list_string)
-        or "/" in list_string
-    ):
-        return resolve_sessions(
-            batchfile=list_string,
-            sessions=sessionids,
-            filter=filter,
-            sessionsfolder=sessionsfolder,
-            verbose=verbose,
-        )
-
-    # a list of session ids, which sessionids then selects within
-    sessions, header = resolve_sessions(
-        sessions=list_string,
-        filter=filter,
-        sessionsfolder=sessionsfolder,
-        verbose=verbose,
-    )
-
-    if sessionids and sessionids.strip():
-        sessions = sessions.filter_by_key("id", sessionids)
-
-    return sessions, header
 
 
 # ==============================================================================

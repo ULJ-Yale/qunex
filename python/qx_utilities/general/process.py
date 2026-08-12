@@ -1195,17 +1195,15 @@ def run(qx_command, args):
             options[line[0]] = line[1]
 
     # read options from batch.txt
-    if "sessions" in args:
-        options["sessions"] = args["sessions"]
-    if "sessionids" in args:
-        options["sessionids"] = args["sessionids"]
-    if "filter" in args:
-        options["filter"] = args["filter"]
+    for key in ["batchfile", "sessions", "filter"]:
+        if key in args:
+            options[key] = args[key]
 
-    sessions, gpref = gc.get_sessions_list(
-        options["sessions"],
+    sessions, gpref = gc.resolve_sessions(
+        batchfile=options["batchfile"],
+        sessions=options["sessions"],
         filter=options["filter"],
-        sessionids=options["sessionids"],
+        command=qx_command.name,
         verbose=False,
     )
 
@@ -1326,7 +1324,7 @@ def run(qx_command, args):
 
     # check if there are no sessions
     if not sessions or processing_type == "subject" and not subjects:
-        sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessionids parameter!\n"
+        sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessions parameter!\n"
         print(sout)
         writelog(sout)
         exit()

@@ -1662,8 +1662,8 @@ main() {
                             output="name"
                         fi
                         # For debugging
-                        echo "   gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'"
-                        BOLDS=`gmri batch_tag2namekey filename="${SessionBatchFile}" subjid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'`
+                        echo "   gmri batch_tag2namekey filename="${SessionBatchFile}" sessionid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'"
+                        BOLDS=`gmri batch_tag2namekey filename="${SessionBatchFile}" sessionid="${CASE}" bolds="${BOLDSBATCH}" prefix="" output="${output}" | grep "BOLDS:" | sed 's/BOLDS://g'`
                         BOLDLIST="${BOLDS}"
                     else
                         echo " ERROR: Requested BOLD modality with a batch file but the batch file not found. Check your inputs!"; echo ""

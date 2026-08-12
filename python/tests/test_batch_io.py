@@ -316,6 +316,33 @@ def test_resolve_sessions_reads_a_list_file(tmp_path):
     assert header == {}
 
 
+def test_a_list_file_can_arrive_through_sessions(tmp_path):
+    # a *.list file is a session specification, so --sessions is where it belongs;
+    # with no batch file it is the source of the sessions and of their files
+    path = tmp_path / "sessions.list"
+    path.write_text(
+        "session id: S01\nfile: /data/S01/a.nii.gz\nsession id: S02\nfile: /data/S02/a.nii.gz\n"
+    )
+
+    sessions, header = gc.resolve_sessions(sessions=str(path))
+
+    assert sessions.get_list_by_key("id") == "S01,S02"
+    assert sessions[0]["file"] == ["/data/S01/a.nii.gz"]
+    assert header == {}
+
+
+def test_a_list_file_through_sessions_selects_within_a_batch_file(tmp_path):
+    batch = tmp_path / "batch.txt"
+    batch.write_text(BATCH)
+    path = tmp_path / "sessions.list"
+    path.write_text("session id: S02\nfile: /data/S02/a.nii.gz\n")
+
+    sessions, header = gc.resolve_sessions(batchfile=str(batch), sessions=str(path))
+
+    assert sessions.get_list_by_key("id") == "S02"
+    assert header != {}
+
+
 def test_a_missing_batch_file_is_always_an_error(tmp_path):
     missing = str(tmp_path / "there-is-no-batch.txt")
 
@@ -331,25 +358,6 @@ def test_a_bad_filter_is_reported_as_a_command_failure(tmp_path):
         gc.resolve_sessions(batchfile=write_batch(tmp_path), filter="group")
 
 
-def test_get_sessions_list_still_takes_the_legacy_encoding(tmp_path):
-    batchfile = write_batch(tmp_path)
-
-    # a batch file, with sessionids selecting within it
-    sessions, header = gc.get_sessions_list(batchfile, sessionids="S01,S03")
-    assert sessions.get_list_by_key("id") == "S01,S03"
-    assert header["unzip"] == "yes"
-
-    # a list of ids, with sessionids selecting within it
-    sessions, header = gc.get_sessions_list("S01,S02,S03", sessionids="S02")
-    assert sessions.get_list_by_key("id") == "S02"
-    assert header == {}
-
-    # a filter
-    sessions, _ = gc.get_sessions_list(batchfile, filter="group:control")
-    assert sessions.get_list_by_key("id") == "S01"
-
-
-def test_get_sessions_list_no_longer_falls_back_to_the_ids(tmp_path):
-    """The silent fallback for an unreadable batch file is gone."""
-    with pytest.raises(CommandFailed):
-        gc.get_sessions_list(str(tmp_path / "no-batch.txt"), sessionids="S01,S02")
+def test_get_sessions_list_is_gone():
+    """Every caller takes a batch file and a session specification separately."""
+    assert not hasattr(gc, "get_sessions_list")

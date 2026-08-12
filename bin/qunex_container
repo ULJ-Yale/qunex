@@ -1284,14 +1284,8 @@ def main(args=None):
             if i < len(sessionids_array):
                 if not old_sessions_naming:
                     qx_command += f'--sessions="{sessionids_array[i]}" '
-                    # run_turnkey requires both
-                    if "run_turnkey" in qx_command:
-                        qx_command += f'--sessionids="{sessionids_array[i]}" '
                 else:
                     qx_command += f'--sessionids="{sessionids_array[i]}" '
-                    # run_turnkey requires both
-                    if "run_turnkey" in qx_command:
-                        qx_command += f'--sessions="{sessionids_array[i]}" '
 
             # logs folder
             if not fallback_logfolder:
