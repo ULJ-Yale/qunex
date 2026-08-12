@@ -351,6 +351,208 @@ def test_a_batch_file_header_fills_in_what_a_command_was_not_told(
     assert reported_as(banner, "unzip").startswith("command line")
 
 
+def unset_run(gmri, tmp_path, monkeypatch, args, header=None, session=None):
+    """
+    Runs `import_dicom` over a batch file whose header and session entry are
+    given, and returns what the command was called with. `import_dicom`
+    declares `unzip` and `gzip`, which is what makes it readable here.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n%s---\nid: S01\nsubject: S01\n%s01: T1w\n"
+        % (study / "sessions", header or "", session or "")
+    )
+
+    called = {}
+
+    def record(function, args, run=None, tags=None):
+        called.update(args)
+        return gmri.gc.CallOutcome("import_dicom", 0, None, None)
+
+    monkeypatch.setattr(gmri.gc, "run_with_log", record)
+
+    # the sessions folder on the command line, not from the header alone:
+    # `all` unsets the header's `_sessionsfolder` too, which is right -- it
+    # means all -- and would otherwise leave the run with no study to log in
+    gmri.runCommand(
+        "import_dicom",
+        {
+            "batchfile": str(batch),
+            "sessionsfolder": str(study / "sessions"),
+            **args,
+        },
+    )
+    return called
+
+
+@pytest.mark.parametrize(
+    "spelling",
+    ["unzip", "unzip,gzip", "un*", "*", "all"],
+    ids=["a name", "a comma separated list", "a glob", "*", "all"],
+)
+def test_the_run_can_say_what_not_to_take_from_the_batch_file_header(
+    gmri, tmp_path, monkeypatch, spelling
+):
+    """
+    The header reaches every command class now, so a name it states can land
+    somewhere its author did not have in mind -- `targetfile` is declared by
+    four commands that write four different files. This is how a run says
+    "not from there".
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": spelling},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    # fill, never override: only what a tier states is passed on, so a value
+    # that was not taken is a parameter the command is not given at all and
+    # keeps its own default for
+    assert "unzip" not in called, "the header value was not taken"
+
+    if spelling in ("*", "all", "unzip,gzip"):
+        assert "gzip" not in called, "and neither was any other it names"
+    else:
+        assert called["gzip"] == "folder", "and nothing it does not name is touched"
+
+
+def test_an_unset_header_parameter_does_not_beat_the_command_line(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    An unset removes a tier, never the user's own word: what was typed still
+    applies, and still wins.
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "unzip", "unzip": "yes"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    assert called["unzip"] == "yes"
+
+
+def test_what_the_unset_took_out_is_named_in_the_banner(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    A pattern is not a list: `un*` removes whatever this study's header
+    happens to state today, so the run says what it actually removed rather
+    than leaving a reader to work it out from the release it ran on. The
+    parameter table above it reports what applied; this reports what did not.
+    """
+    unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "*zip"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    banner = capsys.readouterr().out
+    assert "not taken from the batch file header: gzip, unzip" in banner
+    assert not reported_as(banner, "gzip"), "and the table above reports what applied"
+
+
+def test_a_header_name_nobody_stated_is_a_no_op(gmri, tmp_path, monkeypatch, capsys):
+    """A typo unsets nothing, and the report is what makes that visible."""
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "unzpi"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    assert called["unzip"] == "no"
+    assert "not taken from the batch file header" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("spelling", ["log", "comlog_folders", "comlog_*"])
+def test_a_deprecated_header_spelling_can_be_unset_from_either_side(
+    gmri, tmp_path, monkeypatch, spelling
+):
+    """
+    The names a header *states* and the names it *contributes* are not the
+    same set: `_log: study` arrives as `log` **and** `comlog_folders`, the
+    second under a name nobody wrote. Both spellings have to work, which is
+    why the filter runs on both sides of the remap.
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": spelling},
+        header="_log: study\n_unzip: no\n",
+    )
+
+    assert "comlog_folders" not in called
+    assert called["unzip"] == "no", "and only what was named went"
+
+
+def test_the_run_can_say_what_not_to_take_from_a_session_s_own_entry(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    The other batch tier. Applied by `gp.run` alone, so a processing command
+    is the only kind that ever sees it -- `import_dicom` is a utility, so this
+    asserts on `update_options` itself, which is where it is applied.
+
+    **Unsetting a tier is not deleting a parameter.** This tier is the highest
+    of them, so what unsetting it means is that the tier below is left to
+    stand, not that the command is left without a value.
+    """
+    session = {"id": "S01", "_hcp_brainsize": "130", "_hcp_t2": "NONE"}
+    options = {
+        "hcp_brainsize": "170",  # what the tiers below this one settled on
+        "unset_batch_session_parameters": "hcp_brainsize",
+    }
+
+    soptions, ssources = gmri.gcs.update_options(
+        session, options, {"hcp_brainsize": "batch file"}
+    )
+
+    assert soptions["hcp_brainsize"] == "170", "the tier below stands, unoverridden"
+    assert ssources["hcp_brainsize"] == "batch file", "and still reports as its own"
+    assert soptions["hcp_t2"] == "NONE", "and nothing it does not name is touched"
+    assert ssources["hcp_t2"] == gmri.gcs.PER_SESSION
+
+    everything, _ = gmri.gcs.update_options(
+        session, {**options, "unset_batch_session_parameters": "all"}, {}
+    )
+    assert everything["hcp_brainsize"] == "170", "`all` leaves every one of them"
+    assert "hcp_t2" not in everything, "one the tiers below never stated"
+
+
+def test_neither_unset_reaches_the_command_it_steers(gmri):
+    """
+    They steer the run, like `batchfile` and `filter`, so they are run level:
+    registered, which is what stops `gmri` rejecting them as unknown, and
+    dropped before the callable, which is what stops them being a TypeError.
+    """
+    assert gmri.gcs.UNSET_BATCH_HEADER in gmri.gcs.extra_parameters
+    assert gmri.gcs.UNSET_BATCH_SESSION in gmri.gcs.extra_parameters
+
+    cargs = {
+        "unset_batch_header_parameters": "all",
+        "unset_batch_session_parameters": "hcp_*",
+        "unzip": "yes",
+    }
+    gmri.gc._drop_run_parameters(
+        gmri.qx_commands.get("import_dicom").load_callable(), cargs
+    )
+
+    assert cargs == {"unzip": "yes"}
+
+
 def test_a_run_started_at_gmri_gets_the_threads_the_shell_front_end_would_set(
     gmri, tmp_path, monkeypatch
 ):

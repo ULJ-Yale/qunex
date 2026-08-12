@@ -135,7 +135,7 @@ def runCommand(command, args):
         "processing"
     )
 
-    sessions, batch_header = None, None
+    sessions, batch_header, unset_from_header = None, None, []
     if processing or "sessions" in args or "batchfile" in args:
         if folders["sessionsfolder"] is None:
             folders["sessionsfolder"] = "."
@@ -148,6 +148,23 @@ def runCommand(command, args):
             command=command,
             verbose=False,
         )
+
+        # what the run said not to take from the header, taken out here rather
+        # than at the merge: the header is read again below to deduce the
+        # folders, and a parameter that is not to be taken is not to be taken
+        # for that either.
+        #
+        # Twice, around the remap of the deprecated spellings, because the
+        # names a header *states* and the names it *contributes* are not the
+        # same set -- a header saying `log:` contributes `log` and
+        # `comlog_folders`, one of them under a name nobody wrote. Filtering on
+        # both sides is what makes either spelling work. `merge_options` remaps
+        # again and finds nothing left to do, the remap being idempotent.
+        unset = gcs.unset_patterns(args.get(gcs.UNSET_BATCH_HEADER))
+        batch_header, as_written = gcs.without_unset(batch_header, unset)
+        batch_header = gcs.check_deprecated_parameters(batch_header, command)
+        batch_header, as_remapped = gcs.without_unset(batch_header, unset)
+        unset_from_header = sorted(set(as_written) | set(as_remapped))
 
     # -- sort arguments
     bargs = {}
@@ -259,6 +276,13 @@ def runCommand(command, args):
         banner = gcs.report_parameters(
             qx_command, options if processing else {**options, **stated}, sources
         )
+
+        # what an unset took out never enters the options, so the table above
+        # reports what applied and this reports what did not. Named rather than
+        # counted, because a pattern is not a list: `hcp_*` removes what this
+        # study's header happens to state today
+        banner += gcs.report_unset(unset_from_header, options)
+
         print(banner)
         run.write(banner)
 

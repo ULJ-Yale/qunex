@@ -11,6 +11,7 @@
 Helper code for perarations of commands and their parameters
 """
 
+import fnmatch
 import os
 import re
 
@@ -638,6 +639,70 @@ RECIPE_PARAMETERS = "QX_RECIPE_PARAMETERS"
 # written against the command itself is a mistake, and is named.
 RUN_WIDE_SOURCES = ("batch file", PER_SESSION, RECIPE_RUN)
 
+# ==============================================================================
+#                                            NOT TAKING WHAT THE BATCH FILE SAYS
+#
+# A batch file states parameters for every command of a study, and since the
+# header reaches every command class, a name it states can land somewhere its
+# author did not have in mind -- `targetfile` is declared by four commands that
+# write four different files. These say "not from there", one per batch tier,
+# and they are run level parameters, so they can be written on the command line
+# and at every level of a recipe.
+UNSET_BATCH_HEADER = "unset_batch_header_parameters"
+UNSET_BATCH_SESSION = "unset_batch_session_parameters"
+
+
+def unset_patterns(stated):
+    """
+    ``unset_patterns(stated)``
+
+    The patterns an unset states: a name, a comma separated list of them, or an
+    array -- the forms a recipe's `unset_parameters` already takes, so there is
+    one convention rather than two. An empty list states nothing, which is how
+    a step opts back in under a run wide `all`.
+    """
+    if stated is None:
+        return []
+    if isinstance(stated, str):
+        stated = stated.split(",")
+    return [str(pattern).strip() for pattern in stated if str(pattern).strip()]
+
+
+def is_unset(name, patterns):
+    """
+    ``is_unset(name, patterns)``
+
+    Whether any of `patterns` unsets `name`. A pattern is a parameter name, a
+    glob over parameter names (`hcp_*`), `*`, or `all` -- the last being the
+    spelling QuNex uses for "every one of them" elsewhere, and free here since
+    no command declares a parameter of that name.
+
+    `fnmatchcase` rather than `fnmatch`, as in `batch_io`: the answer must not
+    depend on the operating system. `_` is not a metacharacter, so `hcp_*`
+    matches what it looks like it matches.
+    """
+    return any(
+        pattern in ("all", "*") or name == pattern or fnmatch.fnmatchcase(name, pattern)
+        for pattern in patterns
+    )
+
+
+def without_unset(options, patterns):
+    """
+    ``without_unset(options, patterns)``
+
+    The options left once the patterns have taken out what they name, and the
+    names they took. The names are returned because a pattern is not a list: a
+    run has to be able to say what `hcp_*` removed on the day it ran, rather
+    than leaving a reader to work it out from the release it ran on.
+    """
+    if not options or not patterns:
+        return options, []
+
+    unset = sorted(key for key in options if is_unset(key, patterns))
+
+    return {key: value for key, value in options.items() if key not in unset}, unset
+
 
 def declared_parameters(qx_command):
     """
@@ -661,9 +726,16 @@ def update_options(session, options, sources=None):
     this session alone - the keys it prefixes with `_` or `--` - applied over
     them, and a copy of the sources recording those keys as having come from
     the batch file's entry for the session.
+
+    What `unset_batch_session_parameters` names is not applied. The run states
+    it and it travels in the options, so this is the only place that has to
+    know about it - and it is the only place this tier is applied, `gp.run`
+    being its one caller, so a processing command is the only kind that ever
+    sees this tier at all.
     """
     soptions = dict(options)
     ssources = dict(sources or {})
+    patterns = unset_patterns(options.get(UNSET_BATCH_SESSION))
 
     for key, value in session.items():
         if key.startswith("_"):
@@ -671,6 +743,9 @@ def update_options(session, options, sources=None):
         elif key.startswith("--"):
             key = key[2:]
         else:
+            continue
+
+        if is_unset(key, patterns):
             continue
 
         soptions[key] = value
@@ -789,6 +864,47 @@ def report_parameters(qx_command, options, sources, session=None):
     return table(rows)
 
 
+def report_unset(unset_from_header, options):
+    """
+    ``report_unset(unset_from_header, options)``
+
+    What the run was told not to take from the batch file, rendered under the
+    parameter table. An unset value never reaches the options, so the table
+    says what applied and this says what did not.
+
+    The header's removals are **named**, not counted: a pattern is not a list,
+    and `hcp_*` removes whatever this study's header happens to state on the
+    day the run happens. The per session tier can only be reported as the
+    patterns themselves -- what they remove differs from one session to the
+    next, and each session's own table shows the result.
+
+    Parameters:
+        --unset_from_header     The header keys an unset took out, from
+                                `without_unset`.
+        --options               The merged options, read for the per session
+                                patterns.
+
+    Returns:
+        The rendered lines, or an empty string when the run unset nothing.
+    """
+    text = ""
+
+    if unset_from_header:
+        text += "\n%snot taken from the batch file header: %s\n" % (
+            INDENT,
+            ", ".join(unset_from_header),
+        )
+
+    per_session = unset_patterns(options.get(UNSET_BATCH_SESSION))
+    if per_session:
+        text += "\n%snot taken from any session's own entry: %s\n" % (
+            INDENT,
+            ", ".join(per_session),
+        )
+
+    return text
+
+
 # ==============================================================================
 #                                                               EXTRA PARAMETERS
 #
@@ -819,6 +935,8 @@ extra_parameters = [
     "ignore",
     "bash",
     "existing_study",
+    UNSET_BATCH_HEADER,
+    UNSET_BATCH_SESSION,
 ]
 
 

@@ -186,6 +186,14 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             `None` are values commands accept, so `img_suffix : ""` states the
             empty string rather than removing the parameter.
 
+            `unset_parameters` is about what the recipe hands a step. What a
+            *batch file* hands a command is a separate question, answered by
+            `unset_batch_header_parameters` and
+            `unset_batch_session_parameters`, which may also be written against
+            a command, for a recipe or in global_parameters -- and, unlike this
+            one, are allowed at the global level, the batch file not being
+            something the recipe supplies.
+
         A batch file the recipe itself creates:
             A recipe usually states the study's `batchfile` globally and then
             builds that file with `create_batch` partway through. The steps
@@ -768,6 +776,13 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 passthrough = set(gcs.extra_parameters)
                 if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder"]):
                     passthrough = {"logfolder"}
+
+                    # except that a command taking a batch file is handed its
+                    # header whether or not it runs over sessions, so what the
+                    # recipe said not to take from it has to travel with it.
+                    # All nine utilities that take one are narrowed here
+                    if qx_command.has_arg("batchfile"):
+                        passthrough |= {gcs.UNSET_BATCH_HEADER, gcs.UNSET_BATCH_SESSION}
 
                 command_parameters = {
                     key: value

@@ -709,6 +709,44 @@ def test_a_contradictory_unset_is_a_recipe_error(
         )
 
 
+@pytest.mark.parametrize(
+    "where",
+    ["step", "recipe", "global"],
+    ids=["against the step", "for the recipe", "for the whole run"],
+)
+def test_an_unset_of_the_batch_tiers_reaches_the_step_that_needs_it(
+    tmp_path, study, fake_gmri, where
+):
+    """
+    The batch unsets steer `gmri`, so a recipe passes them on rather than
+    applying them. All nine utilities that take a batch file are narrowed by
+    the passthrough rule -- none declares `sourcefolder` or `folder` -- so
+    without an exception for them the parameters would be dropped for exactly
+    the commands they exist for.
+
+    Unlike `unset_parameters`, these are allowed at the global level: the
+    header is not something the recipe supplies, so "no step of this run takes
+    anything from it" is a statement about another file.
+    """
+    unset = {"unset_batch_header_parameters": "targetfile"}
+    commands = [{"gather_behavior": dict(unset)} if where == "step" else "gather_behavior"]
+
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path,
+            commands,
+            parameters=unset if where == "recipe" else None,
+            global_parameters=unset if where == "global" else None,
+        ),
+        recipe="test",
+        eargs={"studyfolder": str(study)},
+    )
+
+    assert "--unset_batch_header_parameters=targetfile" in call_for(
+        fake_gmri, "gather_behavior"
+    )
+
+
 def test_a_step_is_told_which_of_its_parameters_came_from_the_recipe(
     tmp_path, study, fake_gmri
 ):

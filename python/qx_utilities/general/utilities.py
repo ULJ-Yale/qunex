@@ -835,6 +835,11 @@ def create_batch(
             The path to the batch file to be generated. By default, it is
             created as <study>/processing/batch.txt.
 
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
+
         --batchfile (str, default None):
             An optional path to an existing batch file or a list file to take
             the sessions from, instead of looking through the sessions folder.
@@ -2434,6 +2439,11 @@ def gather_behavior(
             The path to the target file, a file that will contain the joined data
             from all the individual session files.
 
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
+
         --overwrite (str, 'no'):
             Whether to overwrite an existing group behavioral file or not.
 
@@ -2836,6 +2846,11 @@ def pull_sequence_names(
         --targetfile (str, None):
             The path to the target file, a file that will contain the list of all
             the session names from all the individual session information files.
+
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
 
         --overwrite (str, 'no'):
             Whether to overwrite an existing file or not.
@@ -3256,6 +3271,11 @@ def create_session_info(
 
         --targetfile (str, default session_<pipeline>.txt):
             The "target" session.txt file.
+
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
 
         --mapping (str, default specs/<pipeline>_mapping.txt):
             The path to the text file describing the mapping.
