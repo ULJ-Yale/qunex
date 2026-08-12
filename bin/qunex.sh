@@ -19,7 +19,12 @@
 
 TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
-qunex_commands="show_version environment dwi_legacy_gpu dwi_eddy_qc dwi_parcellate dwi_seed_tractography_dense dwi_dtifit dwi_bedpostx_gpu dwi_pre_tractography dwi_probtrackx_dense_gpu auto_ptx compute_bold_fc compute_bold_fc parcellate_anat parcellate_bold extract_roi run_qc run_turnkey"
+# The commands this file still handles itself. Every other command is passed on
+# to gmri, which is what `gmri -available` reports below; the wrappers for the
+# ones that are also registry commands are kept in this file but are no longer
+# reached. show_version and environment are answered above, before any of this.
+# auto_ptx is not a registry command and has no script of its own.
+qunex_commands="auto_ptx run_turnkey"
 
 # version
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
@@ -144,12 +149,6 @@ bash_call_execute() {
         mkdir ${MasterComlogFolder} &> /dev/null
     fi
 
-    # -- Set and generate runchecks folder
-    RunChecksFolder="${StudyFolder}/processing/runchecks"
-    if [[ ! -d ${RunChecksFolder} ]]; then
-        mkdir ${RunChecksFolder} &> /dev/null
-    fi
-
     # -- Set and generate temp run folder
     ComRunFolder="${StudyFolder}/processing/scripts/tmp"
     if [[ ! -d ${ComRunFolder} ]]; then
@@ -196,9 +195,7 @@ bash_call_execute() {
         ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
         ComRun="${ComRunFolder}/Run_${logtag}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
         ComlogDone="${MasterComlogFolder}/done_${logtag}.log"
-        CompletionCheckPass="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Pass"
         ComlogError="${MasterComlogFolder}/error_${logtag}.log"
-        CompletionCheckFail="${RunChecksFolder}/CompletionCheck_${TimeStamp}_${CommandToRun}.Fail"
 
         # -- Batchlog
         # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
@@ -233,9 +230,9 @@ bash_call_execute() {
         echo "#" >> ${ComlogTmp}
         ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
 
-        # -- Acceptance tests
-        ComComplete="cat ${ComlogTmp} | grep 'Successful completion' > ${CompletionCheckPass}"
-        ComError="cat ${ComlogTmp} | grep 'ERROR' > ${CompletionCheckFail}"
+        # -- Acceptance test: the exit status of the run is tee's, so the
+        #    comlog is what says whether the command succeeded
+        ComAccept="grep -q 'Successful completion' ${ComlogTmp} && ! grep -q 'ERROR' ${ComlogTmp}"
 
         # -- Garbage collection
         ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
@@ -245,9 +242,9 @@ bash_call_execute() {
         # -- Run the commands locally
         if [[ ${Cluster} == 1 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+            ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
             # -- Combine final string of commands
-            ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
+            ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
             echo "--------------------------------------------------------------"
             echo ""
             echo "   Running ${CommandToRun} locally on `hostname`"
@@ -262,9 +259,9 @@ bash_call_execute() {
         # -- Run the commands via scheduler
         if [[ ${Cluster} == 2 ]]; then
             # -- Command to perform acceptance test
-            ComRunCheck="if [[ -s ${CompletionCheckPass} && ! -s ${CompletionCheckFail} ]]; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+            ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
             # -- Combine final string of commands
-            ComRunAll="${ComRunExec}; ${ComComplete}; ${ComError}; ${ComRunCheck}; ${ComRunGarbage}"
+            ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
             cd ${MasterLogFolder}
             gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
             echo "--------------------------------------------------------------"
@@ -942,7 +939,7 @@ show_version() {
 # ------------------------------------------------------------------------------
 
 # -- Check if version was requested
-if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ]; then
+if [ "$1" == "-version" ] || [ "$1" == "version" ] || [ "$1" == "--version" ] || [ "$1" == "--v" ] || [ "$1" == "-v" ] || [ "$1" == "show_version" ]; then
     show_version
     echo ""
     exit 0
@@ -958,7 +955,7 @@ if [ ${1} == "--help" ] || [ "$1" == "-h" ]; then
     exit 0
 fi
 
-if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envsetup" ]]; then
+if [[ ${1} == "--envsetup" ]] || [[ ${1} == "-envsetup" ]] || [[ ${1} == "envsetup" ]] || [[ ${1} == "environment" ]]; then
     show_version
     echo ""
     echo "Printing help call for $TOOLS/$QUNEXREPO/env/qunex_environment.sh"

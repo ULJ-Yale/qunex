@@ -87,6 +87,27 @@ def _call_summary(outcome):
     )
 
 
+def _bash_sessions(qx_command, sessions, args):
+    """
+    The sessions a bash script is called once for, or `[None]` for one call
+    with whatever session specification the run carries.
+
+    A bash script is written for a single session -- of the thirteen routed
+    here only `compute_bold_fc` and `run_qc` loop over a list of their own --
+    and the shell front end called it once per session, in the loop at
+    `bin/qunex.sh:1735` and its per command copies. The exception is a run that
+    works *across* sessions: `bin/qunex.sh:2315` hands a group run the whole
+    list in one call, and so does this.
+    """
+    if not sessions or args.get("runtype") in ["group", "list"]:
+        return [None]
+
+    if not (gcs.declared_parameters(qx_command) & {"session", "sessions"}):
+        return [None]
+
+    return [session["id"] for session in sessions]
+
+
 def runCommand(command, args):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
@@ -170,12 +191,6 @@ def runCommand(command, args):
     #    on the command line. Fill, never override: what the user typed reaches
     #    the command as the user typed it. Nothing is dropped here -- what a
     #    command cannot take, it was never passed before either.
-    #
-    #    The matlab and bash classes are not filled yet: `run_bash` drops the
-    #    run level parameters a script declares as its own (it reads `has_arg`,
-    #    which is the signature, and a bash script's parameters are documented
-    #    ones), so filling there fills half a call. That goes with the routing
-    #    in step 10, where those scripts start reaching `gmri` at all
     filled, _ = gcs.select_parameters(stated, sources, qx_command)
     filled = {key: value for key, value in filled.items() if key not in args}
     bargs = {**bargs, **filled}
@@ -254,27 +269,53 @@ def runCommand(command, args):
 
     # -- is this a matlab or a bash command?
     if qx_command.language in ["matlab", "bash"]:
+        cargs = {**args, **filled}
+
         if "scheduler" in args:
             # the job is submitted, not run: what it did is for the run on the
-            # node to report, so there is no record to write here
-            gs.run_through_scheduler(command, sessions=None, args=args, run=run)
-        else:
-            if qx_command.language == "matlab":
-                code = gm.run(qx_command, args, run=run)
-            else:
-                code = gb.run(qx_command, args, run=run)
+            # node to report, so there is no record to write here. A bash
+            # command is scheduled per session, as `bin/qunex.sh` scheduled it
+            # (one submission inside its per session loop)
+            gs.run_through_scheduler(
+                command,
+                sessions=sessions if qx_command.language == "bash" else None,
+                args=args,
+                parsessions=int(args.get("parsessions", 1)),
+                run=run,
+            )
+            return
 
-            # the record a parent asked for. The exit code was the only thing
-            # these paths reported and it reached the console alone, so a
-            # matlab or bash step of a recipe had no status at all
-            run.write_status(
-                [
-                    (
-                        command,
-                        "completed" if not code else "failed with exit code %s" % code,
-                        1 if code else 0,
-                    )
-                ]
+        if qx_command.language == "matlab":
+            codes = [(command, gm.run(qx_command, cargs, run=run))]
+        else:
+            codes = [
+                ("%s: %s" % (command, sid) if sid else command,
+                 gb.run(qx_command, cargs, run=run, session=sid))
+                for sid in _bash_sessions(qx_command, sessions, cargs)
+            ]
+
+        # the record a parent asked for. The exit code was the only thing
+        # these paths reported and it reached the console alone, so a
+        # matlab or bash step of a recipe had no status at all
+        run.write_status(
+            [
+                (
+                    name,
+                    "completed" if not code else "failed with exit code %s" % code,
+                    1 if code else 0,
+                )
+                for name, code in codes
+            ]
+        )
+
+        # and, as everywhere else, a command that failed fails the run.
+        # `bin/qunex.sh` exited 1 for these (`qunex_failed`); this path
+        # returned 0 whatever the script did
+        if any(code for _, code in codes):
+            raise ge.CommandFailed(
+                command,
+                "The command did not complete successfully",
+                "Please check the logs in %s" % (run.logfolder),
             )
         return
 

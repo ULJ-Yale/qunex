@@ -11,6 +11,7 @@ record a parent process asked it for. `run_recipe` is that parent today, and
 it reads the record to report what each of its steps did.
 """
 
+import fnmatch
 import importlib.machinery
 import importlib.util
 import os
@@ -91,18 +92,101 @@ def test_a_bash_command_reports_what_its_exit_code_said(gmri, tmp_path, monkeypa
     The matlab and bash paths had the exit code and did nothing with it but
     print it, so such a step of a recipe had no status at all. The runner is
     stubbed: what is pinned is the record, not the pipeline behind it.
+
+    A non-zero code also fails the run, the way it did at the shell front end
+    (`bin/qunex.sh`'s `qunex_failed` exits 1) and the way every other command
+    class does; this path used to exit 0 whatever the script said.
     """
-    monkeypatch.setattr(gmri.gb, "run", lambda qx_command, args, run=None: 3)
+    monkeypatch.setattr(
+        gmri.gb, "run", lambda qx_command, args, run=None, session=None: 3
+    )
     status = tmp_path / "status.yaml"
 
-    gmri.runCommand(
-        "dwi_dtifit",
-        {"studyfolder": str(tmp_path / "study"), "logstatus": str(status)},
-    )
+    with pytest.raises(gmri.ge.CommandFailed):
+        gmri.runCommand(
+            "dwi_dtifit",
+            {"studyfolder": str(tmp_path / "study"), "logstatus": str(status)},
+        )
 
     record = yaml.safe_load(status.read_text())
     assert record["failed"] == 1
     assert record["sessions"][0]["summary"] == "failed with exit code 3"
+
+
+def test_a_bash_command_is_run_once_per_session_with_the_header_filled_in(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    A bash script is written for one session, and the shell front end called it
+    once per session, in the loop each of its wrappers sits in. It also passed it
+    nothing the batch file's header said, because it never read one: the
+    routing has to keep the first and add the second.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / "sessions" / "S02").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_species: macaque\n_hcp_brainsize: 170\n"
+        "---\nid: S01\nsubject: S01\n01: T1w\n"
+        "---\nid: S02\nsubject: S02\n01: T1w\n" % (study / "sessions")
+    )
+
+    calls = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: calls.append((args, session))
+        or 0,
+    )
+
+    gmri.runCommand("dwi_dtifit", {"batchfile": str(batch)})
+
+    assert [session for _, session in calls] == ["S01", "S02"]
+    assert calls[0][0]["species"] == "macaque", "the header filled the call in"
+    assert "hcp_brainsize" not in calls[0][0], "with what the command declares"
+
+
+def test_a_bash_comlog_is_named_the_way_run_turnkey_looks_for_it(gmri):
+    """
+    `run_turnkey` decides whether a step ran by globbing its log folder for
+    `*<step name>*<session>*log`, and its QC steps are named after the command
+    *and the modality* -- `run_qc_t1w`, `run_qc_bold`. So the name parts the
+    shell front end put in a comlog are a contract, not decoration.
+    """
+    run_qc = gmri.qx_commands.get("run_qc")
+
+    name = gmri.gb.comlog_name(run_qc, {"modality": "T1w"}, session="S01")
+
+    assert name == "run_qc_t1w_S01"
+    assert fnmatch.fnmatch(name + ".log", "*run_qc_t1w*S01*log")
+    assert gmri.gb.comlog_name(run_qc, {}) == "run_qc", "and nothing else is added"
+
+
+def test_a_bash_script_is_passed_the_run_parameters_it_declares(gmri, monkeypatch):
+    """
+    `run_bash` dropped the run level parameters a script did not declare and
+    asked the *signature*, which a bash command does not have -- its parameters
+    are documented ones -- so it dropped `--sessionsfolder` and `--batchfile`
+    with `--parsessions`, and `dwi_dtifit` reached its script with no arguments
+    at all.
+    """
+    ran = []
+    monkeypatch.setattr(gmri.gb.gl, "run_and_log", lambda com, name, run=None: ran.append(com) or 0)
+    monkeypatch.setattr(gmri.gb.os.path, "exists", lambda path: True)
+
+    gmri.gb.run(
+        gmri.qx_commands.get("dwi_dtifit"),
+        {"sessionsfolder": "/study/sessions", "parsessions": "2", "batchfile": "b.txt"},
+        session="S01",
+    )
+
+    assert "--sessionsfolder='/study/sessions'" in ran[0]
+    assert "--sessions='S01'" in ran[0]
+    assert "--parsessions" not in ran[0], "the run's parameters are not the script's"
+    assert "--batchfile" not in ran[0], "nor is a file it cannot read"
 
 
 def test_a_run_that_dies_still_reports_that_it_failed(gmri, tmp_path):

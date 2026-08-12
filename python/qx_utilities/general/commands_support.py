@@ -639,6 +639,20 @@ RECIPE_PARAMETERS = "QX_RECIPE_PARAMETERS"
 RUN_WIDE_SOURCES = ("batch file", PER_SESSION, RECIPE_RUN)
 
 
+def declared_parameters(qx_command):
+    """
+    ``declared_parameters(qx_command)``
+
+    The names a command declares: its signature arguments and its documented
+    options. `qx_command.has_arg` answers for the signature alone, which is the
+    whole story for a python command and none of it for a matlab or a bash one -
+    their parameters are documented ones and live in `options`.
+    """
+    return {arg.name for arg in qx_command.args} | {
+        option.name for option in qx_command.options
+    }
+
+
 def update_options(session, options, sources=None):
     """
     ``update_options(session, options, sources=None)``
@@ -689,9 +703,7 @@ def select_parameters(options, sources, qx_command):
         states parameters for every command in the run, and the run level
         parameters steer the run rather than the command.
     """
-    declared = {arg.name for arg in qx_command.args} | {
-        option.name for option in qx_command.options
-    }
+    declared = declared_parameters(qx_command)
 
     accepted, dropped = {}, []
     for key, value in options.items():
@@ -736,9 +748,7 @@ def report_parameters(qx_command, options, sources, session=None):
     if session:
         reported = sorted(k for k in sources if sources[k] == PER_SESSION)
     else:
-        declared = {arg.name for arg in qx_command.args} | {
-            option.name for option in qx_command.options
-        }
+        declared = declared_parameters(qx_command)
         reported = sorted(k for k in options if k in declared)
 
         if not reported:

@@ -238,7 +238,9 @@ get_options() {
                 sessionsfolder=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
-            --session=*)
+            # --sessions is the documented spelling and the one qunex passes;
+            # --session is what the shell front end passed and is kept
+            --session=*|--sessions=*)
                 session=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
