@@ -846,20 +846,23 @@ def report_parameters(qx_command, options, sources, session=None):
         names = max(len(name) for name, _, _ in rows + [("parameter", "", "")])
         origins = max(len(source) for _, _, source in rows + [("", "", "source")])
         values = max(len(value) for _, value, _ in rows + [("", "value", "")])
-        text = title + "%s%-*s   %-*s   %s\n%s%s\n" % (
+        rule = INDENT + "-" * (names + origins + values + 6) + "\n"
+
+        text = title + "%s%-*s   %-*s   %s\n%s" % (
             INDENT,
             names,
             "parameter",
             origins,
             "source",
             "value",
-            INDENT,
-            "-" * (names + origins + values + 6),
+            rule,
         )
         for name, value, source in rows:
             text += "%s%-*s   %-*s   %s\n" % (INDENT, names, name, origins, source, value)
 
-        return text
+        # closed at the bottom as well as the top: a long run's output scrolls,
+        # and a table that ends without a line ends wherever the reader stops
+        return text + rule
 
     return table(rows)
 
