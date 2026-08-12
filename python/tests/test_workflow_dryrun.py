@@ -13,9 +13,13 @@ Measured by AST: five of the file's seven registered processing commands --
 ``create_stats_report`` and ``extract_nuisance_signal`` -- never consulted
 ``options["run"]`` anywhere in their bodies. Only ``preprocess_bold`` and
 ``preprocess_conc`` did. A ``--test`` run of any of the five therefore copied
-and linked files, invoked FSL, R and MATLAB, and -- in
+and linked files, invoked FSL and MATLAB (and, at the time, R), and -- in
 ``create_stats_report`` -- deleted the existing movement reports before
 regenerating them, all while the report said the command was being tested.
+
+``create_stats_report`` no longer runs anything external: its work is now
+``processing/mov_stats.py``, called in process. The dry run still has to guard
+it, since it appends to the group reports and writes the fidl snippets.
 
 This is the same defect ``processing/fs.py`` had, and these tests are that
 file's ``test_fs_dryrun.py`` applied here: nothing is executed, nothing on disk
@@ -56,7 +60,9 @@ TOOLS = {
     "get_bold_data": "g_FlipFormat",
     "create_bold_brain_masks": "bet ",
     "compute_bold_stats": "matlab",
-    "create_stats_report": "bold_stats.R",
+    # the only one of the five that no longer shells out at all: it names the
+    # work rather than a tool, which is the point of dropping the subprocess
+    "create_stats_report": "movement and statistics reporting",
     "extract_nuisance_signal": "matlab",
 }
 
@@ -197,9 +203,9 @@ def test_an_existing_movement_report_survives_a_test_run(session):
     """
     The destructive step, pinned on its own.
 
-    `create_stats_report` deletes the movement reports before the R script
-    regenerates them. Under `--test` the script never runs, so deleting them
-    would leave the session worse off than before the dry run.
+    `create_stats_report` deletes the movement reports before regenerating
+    them. Under `--test` nothing regenerates them, so deleting them would leave
+    the session worse off than before the dry run.
     """
     _, _, root, _ = session
     keep = root / "sessions" / "QC" / "movement" / "bold_mov_report.txt"

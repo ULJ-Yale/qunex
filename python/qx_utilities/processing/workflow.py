@@ -38,6 +38,7 @@ from datetime import datetime
 from functools import partial
 
 import qx_utilities.processing.core as pc
+import qx_utilities.processing.mov_stats as ms
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.meltmovfidl as gm
@@ -55,6 +56,29 @@ if "QUNEXMCOMMAND" not in os.environ:
     mcommand = "matlab -nojvm -nodisplay -nosplash -r"
 else:
     mcommand = os.environ["QUNEXMCOMMAND"]
+
+
+# ------------------------------------------------- create_stats_report's preamble
+
+# what the command does, shown once at the head of every session report. A
+# dedented block rather than a line carrying its own `\n    `: this is prose,
+# it is read as prose, and it should be reviewable as prose
+STATS_REPORT_PURPOSE = """\
+Movement correction parameters and computed BOLD statistics are used to create
+per session plots, fidl snippets and group reports. Only the images named by
+--bolds are processed; see the documentation for the other parameters."""
+
+# quoted back at the head of the report, in the order it has always had them.
+# A list rather than a format string, so it cannot drift from `options`
+STATS_REPORT_PARAMETERS = [
+    "mov_dvars",
+    "mov_dvarsme",
+    "mov_fd",
+    "mov_radius",
+    "mov_fidl",
+    "mov_post",
+    "mov_pref",
+]
 
 
 # --------------------------------------------------------------- the dry run
@@ -1237,9 +1261,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         --mov_post (str, default 'udvarsme'):
             The criterium for identification of bad frames that is used when
-            generating a post scrubbing statistics group report:
+            generating a post scrubbing statistics group report. The value names
+            a column of the `.scrub` file that `compute_bold_stats` wrote:
 
-            - 'fd'        ... Frame displacement threshold (fdt) is exceeded.
+            - 'mov'       ... Frame displacement threshold (fdt) is exceeded.
             - 'dvars'     ... Image intensity normalized root mean squared error
               (RMSE) threshold (dvarsmt) is exceeded.
             - 'dvarsme'   ... Median normalised RMSE threshold (dvarsmet) is
@@ -1256,9 +1281,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
         --mov_fidl (str, default 'udvarsme'):
             Whether to create fidl file snippets with listed bad frames, and
-            what criterium to use for the definition of bad frames:
+            what criterium to use for the definition of bad frames. The value
+            names a column of the `.scrub` file that `compute_bold_stats` wrote:
 
-            - 'fd'        ... Frame displacement threshold (fdt) is exceeded.
+            - 'mov'       ... Frame displacement threshold (fdt) is exceeded.
             - 'dvars'     ... Image intensity normalized root mean squared error
               (RMSE) threshold (dvarsmt) is exceeded.
             - 'dvarsme'   ... Median normalised RMSE threshold  (dvarsmet) is
@@ -1323,11 +1349,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                 of movement scrubbing.
 
             Extra notes and dependencies:
-                The command runs the bold_stats.R R script that computes the
-                statistics and plots the data. The function requires that
-                movement correction parameters files and bold statistics data
-                files (results of the compute_bold_stats command) are present in
-                the expected locations.
+                The statistics are computed and the plots drawn in Python. The
+                command requires that movement correction parameters files and
+                bold statistics data files (results of the compute_bold_stats
+                command) are present in the expected locations.
 
                 Session statistics are appended to the group level report files
                 as they are being computed. To avoid messy group level files, it
@@ -1382,11 +1407,9 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     try:
         log.raw("\n---------------------------------------------------------")
         log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-        log.raw("\n\nCreating BOLD Movement and statistics report ...")
-        log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
-        log.raw("\n\n    The command will use movement correction parameters and computed BOLD\n    statistics to create per session plots, fidl snippets and group reports. Only\n    images specified using --bolds parameter will be processed. Please\n    see documentation for use of other relevant parameters!")
-        log.raw(f"\n\n    Using parameters:\n\n    --mov_dvars: {options['mov_dvars']}\n    --mov_dvarsme: {options['mov_dvarsme']}\n    --mov_fd: {options['mov_fd']}\n    --mov_radius: {options['mov_radius']}\n    --mov_fidl: {options['mov_fidl']}\n    --mov_post: {options['mov_post']}\n    --mov_pref: {options['mov_pref']}")
-        log.raw("\n\n........................................................")
+        log.action("Creating", "BOLD movement and statistics report ...", options["run"], level="info")
+        log.blank()
+        log.info(STATS_REPORT_PURPOSE)
 
         pc.do_options_check(options, sinfo, "create_stats_report")
         d = pc.get_session_folders(sinfo, options)
@@ -1396,11 +1419,15 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         else:
             ostatus = "will not"
 
-        log.raw("\n\nWorking on BOLD information images in: " + d["s_bold_mov"])
-        log.info("Resulting plots will be saved in: " + d["s_bold_mov"])
+        log.step("Using parameters")
+        for name in STATS_REPORT_PARAMETERS:
+            log.detail(f"--{name}: {options[name]}")
 
-        log.raw(f"\n\nBased on the settings, {', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds).")
-        log.info(f"If already present, existing results {ostatus} be overwritten (see --overwrite).")
+        log.step(f"Working on BOLD information in {d['s_bold_mov']}")
+        log.detail(f"images{options['img_suffix']}/functional{options['bold_variant']} will be processed")
+        log.detail("the resulting plots will be saved there")
+        log.detail(f"{', '.join(options['bolds'].split('|'))} BOLD files will be processed (see --bolds)")
+        log.detail(f"existing results {ostatus} be overwritten (see --overwrite)")
 
         procbolds = []
         d = pc.get_session_folders(sinfo, options)
@@ -1427,12 +1454,12 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             plot = ""
             preport["plotdone"] = "none"
 
-        log.raw(f"\n\nChecking for data in {d['s_bold_mov']}.")
+        log.step(f"Checking for data in {d['s_bold_mov']}")
 
         bolds, bskip, preport["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         for boldinfo in bolds:
-            log.raw("\n\nWorking on: " + boldinfo["name"] + " ...")
+            log.step("Working on " + boldinfo["name"] + " ...")
 
             try:
                 # --- filenames
@@ -1480,7 +1507,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             except Exception:
                 log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
 
-        # run the R script
+        # build the reports
 
         procbolds.sort()
         procbolds = [str(e) for e in procbolds]
@@ -1499,73 +1526,30 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             else:
                 report[tf] = ""
 
-        rcomm = (
-            '%s --args -f=%s -mr=%s -pr=%s -sr=%s -s=%s -d=%.1f -e=%.1f -m=%.1f -rd=%.1f -tr=%.2f -fidl=%s -post=%s -plot=%s -pref=%s -rname=%s -bold_tail=%s -bolds="%s" -v'
-            % (
-                os.path.join(
-                    os.environ["QUNEXPATH"], "r/qx_utilities", "bold_stats.R"
-                ),  # script location
-                d["s_bold_mov"],  # the folder to look for .dat data [.]
-                report["mov_mreport"],  # the file to write movement report to [none]
-                report[
-                    "mov_preport"
-                ],  # the file to write movement report after scrubbing to [none]
-                report["mov_sreport"],  # the file to write scrubbing report to [none]
-                sinfo["id"],  # session id to use in plots and reports [none]
-                options[
-                    "mov_dvars"
-                ],  # threshold to use for computing dvars rejections [3]
-                options[
-                    "mov_dvarsme"
-                ],  # threshold to use for computing dvarsme rejections [1.5]
-                options[
-                    "mov_fd"
-                ],  # threshold to use for computing frame-to-frame movement rejections [0.5]
-                options[
-                    "mov_radius"
-                ],  # radius (in mm) from center of head to cortex to estimate rotation size [50]
-                options["tr"],  # TR to be used when generating .fidl files [2.5]
-                options[
-                    "mov_fidl"
-                ],  # whether to output and what to base fild on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
-                options[
-                    "mov_post"
-                ],  # whether to create report of scrubbing effect and what to base it on (fd, dvars, dvarsme, u/ume - union, i/ime - intersection, none) [none]
-                plot,  # root name of the plot file, none to omit plotting [mov_report]
-                options["mov_pref"],  # prefix for the reports
-                options["boldname"],  # root name for the bold files
-                options["nifti_tail"],  # tail for the volume bold files
-                "|".join(procbolds),
-            )
-        )  # | separated list of bold indeces for which to do the stat report
+        runs = [options["boldname"] + e + options["nifti_tail"] for e in procbolds]
 
-        tfile = os.path.join(d["s_bold_mov"], ".r.ok")
-
-        if options["print_command"] == "yes":
-            log.raw("\n\nRunning\n" + rcomm + "\n")
-        endlog, status, failed = _run_external(
-            log,
-            options,
-            tfile,
-            rcomm,
-            "\nRunning bold_stats",
-            overwrite=overwrite,
-            thread=sinfo["id"],
-            remove=options["log"] == "remove",
-            task=options["command_ran"],
-            logfolder=options["comlogs"],
-            logtags=[options["bold_variant"], options["logtag"]],
+        # one line for both arms: `action` is what spells it "Test running ..."
+        # under `--test`, so the run mode is the log's business and not a branch
+        log.action(
+            "Running",
+            f"movement and statistics reporting for {', '.join(runs)}",
+            options["run"],
         )
-        if os.path.exists(tfile):
-            preport["procok"] = "ok"
-            _remove(log, options, tfile)
-        elif options["run"] != "run":
-            # nothing ran, so the marker the run would have left is not
-            # evidence of anything -- reporting a failure here would make
-            # every dry run look like a failed one
+
+        if options["run"] != "run":
+            for tf in ["mov_mreport", "mov_sreport", "mov_preport"]:
+                if report[tf] != "":
+                    log.detail(f"test, not written: {report[tf]}")
+            if options["mov_fidl"] != "none":
+                for run in runs:
+                    log.detail(f"test, not written: {os.path.join(d['s_bold_mov'], run + '_scrub.fidl')}")
             preport["procok"] = "test"
         else:
-            preport["procok"] = "failed"
+            # failure arrives as an exception now, caught by the handlers below
+            ms.report_movement_statistics(
+                d["s_bold_mov"], procbolds, sinfo["id"], report, options, plot, _log=log
+            )
+            preport["procok"] = "ok"
 
         if options["mov_plot"] != "" and options["mov_pdf"] != "no":
             for sf in ["cor", "dvars", "dvarsme"]:
@@ -1601,8 +1585,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
                     log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
 
         if (
-            options["mov_fidl"]
-            in ["fd", "dvars", "dvarsme", "udvars", "udvarsme", "idvars", "idvarsme"]
+            options["mov_fidl"] in ms.CRITERIA
             and options["event_file"] != ""
             and options["bolds"] != ""
         ):

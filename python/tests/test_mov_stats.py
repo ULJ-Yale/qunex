@@ -383,6 +383,54 @@ def test_importing_the_module_does_not_require_matplotlib():
     assert subprocess.call([sys.executable, "-c", check], cwd=PYTHON) == 0
 
 
+def test_create_stats_report_produces_the_reports_end_to_end(tmp_path):
+    """
+    The command, not just the module, against the same reference.
+
+    This is the path that used to go out to ``Rscript``. It covers what the
+    module's own tests cannot: the report paths assembled from ``--boldname``,
+    ``--nifti_tail`` and ``--mov_mreport``, the bold list ``use_or_skip_bold``
+    returns from the batch information, and the call that replaced the
+    subprocess.
+    """
+    import qx_utilities.processing.workflow as wf
+    from tests.utils import default_options
+
+    sessions = tmp_path / "sessions"
+    movement = sessions / SESSION / "images" / "functional" / "movement"
+    movement.mkdir(parents=True)
+    for name in os.listdir(MOVEMENT):
+        shutil.copy(os.path.join(MOVEMENT, name), str(movement / name))
+
+    options = default_options(sessionsfolder=str(sessions), run="run")
+    # `default_options` recodes "" to None, which the file name builders
+    # concatenate; the CLI supplies real empty strings for these
+    for name, value in list(options.items()):
+        if value is None and ("tail" in name or "variant" in name or "pref" in name):
+            options[name] = ""
+    # the reference's settings, plus no plots: matplotlib is not a given here,
+    # and the figures have their own test
+    options.update(OPTIONS, mov_plot="", event_file="")
+
+    sinfo = {"id": SESSION}
+    sinfo.update({b: {"name": f"bold{b}", "task": "rest"} for b in BOLDS})
+
+    log = wf.create_stats_report(sinfo, options, thread=1)
+
+    assert "BOLDs ok:  3" in log.status[1], log.text
+    assert "processing: ok" in log.status[1], log.text
+
+    qc = sessions / "QC" / "movement"
+    for name in ["bold_movement_report.txt", "bold_movement_report_post.txt",
+                 "bold_movement_scrubbing_report.txt"]:
+        assert compare(read_report(str(qc / name)), reference_report(name)) == [], name
+
+    for bold in BOLDS:
+        name = f"bold{bold}_scrub.fidl"
+        with open(os.path.join(REFERENCE, name)) as f:
+            assert (movement / name).read_text() == f.read(), name
+
+
 def test_plots_are_written(tmp_path):
     pytest.importorskip("matplotlib")
 

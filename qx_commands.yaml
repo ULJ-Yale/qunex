@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-11T02:22:13.859617+00:00'
+generated_at: '2026-08-12T22:26:34.358792+00:00'
 source:
     id: core
 commands:
@@ -1188,12 +1188,12 @@ commands:
         type: str
         default: udvarsme
         description: 'The criterium for identification of bad frames that is used when generating a post scrubbing statistics
-            group report:'
+            group report. The value names a column of the `.scrub` file that `compute_bold_stats` wrote:'
     -   name: mov_fidl
         type: str
         default: udvarsme
         description: 'Whether to create fidl file snippets with listed bad frames, and what criterium to use for the definition
-            of bad frames:'
+            of bad frames. The value names a column of the `.scrub` file that `compute_bold_stats` wrote:'
     -   name: mov_pdf
         type: str
         default: movement_plots
