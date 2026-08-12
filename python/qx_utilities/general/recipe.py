@@ -639,6 +639,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 run.write(report + "\n")
 
         elif qx_commands.get(command_name) is not None:
+            # where each of this step's parameters came from, so that what the
+            # command cannot take can be reported to whoever wrote it: the
+            # recipe states these against the command itself, the tiers below
+            # state them for every command of the run
+            sources = dict.fromkeys(command_parameters, "recipe")
+
             # override params with those from eargs (passed because of parallelization on a higher level)
             if eargs is not None:
                 # do not add parameter if it is flagged as removed
@@ -650,25 +656,44 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                             )
                     else:
                         command_parameters[k] = eargs[k]
+                    sources[k] = gcs.RECIPE_RUN
 
             # append global and recipe parameters
             for parameter, value in parameters.items():
                 if parameter not in command_parameters:
                     command_parameters[parameter] = value
+                    sources[parameter] = gcs.RECIPE_RUN
 
-            # remove parameters that are not allowed
+            # narrow to what the command accepts, and say what that leaves out:
+            # a parameter written against a command that cannot take it is a
+            # mistake in the recipe, and was dropped without a word
             qx_command = qx_commands.get(command_name)
 
             if qx_command.type == "utility" and qx_command.language == "python":
-                allowed_parameters = list([e.name for e in qx_command.args] + ["logfolder"])
-                if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
-                    allowed_parameters += gcs.extra_parameters
+                kept, dropped = gcs.select_parameters(
+                    command_parameters, sources, qx_command
+                )
 
-                new_parameters = command_parameters.copy()
-                for param in command_parameters.keys():
-                    if param not in allowed_parameters:
-                        del new_parameters[param]
-                command_parameters = new_parameters
+                # the run level parameters steer `gmri` rather than the
+                # command, so they go on when the command is one `gmri` can run
+                # over sessions; a command that cannot has no use for them
+                passthrough = set(gcs.extra_parameters)
+                if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder"]):
+                    passthrough = {"logfolder"}
+
+                command_parameters = {
+                    key: value
+                    for key, value in command_parameters.items()
+                    if key in kept or key in passthrough
+                }
+
+                for param in dropped:
+                    warning = (
+                        "\nWARNING: %s is not a parameter of %s and was not passed to "
+                        "it. Please check the recipe!\n" % (param, command_name)
+                    )
+                    print(warning)
+                    run.write(warning)
 
             # XNAT individual command prep, creates _in checkpoint
             if os.environ.get("XNAT", "") == "yes":

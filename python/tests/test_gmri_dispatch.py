@@ -218,6 +218,46 @@ def test_the_parameters_a_command_runs_with_are_reported_before_it_runs(
     assert "hcp_brainsize" in runlog.read_text(), "and the same text in the runlog"
 
 
+def test_a_batch_file_header_fills_in_what_a_command_was_not_told(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    The brief's first problem: `import_dicom` declares `unzip` and `gzip`, the
+    batch file states them for the whole study, and the two never met -- the
+    header reached `process.run` and nothing else. What the user typed still
+    wins over what the file says.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_unzip: no\n_gzip: folder\n---\nid: S01\nsubject: S01\n"
+        "01: T1w\n" % (study / "sessions")
+    )
+
+    called = {}
+
+    def record(function, args, run=None, tags=None):
+        called.update(args)
+        return gmri.gc.CallOutcome("import_dicom", 0, None, None)
+
+    monkeypatch.setattr(gmri.gc, "run_with_log", record)
+
+    gmri.runCommand("import_dicom", {"batchfile": str(batch), "unzip": "yes"})
+
+    assert called["gzip"] == "folder", "the header filled in what nobody typed"
+    assert called["unzip"] == "yes", "and never overrode what somebody did"
+
+    banner = capsys.readouterr().out
+    for line in banner.split("\n"):
+        if line.split()[:1] == ["gzip"]:
+            assert line.endswith("batch file"), "and the banner says where it came from"
+        if line.split()[:1] == ["unzip"]:
+            assert line.endswith("command line")
+
+
 def test_the_record_a_run_wrote_itself_is_not_overwritten_at_the_boundary(tmp_path):
     """
     `process.run` writes its per-session digest and *then* raises for the

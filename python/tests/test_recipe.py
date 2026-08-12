@@ -20,6 +20,7 @@ status record is the whole of the contract on the other side of the boundary.
 
 import os
 import stat
+from pathlib import Path
 
 import pytest
 import yaml
@@ -28,6 +29,19 @@ import qx_utilities.general.exceptions as ge
 import qx_utilities.general.log as gl
 import qx_utilities.general.log.settings as gls
 import qx_utilities.general.recipe as gr
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def registry_of_this_tree(monkeypatch):
+    """
+    A recipe reads the command registry to know what its steps are, and the
+    registry is loaded from ``$QUNEXPATH/qx_commands.yaml``. This tree carries
+    its own, so the tests name it and run without the suite's environment --
+    without this they pass only in a run where some other file has set it.
+    """
+    monkeypatch.setenv("QUNEXPATH", str(REPO_ROOT))
 
 
 @pytest.fixture(autouse=True)
@@ -313,6 +327,51 @@ def test_a_failing_step_that_writes_no_record_is_not_reported_as_silent(
     log = runlog(study)
     assert "create_study: failed with exit code 4; no status record written" in log
     assert "command create_study ... FAILED" in log
+
+
+# ------------------------------------------------- what a step is passed
+
+
+def test_a_parameter_a_step_cannot_take_is_named_rather_than_dropped(
+    tmp_path, study, fake_qunex, capsys
+):
+    """
+    A parameter written against a command that cannot take it was deleted
+    without a word, so a recipe with a typo in it ran, reported success, and
+    did something other than what it said.
+    """
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path, [{"create_study": {"hcp_brainsize": 170}}]
+        ),
+        recipe="test",
+        eargs={"studyfolder": str(study)},
+    )
+
+    warning = "hcp_brainsize is not a parameter of create_study"
+    assert warning in capsys.readouterr().out
+    assert warning in runlog(study)
+    assert "hcp_brainsize" not in fake_qunex.read_text(), "and it is still not passed"
+
+
+def test_a_recipe_wide_parameter_a_step_cannot_take_is_dropped_in_silence(
+    tmp_path, study, fake_qunex, capsys
+):
+    """
+    The recipe level parameters are stated for every command of the run, the
+    way a batch file's header is: one a command cannot take was meant for
+    another command, and warning about it once per step would be noise.
+    """
+    gr.run_recipe(
+        recipe_file=recipe_file(
+            tmp_path, ["create_study"], parameters={"hcp_brainsize": 170}
+        ),
+        recipe="test",
+        eargs={"studyfolder": str(study)},
+    )
+
+    assert "hcp_brainsize" not in capsys.readouterr().out
+    assert "hcp_brainsize" not in fake_qunex.read_text()
 
 
 # ------------------------------------------------------- label injection

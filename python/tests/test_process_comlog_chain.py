@@ -178,7 +178,7 @@ def run_step(study, settings=None, shell="touch %(checkfile)s", command=None, **
         sessionsfolder=args["sessionsfolder"],
         command=qx_command.name,
     )
-    options, sources = gp.merge_options(qx_command.name, args, header)
+    options, sources, _ = gp.merge_options(qx_command.name, args, header)
     folders = gc.deduce_folders({**header, **args}, qx_command.name)
     run_context = gl.RunContext(qx_command.name, args, settings, folders)
     gl.set_active(settings)

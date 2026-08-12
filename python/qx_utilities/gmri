@@ -150,7 +150,10 @@ def runCommand(command, args):
                 "Provided unknown arguments: [%s]!" % (", ".join(bad)),
             )
 
-        if ("sessions" in eargs or "batchfile" in eargs) and not any(
+        # a batch file is not a request to run over its sessions -- it is also
+        # where the header comes from, and every command takes that -- so only
+        # a session list a command cannot act on is an error
+        if "sessions" in eargs and not any(
             [qx_command.has_arg(e) for e in ["sourcefolder", "folder"]]
         ):
             raise ge.CommandError(
@@ -160,7 +163,22 @@ def runCommand(command, args):
             )
 
     # -- the one merged options dictionary every dispatcher below starts from
-    options, sources = gp.merge_options(command, args, batch_header)
+    options, sources, stated = gp.merge_options(command, args, batch_header)
+
+    # -- and, for a python command, which is called with parameters rather than
+    #    with the whole dictionary, the ones it declares that it was not given
+    #    on the command line. Fill, never override: what the user typed reaches
+    #    the command as the user typed it. Nothing is dropped here -- what a
+    #    command cannot take, it was never passed before either.
+    #
+    #    The matlab and bash classes are not filled yet: `run_bash` drops the
+    #    run level parameters a script declares as its own (it reads `has_arg`,
+    #    which is the signature, and a bash script's parameters are documented
+    #    ones), so filling there fills half a call. That goes with the routing
+    #    in step 10, where those scripts start reaching `gmri` at all
+    filled, _ = gcs.select_parameters(stated, sources, qx_command)
+    filled = {key: value for key, value in filled.items() if key not in args}
+    bargs = {**bargs, **filled}
 
     # -- the header may have moved the study, so the folders are deduced again.
     #    From what was actually stated rather than from the merged options: the
@@ -214,7 +232,12 @@ def runCommand(command, args):
         if processing:
             print(header)
 
-        banner = gcs.report_parameters(qx_command, options, sources)
+        # a processing command is handed the merged dictionary and reports it;
+        # every other class is called with parameters, and reports those, so
+        # that the banner and the call agree on how a value is spelled
+        banner = gcs.report_parameters(
+            qx_command, options if processing else {**options, **stated}, sources
+        )
         print(banner)
         run.write(banner)
 
@@ -256,10 +279,12 @@ def runCommand(command, args):
 
     # -- continue with regular python command
 
-    # -- a command runs over the sessions only when the batch file reached it
-    #    as an extra argument. A command that declares `batchfile` itself is
-    #    given it and resolves the sessions on its own, once
-    if "sessions" not in eargs and "batchfile" not in eargs:
+    # -- a command runs over the sessions only when the dispatcher has a way to
+    #    hand it one: it either takes a session's folder, or it forwards the
+    #    run's parameters on (`eargs`) and fans out itself. Everything else is
+    #    called once, with the batch file's header filled in -- a command that
+    #    declares `batchfile` resolves the sessions on its own
+    if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder", "eargs"]):
         sessions = None
 
     calls = []
@@ -371,18 +396,20 @@ def runCommand(command, args):
 
         # -- a basic call
         elif sessions is None:
+            cargs = {**args, **filled}
+
             # commands that are not logged run bare, without a comlog
             if not log_settings.enabled:
                 # drop the run-level parameters the command itself does not take
                 callable = qx_commands.get(command).load_callable()
-                gc._drop_run_parameters(callable, args)
+                gc._drop_run_parameters(callable, cargs)
                 # execute
-                callable(**args)
+                callable(**cargs)
             # run with log
             else:
                 outcome = gc.run_with_log(
                     qx_commands.get(command).load_callable(),
-                    args=args,
+                    args=cargs,
                     run=run,
                     tags=[command, args.get("sessions")],
                 )

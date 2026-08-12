@@ -575,6 +575,15 @@ def impute_parameters(options, command):
 #                                                          PARAMETER PROVENANCE
 #
 PER_SESSION = "batch file (session)"
+RECIPE_RUN = "recipe run"
+
+# The tiers that state parameters for a run rather than for one command: a
+# batch file's header, and everything a recipe states for all of its steps --
+# its global and recipe level parameters and the command line `run_recipe`
+# itself was given. A value of theirs that a command cannot take was meant for
+# another command of the same run, so it is dropped without a word. One
+# written against the command itself is a mistake, and is named.
+RUN_WIDE_SOURCES = ("batch file", PER_SESSION, RECIPE_RUN)
 
 
 def update_options(session, options, sources=None):
@@ -601,6 +610,48 @@ def update_options(session, options, sources=None):
         ssources[key] = PER_SESSION
 
     return soptions, ssources
+
+
+def select_parameters(options, sources, qx_command):
+    """
+    ``select_parameters(options, sources, qx_command)``
+
+    Narrows the merged options to the parameters the registry says the command
+    accepts, and names the ones it does not.
+
+    Fill, never override: only values somebody stated are returned, so the
+    command keeps its own defaults for everything nobody named, and a caller
+    that layers the command line back over the result gets a command line that
+    always wins.
+
+    Parameters:
+        --options       The parameters to narrow - what the tiers stated, from
+                        `process.merge_options`, or a recipe step's own.
+        --sources       Where each of them came from.
+        --qx_command    The registry entry of the command to be run.
+
+    Returns:
+        The parameters the command accepts, and the names of those it does
+        not. Named are only the ones stated for this command: a run wide tier
+        states parameters for every command in the run, and the run level
+        parameters steer the run rather than the command.
+    """
+    declared = {arg.name for arg in qx_command.args} | {
+        option.name for option in qx_command.options
+    }
+
+    accepted, dropped = {}, []
+    for key, value in options.items():
+        source = sources.get(key, "default")
+
+        if source == "default":
+            continue
+        elif key in declared:
+            accepted[key] = value
+        elif key not in extra_parameters and source not in RUN_WIDE_SOURCES:
+            dropped.append(key)
+
+    return accepted, dropped
 
 
 def report_parameters(qx_command, options, sources, session=None):

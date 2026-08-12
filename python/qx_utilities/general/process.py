@@ -1120,8 +1120,9 @@ def merge_options(command, args, header=None):
         --header    The parameters from the batch file header, if there was one.
 
     Returns:
-        The merged options, and for every name in them the tier its value came
-        from - one of "default", "batch file", "recipe" or "command line".
+        The merged options, for every name in them the tier its value came
+        from - one of "default", "batch file", "recipe" or "command line" -
+        and what those tiers stated, before `arglist`'s converters recoded it.
     """
     options = {"command_ran": command}
     sources = {"command_ran": "default"}
@@ -1153,6 +1154,12 @@ def merge_options(command, args, header=None):
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
 
+    # what the tiers said, before the recode below has its way with it. A
+    # command called with parameters rather than with this dictionary keeps
+    # its own conventions - `overwrite` is "yes", "no" or "skip" in a utility
+    # signature and a bool here - so it is filled in from what was written
+    stated = {key: options[key] for key, source in sources.items() if source != "default"}
+
     # recode as last step before options are used
     for line in arglist:
         if len(line) == 3:
@@ -1172,7 +1179,7 @@ def merge_options(command, args, header=None):
     # specified it, which is what the source says
     options = gcs.impute_parameters(options, command)
 
-    return options, sources
+    return options, sources, stated
 
 
 # ==============================================================================
