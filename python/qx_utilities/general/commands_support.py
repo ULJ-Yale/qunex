@@ -765,20 +765,24 @@ def report_parameters(qx_command, options, sources, session=None):
         if not rows:
             return title + INDENT + "(none)\n"
 
+        # the value goes last, and is the only column not padded: a path can
+        # be a hundred characters wide, and a source read off the far side of
+        # one is a source nobody reads
         names = max(len(name) for name, _, _ in rows + [("parameter", "", "")])
+        origins = max(len(source) for _, _, source in rows + [("", "", "source")])
         values = max(len(value) for _, value, _ in rows + [("", "value", "")])
         text = title + "%s%-*s   %-*s   %s\n%s%s\n" % (
             INDENT,
             names,
             "parameter",
-            values,
-            "value",
+            origins,
             "source",
+            "value",
             INDENT,
-            "-" * (names + values + 6 + len("command line")),
+            "-" * (names + origins + values + 6),
         )
         for name, value, source in rows:
-            text += "%s%-*s   %-*s   %s\n" % (INDENT, names, name, values, value, source)
+            text += "%s%-*s   %-*s   %s\n" % (INDENT, names, name, origins, source, value)
 
         return text
 

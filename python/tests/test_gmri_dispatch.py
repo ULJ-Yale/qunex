@@ -65,6 +65,20 @@ def gmri():
     return module
 
 
+def reported_as(banner, parameter):
+    """
+    A parameter's row of a report banner with its name taken off the front,
+    so that a test reads the source without counting columns. The source is
+    the second column and the value the last, unpadded, because a value can
+    be a hundred characters wide and a source read off the far side of one is
+    a source nobody reads.
+    """
+    for line in banner.split("\n"):
+        if line.split()[:1] == [parameter]:
+            return line.split(parameter, 1)[1].strip()
+    return ""
+
+
 def test_a_single_utility_call_writes_the_status_record_it_was_asked_for(
     gmri, tmp_path
 ):
@@ -290,13 +304,9 @@ def test_the_parameters_a_command_runs_with_are_reported_before_it_runs(
     banner = capsys.readouterr().out
     assert "Parameters for hcp_pre_freesurfer" in banner
     assert "hcp_brainsize" in banner and "170" in banner
-    for line in banner.split("\n"):
-        if line.split()[:1] == ["hcp_brainsize"]:
-            assert line.endswith("batch file")
-        if line.split()[:1] == ["hcp_t2"]:
-            assert line.endswith("command line")
-        if line.split()[:1] == ["hcp_prefs_brain_extraction_type"]:
-            assert line.endswith("default")
+    assert reported_as(banner, "hcp_brainsize").startswith("batch file")
+    assert reported_as(banner, "hcp_t2").startswith("command line")
+    assert reported_as(banner, "use_sequence_info").startswith("default")
 
     runlog = next((study / "logs").rglob("Log-*.log"))
     assert "hcp_brainsize" in runlog.read_text(), "and the same text in the runlog"
@@ -335,11 +345,10 @@ def test_a_batch_file_header_fills_in_what_a_command_was_not_told(
     assert called["unzip"] == "yes", "and never overrode what somebody did"
 
     banner = capsys.readouterr().out
-    for line in banner.split("\n"):
-        if line.split()[:1] == ["gzip"]:
-            assert line.endswith("batch file"), "and the banner says where it came from"
-        if line.split()[:1] == ["unzip"]:
-            assert line.endswith("command line")
+    assert reported_as(banner, "gzip").startswith(
+        "batch file"
+    ), "and the banner says where it came from"
+    assert reported_as(banner, "unzip").startswith("command line")
 
 
 def test_a_run_started_at_gmri_gets_the_threads_the_shell_front_end_would_set(
@@ -503,11 +512,8 @@ def test_a_matlab_command_is_filled_from_the_header_and_never_over_it(
     assert "hcp_brainsize" not in called, "with what the command declares"
 
     banner = capsys.readouterr().out
-    for line in banner.split("\n"):
-        if line.split()[:1] == ["frames"]:
-            assert line.endswith("batch file")
-        if line.split()[:1] == ["targetf"]:
-            assert line.endswith("command line")
+    assert reported_as(banner, "frames").startswith("batch file")
+    assert reported_as(banner, "targetf").startswith("command line")
 
 
 def test_what_a_batch_file_says_for_one_session_is_reported_for_that_session(gmri):
