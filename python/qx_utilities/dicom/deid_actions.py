@@ -17,6 +17,7 @@ import csv
 import functools
 import random
 
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.deid_tags import get_group, get_tag, recurse_tree
 
 try:
@@ -42,7 +43,7 @@ def date_removal_func(node_id, node_path, node, target_date, replace_date):
         node.value = node.value.replace(target_date, replace_date)
 
 
-def strip_dates(dicom_file, replacement_date=None):
+def strip_dates(dicom_file, replacement_date=None, _log=None):
     """
     ``strip_dates(dicom_file, replacement_date=None)``
 
@@ -58,7 +59,7 @@ def strip_dates(dicom_file, replacement_date=None):
     elif "SeriesDate" in dicom_file:
         target_date = dicom_file.SeriesDate
     else:
-        print("     -> WARNING: No StudyDate field present")
+        gl.log_or_console(_log).warning("No StudyDate field present")
         return
 
     if replacement_date is None:
@@ -82,7 +83,7 @@ def strip_dates(dicom_file, replacement_date=None):
     recurse_tree(dicom_file.file_meta, modified_removal_func)
 
 
-def read_spec_file(spec_file):
+def read_spec_file(spec_file, _log=None):
     """
     ``read_spec_file(spec_file)``
 
@@ -122,6 +123,8 @@ def read_spec_file(spec_file):
     ignored.
     """
 
+    log = gl.log_or_console(_log)
+
     action_order = ['archive', 'replace', 'delete']
 
     action_dict = {}
@@ -141,7 +144,7 @@ def read_spec_file(spec_file):
                     if key not in action_dict:
                         action_dict[key] = []
                     else:
-                        print("---> Warning, actions for tag %s specified more than once! [line: %d]" % (key, line_number))
+                        log.warning(f"actions for tag {key} specified more than once! [line: {line_number}]")
 
                     for action in actions:
                         if "replace" in action:
@@ -150,7 +153,7 @@ def read_spec_file(spec_file):
                                 action, replacement = parts
                                 replace_map[key] = replacement
                             else:
-                                print("---> Warning, no replacement specified, skipping replacement! [line %d: %s]" % (line_number, action))
+                                log.warning(f"no replacement specified, skipping replacement! [line {line_number}: {action}]")
 
                         action_dict[key].append(action)
 
@@ -267,8 +270,8 @@ def apply_action_from_field_id(opened_dicom, field_id, apply_func, filename):
         apply_func(target, field_path_int[-1], field_id, filename)
 
 
-def deid(opened_dicom, param_file="", archive_file="", filename=""):
-    action_dict, replace_map = read_spec_file(param_file)
+def deid(opened_dicom, param_file="", archive_file="", filename="", _log=None):
+    action_dict, replace_map = read_spec_file(param_file, _log=_log)
 
     archive_writer = csv.writer(open(archive_file, mode='a'))
     for key in action_dict:
@@ -290,7 +293,7 @@ def deid(opened_dicom, param_file="", archive_file="", filename=""):
     return opened_dicom
 
 
-def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename=""):
-    deid(opened_dicom, param_file, archive_file, filename)
-    strip_dates(opened_dicom, replacement_date)
+def deid_and_date_removal(opened_dicom, param_file="", archive_file="", replacement_date=None, filename="", _log=None):
+    deid(opened_dicom, param_file, archive_file, filename, _log=_log)
+    strip_dates(opened_dicom, replacement_date, _log=_log)
     return opened_dicom

@@ -44,6 +44,9 @@ class CommandInfo:
     options: Tuple[ArgInfo, ...]     # populated only if signature has 'options'
     returns: Tuple[ArgInfo, ...]     # ordered as listed in Returns:
     origin: str
+    # optional `logging:` from the qx_command block: none|comlog|runlog|both.
+    # None means the command states nothing and the settings files decide.
+    logging: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -108,6 +111,7 @@ def registry_from_obj(obj: Dict[str, Any]) -> Registry:
                 options=load_args(c.get("options") or []),
                 returns=load_args(c.get("returns") or []),
                 origin=c.get("origin", source_id),
+                logging=c.get("logging"),
             )
         )
 

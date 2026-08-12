@@ -20,6 +20,8 @@ None of the code is run directly from the terminal interface.
 import os
 import subprocess
 
+import qx_utilities.general.log as gl
+
 
 if "QUNEXMCOMMAND" not in os.environ:
     print("WARNING: QUNEXMCOMMAND environment variable not set. Matlab will be run by default!")
@@ -47,7 +49,15 @@ def help(command):
 #                                                              RUNNING FUNCTIONS
 #
 
-def run(qx_command, args):
+def run(qx_command, args, run=None):
+    """
+    Runs a matlab command, keeping its output in a comlog of its own.
+
+    The comlog is renamed by the exit status, so a failed matlab call is
+    visible in the file listing, and the outcome is recorded in the runlog.
+
+    For internal use only.
+    """
 
     # -- prepare arguments
 
@@ -89,33 +99,17 @@ def run(qx_command, args):
     mcom = "%s(%s)" % (qx_command.name, ", ".join(arglist))
     com = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcommand, mcom)
 
-    # --- parse output options
-
-    sout = None
-    serr = None
-
-    if "saveOutput" in args:
-        output = args['saveOutput']
-        if 'return' in output:
-            serr = subprocess.STDOUT
-            sout = subprocess.PIPE
-        elif 'both' in output:
-            serr = subprocess.STDOUT
-            sout = open(output.split(':')[1].strip(), 'a')
-        else:
-            for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-                if k == 'stdout':
-                    sout = open(v, 'a')
-                elif k == 'stderr':
-                    serr = open(v, 'a')
-
-    # --- run command
+    # --- run command, keeping the output
 
     print("\nRunning:\n>>> %s\n" % (mcom))
 
-    ret = subprocess.call(com, shell=True, stdout=sout, stderr=serr)
+    ret = gl.run_and_log(com, qx_command.name, run=run)
 
     if ret:
         print("\n\nERROR: %s failed! Please check output / log!\n" % (qx_command.name))
     else:
         print("\n\n---> Successful completion of task\n")
+
+    # the caller writes the run's status record from this; printing it was all
+    # that used to be done with it
+    return ret

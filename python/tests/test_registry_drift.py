@@ -46,3 +46,24 @@ def test_committed_registry_matches_rebuild(tmp_path, monkeypatch):
         f"  new in rebuild: {added}\n"
         f"  changed: {changed}"
     )
+
+
+def test_no_registered_argument_starts_with_an_underscore():
+    """
+    The underscore rule, which is what makes ``_log`` unsettable.
+
+    A command opts into a report log by declaring ``_log=None``, and
+    ``qx_registry_build`` drops underscore-prefixed signature parameters so
+    ``Command.has_arg`` stays false for them. Were one to reach the registry it
+    would become a CLI parameter taking a ``ReportLog`` and receiving a string.
+    """
+    commands = yaml.safe_load((REPO_ROOT / "qx_commands.yaml").read_text())["commands"]
+
+    leaked = [
+        "%s --%s" % (c["name"], a["name"])
+        for c in commands
+        for a in (c.get("args") or [])
+        if a["name"].startswith("_")
+    ]
+
+    assert not leaked, "underscore-prefixed parameters reached the registry: %s" % leaked

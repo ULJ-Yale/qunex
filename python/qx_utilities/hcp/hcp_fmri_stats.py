@@ -168,14 +168,14 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
 
         # hcp_fmristats_procstring
         if options["hcp_fmristats_procstring"] is None:
-            log.raw("\\nERROR: hcp_fmristats_procstring parameter is not set!\n")
+            log.error("hcp_fmristats_procstring parameter is not set!\n")
             run = False
 
         # --- matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = None
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                 run = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -187,7 +187,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             elif options["hcp_matlab_mode"] == "octave":
                 matlabrunmode = "2"
             else:
-                log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 run = False
 
         # --- Build the command
@@ -275,7 +275,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP fMRI Stats",
@@ -287,12 +287,13 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP fMRI Stats", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP fMRI Stats", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP fMRI Stats can be run")
@@ -305,7 +306,7 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

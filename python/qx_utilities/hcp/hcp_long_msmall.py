@@ -217,7 +217,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         # --- Get sorted bold numbers and bold data
         #
         # WARNING: Only BOLDS from the first session are identified!
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo[0], options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo[0], options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
@@ -237,10 +237,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     outfmriname = options["hcp_msmall_outfmriname"]
 
                     log.raw("\n\n------------------------------------------------------------")
-                    log.raw("\n---> %s MSMAll %s" % (
-                        pc.action("Processing", options["run"]),
-                        outfmriname,
-                    ))
+                    log.action("Processing", f"MSMAll {outfmriname}", options["run"])
 
                     # --- check for bold images and prepare targets parameter
                     boldtargets = ""
@@ -274,10 +271,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             boldtarget,
                             "%s%s.dtseries.nii" % (boldtarget, fmriprocstring),
                         )
-                        boldok = log.check_for_file(boldimg,
-                            "\n     ... bold image %s present" % boldtarget,
-                            "\n     ... ERROR: bold image [%s] missing!" % boldimg,
+                        boldok = pc.check_for_file(boldimg,
+                            f"bold image {boldtarget} present",
+                            f"bold image [{boldimg}] missing!",
                             status=boldok,
+                            bad_level="error",
+                            _log=log,
                         )
 
                         if not boldok:
@@ -296,10 +295,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                         groupimg = os.path.join(
                             hcp["hcp_nonlin"], "Results", groupname, groupica
                         )
-                        boldok = log.check_for_file(groupimg,
-                            "\n     ... ICA %s present" % groupname,
-                            "\n     ... ERROR: ICA [%s] missing!" % groupimg,
+                        boldok = pc.check_for_file(groupimg,
+                            f"ICA {groupname} present",
+                            f"ICA [{groupimg}] missing!",
                             status=boldok,
+                            bad_level="error",
+                            _log=log,
                         )
 
                     if options["hcp_msmall_templates"] is None:
@@ -321,7 +322,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     matlabrunmode = None
                     if options["hcp_matlab_mode"] is None:
                         if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                            log.raw("\\nERROR: hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                            log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
                             boldok = False
                         else:
                             matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
@@ -333,7 +334,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                         elif options["hcp_matlab_mode"] == "octave":
                             matlabrunmode = "2"
                         else:
-                            log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                            log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                             boldok = False
 
                     # fix names to use
@@ -341,7 +342,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
                     studyfolder = gc.deduceFolders(options)["basefolder"]
                     if not studyfolder:
-                        log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                        log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                         boldok = False
                     # replace path
                     path = os.path.join(studyfolder, "subjects", subject_id)
@@ -399,7 +400,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     # -- Run
                     if run and boldok:
                         if options["run"] == "run":
-                            _, _, failed = log.run_external(
+                            _, _, failed = pc.run_external_for_file(
                                 None,
                                 comm,
                                 "Running HCP MSMAll",
@@ -411,6 +412,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 logtags=[options["logtag"], groupname],
                                 full_test=None,
                                 shell=True,
+                                _log=log,
                             )
                             failed = False
 
@@ -501,11 +503,12 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
                         # -- just checking
                         else:
-                            passed, _, failed = log.check_run(
+                            passed, _, failed = pc.check_run(
                                 None,
                                 None,
                                 "HCP MSMAll " + f"{subject_id}_{groupname}",
                                 overwrite=True,
+                                _log=log,
                             )
                             if failed == 0:
                                 log.step("HCP MSMAll can be run")
@@ -522,16 +525,11 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                             log.error("something missing, this group would be skipped!")
 
                 except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-                    log.raw("\n\n\n --- Failed during processing of group %s with error:\n"
-                        % (f"{subject_id}_{groupname}"))
+                    log.raw(f"\n\n\n --- Failed during processing of group {f'{subject_id}_{groupname}'} with error:\n")
                     log.raw(str(errormessage))
                     report["failed"].append(f"{subject_id}_{groupname}")
                 except Exception:
-                    log.raw("\n --- Failed during processing of group %s with error:\n %s\n"
-                        % (
-                            f"{subject_id}_{groupname}",
-                            traceback.format_exc(),
-                        ))
+                    log.info(f" --- Failed during processing of group {f'{subject_id}_{groupname}'} with error:\n {traceback.format_exc()}\n")
                     report["failed"].append(f"{subject_id}_{groupname}")
         else:
             log.step("Subject cannot be processed.")

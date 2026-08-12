@@ -62,8 +62,8 @@ def sign(x):
 
 
 def read_text_file_to_lines(filename):
-    file = open(filename, 'r')
-    s = file.read()
+    with open(filename, 'r') as file:
+        s = file.read()
     s = s.replace('\r', '\n')
     s = s.replace('\n\n', '\n')
     s = s.split('\n')
@@ -1504,6 +1504,9 @@ def compare_nifti_images(file1, file2, ndifflines=10):
     headers, extensions, and data arrays. The comparison is presented in a
     structured, tabular format highlighting differences.
 
+    ..  qx_command:
+        type: utility
+
     Parameters:
         --file1 (str):
             The path to the first NIFTI file to compare. Can be .nii or .nii.gz
@@ -1522,11 +1525,13 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         The function performs comparison in the following order:
 
         1. **File Hash Comparison**:
+
            - Computes SHA-256 hash of both complete files
            - If hashes match, files are identical and comparison stops
            - If hashes differ, proceeds with detailed analysis
 
         2. **Header Comparison**:
+
            - Opens both files and reads NIfTI headers
            - Compares each header field individually
            - Reports field name, value from file1, and value from file2 for
@@ -1534,22 +1539,30 @@ def compare_nifti_images(file1, file2, ndifflines=10):
            - Handles both NIfTI-1 (348 byte) and NIfTI-2 (540 byte) headers
 
         3. **Extension Comparison**:
+
            - Compares the number of extensions in each file
            - Identifies extensions present in one file but not the other
            - For matching extension codes:
+
              * Compares extension hashes (SHA-256)
              * If hashes match, reports extensions as identical
              * If hashes differ and extension is text:
+
                - Performs line-by-line diff
-               - Displays rows that differ between files (limited by ndifflines)
+               - Displays rows that differ between files (limited by
+                 ndifflines)
+
              * If hashes differ and extension is binary:
+
                - Reports that extensions differ
                - Lists the size of each extension
 
         4. **Data Comparison**:
+
            - Checks if data dimensionality matches (shape of arrays)
            - If dimensions differ, reports the difference
            - If dimensions match:
+
              * Computes SHA-256 hash over the data arrays
              * Reports whether data is identical or different
              * Does not load entire data into memory for large files

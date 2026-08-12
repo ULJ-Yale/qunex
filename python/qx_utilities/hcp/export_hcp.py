@@ -25,6 +25,7 @@ import time
 import shutil
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 
 def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
@@ -190,7 +191,9 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
     # -- open logfile
-    logfilename, logfile = gc.get_log_file(folders={'sessionsfolder': sessionsfolder}, tags=['export_hcp'])
+    logfolder = gc.deduce_folders({'sessionsfolder': sessionsfolder})['logfolder']
+    comlog = gl.ComContext(gl.comlog_folder(logfolder), 'export_hcp').open()
+    logfile = comlog.file
 
     # -- start
     gc.print_and_log(gc.underscore("Running export_hcp"), file=logfile)
@@ -213,7 +216,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
 
     if not to_map:
         gc.print_and_log("ERROR: Found nothing to map!", file=logfile, silent=True)
-        endlog = gc.close_log_file(logfile, logfilename, status="error")
+        endlog = comlog.close(status="error")
         raise ge.CommandFailed("export_hcp", "Nothing to map" , "No files were found to map!", "Please check your data!")
 
     # -- check mapping
@@ -240,7 +243,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         for sfile, tfile in missing:
             gc.print_and_log("           ---> " + sfile, file=logfile)
         gc.print_and_log("\nMapping Aborted!", file=logfile)
-        endlog = gc.close_log_file(logfile, logfilename, status="error")
+        endlog = comlog.close(status="error")
         raise ge.CommandFailed("export_hcp", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
 
     if existing:
@@ -262,7 +265,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
 
         if overwrite.lower() == 'no':
             gc.print_and_log("---> Mapping Aborted!", file=logfile)
-            endlog = gc.close_log_file(logfile, logfilename, status="error")
+            endlog = comlog.close(status="error")
             raise ge.CommandFailed("export_hcp", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
 
     if toexclude:
@@ -273,7 +276,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
 
     if not process:
         gc.print_and_log("---> Nothing left to map!", file=logfile, silent=True)
-        endlog = gc.close_log_file(logfile, logfilename, status="done")
+        endlog = comlog.close(status="done")
         raise ge.CommandNull("export_hcp", "Nothing left to map" , "After skipping and exclusion, no files were left to map!", "Please check your data!")
 
     # -- execute mapping
@@ -355,8 +358,8 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         for sfile, tfile in failed:
             gc.print_and_log("---> %s ---> %s" % (sfile, tfile), file=logfile)
 
-        endlog = gc.close_log_file(logfile, logfilename, status="error")
+        endlog = comlog.close(status="error")
         raise ge.CommandFailed("export_hcp", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
 
     gc.print_and_log("---> Mapping completed", file=logfile)
-    endlog = gc.close_log_file(logfile, logfilename, status="done")
+    endlog = comlog.close(status="done")

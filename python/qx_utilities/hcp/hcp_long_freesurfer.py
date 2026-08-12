@@ -162,7 +162,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         # exit if overwrite is not set, else cleanup
         long_dir_exists = os.path.lexists(long_dir)
         if not overwrite and long_dir_exists:
-            log.raw(f"\n---> ERROR: {long_dir} already exists and overwrite is set to no!")
+            log.error(f"{long_dir} already exists and overwrite is set to no!")
             run = False
         else:
             if long_dir_exists:
@@ -179,7 +179,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             source_dir = os.path.join(session["hcp"], session["id"])
             # check that source exists
             if not os.path.exists(source_dir):
-                log.raw(f"\n---> ERROR: {source_dir} does not exists, cannot map into longutidinal folder structure!")
+                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
                 run = False
 
             target_dir = os.path.join(study_folder, session["id"])
@@ -265,7 +265,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Longitudinal FS",
@@ -277,6 +277,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed == 0:
@@ -298,8 +299,8 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             # -- just checking
             else:
-                passed, _, _ = log.check_run(
-                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite
+                passed, _, _ = pc.check_run(
+                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP Longitudinal FS can be run")
@@ -321,7 +322,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "Error"
         failed = 1
     except Exception:

@@ -255,8 +255,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> NHP mandatory parameters
@@ -306,8 +305,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if e.strip() not in ["aseg", "wm", "brainmask", "yes", "true"]
             ]
             if extra:
-                log.raw("\n---> ERROR: Invalid edits specified in hcp_fs_edits: '%s' ['%s']"
-                    % (",".join(extra), options["hcp_fs_edits"]))
+                log.error(f"Invalid edits specified in hcp_fs_edits: '{','.join(extra)}' ['{options['hcp_fs_edits']}']")
                 run = False
 
             else:
@@ -336,12 +334,12 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         edited.append("control")
                     for efile, destfile in copyfiles:
                         if os.path.exists(destfile):
-                            log.raw("\n     ... replacing: %s " % (fname))
+                            log.detail(f"replacing: {fname} ")
                         else:
-                            log.raw("\n     ... adding: %s " % (fname))
+                            log.detail(f"adding: {fname} ")
                         shutil.copy2(efile, destfile)
                 else:
-                    log.raw("\n     ... no edits files found in %s!" % (editsfolder))
+                    log.detail(f"no edits files found in {editsfolder}!")
 
                 # -- set extra parameters
                 options["hcp_fs_existing_session"] = True
@@ -355,8 +353,8 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                     add_extra = ["-autorecon-pial"]
                 else:
                     log.error("No edits specified and no edited files found!")
-                    log.raw("\n            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits.")
-                    log.raw("\n            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters.")
+                    log.info("            If you are processing edits to control points, wm, aseg, or brainmask, please provide the appropriate edit files or list them explicitly in hcp_fs_edits.")
+                    log.info("            For other edits, please set hcp_fs_edits to FALSE, and use hcp_fs_existing_session and hcp_fs_extra_reconall parameters.")
                     run = False
                     add_extra = []
 
@@ -451,8 +449,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 # ---> clean up only if hcp_fs_existing_session is not set to True
                 if overwrite and not options["hcp_fs_existing_session"]:
                     if os.path.lexists(hcp["FS_folder"]):
-                        log.raw("\n---> removing preexisting FS folder [%s]"
-                            % (hcp["FS_folder"]))
+                        log.step(f"removing preexisting FS folder [{hcp['FS_folder']}]")
                         shutil.rmtree(hcp["FS_folder"], ignore_errors=True)
                     for toremove in [
                         "fsaverage",
@@ -467,17 +464,14 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             elif os.path.isdir(rmtarget):
                                 shutil.rmtree(rmtarget)
                         except Exception:
-                            log.raw("\n---> WARNING: Could not remove preexisting file/folder: %s! Please check your data!"
-                                % (rmtarget))
+                            log.warning(f"Could not remove preexisting file/folder: {rmtarget}! Please check your data!")
                             status = False
 
                 if os.path.exists(post_fs_tfile):
                     log.warning("PostFreeSurfer results already present!")
                     # -> cleanup postfs
-                    log.raw("\n     Found PostFreeSurfer results file: %s" % (
-                        post_fs_tfile
-                    ))
-                    log.raw("\n     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
+                    log.info(f"     Found PostFreeSurfer results file: {post_fs_tfile}")
+                    log.info("     Cleaning up PostFreeSurfer results to allow FreeSurfer reprocessing ...")
                     have_postfs_diff = os.path.exists(postfs_snapshot_paths["diff"])
                     have_postfs_backup = os.path.exists(postfs_snapshot_paths["backup"])
 
@@ -486,14 +480,16 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                             diff=postfs_snapshot_paths["diff"],
                             action="delete",
                             exclude=hcp["snapshots"],
+                            _log=log,
                         )
 
                         # -> restore backup
-                        log.raw("\n     Restoring FreeSurfer backup ...")
+                        log.info("     Restoring FreeSurfer backup ...")
                         gs.restore_files(
                             source=postfs_snapshot_paths["backup"],
                             target=hcp["base"],
                             overwrite=True,
+                            _log=log,
                         )
                     elif have_postfs_diff or have_postfs_backup:
                         raise ge.CommandFailed(
@@ -519,7 +515,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if status:
-                    endlog, report, failed = log.run_external(
+                    endlog, report, failed = pc.run_external_for_file(
                         None,
                         comm,
                         "Running HCP NHP FS",
@@ -531,12 +527,13 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         logtags=options["logtag"],
                         full_test=None,
                         shell=True,
+                        _log=log,
                     )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP NHP FS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP NHP FS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP NHP FS can be run")
@@ -552,7 +549,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "FS failed"
         failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

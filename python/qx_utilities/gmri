@@ -39,6 +39,7 @@ from qx_utilities.general import run_bash as gb
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
+from qx_utilities.general import log as gl
 from qx_registry import qx_commands
 
 
@@ -71,6 +72,21 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 """
 
 
+def _call_summary(outcome):
+    """
+    What one call through `run_with_log` is reported as, in one line.
+
+    The same spelling for the run's final report and for the status record a
+    parent reads, so the two cannot drift: the error when the call raised, and
+    the comlog to read when there is one.
+    """
+    return "%s%s" % (
+        outcome.error
+        or ("completed with errors" if outcome.failed else "completed"),
+        " [log: %s]" % outcome.comlog if outcome.comlog else "",
+    )
+
+
 def runCommand(command, args):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
@@ -90,30 +106,56 @@ def runCommand(command, args):
         print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
         sys.exit(1)
 
-    
+    # -- how, and whether, this run is logged
+    log_settings = gl.resolve_logging(
+        command,
+        args,
+        qx_command=qx_command,
+        studyfolder=folders["basefolder"],
+        legacy_skip=gcs.logskip_commands,
+    )
+
+    # the helpers at the bottom of `processing.core` hold no context; this is
+    # the only way the answer reaches them
+    gl.set_active(log_settings)
+
     # -- is this a processing command?
     if qx_command.language == "python" and qx_command.type.startswith("processing"):
-        gp.run(qx_command, args)
+        # process.run builds its own RunContext: it merges the batch file into
+        # the options first, and that can move the study (and so the log)
+        # folder. The settings resolved above are what it builds it from.
+        gp.run(qx_command, args, log_settings)
         return
-    
-    # -- is this a matlab command?
-    if qx_command.language == "matlab":
+
+    # -- one runlog per run, shared by every call this invocation makes; built
+    #    before any dispatch, so the matlab, bash and scheduler paths get it too
+    run = gl.RunContext(command, args, log_settings, folders, timestamp=timestamp)
+
+    # -- is this a matlab or a bash command?
+    if qx_command.language in ["matlab", "bash"]:
+        run.header()
         if "scheduler" in args:
-            gs.run_through_scheduler(
-                command, sessions=None, args=args, logfolder=folders["logfolder"]
-            )
+            # the job is submitted, not run: what it did is for the run on the
+            # node to report, so there is no record to write here
+            gs.run_through_scheduler(command, sessions=None, args=args, run=run)
         else:
-            gm.run(qx_command, args)
-        return
-    
-    # -- is this a bash command?
-    if qx_command.language == "bash":
-        if "scheduler" in args:
-            gs.run_through_scheduler(
-                command, sessions=None, args=args, logfolder=folders["logfolder"]
+            if qx_command.language == "matlab":
+                code = gm.run(qx_command, args, run=run)
+            else:
+                code = gb.run(qx_command, args, run=run)
+
+            # the record a parent asked for. The exit code was the only thing
+            # these paths reported and it reached the console alone, so a
+            # matlab or bash step of a recipe had no status at all
+            run.write_status(
+                [
+                    (
+                        command,
+                        "completed" if not code else "failed with exit code %s" % code,
+                        1 if code else 0,
+                    )
+                ]
             )
-        else:
-            gb.run(qx_command, args)
         return
 
     # -- any other (unsupported) language
@@ -169,8 +211,6 @@ def runCommand(command, args):
             verbose=False,
         )
 
-    logname = eargs.get("logname")
-
     calls = []
 
     # -- run_recipe specifics
@@ -188,13 +228,13 @@ def runCommand(command, args):
                     all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
+                run.header()
                 gs.run_through_scheduler(
                     command,
                     sessions=sessions,
                     args=args,
                     parsessions=parsessions,
-                    logfolder=folders["logfolder"],
-                    logname=logname,
+                    run=run,
                 )
 
             else:
@@ -236,6 +276,13 @@ def runCommand(command, args):
 
                     recipe_args["eargs"] = recipe_eargs
 
+                    # the recipe builds its own RunContext from these -- the
+                    # recipe file can move the study -- but every parallel
+                    # recipe of one invocation logs into one folder
+                    recipe_args["log_settings"] = log_settings
+                    if not recipe_args.get("logfolder"):
+                        recipe_args["logfolder"] = run.logfolder
+
                     # disable within recipe parallelism
                     recipe_eargs["parsessions"] = 1
 
@@ -244,36 +291,18 @@ def runCommand(command, args):
                             "name": "run_recipe_%d" % (c),
                             "function": qx_command.load_callable(),
                             "args": recipe_args,
-                            "logfile": None,
                         }
                     )
 
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand
             if "scheduler" in eargs:
-                run_recipe_folder = folders["logfolder"]
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                run_recipe_folder = os.path.join(run_recipe_folder)
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
-                    "run_recipe",
-                    timestamp,
-                )
-
-                gs.run_through_scheduler(
-                    command, args=args, logfolder=run_recipe_folder, logname=logname
-                )
+                run.header()
+                gs.run_through_scheduler(command, args=args, run=run)
 
             else:
                 bargs["eargs"] = eargs
+                bargs["log_settings"] = log_settings
                 qx_commands.get(command).load_callable()(**bargs)
                 print(f"\n---> Successful completion of task at {datetime.now()}")
 
@@ -283,48 +312,53 @@ def runCommand(command, args):
 
         # -- are we using a scheduler
         if "scheduler" in eargs:
+            run.header()
             gs.run_through_scheduler(
                 command,
                 sessions=sessions,
                 args=args,
                 parsessions=parsessions,
-                logfolder=folders["logfolder"],
-                logname=logname,
+                run=run,
             )
 
         # -- a basic call
         elif sessions is None:
-            # logfolder
-            if not folders["logfolder"]:
-                folders["logfolder"] = "."
-
-                # createstudy exception
-                if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/logs"
-                elif command == "create_study":
-                    folders["logfolder"] = "./logs"
-
-            suffix = ""
-            if "batchfile" in args and "sessions" in args:
-                suffix = "_" + args["sessions"]
-
-            logfile = os.path.join(
-                folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
-            )
-            # run without log for exceptions
-            # remove logs for exceptions
-            if command in gcs.logskip_commands:
-                # remove non-command args
-                args = {k: v for k, v in args.items() if qx_commands.get(command).has_arg(k)}
+            # commands that are not logged run bare, without a comlog
+            if not log_settings.enabled:
+                # drop the run-level parameters the command itself does not take
+                callable = qx_commands.get(command).load_callable()
+                gc._drop_run_parameters(callable, args)
                 # execute
-                qx_commands.get(command).load_callable()(**args)
+                callable(**args)
             # run with log
             else:
-                _, result, _, _ = gc.run_with_log(
+                run.header()
+                outcome = gc.run_with_log(
                     qx_commands.get(command).load_callable(),
-                    args=bargs,
-                    logfile=logfile,
+                    args=args,
+                    run=run,
+                    tags=[command, args.get("sessions")],
                 )
+
+                # and, when a parent process asked for it, what this call did
+                # as data. The sessions loop below and `gp.run` both write
+                # theirs; a single utility call wrote none, so every utility
+                # step of a recipe was reported as "no status reported" --
+                # which is also what the step's caller has instead of an exit
+                # code once the call is one of several in a recipe
+                run.write_status([(command, _call_summary(outcome), outcome.failed)])
+
+                # a failed command exits non-zero, the way the parallel path
+                # below already does: `bin/qunex.sh` returns gmri's status
+                # verbatim, so this is how a shell, a scheduler job or CI
+                # learns the command did not do what it was asked
+                if outcome.failed:
+                    raise ge.CommandFailed(
+                        command,
+                        "The command did not complete successfully",
+                        "Please check the log in %s"
+                        % (outcome.comlog or run.logfolder),
+                    )
 
         # -- sessions loop
         else:
@@ -332,12 +366,6 @@ def runCommand(command, args):
                 targs = dict(bargs)
                 name = command + ": " + session["id"]
                 sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
-                if folders["logfolder"]:
-                    logfile = os.path.join(
-                        folders["logfolder"],
-                        "comlogs",
-                        "%s_%s.log" % (command, session["id"]),
-                    )
                 for targ in ["sourcefolder", "folder"]:
                     if qx_command.has_arg(targ):
                         targs[targ] = sessionsfolder
@@ -347,12 +375,14 @@ def runCommand(command, args):
                         "name": name,
                         "function": qx_command.load_callable(),
                         "args": targs,
-                        "logfile": logfile,
+                        "tags": [command, session["id"]],
                     }
                 )
 
     # -- Have we set up calls to run in parallel?
     if calls:
+        run.header()
+
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(["=" for e in range(len(callInfo))])
         print(callInfo)
@@ -361,22 +391,32 @@ def runCommand(command, args):
             "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
-        results = gc.run_in_parallel(calls, cores=parsessions, prepend="     ... ")
+        results = gc.run_in_parallel(
+            calls, cores=parsessions, prepend="     ... ", run=run
+        )
 
-        ok = True
-        print("\n---> Final report for command", command)
-        results.sort(key=lambda x: x[0])
-        for name, result, targetLog, prepend in results:
-            if result:
-                ok = False
-            else:
-                result = "completed"
-            if targetLog:
-                print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
-            else:
-                print("%s %s %s" % (prepend, name, result))
-        if ok:
-            print(f"\n---> Successful completion of task at {datetime.now()}")
+        # the same digest a processing command produces, from the same method:
+        # the results are adapted to the (id, summary, failed) contract, with
+        # the comlog path folded into the summary. `failed` comes from
+        # run_with_log, which counts a recorded error as well as a raise; this
+        # path is deleted when utility commands that run over sessions become
+        # processing commands and go through `gp.run`.
+        stati = [
+            (outcome.name, _call_summary(outcome), outcome.failed)
+            for outcome in sorted(results, key=lambda outcome: outcome.name)
+        ]
+        run.final_report(stati)
+        run.write_status(stati)
+
+        # `failed is None` is a call that did not complete -- a worker that
+        # died -- and it fails the run as squarely as a call that reported a
+        # failure does
+        if any(failed is None or failed for _, _, failed in stati):
+            raise ge.CommandFailed(
+                command,
+                "Not all tasks completed fully",
+                "Please check the logs in %s" % (run.logfolder),
+            )
 
 
 def print_bash_help(cmd):
@@ -489,15 +529,26 @@ def main(args=None):
         else:
             runCommand(comm, opts)
 
+    # A parent that asked for a status record gets one however this ends. The
+    # run writes its own when it gets far enough to build one, and this fills
+    # in for the runs that do not: a command that raised before its loop, a
+    # worker that never came back, a name that is not a command. Without it
+    # `run_recipe` reported such a step as "no status reported" -- the step
+    # that failed hardest being the one it could say least about. A record
+    # already written is kept: `write_failure_status` no-ops after one.
     except ge.CommandNull as e:
+        # nothing to do is not a failure, and the record says so
+        gl.write_failure_status(opts, comm, e, failed=0)
         print(ge.report_command_null(comm, e))
         print()
         sys.exit(0)
     except ge.CommandFailed as e:
+        gl.write_failure_status(opts, comm, e)
         print(ge.report_command_failed(comm, e))
         print()
         sys.exit(1)
     except ge.CommandError as e:
+        gl.write_failure_status(opts, comm, e)
         print(ge.report_command_error(comm, e))
         print(
             "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
@@ -509,6 +560,7 @@ def main(args=None):
         )
         sys.exit(1)
     except ValueError as e:
+        gl.write_failure_status(opts, comm, e)
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\nERROR: Execution of qunex command %s failed!"
             % (comm)
@@ -520,8 +572,15 @@ def main(args=None):
         )
         raise
     except SystemExit as e:
+        # the paths that exit rather than raise -- an unrecognised command, an
+        # unsupported language -- and which a recipe reaches by way of a typo
+        if e.code:
+            gl.write_failure_status(opts, comm, "exited with status %s" % e.code)
         sys.exit(e)
     except:
+        # the clause stays bare: it is what keeps a KeyboardInterrupt from
+        # being swallowed here, so the exception is read rather than bound
+        gl.write_failure_status(opts, comm, sys.exc_info()[1])
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\n\nERROR: Execution of command `%s` failed!"
             % (comm)

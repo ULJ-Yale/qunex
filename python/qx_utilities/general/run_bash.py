@@ -15,14 +15,24 @@ None of the code is run directly from the terminal interface.
 """
 
 import os
-import subprocess
+
+import qx_utilities.general.commands_support as gcs
+import qx_utilities.general.log as gl
 
 
 # ==============================================================================
 #                                                              RUNNING FUNCTIONS
 #
 
-def run(qx_command, args):
+def run(qx_command, args, run=None):
+    """
+    Runs a bash command, keeping its output in a comlog of its own.
+
+    The comlog is renamed by the exit status, so a failed script is visible in
+    the file listing, and the outcome is recorded in the runlog.
+
+    For internal use only.
+    """
 
     # -- resolve script path
 
@@ -37,6 +47,10 @@ def run(qx_command, args):
     arglist = []
 
     for key, value in args.items():
+        # the run-level parameters steer how qunex runs the command, not what
+        # the script does; none of the registered scripts reads them
+        if key in gcs.extra_parameters and not qx_command.has_arg(key):
+            continue
         if value is True:
             arglist.append("--%s" % (key))
         else:
@@ -44,13 +58,17 @@ def run(qx_command, args):
 
     com = " ".join(["bash", script] + arglist)
 
-    # -- run command
+    # -- run command, keeping the output
 
     print("\nRunning:\n>>> %s\n" % (com))
 
-    ret = subprocess.call(com, shell=True)
+    ret = gl.run_and_log(com, qx_command.name, run=run)
 
     if ret:
         print("\n\nERROR: %s failed! Please check output / log!\n" % (qx_command.name))
     else:
         print("\n\n---> Successful completion of task\n")
+
+    # the caller writes the run's status record from this; printing it was all
+    # that used to be done with it
+    return ret

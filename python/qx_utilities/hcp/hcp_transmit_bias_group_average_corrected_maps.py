@@ -154,8 +154,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             # resolves and validates the session HCP paths
             get_hcp_paths(session, options)
             if "hcp" not in session:
-                log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                    % (session["id"]))
+                log.error(f"There is no hcp info for session {session['id']} in batch.txt")
                 run = False
 
             # subject_list
@@ -199,9 +198,9 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             voltages_file = options["hcp_voltages"]
 
             if os.path.exists(voltages_file):
-                log.raw(f"\n---> Using existing hcp_voltages file: {voltages_file}")
+                log.step(f"Using existing hcp_voltages file: {voltages_file}")
             else:
-                log.raw(f"\n---> hcp_voltages file does not exist. Creating it: {voltages_file}")
+                log.step(f"hcp_voltages file does not exist. Creating it: {voltages_file}")
                 run = write_transmit_bias_voltages(
                     sessions, options, voltages_file, log
                 )
@@ -218,7 +217,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                 elif options["hcp_matlab_mode"] == "octave":
                     matlabrunmode = "2"
                 else:
-                    log.raw("\\nERROR: unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     run = False
             else:
                 matlabrunmode = "0"
@@ -307,7 +306,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
         # -- Run
         if run:
             if options["run"] == "run":
-                endlog, report, failed = log.run_external(
+                endlog, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP Transmit Bias Phase 4, Group Average Corrected Maps",
@@ -319,6 +318,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                     logtags=options["logtag"],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 # #Remove soft links
@@ -326,11 +326,12 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
+                passed, report, failed = pc.check_run(
                     None,
                     None,
                     "HCP Transmit Bias Phase 4, Group Average Corrected Maps",
                     overwrite=overwrite,
+                    _log=log,
                 )
                 if passed is None:
                     log.step("HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run")
@@ -343,11 +344,11 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
-        log.raw(f"\nERROR: Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
+        log.error(f"{e}")
+        log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
         failed = 1
 
     #Remove soft links to prevent clutter

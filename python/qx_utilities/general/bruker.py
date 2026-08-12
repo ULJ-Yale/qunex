@@ -35,9 +35,10 @@ import shutil
 # qx imports
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 
-def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1):
+def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1, _log=None):
     """
     ``bruker_to_dicom [... processing options]``
 
@@ -84,8 +85,11 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
     """
 
-    print('Running bruker_to_dicom')
-    print('=======================')
+    log = gl.log_or_console(_log)
+
+    # `raw` because a title over its own rule is not a record shape; no
+    # trailing newline, since every record that follows opens with one
+    log.raw('\nRunning bruker_to_dicom\n=======================')
 
     # check inputs
     if archive not in ['leave', 'move', 'copy', 'delete']:
@@ -104,19 +108,19 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, 'inbox', 'bruker')):
         os.makedirs(os.path.join(sessionsfolder, 'inbox', 'bruker'))
-        print('---> creating inbox bruker folder')
+        log.step('creating inbox bruker folder')
 
     # archive
     archive_dir = os.path.join(sessionsfolder, 'archive', 'bruker')
     if not os.path.exists(os.path.join(sessionsfolder, 'archive', 'bruker')):
         os.makedirs(archive_dir)
-        print('---> creating archive bruker folder')
+        log.step('creating archive bruker folder')
 
     # identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r' +|\| *|, *', sessions)]
 
-    print('---> identifying files in %s' % (inbox))
+    log.step(f"identifying files in {inbox}")
 
     # prepare calls
     calls = []
@@ -140,20 +144,20 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
             # onboard
             if onboard:
-                print(f'\n---> importing {d}')
+                log.blank()
+                with log.section(f'importing {d}'):
+                    # target path
+                    target_path = os.path.join(sessionsfolder, 'inbox', 'MR', d)
+                    if not os.path.exists(target_path):
+                        os.makedirs(target_path)
 
-                # target path
-                target_path = os.path.join(sessionsfolder, 'inbox', 'MR', d)
-                if not os.path.exists(target_path):
-                    os.makedirs(target_path)
+                    log_path = os.path.join(target_path, 'bruker_to_dicom.log')
 
-                log_path = os.path.join(target_path, 'bruker_to_dicom.log')
+                    if os.path.exists(log_path):
+                        os.remove(log_path)
 
-                if os.path.exists(log_path):
-                    os.remove(log_path)
-
-                print(f'... importing to {target_path}')
-                print(f'... import log can be found at {log_path}')
+                    log.detail(f'importing to {target_path}')
+                    log.detail(f'import log can be found at {log_path}')
 
                 # dicomifier
                 calls.append({'name': 'bruker_to_dicom: ' + d, 'args': ['dicomifier', 'to-dicom', source_path, target_path], 'sout': log_path})
@@ -166,30 +170,45 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
                 dirs.append(dir_dict)
 
     # execute
-    print('\n---> running conversions')
-    done = gc.run_external_parallel(calls, cores=parelements, prepend=' ... ')
+    log.blank()
+    log.step('running conversions')
+    done = gc.run_external_parallel(calls, cores=parelements, _log=log)
 
     # archive
-    print()
+    failed = []
     i = 0
     for call in done:
         session = dirs[i]['session']
 
         if call['exit'] != 0:
-            print(f'WARNING: failed import for {session}, inspect {call["log"]}')
+            # a session whose conversion exited non-zero used to get this line
+            # and nothing else, so the command reported the failure and still
+            # exited 0
+            failed.append(session)
+            log.error(f'failed import for {session}, inspect {call["log"]}')
         elif archive != 'leave':
             source_path =  dirs[i]['source']
 
-            print(f'---> archiving {session}')
-            if archive == 'move':
-                print('... moving dataset to archive')
-                shutil.move(source_path, archive_dir)
-            elif archive == 'copy':
-                print('... copying dataset to archive')
-                shutil.copy2(source_path, archive_dir)
-            elif archive == 'delete':
-                print('... deleting dataset')
-                shutil.rmtree(source_path)
+            with log.section(f'archiving {session}'):
+                if archive == 'move':
+                    log.detail('moving dataset to archive')
+                    shutil.move(source_path, archive_dir)
+                elif archive == 'copy':
+                    log.detail('copying dataset to archive')
+                    shutil.copy2(source_path, archive_dir)
+                elif archive == 'delete':
+                    log.detail('deleting dataset')
+                    shutil.rmtree(source_path)
 
         # index increase
         i += 1
+
+    # raised after the loop, so one failing session does not abort its siblings
+    if failed:
+        raise ge.CommandFailed(
+            'bruker_to_dicom',
+            'Conversion failed',
+            'Conversion to DICOM failed for %d of %d sessions: %s'
+            % (len(failed), len(done), ', '.join(failed)),
+            'Please check the report!',
+        )

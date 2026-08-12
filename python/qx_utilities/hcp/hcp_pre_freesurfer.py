@@ -464,8 +464,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # --- check for T1w and T2w images
@@ -480,14 +479,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "T1w", "DwellTime", options
                 ):
                     options["hcp_t1samplespacing"] = f"{float(t1w['DwellTime']):.10f}"
-                    log.raw("\n---> T1w image specific EchoSpacing: %s s"
-                        % (options["hcp_t1samplespacing"]))
+                    log.step(f"T1w image specific EchoSpacing: {options['hcp_t1samplespacing']} s")
                 elif "EchoSpacing" in t1w and check_inline_parameter_use(
                     "T1w", "EchoSpacing", options
                 ):
                     options["hcp_t1samplespacing"] = f"{float(t1w['EchoSpacing']):.10f}"
-                    log.raw("\n---> T1w image specific EchoSpacing: %s s"
-                        % (options["hcp_t1samplespacing"]))
+                    log.step(f"T1w image specific EchoSpacing: {options['hcp_t1samplespacing']} s")
 
                 if (
                     options["hcp_unwarpdir"] is None
@@ -495,8 +492,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     and check_inline_parameter_use("T1w", "UnwarpDir", options)
                 ):
                     options["hcp_unwarpdir"] = t1w["UnwarpDir"]
-                    log.raw("\n---> T1w image specific unwarp direction: %s"
-                        % (options["hcp_unwarpdir"]))
+                    log.step(f"T1w image specific unwarp direction: {options['hcp_unwarpdir']}")
 
                 # try to set hcp_t1samplespacing from the JSON sidecar if not yet set
                 if options["hcp_t1samplespacing"] == "NONE":
@@ -509,7 +505,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 options["hcp_t1samplespacing"] = (
                                     f"{float(sidecar_data['DwellTime']):.10f}"
                                 )
-                                log.raw(f"\n       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}")
+                                log.info(f"       - hcp_t1samplespacing set to {options['hcp_t1samplespacing']}")
 
         if hcp["T2w"] in ["", "NONE"]:
             if options["hcp_processing_mode"] == "HCPStyleData":
@@ -532,16 +528,14 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         options["hcp_t2samplespacing"] = (
                             f"{float(t2w['DwellTime']):.10f}"
                         )
-                        log.raw("\n---> T2w image specific EchoSpacing: %s s"
-                            % (options["hcp_t2samplespacing"]))
+                        log.step(f"T2w image specific EchoSpacing: {options['hcp_t2samplespacing']} s")
                     elif "EchoSpacing" in t2w and check_inline_parameter_use(
                         "T2w", "EchoSpacing", options
                     ):
                         options["hcp_t2samplespacing"] = (
                             f"{float(t2w['EchoSpacing']):.10f}"
                         )
-                        log.raw("\n---> T2w image specific EchoSpacing: %s s"
-                            % (options["hcp_t2samplespacing"]))
+                        log.step(f"T2w image specific EchoSpacing: {options['hcp_t2samplespacing']} s")
 
                     # try to set hcp_t2samplespacing from the JSON sidecar if not yet set
                     if options["hcp_t2samplespacing"] == "NONE":
@@ -554,10 +548,10 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     options["hcp_t2samplespacing"] = (
                                         f"{float(sidecar_data['DwellTime']):.10f}"
                                     )
-                                    log.raw(f"\n       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}")
+                                    log.info(f"       - hcp_t2samplespacing set to {options['hcp_t2samplespacing']}")
 
                 else:
-                    log.raw("\n---> ERROR: Could not find T2w image file. [%s]" % (tfile))
+                    log.error(f"Could not find T2w image file. [{tfile}]")
                     run = False
 
         # --- do we need spinecho images
@@ -580,8 +574,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 # overwrite senum if set
                 if options["hcp_senum"]:
                     senum = options["hcp_senum"]
-                    log.raw("\n---> Overwriting automatically extracted Spin-Echo pair number with a user specified value: %s"
-                        % (options["hcp_senum"]))
+                    log.step(f"Overwriting automatically extracted Spin-Echo pair number with a user specified value: {options['hcp_senum']}")
                 if senum:
                     try:
                         senum = int(senum)
@@ -590,15 +583,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 hcp["source"],
                                 "SpinEchoFieldMap%d%s" % (senum, options["fctail"]),
                             )
-                            log.raw("\n---> TOPUP Correction, Spin-Echo pair %d specified"
-                                % (senum))
+                            log.step(f"TOPUP Correction, Spin-Echo pair {senum} specified")
                         else:
-                            log.raw("\n---> ERROR: No Spin-Echo image pair specified for T1w image! [%d]"
-                                % (senum))
+                            log.error(f"No Spin-Echo image pair specified for T1w image! [{senum}]")
                             run = False
                     except Exception:
-                        log.raw("\n---> ERROR: Could not process the specified Spin-Echo information [%s]! "
-                            % (str(senum)))
+                        log.error(f"Could not process the specified Spin-Echo information [{str(senum)}]! ")
                         run = False
 
             except Exception:
@@ -615,11 +605,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         .replace("SpinEchoFieldMap", "")
                         .replace("_fncb", "")
                     )
-                    log.raw("\n---> TOPUP Correction, no Spin-Echo pair explicitly specified, using pair %d"
-                        % (senum))
+                    log.step(f"TOPUP Correction, no Spin-Echo pair explicitly specified, using pair {senum}")
                 except Exception:
-                    log.raw("\n---> ERROR: Could not find folder with files for TOPUP processing of session %s."
-                        % (sinfo["id"]))
+                    log.error(f"Could not find folder with files for TOPUP processing of session {sinfo['id']}.")
                     run = False
                     raise
 
@@ -641,7 +629,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                 options["hcp_seechospacing"] = (
                                     f"{float(sidecar_data['EffectiveEchoSpacing']):.10f}"
                                 )
-                                log.raw(f"\n       - hcp_seechospacing set to {options['hcp_seechospacing']}")
+                                log.info(f"       - hcp_seechospacing set to {options['hcp_seechospacing']}")
 
             # -- spin echo settings
             sesettings = True
@@ -650,7 +638,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 "hcp_sephasepos",
             ]:
                 if not options[p]:
-                    log.raw(f"\nERROR: {p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
+                    log.error(f"{p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
                     run = False
                     sesettings = False
 
@@ -663,10 +651,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     ):
                         sepos = options["hcp_sephasepos"]
                         seneg = options["hcp_sephaseneg"]
-                        log.raw("\n---> Spin-Echo pair of images present. [%s, %s]" % (
-                            os.path.basename(sepos),
-                            os.path.basename(seneg),
-                        ))
+                        log.step(f"Spin-Echo pair of images present. [{os.path.basename(sepos)}, {os.path.basename(seneg)}]")
                     # labels
                     elif tufolder:
                         sepos = glob.glob(
@@ -681,12 +666,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         )[0]
 
                         if all([sepos, seneg]):
-                            log.raw("\n---> Spin-Echo pair of images present. [%s]" % (
-                                os.path.basename(tufolder)
-                            ))
+                            log.step(f"Spin-Echo pair of images present. [{os.path.basename(tufolder)}]")
                         else:
-                            log.raw("\n---> ERROR: Could not find the relevant Spin-Echo files! [%s]"
-                                % (tufolder))
+                            log.error(f"Could not find the relevant Spin-Echo files! [{tufolder}]")
                             run = False
 
                 # get SE info from session info
@@ -709,22 +691,19 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                         and check_inline_parameter_use("SE", "EchoSpacing", options)
                     ):
                         options["hcp_seechospacing"] = se_info["EchoSpacing"]
-                        log.raw("\n---> Spin-Echo images specific EchoSpacing: %s s"
-                            % (options["hcp_seechospacing"]))
+                        log.step(f"Spin-Echo images specific EchoSpacing: {options['hcp_seechospacing']} s")
 
                 if options["hcp_seunwarpdir"] is None:
                     if se_info and "phenc" in se_info:
                         options["hcp_seunwarpdir"] = se_dir_map[se_info["phenc"]]
-                        log.raw("\n---> Spin-Echo unwarp direction: %s"
-                            % (options["hcp_seunwarpdir"]))
+                        log.step(f"Spin-Echo unwarp direction: {options['hcp_seunwarpdir']}")
                     elif (
                         se_info
                         and "PEDirection" in se_info
                         and check_inline_parameter_use("SE", "PEDirection", options)
                     ):
                         options["hcp_seunwarpdir"] = se_info["PEDirection"]
-                        log.raw("\n---> Spin-Echo unwarp direction: %s"
-                            % (options["hcp_seunwarpdir"]))
+                        log.step(f"Spin-Echo unwarp direction: {options['hcp_seunwarpdir']}")
 
                 if options["hcp_topupconfig"] != "NONE" and options["hcp_topupconfig"]:
                     topupconfig = options["hcp_topupconfig"]
@@ -733,8 +712,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             hcp["hcp_Config"], options["hcp_topupconfig"]
                         )
                         if not os.path.exists(topupconfig):
-                            log.raw("\n---> ERROR: Could not find TOPUP configuration file: %s."
-                                % (topupconfig))
+                            log.error(f"Could not find TOPUP configuration file: {topupconfig}.")
                             run = False
                         else:
                             log.step("TOPUP configuration file present.")
@@ -746,12 +724,11 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     "hcp_seunwarpdir",
                 ]:
                     if p in options and not options[p]:
-                        log.raw(f"\nERROR: {p} parameter not set manually and QuNex was unable to set it automatically.")
+                        log.error(f"{p} parameter not set manually and QuNex was unable to set it automatically.")
                         run = False
 
             except Exception:
-                log.raw("\n---> ERROR: Could not find files for TOPUP processing of session %s."
-                    % (sinfo["id"]))
+                log.error(f"Could not find files for TOPUP processing of session {sinfo['id']}.")
                 run = False
                 raise
 
@@ -764,10 +741,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             else:
                 for i, v in hcp["fieldmap"].items():
                     if os.path.exists(hcp["fieldmap"][i]["GE"]):
-                        log.raw("\n---> Gradient Echo Field Map %d file present." % (i))
+                        log.step(f"Gradient Echo Field Map {i} file present.")
                     else:
-                        log.raw("\n---> ERROR: Could not find Gradient Echo Field Map %d file for session %s.\n            Expected location: %s"
-                            % (i, sinfo["id"], hcp["fmapge"]))
+                        log.error(f"Could not find Gradient Echo Field Map {i} file for session {sinfo['id']}.\n            Expected location: {hcp['fmapge']}")
                         run = False
 
                 fmmag = None
@@ -792,23 +768,20 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                             os.path.exists(mag)
                             for mag in hcp["fieldmap"][i]["magnitude"]
                         ):
-                            log.raw("\n---> Magnitude Field Map %d files present." % (i))
+                            log.step(f"Magnitude Field Map {i} files present.")
                         else:
-                            log.raw("\n---> ERROR: Could not find all Magnitude Field Map %d files for session %s.\n            Expected locations: %s"
-                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"]))
+                            log.error(f"Could not find all Magnitude Field Map {i} files for session {sinfo['id']}.\n            Expected locations: {hcp['fieldmap'][i]['magnitude']}")
                             run = False
                     else:
                         if os.path.exists(hcp["fieldmap"][i]["magnitude"]):
-                            log.raw("\n---> Magnitude Field Map %d file present." % (i))
+                            log.step(f"Magnitude Field Map {i} file present.")
                         else:
-                            log.raw("\n---> ERROR: Could not find Magnitude Field Map %d file for session %s.\n            Expected location: %s"
-                                % (i, sinfo["id"], hcp["fieldmap"][i]["magnitude"]))
+                            log.error(f"Could not find Magnitude Field Map {i} file for session {sinfo['id']}.\n            Expected location: {hcp['fieldmap'][i]['magnitude']}")
                             run = False
                     if os.path.exists(hcp["fieldmap"][i]["phase"]):
-                        log.raw("\n---> Phase Field Map %d file present." % (i))
+                        log.step(f"Phase Field Map {i} file present.")
                     else:
-                        log.raw("\n---> ERROR: Could not find Phase Field Map %d file for session %s.\n            Expected location: %s"
-                            % (i, sinfo["id"], hcp["fmapphase"]))
+                        log.error(f"Could not find Phase Field Map {i} file for session {sinfo['id']}.\n            Expected location: {hcp['fmapphase']}")
                         run = False
 
                 fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
@@ -842,7 +815,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                                     et1 = float(sidecar_data["EchoTime1"])
                                     echodiff = (et2 - et1) * 1000
                                     echodiff = f"{echodiff:.10f}"
-                                    log.raw(f"\n       - hcp_echodiff set to {echodiff}")
+                                    log.info(f"       - hcp_echodiff set to {echodiff}")
                         else:
                             log.step("hcp_echodiff not provided and not found in the JSON sidecar, setting it to 'NONE'.")
                             echodiff = "NONE"
@@ -877,17 +850,15 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if os.path.exists(mfile):
                     log.detail("Custom mask present.")
                 else:
-                    log.raw("\n     ... ERROR: Custom mask missing! [%s]!." % (mfile))
+                    log.error(f"Custom mask missing! [{mfile}]!.", depth=1)
                     run = False
             else:
                 run = False
-                log.detail("ERROR: No previous results found! Please run PreFS without hcp_prefs_custombrain set to MASK first!")
+                log.error("No previous results found! Please run PreFS without hcp_prefs_custombrain set to MASK first!", depth=1)
                 if os.path.exists(mfile):
                     log.detail("Custom mask present.")
                 else:
-                    log.raw("\n     ... ERROR: Custom mask missing as well! [%s]!." % (
-                        mfile
-                    ))
+                    log.error(f"Custom mask missing as well! [{mfile}]!.", depth=1)
 
         # --- check if we are using a custom brain
         if options["hcp_prefs_custombrain"] == "CUSTOM":
@@ -907,10 +878,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             if missingfiles:
                 run = False
-                log.raw("\n     ... ERROR: The following brain files are missing in %s:"
-                    % (hcp["T1w_folder"]))
+                log.error(f"The following brain files are missing in {hcp['T1w_folder']}:", depth=1)
                 for tfile in missingfiles:
-                    log.raw("\n                %s" % tfile)
+                    log.info(f"                {tfile}")
 
         # -- Prepare templates
         # non-human species use species-specific templates from a different
@@ -929,14 +899,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 log.raw(res_report)
                 if resolution == 0:
                     run = False
-                    log.detail("ERROR: unable to set hcp_prefs_template_res automatically, please set it manually!")
+                    log.error("unable to set hcp_prefs_template_res automatically, please set it manually!", depth=1)
                 else:
                     options["hcp_prefs_template_res"] = resolution
         elif not options["hcp_prefs_template_res"]:
             # non-human resolution cannot be inferred and selects the
             # species-specific template, so it has to be set explicitly
-            log.raw("\n---> ERROR: hcp_prefs_template_res must be set explicitly for non-human species '%s'; QuNex cannot infer it from the data."
-                % (species))
+            log.error(f"hcp_prefs_template_res must be set explicitly for non-human species '{species}'; QuNex cannot infer it from the data.")
             run = False
 
         # if hcp_prefs_template_res cannot be converted to a number something went wrong
@@ -944,8 +913,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             try:
                 float(options["hcp_prefs_template_res"])
             except Exception:
-                log.raw("\n---> ERROR: hcp_prefs_template_res  [%s] is not a number! It could be that automatic setup did not work, set it manually."
-                    % (options["hcp_prefs_template_res"]))
+                log.error(f"hcp_prefs_template_res  [{options['hcp_prefs_template_res']}] is not a number! It could be that automatic setup did not work, set it manually.")
                 run = False
 
         # default structural template paths; human templates live in the
@@ -977,9 +945,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             )
             if tpl is None:
                 tpl = {}
-                log.raw("\n---> NOTE: species '%s' is not in QuNex's built-in NHP template map; "
-                    "the structural template paths have to be provided explicitly via "
-                    "hcp_prefs_t1template and the related parameters." % (species))
+                log.step(f"NOTE: species '{species}' is not in QuNex's built-in NHP template map; "
+                    f"the structural template paths have to be provided explicitly via "
+                    f"hcp_prefs_t1template and the related parameters.")
 
         # hcp_prefs_t1template
         if options["hcp_prefs_t1template"] is None:
@@ -1046,8 +1014,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ]
             for pname, pvalue in required:
                 if not pvalue:
-                    log.raw("\n---> ERROR: could not determine %s for species '%s', please set it manually."
-                        % (pname, species))
+                    log.error(f"could not determine {pname} for species '{species}', please set it manually.")
                     run = False
 
         # hcp_prefs_fnirtconfig
@@ -1120,10 +1087,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             ):
                 sepos2 = options["hcp_sephasepos2"]
                 seneg2 = options["hcp_sephaseneg2"]
-                log.raw("\n---> Second Spin-Echo pair of images present. [%s, %s]" % (
-                    os.path.basename(sepos2),
-                    os.path.basename(seneg2),
-                ))
+                log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(sepos2)}, {os.path.basename(seneg2)}]")
             # labels
             elif options["hcp_senum2"]:
                 try:
@@ -1144,16 +1108,12 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     )[0]
 
                     if all([sepos2, seneg2]):
-                        log.raw("\n---> Spin-Echo pair of images present. [%s]" % (
-                            os.path.basename(tufolder2)
-                        ))
+                        log.step(f"Spin-Echo pair of images present. [{os.path.basename(tufolder2)}]")
                     else:
-                        log.raw("\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
-                            % (tufolder2))
+                        log.error(f"Could not find the relevant second Spin-Echo files! [{tufolder2}]")
                         run = False
                 except Exception:
-                    log.raw("\n---> ERROR: Could not find the relevant second Spin-Echo files! [%s]"
-                        % (tufolder2))
+                    log.error(f"Could not find the relevant second Spin-Echo files! [{tufolder2}]")
                     run = False
             else:
                 sepos2, sepos2_found = resolve_session_relative_image(
@@ -1164,12 +1124,9 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 )
 
                 if sepos2_found and seneg2_found:
-                    log.raw("\n---> Second Spin-Echo pair of images present. [%s, %s]" % (
-                        sepos2,
-                        seneg2,
-                    ))
+                    log.step(f"Second Spin-Echo pair of images present. [{sepos2}, {seneg2}]")
                 else:
-                    log.raw("\n---> ERROR: Could not find the relevant second Spin-Echo files for hcp_sephasepos2/hcp_sephaseneg2! "
+                    log.error("Could not find the relevant second Spin-Echo files for hcp_sephasepos2/hcp_sephaseneg2! "
                         "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
                     run = False
 
@@ -1263,7 +1220,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     if os.path.exists(bias):
                         os.remove(bias)
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP PreFS",
@@ -1275,12 +1232,13 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP PreFS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP PreFS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP PreFS can be run")
@@ -1296,7 +1254,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "PreFS failed"
         failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = "PreFS failed"
         failed = 1
     except Exception:

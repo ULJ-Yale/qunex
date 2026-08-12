@@ -12,10 +12,10 @@ handling, input discovery and -- since every command now builds its report
 through :class:`SessionLog` -- the runlog itself.
 
 Each command gets its own test. Every one asserts the invariant the whole
-logging refactor guarantees: a command returns ``(report_text, status)`` where
-``status`` is a three-field ``(id, summary, failed)`` tuple, the report opens
-with the session header and closes with the pipeline footer. Commands that
-reach further on this fixture assert a little more.
+logging refactor guarantees: a command returns its **log**, whose ``status`` is
+a three-field ``(id, summary, failed)`` triple and whose ``text`` opens with the
+session header and closes with the pipeline footer. Commands that reach further
+on this fixture assert a little more.
 """
 
 import pytest
@@ -102,14 +102,16 @@ def _check_contract(report, status, sid="sess-01"):
 
 def test_pre_freesurfer_dry_run(session):
     sinfo, options = session(hcp_avgrdcmethod="NONE")
-    report, status = hcp_pre_freesurfer(sinfo, options)
+    log = hcp_pre_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "HCP PreFreeSurfer Pipeline" in report
 
 
 def test_freesurfer_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_freesurfer(sinfo, options)
+    log = hcp_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "HCP FreeSurfer Pipeline" in report
     assert "PreFS" in report
@@ -117,21 +119,24 @@ def test_freesurfer_dry_run(session):
 
 def test_post_freesurfer_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_post_freesurfer(sinfo, options)
+    log = hcp_post_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "HCP PostFreeSurfer" in report or "HCP PostFS" in report
 
 
 def test_nhp_freesurfer_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_nhp_freesurfer(sinfo, options)
+    log = hcp_nhp_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "NHP FreeSurfer" in report
 
 
 def test_cortical_thickness_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_cortical_thickness(sinfo, options)
+    log = hcp_cortical_thickness(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert status[1] == "HCP CorrThick finished"
     assert "Running HCP Pipelines command via QuNex:" in report
@@ -143,7 +148,8 @@ def test_cortical_thickness_dry_run(session):
 
 def test_diffusion_dry_run(session):
     sinfo, options = session(dwi=True)
-    report, status = hcp_diffusion(sinfo, options)
+    log = hcp_diffusion(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Diffusion" in report
     assert "Running HCP Pipelines command via QuNex:" in report
@@ -169,7 +175,8 @@ def test_diffusion_nhp_dry_run(session):
         hcp_dwi_resamp="lsr",
         hcp_dwi_usephasezero=True,
     )
-    report, status = hcp_diffusion(sinfo, options)
+    log = hcp_diffusion(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "--species=Macaque" in report
     assert "--truepatientposition=HFP" in report
@@ -184,28 +191,32 @@ def test_diffusion_nhp_dry_run(session):
 
 def test_fmri_volume_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_fmri_volume(sinfo, options)
+    log = hcp_fmri_volume(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "fMRI Volume" in report
 
 
 def test_fmri_surface_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_fmri_surface(sinfo, options)
+    log = hcp_fmri_surface(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "fMRI" in report
 
 
 def test_fmri_stats_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_fmri_stats(sinfo, options)
+    log = hcp_fmri_stats(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "fMRI Stats" in report
 
 
 def test_task_fmri_analysis_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_task_fmri_analysis(sinfo, options)
+    log = hcp_task_fmri_analysis(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "task analysis" in report or "task fMRI" in report.lower()
 
@@ -215,49 +226,56 @@ def test_task_fmri_analysis_dry_run(session):
 
 def test_icafix_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_icafix(sinfo, options)
+    log = hcp_icafix(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "ICAFix" in report
 
 
 def test_post_fix_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_post_fix(sinfo, options)
+    log = hcp_post_fix(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "PostFix" in report
 
 
 def test_reapply_fix_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_reapply_fix(sinfo, options)
+    log = hcp_reapply_fix(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "ReApplyFix" in report
 
 
 def test_msmall_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_msmall(sinfo, options)
+    log = hcp_msmall(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "MSMAll" in report
 
 
 def test_dedrift_and_resample_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_dedrift_and_resample(sinfo, options)
+    log = hcp_dedrift_and_resample(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "DeDriftAndResample" in report
 
 
 def test_apply_auto_reclean_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = hcp_apply_auto_reclean(sinfo, options)
+    log = hcp_apply_auto_reclean(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Reclean" in report
 
 
 def test_temporal_ica_dry_run(session):
     sinfo, options = session(multisession=True)
-    report, status = hcp_temporal_ica(sinfo, options)
+    log = hcp_temporal_ica(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "temporal ICA" in report
 
@@ -267,28 +285,32 @@ def test_temporal_ica_dry_run(session):
 
 def test_asl_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_asl(sinfo, options)
+    log = hcp_asl(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "ASL" in report
 
 
 def test_transmit_bias_individual_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_transmit_bias_individual(sinfo, options)
+    log = hcp_transmit_bias_individual(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Transmit Bias" in report
 
 
 def test_make_average_dataset_dry_run(session):
     sinfo, options = session(multisession=True)
-    report, status = hcp_make_average_dataset(sinfo, options)
+    log = hcp_make_average_dataset(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "average dataset" in report
 
 
 def test_map_hcp_data_dry_run(session):
     sinfo, options = session(bolds=True)
-    report, status = map_hcp_data(sinfo, options)
+    log = map_hcp_data(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Mapping HCP data" in report
 
@@ -298,35 +320,40 @@ def test_map_hcp_data_dry_run(session):
 
 def test_prep_long_dry_run(session):
     sinfo, options = session(subject=True)
-    report, status = hcp_prep_long(sinfo, options)
+    log = hcp_prep_long(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "prep long" in report
 
 
 def test_long_freesurfer_dry_run(session):
     sinfo, options = session(subject=True)
-    report, status = hcp_long_freesurfer(sinfo, options)
+    log = hcp_long_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "Longitudnal FS" in report or "Longitudinal FS" in report
 
 
 def test_long_post_freesurfer_dry_run(session):
     sinfo, options = session(subject=True)
-    report, status = hcp_long_post_freesurfer(sinfo, options)
+    log = hcp_long_post_freesurfer(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "Post FS" in report or "Post FS" in report
 
 
 def test_long_msmall_dry_run(session):
     sinfo, options = session(subject=True, bolds=True)
-    report, status = hcp_long_msmall(sinfo, options)
+    log = hcp_long_msmall(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "MSMAll" in report
 
 
 def test_long_transmit_bias_dry_run(session):
     sinfo, options = session(subject=True)
-    report, status = hcp_long_transmit_bias(sinfo, options)
+    log = hcp_long_transmit_bias(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "Transmit Bias" in report or "FS Pipeline" in report
 
@@ -336,28 +363,32 @@ def test_long_transmit_bias_dry_run(session):
 
 def test_transmit_bias_individual_align_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_transmit_bias_individual_align(sinfo, options)
+    log = hcp_transmit_bias_individual_align(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Individual Align" in report
 
 
 def test_transmit_bias_group_average_fit_dry_run(session):
     sinfo, options = session(multisession=True)
-    report, status = hcp_transmit_bias_group_average_fit(sinfo, options)
+    log = hcp_transmit_bias_group_average_fit(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Group Average Fit" in report
 
 
 def test_transmit_bias_individual_adjustment_dry_run(session):
     sinfo, options = session()
-    report, status = hcp_transmit_bias_individual_adjustment(sinfo, options)
+    log = hcp_transmit_bias_individual_adjustment(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Individual Adjustment" in report
 
 
 def test_transmit_bias_group_average_corrected_maps_dry_run(session):
     sinfo, options = session(multisession=True)
-    report, status = hcp_transmit_bias_group_average_corrected_maps(sinfo, options)
+    log = hcp_transmit_bias_group_average_corrected_maps(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "Corrected Maps" in report
 
@@ -365,7 +396,8 @@ def test_transmit_bias_group_average_corrected_maps_dry_run(session):
 def test_create_transmit_bias_voltages_file_requires_hcp_voltages(session):
     """The voltages path is mandatory; without it the command must fail loudly."""
     sinfo, options = session(multisession=True)
-    report, status = create_transmit_bias_voltages_file(sinfo, options)
+    log = create_transmit_bias_voltages_file(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert "hcp_voltages parameter is mandatory" in report
     assert status[2] == 1
@@ -375,7 +407,8 @@ def test_create_transmit_bias_voltages_file_dry_run(session, tmp_path):
     """With --test the command reports the file it would create, and creates none."""
     target = tmp_path / "voltages.txt"
     sinfo, options = session(multisession=True, hcp_voltages=str(target))
-    report, status = create_transmit_bias_voltages_file(sinfo, options)
+    log = create_transmit_bias_voltages_file(sinfo, options)
+    report, status = log.text, log.status
     _check_contract(report, status)
     assert str(target) in report
     assert status[2] == 0

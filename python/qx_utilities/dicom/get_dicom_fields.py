@@ -19,7 +19,7 @@ from qx_utilities.dicom.deid_discover import discover_dicom
 from qx_utilities.dicom.deid_tags import dicom_scan, write_field_dict
 
 
-def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
+def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20", _log=None):
     """
     ``get_dicom_fields [folder=.] [targetfile=dicom_fields.csv] [limit=20]``
 
@@ -83,5 +83,8 @@ def get_dicom_fields(folder=".", targetfile="dicom_fields.csv", limit="20"):
 
     _ = {}
 
-    discover_dicom(folder, dicom_scan, save=False, archive_file="")
+    # the command has no report of its own -- it declares `_log` so that
+    # `discover_dicom`'s does not fall back to a console stand-in, whose
+    # errors cannot fail the run
+    discover_dicom(folder, dicom_scan, save=False, archive_file="", _log=_log)
     write_field_dict(targetfile, limit)

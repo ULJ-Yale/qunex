@@ -27,6 +27,7 @@ import re
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 from datetime import datetime
 
@@ -57,7 +58,7 @@ set seq = ""
 recode = {True: "ok", False: "missing"}
 
 
-def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
+def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _log=None):
     """
     ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
@@ -87,6 +88,8 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
             qunex run_nil_folder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     """
 
+    log = gl.log_or_console(_log)
+
     if pattern is None:
         pattern = "OP*"
     if sourcefile is None:
@@ -113,36 +116,56 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     ]
 
     do = []
-    print("\n---=== Running NIL preprocessing on folder %s ===---\n" % folder)
-    print("List of sessions to process\n")
-    print("%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params"))
-    for subj, stxt, sdicom, sparam in subjs:
-        print(
-            "%-15s%-15s%-15s%-10s --->"
-            % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
-            end=" ",
+    log.raw(f"\n\n---=== Running NIL preprocessing on folder {folder} ===---")
+    with log.section("List of sessions to process"):
+        log.detail(
+            f'{"session":<15}{"session.txt":<15}{"DICOM-Report":<15}{"params":<10}'
         )
-        if not stxt:
-            print("skipping processing")
-        else:
-            if not sdicom:
-                print("estimating TR as 2.49836", end=" ")
-            if not sparam:
-                print("creating param file", end=" ")
-            elif overwrite:
-                print("overwriting existing params file", end=" ")
+        for subj, stxt, sdicom, sparam in subjs:
+            # the row used to be assembled by four prints with `end=" "`; a
+            # record is a whole line, so the notes are collected first
+            if not stxt:
+                notes = ["skipping processing"]
             else:
-                print("working with existing params file", end=" ")
-            do.append(subj)
-        print("")
+                notes = []
+                if not sdicom:
+                    notes.append("estimating TR as 2.49836")
+                if not sparam:
+                    notes.append("creating param file")
+                elif overwrite:
+                    notes.append("overwriting existing params file")
+                else:
+                    notes.append("working with existing params file")
+                do.append(subj)
+            log.detail(
+                f'{os.path.basename(subj):<15}{recode[stxt]:<15}{recode[sdicom]:<15}{recode[sparam]:<10} ---> {" ".join(notes)}'
+            )
 
+    failed = []
     for s in do:
+        # seam: `run_nil` still prints, and a record renders as "\n<line>"
+        # where a print emits "<line>\n" -- without this newline the two run
+        # together. Goes when `run_nil` is converted.
+        log.raw("\n")
         try:
             run_nil(s, overwrite, sourcefile)
-        except Exception:
-            print("---> Failed running NIL preprocessing on", s)
+        except Exception as e:
+            # the exception used to be swallowed and the failure printed, so
+            # the command reported a failed session and still exited 0
+            failed.append(os.path.basename(s))
+            log.error(f"Failed running NIL preprocessing on {s}: {str(e)}")
 
-    print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
+    log.raw(f"\n\n---=== Done NIL preprocessing on folder {folder} ===---")
+
+    # raised after the loop, so one failing session does not abort its siblings
+    if failed:
+        raise ge.CommandFailed(
+            "run_nil_folder",
+            "NIL preprocessing failed",
+            "NIL preprocessing failed for %d of %d sessions: %s"
+            % (len(failed), len(do), ", ".join(failed)),
+            "Please check the report!",
+        )
 
 
 def run_nil(folder=".", overwrite=None, sourcefile=None):
@@ -192,7 +215,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info = gc.read_batch(os.path.join(folder, sourcefile))
+    info, _ = gc.read_batch(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
@@ -247,7 +270,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
                             )
                             break
         if tr is None or tr == 0.0:
-            "...  No DICOM-Report, assuming TR of 2.49836"
+            print("...  No DICOM-Report, assuming TR of 2.49836")
             tr = 2.49836
 
         # ---- create params content
@@ -265,9 +288,8 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace("{{boldnums}}", " ".join(["%s" % (b) for k, b in bold]))
         params = params.replace("{{bolds}}", " ".join([k + ".nii.gz" for k, b in bold]))
 
-        pfile = open(os.path.join(folder, "4dfp", "params"), "w")
-        print(params, file=pfile)
-        pfile.close()
+        with open(os.path.join(folder, "4dfp", "params"), "w") as pfile:
+            print(params, file=pfile)
 
     else:
         print("...  using existing params file")
@@ -315,15 +337,14 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     logname = "preprocess." + datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f") + ".log"
     print("...  running NIL preprocessing, saving log to %s " % (logname))
-    logfile = open(os.path.join(folder, "4dfp", logname), "w")
-
-    r = subprocess.call(
-        ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
-        stdout=logfile,
-        stderr=subprocess.STDOUT,
-    )
-
-    logfile.close()
+    # `with`: the explicit close this replaces was skipped whenever the call
+    # raised -- and with the 4dfp tooling absent, that is every call
+    with open(os.path.join(folder, "4dfp", logname), "w") as logfile:
+        r = subprocess.call(
+            ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
+            stdout=logfile,
+            stderr=subprocess.STDOUT,
+        )
 
     if r:
         print(

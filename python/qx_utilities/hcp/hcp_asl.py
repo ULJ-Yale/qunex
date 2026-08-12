@@ -225,8 +225,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # extract ASL and SE info
@@ -257,14 +256,14 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         else:
             asl_files = glob.glob(os.path.join(hcp["ASL_source"], "*.nii.gz"))
             if len(asl_files) == 0:
-                log.raw(f"\n---> ERROR: No .nii.gz files found in {hcp['ASL_source']}!")
+                log.error(f"No .nii.gz files found in {hcp['ASL_source']}!")
                 run = False
             else:
                 asl_file = asl_files[0]
 
         # file exists?
         if not os.path.exists(asl_file):
-            log.raw("\n---> ERROR: ASL acquistion data not found [%s]" % asl_file)
+            log.error(f"ASL acquistion data not found [{asl_file}]")
             run = False
 
         # AP and PA fieldmaps for use in distortion correction
@@ -287,8 +286,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_ap_file) == 0:
-                                log.raw("\n---> ERROR: SE AP file not found in [%s]"
-                                    % hcp["ASL_source"])
+                                log.error(f"SE AP file not found in [{hcp['ASL_source']}]")
                                 run = False
                             else:
                                 fmap_ap_file = fmap_ap_file[0]
@@ -305,8 +303,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                                 )
                             )
                             if len(fmap_pa_file) == 0:
-                                log.raw("\n---> ERROR: SE PA file not found in [%s]"
-                                    % hcp["ASL_source"])
+                                log.error(f"SE PA file not found in [{hcp['ASL_source']}]")
                                 run = False
                             else:
                                 fmap_pa_file = fmap_pa_file[0]
@@ -335,10 +332,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             run = False
         else:
             if not os.path.exists(fmap_ap_file):
-                log.raw("\n---> ERROR: AP fieldmap not found [%s]" % fmap_ap_file)
+                log.error(f"AP fieldmap not found [{fmap_ap_file}]")
                 run = False
             if not os.path.exists(fmap_ap_file):
-                log.raw("\n---> ERROR: PA fieldmap not found [%s]" % fmap_pa_file)
+                log.error(f"PA fieldmap not found [{fmap_pa_file}]")
                 run = False
 
         # get library path
@@ -496,7 +493,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if options["longitudinal"]:
                 studyfolder = gc.deduce_folders(options)["basefolder"]
                 if not studyfolder:
-                    log.raw("\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     run = False
                 # replace path
                 longitudinal_study_dir = os.path.join(
@@ -522,7 +519,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 else:
                     logtags = ["long", options["hcp_longitudinal_template"]]
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running HCP ASL",
@@ -534,12 +531,13 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    None, None, "HCP ASL", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    None, None, "HCP ASL", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP ASL can be run")
@@ -552,10 +550,10 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception as e:
-        log.raw(f"\nERROR: {e}")
+        log.error(f"{e}")
         log.unknown_error()
         failed = 1
 

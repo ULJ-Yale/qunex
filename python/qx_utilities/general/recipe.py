@@ -15,19 +15,19 @@ Run recipe framework.
 
 import os
 import os.path
-import shutil
 import subprocess
 from datetime import datetime
 
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 import qx_utilities.general.xnat as gx
 import yaml
 from qx_registry import qx_commands
 
 
-def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfolder=None, eargs=None):
+def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfolder=None, eargs=None, log_settings=None):
     """
     ``run_recipe [recipe_file=None] [recipe=None] [steps=None] [startwith=None] [logfolder=None] [<extra arguments>]``
 
@@ -346,82 +346,75 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
         recipe_dict["commands"] = steps.split(",")
 
     # log location
-    if "logfolder" in parameters and parameters["logfolder"] != "legacy":
-        logfolder = parameters["logfolder"]
-    elif logfolder is None:
-        if "studyfolder" in parameters:
-            logfolder = os.path.join(
-                parameters["studyfolder"], "logs", f"{timestamp}_run_recipe_{recipe}"
-            )
-        elif "studyfolder" in eargs:
-            logfolder = os.path.join(
-                eargs["studyfolder"], "logs", f"{timestamp}_run_recipe_{recipe}"
-            )
-        elif "sessionsfolder" in parameters:
-            logfolder = gc.deduce_folders(
-                parameters, f"run_recipe_{recipe}", timestamp
-            )["logfolder"]
-        elif "sessionsfolder" in eargs:
-            logfolder = gc.deduce_folders(eargs, f"run_recipe_{recipe}", timestamp)[
-                "logfolder"
-            ]
-    elif logfolder == "legacy":
-        if "studyfolder" in parameters:
-            logfolder = os.path.join(parameters["studyfolder"], "logs")
-        elif "studyfolder" in eargs:
-            logfolder = os.path.join(eargs["studyfolder"], "logs")
-        elif "sessionsfolder" in parameters:
-            logfolder = gc.deduce_folders(parameters)["logfolder"]
-        elif "sessionsfolder" in eargs:
-            logfolder = gc.deduce_folders(eargs)["logfolder"]
+    #
+    # The recipe file can name a study the command line never saw, so its
+    # parameters are folder hints in their own right, and they outrank the
+    # ones passed in. Everything past that -- the layout, the timestamped
+    # folder, whether a runlog is written at all -- is `RunContext`'s, the
+    # same as for any other run. This is why `run_recipe` takes the resolved
+    # settings rather than the caller's context: `gp.run`'s precedent.
+    hints = {**(eargs or {}), **parameters}
+    if logfolder is not None and "logfolder" not in parameters:
+        hints["logfolder"] = logfolder
 
-    # mustache injections to logfolder?
-    if "{{" in logfolder and "}}" in logfolder:
-        labels = _find_enclosed_substrings(logfolder)
-        for label in labels:
-            cleaned_label = label.replace("{", "").replace("}", "")
-            os_label = cleaned_label[1:]
-            if cleaned_label[0] == "$" and os_label in os.environ:
-                logfolder = logfolder.replace(label, os.environ[os_label])
-            else:
-                raise ge.CommandFailed(
-                    "run_recipe",
-                    f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                )
+    # Injected here, before anything is deduced from them, and not only into
+    # `logfolder`: these are the values this run resolves its own study, log
+    # folder and status paths from, and a `{{$VAR}}` left in any of them is a
+    # folder of that name. Every path the recipe derives and every path it
+    # hands a step then come from the same resolved text.
+    hints = {key: _inject_labels(value) for key, value in hints.items()}
 
-    comlogfolder = os.path.join(logfolder, "comlogs")
+    run_command = f"run_recipe_{recipe}"
+    folders = gc.deduce_folders(hints, run_command, timestamp)
 
-    print(f"\n---> Saving the run_recipe runlog to: {logfolder}")
+    # The study the recipe file names is a study the caller never saw, so its
+    # `qunex_settings.yaml` was not read when these settings were resolved.
+    # Only that one tier is layered on now; `--logging` is re-applied over it,
+    # so the command line still wins.
+    #
+    # ponytail: the study tier is read twice per invocation, which is the
+    # price of the recipe file being parsed after the settings are. Branch 69's
+    # merged-options model gives the recipe and batch tiers a real home
+    # (§8.3) and this goes with them.
+    log_settings = gl.apply_study_settings(
+        log_settings or gl.LogSettings(), folders["basefolder"], hints
+    )
 
-    # create comlogfolder if it does not exist
-    os.makedirs(comlogfolder, exist_ok=True)
+    run = gl.RunContext(
+        run_command, hints, log_settings, folders, timestamp=timestamp
+    )
 
-    logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    logfilename = f"Log-run_recipe-{logstamp}.log"
-    logname = os.path.join(logfolder, logfilename)
+    # the recipe's study may have restated them, so the deep helpers have to be
+    # told again what this run resolved to
+    gl.set_active(log_settings)
+
+    print(f"\n---> Saving the run_recipe runlog to: {run.logfolder}")
+
+    # a recipe that cannot log is a recipe that fails, as documented above --
+    # unless it was told not to log at all
+    try:
+        if run.settings.enabled:
+            os.makedirs(run.logfolder, exist_ok=True)
+    except OSError:
+        raise ge.CommandFailed(
+            "run_recipe",
+            "Cannot open log",
+            f"Unable to create the log folder [{run.logfolder}]",
+            "Please check the paths!",
+        )
 
     # run
     summary = "\n----==== RECIPE EXECUTION SUMMARY ====----"
 
-    try:
-        log = open(logname, "w", encoding="utf-8")
-    except Exception:
-        raise ge.CommandFailed(
-            "run_recipe",
-            "Cannot open log",
-            f"Unable to open log [{logname}]",
-            "Please check the paths!",
-        )
-
-    print(
-        "\n\n============================== RUN_RECIPE LOG ==============================\n",
-        file=log,
+    run.header()
+    run.write(
+        "\n\n============================== RUN_RECIPE LOG ==============================\n\n"
     )
 
     summary += f"\n\nRecipe: {recipe}"
 
     print(f"---> Running commands from recipe: {recipe}")
-    print(f"---> Running commands from recipe: {recipe}\n", file=log)
+    run.write(f"---> Running commands from recipe: {recipe}\n\n")
 
     # commands
     if "commands" not in recipe_dict:
@@ -467,8 +460,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
         if not start_indices:
             print(f"WARNING: startwith step [{startwith}] is not a part of recipe [{recipe}].")
-            print(f"WARNING: startwith step [{startwith}] is not a part of recipe [{recipe}].", file=log,)
-            log.close()
+            run.write(f"WARNING: startwith step [{startwith}] is not a part of recipe [{recipe}].\n")
             raise ge.CommandError(
                 "run_recipe",
                 "startwith step not found in recipe",
@@ -478,7 +470,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
         if len(start_indices) > 1:
             print(f"WARNING: startwith step [{startwith}] is present more than once in recipe [{recipe}]. Starting with the first occurrence.")
-            print(f"WARNING: startwith step [{startwith}] is present more than once in recipe [{recipe}]. Starting with the first occurrence.", file=log)
+            run.write(f"WARNING: startwith step [{startwith}] is present more than once in recipe [{recipe}]. Starting with the first occurrence.\n")
 
         start_index = start_indices[0]
         commands_skipped = commands[:start_index]
@@ -487,7 +479,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     # print commands
     def _print_commands(title, command_list):
         print(title)
-        print(title, file=log)
+        run.write(title + "\n")
         commands_set = []
         for com in command_list:
             if isinstance(com, dict):
@@ -497,7 +489,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             if command_name not in commands_set:
                 commands_set.append(command_name)
                 print(f"    - {command_name}")
-                print(f"    - {command_name}", file=log, flush=True)
+                run.write(f"    - {command_name}\n")
 
     if startwith:
         _print_commands("\n---> Commands skipped:", commands_skipped)
@@ -509,22 +501,19 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     # If running on XNAT, try and load checkpoint if supplied
     if os.environ.get("XNAT", "") == "yes":
         checkpoint_str = os.environ.get("XNAT_CHECKPOINT", "")
-        print("Checkpoint Supplied: " + checkpoint_str, file=log)
+        run.write("Checkpoint Supplied: " + checkpoint_str + "\n")
         print("Checkpoint Supplied: " + checkpoint_str)
 
         if checkpoint_str == "":
-            print("XNAT Checkpoint empty, skipping...", file=log)
+            run.write("XNAT Checkpoint empty, skipping...\n")
             print("XNAT Checkpoint empty, skipping...")
         else:
             file_path, find_summary = gx.xnat_find_checkpoint(checkpoint_str)
-            print(find_summary, file=log)
+            run.write(find_summary + "\n")
             load_summary = gx.xnat_load_checkpoint(file_path)
-            print(load_summary, file=log)
+            run.write(load_summary + "\n")
 
-    # track command failures across the loop (stays defined even if commands is empty)
-    error = False
-
-    for com in commands:
+    for step, com in enumerate(commands, start=1):
         if isinstance(com, dict):
             command_name = list(com.keys())[0]
             command_parameters = list(com.values())[0]
@@ -533,30 +522,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             command_parameters = {}
 
         # executing a custom script
-        error = False
         if command_name == "script" or command_name == "external":
             if "path" in command_parameters:
-                external_path = command_parameters["path"]
-
-                labels = _find_enclosed_substrings(external_path)
-                for label in labels:
-                    cleaned_label = label.replace("{", "").replace("}", "")
-                    os_label = cleaned_label[1:]
-                    if cleaned_label[0] == "$" and os_label in os.environ:
-                        external_path = external_path.replace(
-                            label, os.environ[os_label]
-                        )
-                    else:
-                        raise ge.CommandFailed(
-                            "run_recipe",
-                            f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                        )
+                external_path = _inject_labels(command_parameters["path"])
 
                 del command_parameters["path"]
             else:
                 summary += f"\n - external {command_parameters} ... FAILED"
                 _print_end_summary(
-                    summary, log, f"{command_parameters} path not provided!"
+                    summary, run, f"{command_parameters} path not provided!"
                 )
 
                 raise ge.CommandFailed(
@@ -568,13 +542,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             print(
                 f"\n--------------------------------------------\n---> Running external: {external_path}"
             )
-            print(
-                f"\n--------------------------------------------\n---> Running external: {external_path}",
-                file=log,
+            run.write(
+                f"\n--------------------------------------------\n---> Running external: {external_path}\n"
             )
             if not os.path.exists(external_path):
                 summary += f"\n - external {external_path} ... FAILED"
-                _print_end_summary(summary, log, f"{external_path} does not exist!")
+                _print_end_summary(summary, run, f"{external_path} does not exist!")
 
                 raise ge.CommandFailed(
                     "run_recipe",
@@ -583,12 +556,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                     "Please check the external command path!",
                 )
 
-            # log
             external_name = os.path.basename(external_path)
-            log_path = os.path.join(
-                comlogfolder,
-                f"tmp_{external_name}_{command_name}_{timestamp}.log",
-            )
 
             # prep command
             if external_path.endswith(".sh") or "." not in external_path:
@@ -638,26 +606,25 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                     f"{external_parameter_prefix}{param}{external_parameter_delimiter}{value}"
                 )
 
-            # run the command with subprocess Popen
-            with open(log_path, "w", encoding="UTF-8") as log_file:
-                process = subprocess.Popen(
-                    command, stdout=log_file, stderr=subprocess.STDOUT
-                )
-                process.communicate()
+            # the external command's output is this step's comlog: opened as
+            # `tmp_`, renamed by the exit status when it closes
+            comlog = run.comlog(external_name, command_name).open()
+            process = subprocess.Popen(
+                command, stdout=comlog.file, stderr=subprocess.STDOUT
+            )
+            process.communicate()
 
             # Get the exit code
             exit_code = process.returncode
+            comlog_path = comlog.close(status="error" if exit_code else "done")
 
             if exit_code != 0:
-                error = True
-                summary += f"\n - external {external_path} ... FAILED"
-                error_log = log_path.replace("tmp_", "error_")
-                print(f"    ... failed [{external_path}], see [{error_log}]")
-                print(f"    ... failed [{external_path}], see [{error_log}]", file=log)
-                os.rename(log_path, error_log)
+                report = f"    ... failed [{external_path}], see [{comlog_path}]"
+                print(report)
+                run.write(report + "\n")
 
                 summary += f"\n - external {external_path} ... FAILED"
-                _print_end_summary(summary, log, f"Failed external {external_path}!")
+                _print_end_summary(summary, run, f"Failed external {external_path}!")
 
                 raise ge.CommandFailed(
                     "run_recipe",
@@ -667,10 +634,9 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 )
             else:
                 summary += f"\n - external {external_path} ... OK"
-                done_log = log_path.replace("tmp_", "done_")
-                print(f"    ... done [{external_path}], see [{done_log}]")
-                print(f"    ... done [{external_path}], see [{done_log}]", file=log)
-                os.rename(log_path, done_log)
+                report = f"    ... done [{external_path}], see [{comlog_path}]"
+                print(report)
+                run.write(report + "\n")
 
         elif qx_commands.get(command_name) is not None:
             # override params with those from eargs (passed because of parallelization on a higher level)
@@ -706,23 +672,22 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
             # XNAT individual command prep, creates _in checkpoint
             if os.environ.get("XNAT", "") == "yes":
-                print("Attemping XNAT specific setup...", file=log)
+                run.write("Attemping XNAT specific setup...\n")
                 possibles = globals().copy()
                 possibles.update(locals())
                 # XNAT helper functions for individual commands must be in format xnat_ + command_name
                 xnat_command = possibles.get("xnat_" + command_name)
                 if not xnat_command:
-                    print("\n------------------------", file=log)
-                    print(
+                    run.write(
+                        "\n------------------------\n"
                         "\nNo XNAT setup method detected for: "
                         + command_name
-                        + ", continuing...",
-                        file=log,
+                        + ", continuing...\n"
+                        "\n------------------------\n"
                     )
-                    print("\n------------------------", file=log)
                 else:
-                    print(xnat_command(prep=True), file=log)
-                print("Making checkpoint IN...", file=log)
+                    run.write(str(xnat_command(prep=True)) + "\n")
+                run.write("Making checkpoint IN...\n")
                 print("Making checkpoint IN...")
                 gx.xnat_make_checkpoint(
                     command_name + "_in",
@@ -737,36 +702,39 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 + command_name
             )
 
-            # add logfolder to command_parameters if not already in there
+            # where the step logs, and where it reports back
+            #
+            # Under `layout: nested` each step gets its own folder inside the
+            # recipe's, numbered so the listing reads in execution order; flat
+            # is the default and puts every step's runlog beside the recipe's.
+            # Either way the step is told where to write its status record --
+            # the parent names the path, so there is nothing to glob for and
+            # no ambiguity when recipes run in parallel.
             if "logfolder" not in command_parameters:
-                command_parameters["logfolder"] = logfolder
+                command_parameters["logfolder"] = (
+                    os.path.join(run.logfolder, f"{step:02d}_{command_name}")
+                    if run.settings.layout == "nested"
+                    else run.logfolder
+                )
+
+            status_path = os.path.join(
+                run.logfolder, "status", f"{step:02d}_{command_name}.yaml"
+            )
+            command_parameters["logstatus"] = status_path
 
             for param, value in command_parameters.items():
-                # inject mustache marked values
-                if (
-                    isinstance(value, str)
-                    and len(value) > 0
-                    and "{{" in value
-                    and "}}" in value
-                ):
-                    labels = _find_enclosed_substrings(value)
-                    for label in labels:
-                        cleaned_label = label.replace("{", "").replace("}", "")
-                        os_label = cleaned_label[1:]
-                        if cleaned_label[0] == "$" and os_label in os.environ:
-                            value = value.replace(label, os.environ[os_label])
-                        else:
-                            summary += f"\n - command {command_name} ... FAILED"
-                            _print_end_summary(
-                                summary,
-                                log,
-                                f"Failed running command {command_name}! Cannot inject values marked with double curly braces in the recipe.",
-                            )
-
-                            raise ge.CommandFailed(
-                                "run_recipe",
-                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                            )
+                # a label the recipe author wrote against this command; the
+                # run level ones were injected before the folders were deduced
+                try:
+                    value = _inject_labels(value)
+                except ge.CommandFailed:
+                    summary += f"\n - command {command_name} ... FAILED"
+                    _print_end_summary(
+                        summary,
+                        run,
+                        f"Failed running command {command_name}! Cannot inject values marked with double curly braces in the recipe.",
+                    )
+                    raise
 
                 if param in flags:
                     command.append(f"--{param}")
@@ -782,38 +750,30 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 )
 
             print(commandr)
-            print(commandr, file=log, flush=True)
+            run.write(commandr + "\n")
 
             # run command
-            process = subprocess.Popen(
+            #
+            # the child's output is watched, not read for meaning: what the
+            # step did comes back as its status record, and whether it worked
+            # comes back as its exit code
+            with subprocess.Popen(
                 command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
-            )
+            ) as process:
+                for line in iter(process.stdout.readline, b""):
+                    # `readline` keeps the newline it read, so the line is
+                    # relayed as it came; printing it would add a second one
+                    # and double space everything every step says
+                    print(line.decode("utf-8"), end="")
 
-            # Poll process for new output until finished
-            logging = False
+                exit_code = process.wait()
 
-            for line in iter(process.stdout.readline, b""):
-                line = line.decode("utf-8")
-                print(line)
-                if any([tag in line for tag in ["ERROR", "failed with error", "/error_", "Not all tasks completed"]]):
-                    print("", file=log)
-                    error = True
+            run.write(_step_report(command_name, status_path, exit_code))
 
-                if "Final report" in line:
-                    print("", file=log)
-                    logging = True
-
-                # print
-                if logging or error:
-                    print(line, end=" ", file=log)
-                    log.flush()
-
-            exit_code = process.wait()
-
-            if error or exit_code != 0:
+            if exit_code != 0:
                 summary += f"\n - command {command_name} ... FAILED"
                 _print_end_summary(
-                    summary, log, f"Failed running command {command_name}!"
+                    summary, run, f"Failed running command {command_name}!"
                 )
 
                 raise ge.CommandFailed(
@@ -830,19 +790,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
             # XNAT individual command cleanup, creates _out checkpoint
             if os.environ.get("XNAT", "") == "yes":
-                print("Attempting XNAT specific cleanup...", file=log)
+                run.write("Attempting XNAT specific cleanup...\n")
                 if not xnat_command:
                     print("\n------------------------")
-                    print(
+                    run.write(
                         "\nNo XNAT cleanup method detected for: "
                         + command_name
-                        + ", continuing...",
-                        file=log,
+                        + ", continuing...\n"
                     )
                     print("\n------------------------")
                 else:
-                    print(xnat_command(prep=False), file=log)
-                print("Making checkpoint OUT...", file=log)
+                    run.write(str(xnat_command(prep=False)) + "\n")
+                run.write("Making checkpoint OUT...\n")
                 print("Making checkpoint OUT...")
                 gx.xnat_make_checkpoint(
                     command_name + "_out",
@@ -851,7 +810,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
         else:
             summary += f"\n - command {command_name} ... FAILED"
-            _print_end_summary(summary, log, f"Unknown command [{command_name}]!")
+            _print_end_summary(summary, run, f"Unknown command [{command_name}]!")
 
             raise ge.CommandFailed(
                 "run_recipe",
@@ -860,41 +819,107 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 "This is not a QuNex command or an external script!",
             )
 
-    _print_end_summary(summary, log, None)
-
-    # hack copy the log from runlogs to comlogs as well
-    comlog = os.path.join(comlogfolder, logfilename)
-    if not error:
-        comlog = comlog.replace("Log-", "done_")
-    else:
-        comlog = comlog.replace("Log-", "error_")
-
-    # copy logname to comlog
-    shutil.copyfile(logname, comlog)
+    _print_end_summary(summary, run, None)
 
 
-def _print_end_summary(summary, log, error=None):
+def _step_report(command_name, status_path, exit_code):
+    """
+    The step's own report, for the recipe log.
+
+    Read from the status record the step was asked to write, so what the
+    recipe reports is what the command reported -- the top level compiling
+    its report from each command's, rather than grepping it out of a pipe.
+
+    A step that wrote no record is reported from its **exit code**, which is
+    the one thing a parent always has. A record can be missing for reasons no
+    amount of care inside the child covers -- it was killed, it ran out of
+    memory, the scheduler took the node -- so the recipe says what it knows
+    rather than that it knows nothing. The old line said the latter, and said
+    it about failures as well, so the report and the summary two screens down
+    disagreed.
+    """
+    record = gl.read_status(status_path)
+
+    if not record:
+        outcome = (
+            "completed" if exit_code == 0 else f"failed with exit code {exit_code}"
+        )
+        return f"\n---> {command_name}: {outcome}; no status record written\n"
+
+    lines = [f"\n---> Report for {command_name}"]
+    if record.get("runlog"):
+        lines.append("     runlog: %s" % record["runlog"])
+    for session in record.get("sessions") or []:
+        lines.append("... %s ---> %s" % (session["id"], session["summary"]))
+
+    return "\n".join(lines) + "\n"
+
+
+def _print_end_summary(summary, run, error=None):
     summary += "\n\n----------==== END SUMMARY ====----------"
 
-    print(summary, file=log)
+    run.write(summary + "\n")
     print(summary)
 
     if not error:
-        print("\n------------------------", file=log)
-        print(f"\n---> Successful completion of QuNex run_recipe at {datetime.now()}", file=log)
+        run.write(
+            f"\n------------------------\n"
+            f"\n---> Successful completion of QuNex run_recipe at {datetime.now()}\n"
+        )
 
         print("\n------------------------")
         print(f"---> Successful completion of QuNex run_recipe at {datetime.now()}")
     else:
-        print("\n------------------------", file=log)
-        print(f"\nERROR: {error}", file=log)
-        print(f"\n---> run_recipe failed at {datetime.now()}", file=log)
+        run.write(
+            f"\n------------------------\n"
+            f"\nERROR: {error}\n"
+            f"\n---> run_recipe failed at {datetime.now()}\n"
+        )
 
         print("\n------------------------")
         print(f"\nERROR: {error}")
         print(f"---> run_recipe failed at {datetime.now()}")
 
-    log.close()
+
+def _inject_labels(value):
+    """
+    Replace every ``{{$VAR}}`` in `value` with what the environment says.
+
+    The recipe's one substitution rule, in one place. It used to be spelled
+    three times -- for the log folder, for an external step's path and for
+    each command parameter -- and the copies did not run at the same point:
+    a value the recipe resolved its **own** folders from was still uninjected
+    when it did so, while the copy of it handed to a step was injected on the
+    way out. That is how a recipe could log to a folder literally named
+    `{{$STUDY_FOLDER}}` while every step it ran logged to the study.
+
+    Parameters:
+        value: the value to inject into. Anything that is not a string
+            holding a label is returned unchanged, so this can be mapped over
+            a whole parameter dictionary.
+
+    Returns:
+        the value with every label replaced.
+
+    Raises:
+        ge.CommandFailed: when a label names something the environment does
+            not hold. A recipe cannot be run half resolved.
+    """
+    if not isinstance(value, str) or "{{" not in value or "}}" not in value:
+        return value
+
+    for label in _find_enclosed_substrings(value):
+        cleaned_label = label.replace("{", "").replace("}", "")
+        os_label = cleaned_label[1:]
+        if cleaned_label[0] == "$" and os_label in os.environ:
+            value = value.replace(label, os.environ[os_label])
+        else:
+            raise ge.CommandFailed(
+                "run_recipe",
+                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
+            )
+
+    return value
 
 
 def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):

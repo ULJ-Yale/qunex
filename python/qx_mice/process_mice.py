@@ -138,9 +138,9 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
-    log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw(f"\n{pc.action('Running', options['run'])} preprocess_mice {session} ...")
+    log.raw("\n------------------------------------------------------------")
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.action("Running", f"preprocess_mice {session} ...", options["run"], level="info")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
@@ -149,11 +149,13 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "preprocess_mice")
 
         # get bolds
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # report
         parelements = max(1, min(options["parelements"], len(bolds)))
-        log.raw(f"\n{pc.action('Running', options['run'])} {parelements} BOLD images in parallel")
+        log.action(
+            "Running", f"{parelements} BOLD images in parallel", options["run"], level="info"
+        )
 
         if parelements == 1:  # serial execution
             for b in bolds:
@@ -198,15 +200,15 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
     except Exception:
-        log.raw(f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "preprocess_mice failed", 1)
 
-    return (log.text, report)
+    return log.result(report)
 
 
 def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
@@ -225,9 +227,11 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
 
     # --- check for bold image
     boldimg = os.path.join(work_dir, f"{boldinfo['name']}_DS.nii.gz")
-    boldok = log.check_for_file(boldimg,
-        "\n     ... preprocess_mice bold image present",
-        "\n     ... ERROR: preprocess_mice bold image missing!",
+    boldok = pc.check_for_file(boldimg,
+        "preprocess_mice bold image present",
+        "preprocess_mice bold image missing!",
+        bad_level="error",
+        _log=log,
     )
 
     # overwrite and file exists
@@ -291,7 +295,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     os.remove(test_file)
 
                 # execute
-                endlog, _, failed = log.run_external(
+                endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
                     "Running preprocess_mice",
@@ -303,27 +307,28 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                     logtags=[options["logtag"]],
                     full_test=None,
                     shell=True,
+                    _log=log,
                 )
 
                 if failed:
-                    log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed")
+                    log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} failed")
                     report["failed"].append(boldinfo["name"])
                 else:
-                    log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} completed")
+                    log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} completed")
                     report["done"].append(boldinfo["name"])
 
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is ready for preprocess_mice command")
+                log.step(f"BOLD {boldinfo['name']} is ready for preprocess_mice command")
                 report["ready"].append(boldinfo["name"])
 
         else:
             # run
             if options["run"] == "run":
-                log.raw(f"\n---> preprocess_mice processing for BOLD {boldinfo['name']} failed")
+                log.step(f"preprocess_mice processing for BOLD {boldinfo['name']} failed")
                 report["failed"].append(boldinfo["name"])
             # just checking
             else:
-                log.raw(f"\n---> BOLD {boldinfo['name']} is not ready for preprocess_mice command")
+                log.step(f"BOLD {boldinfo['name']} is not ready for preprocess_mice command")
                 report["not ready"].append(boldinfo["name"])
 
         return {"r": log.text, "report": report}
@@ -392,9 +397,9 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.capture("\n------------------------------------------------------------")
-    log.raw(f"\nSession id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
-    log.raw(f"\n{pc.action('Running', options['run'])} map_mice_data {session} ...")
+    log.raw("\n------------------------------------------------------------")
+    log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
+    log.action("Running", f"map_mice_data {session} ...", options["run"], level="info")
 
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
 
@@ -403,7 +408,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "map_mice_data")
 
         # get bolds
-        bolds, _, _ = log.use_or_skip_bold(sinfo, options)
+        bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
         # dirs
         source_dir = os.path.join(options["sessionsfolder"], sinfo["id"], "mice")
@@ -414,7 +419,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             os.makedirs(func_dir)
 
         for boldinfo in bolds:
-            log.raw(f"\n---> Mapping {boldinfo['name']}")
+            log.step(f"Mapping {boldinfo['name']}")
 
             # files
             # original
@@ -435,70 +440,70 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             # running or testing
             if options["run"] == "run":
                 # original
-                log.raw(f"\n ... mapping {bold_original}")
+                log.detail(f"mapping {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        f"\n ... {bold_original} already exists and overwrite is set to no, skipping this file"
+                        log.detail(f"{bold_original} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_original, target_original)
                     report["done"].append(bold_original)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_original} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_original} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_original)
 
                 # EPI
-                log.raw(f"\n ... mapping {bold_epi}")
+                log.detail(f"mapping {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        f"\n ... {bold_epi} already exists and overwrite is set to no, skipping this file"
+                        log.detail(f"{bold_epi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_epi, target_epi)
                     report["done"].append(bold_epi)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_epi} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_epi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_epi)
 
                 # ABI
-                log.raw(f"\n ... mapping {bold_abi}")
+                log.detail(f"mapping {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file"
+                        log.detail(f"{bold_abi} already exists and overwrite is set to no, skipping this file")
                     else:
                         gc.link_or_copy(source_abi, target_abi)
                     report["done"].append(bold_abi)
                 else:
-                    log.raw(f"\n ... ERROR: {bold_abi} does not exist, rerun the preprocess_mice step")
+                    log.error(f"{bold_abi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["failed"].append(bold_abi)
 
             else:
                 # original
-                log.raw(f"\n ... checking {bold_original}")
+                log.detail(f"checking {bold_original}")
                 if os.path.exists(source_original):
                     if os.path.exists(target_original) and not overwrite:
-                        f"\n ... {bold_original} already exists and overwrite is set to no, this file would be skipped"
+                        log.detail(f"{bold_original} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_original)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_original} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_original} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_original)
 
                 # EPI
-                log.raw(f"\n ... checking {bold_epi}")
+                log.detail(f"checking {bold_epi}")
                 if os.path.exists(source_epi):
                     if os.path.exists(target_epi) and not overwrite:
-                        f"\n ... {bold_epi} already exists and overwrite is set to no, this file would be skipped"
+                        log.detail(f"{bold_epi} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_epi)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_epi} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_epi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_epi)
 
                 # ABI
-                log.raw(f"\n ... checking {bold_abi}")
+                log.detail(f"checking {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        f"\n ... {bold_abi} already exists and overwrite is set to no, skipping this file"
+                        log.detail(f"{bold_abi} already exists and overwrite is set to no, skipping this file")
                     report["ready"].append(bold_abi)
                 else:
-                    log.raw(f"\n ... WARNING: {bold_abi} does not exist, rerun the preprocess_mice step")
+                    log.warning(f"{bold_abi} does not exist, rerun the preprocess_mice step", depth=1)
                     report["not ready"].append(bold_abi)
 
             log.raw("\n")
@@ -515,12 +520,12 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         )
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(f"\n --- Failed during processing of session {session} with error:\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
         report = (sinfo["id"], "map_mice_data failed", 1)
 
     except Exception:
-        log.raw(f"n --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
+        log.info(f" --- Failed during processing of session {session} with error:\n {traceback.format_exc()}\n")
         report = (sinfo["id"], "map_mice_data failed", 1)
 
-    return (log.text, report)
+    return log.result(report)

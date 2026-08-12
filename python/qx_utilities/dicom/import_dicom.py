@@ -19,6 +19,7 @@ import os
 
 import qx_utilities.dicom.sort_report as gdr
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom2niix import dicom2niix
 from qx_utilities.dicom.import_utils import (
     _archive_packet,
@@ -56,6 +57,7 @@ def import_dicom(
     tr_rel_pct=5.0,
     existing_structure=False,
     test=False,
+    _log=None,
 ):
     r"""
     ``import_dicom [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [min_files=4] [tr_abs_ms=100] [tr_rel_pct=5]``
@@ -581,13 +583,15 @@ def import_dicom(
             deleted after the successful processing.
     """
 
-    print("Running import_dicom\n====================")
+    log = gl.log_or_console(_log)
+
+    log.info("Running import_dicom\n====================")
 
     if true_or_false(existing_structure):
-        print(
-            "WARNING: the existing_structure parameter is deprecated and ignored. The\n"
-            "         importer reads and sorts every file in the package by its series\n"
-            "         number, so preorganized packages need no special handling.\n"
+        log.warning(
+            "the existing_structure parameter is deprecated and ignored. The "
+            "importer reads and sorts every file in the package by its series "
+            "number, so preorganized packages need no special handling."
         )
 
     try:
@@ -600,29 +604,30 @@ def import_dicom(
     (sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b) = _import_normalize_args(
         sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite
     )
-    sessions_info = _import_parse_logfile(logfile)
+    sessions_info = _import_parse_logfile(logfile, _log=log)
 
-    packets, report_set = _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info)
-    _import_report_packets(packets, report_set, overwrite_b)
+    packets, report_set = _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info, _log=log)
+    _import_report_packets(packets, report_set, overwrite_b, _log=log)
 
-    to_process = _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite_b, test)
+    to_process = _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite_b, test, _log=log)
     if to_process is None:
         return
 
     afolder = os.path.join(sessionsfolder, "archive", "MR")
     if not os.path.exists(afolder):
         os.makedirs(afolder)
-        print("---> Created Archive folder for processed packages.")
+        log.step("Created Archive folder for processed packages.")
 
     report = {"failed": [], "ok": []}
-    print("---> Starting to process %d packets ..." % (len(to_process)))
+    log.step(f"Starting to process {len(to_process)} packets ...")
 
     for afile, session in to_process:
         note = []
         try:
             sfolder = os.path.join(sessionsfolder, session["sessionid"])
             dicom_dir = os.path.join(sfolder, "dicom")
-            print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
+            log.blank()
+            log.info(f'\n---=== PROCESSING {session["sessionid"]} ===---')
 
             sources = _resolve_packet_sources(afile, session, masterinbox, sfolder)
 
@@ -635,14 +640,15 @@ def import_dicom(
                 tr_rel_pct=tr_rel_pct,
                 min_images=min_images,
                 verbose=verbose_b,
+                _log=log,
             )
             gdr.write_report(pkg, os.path.join(dicom_dir, "%s_import_report.md" % (session["sessionid"])))
-            print()
-            print(gdr.render_console_summary(pkg))
-            print("---> Package verdict: %s" % (pkg.verdict))
+            log.blank()
+            log.info(gdr.render_console_summary(pkg))
+            log.step(f"Package verdict: {pkg.verdict}")
 
             # convert to NIfTI (still writes session.txt and DICOM-Report.txt)
-            print()
+            log.blank()
             dicom2niix(
                 folder=sfolder,
                 clean="no",
@@ -654,17 +660,18 @@ def import_dicom(
                 add_image_type=add_image_type,
                 add_json_info=add_json_info,
                 verbose=True,
+                _log=log,
             )
 
             if archive != "leave":
                 s = "Processing packages: " + archive
-                print("\n" + s)
-                print("=" * len(s))
-            note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b)
+                log.blank()
+                log.info(f'{s}\n{"=" * len(s)}')
+            note += _archive_packet(sources, afolder, archive, masterinbox, verbose_b, _log=log)
 
             report["ok"].append((afile, dict(session), note))
 
         except ge.CommandFailed as e:
             report["failed"].append((afile, dict(session), ["%s: %s" % (e.function, e.error)]))
 
-    _import_final_report(report)
+    _import_final_report(report, _log=log)

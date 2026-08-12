@@ -177,7 +177,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         # --- Get sorted bold numbers and bold data
-        bolds, bskip, report["boldskipped"] = log.use_or_skip_bold(sinfo, options)
+        bolds, bskip, report["boldskipped"] = pc.use_or_skip_bold(sinfo, options, _log=log)
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
@@ -190,10 +190,13 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             parelements = max(1, min(options["parelements"], len(icafix_bolds)))
         else:
             parelements = max(1, min(options["parelements"], len(icafix_groups)))
-        log.raw("\n\n%s %d PostFixes in parallel" % (
-            pc.action("Processing", options["run"]),
-            parelements,
-        ))
+        log.blank()
+        log.action(
+            "Processing",
+            f"{parelements} PostFixes in parallel",
+            options["run"],
+            level="info",
+        )
 
         # --- Execute
         # single fix
@@ -232,7 +235,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         log.command_failed(e)
         report = (sinfo["id"], "HCP PostFix failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         report = (sinfo["id"], "HCP PostFix failed", 1)
     except Exception:
         log.unknown_error()

@@ -278,8 +278,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         # --- run checks
         if "hcp" not in sinfo:
-            log.raw("\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"]))
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # -> FS results, check only for human
@@ -326,10 +325,10 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             tpl = _nhp_postfs_paths(hcp["hcp_Templates"], species)
             if tpl is None:
                 tpl = {}
-                log.raw("\n---> NOTE: species '%s' is not in QuNex's built-in NHP template map; "
-                    "the surface atlas, grayordinates and reference myelin map paths have to "
-                    "be provided explicitly via hcp_surfatlasdir, hcp_grayordinatesdir and "
-                    "hcp_refmyelinmaps." % (species))
+                log.step(f"NOTE: species '{species}' is not in QuNex's built-in NHP template map; "
+                    f"the surface atlas, grayordinates and reference myelin map paths have to "
+                    f"be provided explicitly via hcp_surfatlasdir, hcp_grayordinatesdir and "
+                    f"hcp_refmyelinmaps.")
 
         # hcp_surfatlasdir
         if options["hcp_surfatlasdir"] is None:
@@ -436,13 +435,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             if options["run"] == "run":
                 if overwrite or not os.path.exists(tfile):
                     log.step("Recording pre-PostFreeSurfer snapshot ...")
-                    _prepare_postfreesurfer_snapshot_state(hcp)
+                    _prepare_postfreesurfer_snapshot_state(hcp, _log=log)
 
                 # ---> clean up test file if overwrite
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP PostFS",
@@ -454,12 +453,13 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                     logtags=options["logtag"],
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP PostFS", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP PostFS", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP PostFS can be run")
@@ -475,7 +475,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         report = "PostFS failed"
         failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

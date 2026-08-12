@@ -21,7 +21,6 @@ import time
 import re
 
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.core as gc
 from qx_registry import qx_commands
 
 from datetime import datetime
@@ -488,10 +487,27 @@ def schedule(
 #                                                  general scheduler code
 
 
-def run_through_scheduler(
-    command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None
-):
+def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=None):
+    """
+    Submits `command` to the scheduler, one job per chunk of sessions.
+
+    The submission record -- what was submitted, with which arguments, and
+    which job ids came back -- is printed and appended to the run's runlog.
+    The runlog belongs to the run, not to the scheduler: it already holds the
+    header and whatever the caller wrote before submitting, so it is never
+    opened for writing here. The jobs' own output goes to
+    ``<run.logfolder>/batchlogs``.
+
+    For internal use only.
+    """
     jobs = []
+
+    def record(*parts):
+        """Print a line of the submission record and add it to the runlog."""
+        text = " ".join(str(part) for part in parts)
+        print(text)
+        if run:
+            run.write(text + "\n")
 
     # ---- setup options to pass to each job
     nopt = []
@@ -507,13 +523,7 @@ def run_through_scheduler(
         ]:
             nopt.append((k, v))
 
-    # ---- open log
-    if logname:
-        flog = open(logname, "w")
-    else:
-        flog = None
-
-    gc.print_and_log("---> Running scheduler for command %s" % (command), file=flog)
+    record("---> Running scheduler for command %s" % (command))
 
     # ---- setup scheduler options
     settings = args["scheduler"]
@@ -546,12 +556,9 @@ def run_through_scheduler(
     # ---- setup bash (commands to run inside compute node before the QuNex command)
     bash = args.get("bash", None)
 
-    # --- set logfolder
-    if logfolder is None:
-        logfolder = os.path.abspath(".")
-    else:
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
+    # --- the jobs' own output goes beside the run's other logs
+    logfolder = os.path.join(run.logfolder, "batchlogs") if run else os.path.abspath(".")
+    os.makedirs(logfolder, exist_ok=True)
 
     # ---- construct gmri command
     c_base = "\ngmri " + command
@@ -562,8 +569,8 @@ def run_through_scheduler(
 
     # ---- if sessions is None
     if sessions is None:
-        gc.print_and_log("\n---> submitting %s" % (command), file=flog)
-        gc.print_and_log(c_base, file=flog)
+        record("\n---> submitting %s" % (command))
+        record(c_base)
 
         if test == "run":
             exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -684,24 +691,24 @@ def run_through_scheduler(
             # increase start index
             start = start + chunk_size
 
-        # print out details
-        print(
+        # report how the sessions were divided among the jobs
+        record(
             "\n---> QuNex will run the command over %s sessions. It will utilize:\n"
             % n_sessions
         )
-        print("    Scheduled jobs: %s " % parjobs)
-        print("    Maximum sessions run in parallel for a job: %s." % parsessions)
-        print("    Maximum elements run in parallel for a session: %s." % parelements)
-        print(
+        record("    Scheduled jobs: %s " % parjobs)
+        record("    Maximum sessions run in parallel for a job: %s." % parsessions)
+        record("    Maximum elements run in parallel for a session: %s." % parelements)
+        record(
             "    Up to %s processes will be utilized for a job.\n"
             % (parelements * parsessions)
         )
 
         if slurm_array:
-            print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
+            record("    Using SLURM job array over sessions: %s" % sessionids_array[0])
         else:
             for i in range(0, parjobs):
-                print(
+                record(
                     "    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i])
                 )
 
@@ -744,8 +751,8 @@ def run_through_scheduler(
 
                 jobname = "%s_#%02d" % (command, i)
 
-                gc.print_and_log("\n---> submitting %s" % (jobname), file=flog)
-                gc.print_and_log(c_str, file=flog)
+                record("\n---> submitting %s" % (jobname))
+                record(c_str)
 
                 result, jobid = schedule(
                     command=c_str,
@@ -759,16 +766,12 @@ def run_through_scheduler(
                 )
                 jobs.append((jobid, jobname))
 
-                gc.print_and_log("...\n", result, file=flog)
+                record("...\n", result)
 
                 time.sleep(sleeptime)
 
     # --- print report
     if jobs:
-        gc.print_and_log("\n---> Submitted jobs", file=flog)
+        record("\n---> Submitted jobs")
         for jobid, jobname in jobs:
-            gc.print_and_log("     %s -> %s" % (jobid, jobname), file=flog)
-
-    # --- close log if specified
-    if flog:
-        flog.close()
+            record("     %s -> %s" % (jobid, jobname))

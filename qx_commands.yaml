@@ -1,8 +1,45 @@
 version: 1
-generated_at: '2026-08-12T09:52:00.738235+00:00'
+generated_at: '2026-08-12T10:26:01.129319+00:00'
 source:
     id: core
 commands:
+-   name: backup_files
+    aliases: []
+    path: qx_utilities.general.snapshots.backup_files
+    language: python
+    call: backup_files source=<path to source folder> target=<path to target folder> filelist=<list of files> [store="original"]
+        [overwrite=False]
+    description: Creates a backup of specified files from a source folder to a target location. Files are stored with sequential
+        backup prefixes (b001\_, b002\_, etc.) and a file_list.txt manifest is created to track the original locations.
+    type: utility
+    args:
+    -   name: source
+        type: str
+        default: null
+        description: The path to the source folder containing the files to back up. All file paths in filelist are resolved
+            relative to this folder if they are not absolute paths.
+    -   name: target
+        type: str
+        default: null
+        description: The path to the target folder where backups will be stored. If the folder does not exist, it will be
+            created. For store=zip mode, this should be the path without .zip extension (the .zip extension will be added
+            automatically).
+    -   name: filelist
+        type: list of str
+        default: null
+        description: A list of file paths to back up. Paths can be absolute or relative to the source folder. The list can
+            be provided as a Python list or as a comma-separated string.
+    -   name: store
+        type: str
+        default: original
+        description: 'Storage mode for the backup files:'
+    -   name: overwrite
+        type: bool
+        default: 'False'
+        description: 'Controls behavior when target already exists and contains files:'
+    options: []
+    returns: []
+    origin: core
 -   name: batch_tag2namekey
     aliases: []
     path: qx_utilities.general.utilities.batch_tag2namekey
@@ -246,10 +283,6 @@ commands:
         type: null
         default: null
         description: null
-    -   name: r
-        type: null
-        default: null
-        description: null
     options:
     -   name: batchfile
         type: str
@@ -334,6 +367,70 @@ commands:
         type: bool
         default: 'True'
         description: Whether to move incomplete-volume/orphan files to ``dicom/orphans``.
+    options: []
+    returns: []
+    origin: core
+-   name: compare_nifti_images
+    aliases: []
+    path: qx_utilities.general.img.compare_nifti_images
+    language: python
+    call: compare_nifti_images file1=<path to first NIFTI file> file2=<path to second NIFTI file> [ndifflines=10]
+    description: Performs a detailed comparison of two NIFTI image files, analyzing their headers, extensions, and data arrays.
+        The comparison is presented in a structured, tabular format highlighting differences.
+    type: utility
+    args:
+    -   name: file1
+        type: str
+        default: null
+        description: The path to the first NIFTI file to compare. Can be .nii or .nii.gz format. Supports both NIfTI-1 and
+            NIfTI-2 formats.
+    -   name: file2
+        type: str
+        default: null
+        description: The path to the second NIFTI file to compare. Can be .nii or .nii.gz format. Supports both NIfTI-1 and
+            NIfTI-2 formats.
+    -   name: ndifflines
+        type: int
+        default: '10'
+        description: Maximum number of diff lines to display when comparing textual extensions. If set to -1, all diff lines
+            are printed. This helps manage output length when extensions have many differences.
+    options: []
+    returns: []
+    origin: core
+-   name: compare_snapshots
+    aliases: []
+    path: qx_utilities.general.snapshots.compare_snapshots
+    language: python
+    call: compare_snapshots before=<path to snapshot file> after=<path to snapshot file or folder> outfile=<path to comparison
+        file> [includehash=True] [exclude=None]
+    description: Compares two directory snapshots or a snapshot against a live directory to identify changes. Creates a detailed
+        comparison tree showing which files were added, deleted, or modified. The comparison can be used for change analysis
+        or as input to rollback_snapshot() for reverting changes.
+    type: utility
+    args:
+    -   name: before
+        type: str
+        default: null
+        description: Path to the "before" snapshot file (baseline state). This must be a snapshot file created by record_snapshot().
+            The snapshot captures the original state before changes were made.
+    -   name: after
+        type: str
+        default: null
+        description: 'Path to either:'
+    -   name: outfile
+        type: str
+        default: null
+        description: Path to the output file where the comparison results will be saved. The file will contain a tree structure
+            with status markers showing all changes. If the file exists, it will be overwritten.
+    -   name: includehash
+        type: bool or str
+        default: 'True'
+        description: 'Whether to use MD5 hash when detecting modifications:'
+    -   name: exclude
+        type: list or str
+        default: None
+        description: 'Optional list of files or folders to exclude from the comparison. Excluded items will not appear in
+            the comparison output. Can be specified as:'
     options: []
     returns: []
     origin: core
@@ -8911,6 +9008,101 @@ commands:
     options: []
     returns: []
     origin: core
+-   name: merge_session
+    aliases: []
+    path: qx_utilities.general.sessions.merge_session
+    language: python
+    call: merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]
+        [--original_sessions=<action>]
+    description: Join multiple sessions into a single session.
+    type: utility
+    args:
+    -   name: studyfolder
+        type: str
+        default: null
+        description: Path to the study folder. This is used as the base for resolving relative paths and for locating sessions
+            when only session IDs are provided (assumes sessions are in <studyfolder>/sessions/).
+    -   name: source
+        type: str
+        default: null
+        description: 'A comma-separated list of session IDs or paths to join. Each can be: - A session ID (e.g., ''session1'')
+            - assumes <studyfolder>/sessions/<id> - A relative path (e.g., ''other/session1'') - relative to studyfolder -
+            An absolute path (e.g., ''/data/study/sessions/session1'') The sessions will be merged in the order specified,
+            with sequence numbers and indices adjusted accordingly.'
+    -   name: target
+        type: str
+        default: null
+        description: 'The target session ID or path. Can be specified as: - A session ID (e.g., ''merged_session'') - creates
+            in <studyfolder>/sessions/ - A relative path (e.g., ''sessions/merged'') - relative to studyfolder - An absolute
+            path (e.g., ''/data/study/sessions/merged'')'
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: How to handle existing target folder. Options are 'no' (raise an error if target exists with content),
+            'clean' (remove existing content and replace with merged data), or 'merge' (add new data to existing session,
+            continuing sequence numbering from where target left off).
+    -   name: raw_data
+        type: str
+        default: copy
+        description: 'How to handle raw data (dicom/ and bids/ folders). Options are: - ''copy'': Copy raw data from source
+            to target (default) - ''move'': Move raw data from source to target - ''leave'': Do not transfer raw data, only
+            merge session metadata'
+    -   name: original_sessions
+        type: str
+        default: leave
+        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
+            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
+            sessions to specified path (e.g., ''move:/data/backup_sessions''). If a session already exists at the destination,
+            behavior depends on the --overwrite parameter: ''no'' skips the move with a warning, while ''clean'' or ''merge''
+            replaces the existing session.'
+    options: []
+    returns: []
+    origin: core
+-   name: merge_sessions_list
+    aliases: []
+    path: qx_utilities.general.sessions.merge_sessions_list
+    language: python
+    call: merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>]
+        [--raw_data=<mode>] [--original_sessions=<action>]
+    description: Join multiple sessions according to a list file.
+    type: utility
+    args:
+    -   name: studyfolder
+        type: str
+        default: null
+        description: Path to the study folder. This is passed to each merge_session call.
+    -   name: session_list
+        type: str
+        default: null
+        description: 'Path to a text file containing join specifications. Each line should have the format:'
+    -   name: source_folder
+        type: str
+        default: null
+        description: Path to the folder containing source sessions. Each source_id from the session_list will be resolved
+            as <source_folder>/<source_id>.
+    -   name: target_folder
+        type: str
+        default: null
+        description: Path to the folder where target sessions will be created. Each target_id from the session_list will be
+            resolved as <target_folder>/<target_id>.
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: How to handle existing target folders. Passed to each merge_session call. Options are 'no', 'clean',
+            or 'merge'.
+    -   name: raw_data
+        type: str
+        default: copy
+        description: How to handle raw data. Passed to each merge_session call. Options are 'copy', 'move', or 'leave'.
+    -   name: original_sessions
+        type: str
+        default: leave
+        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
+            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
+            sessions to specified path (e.g., ''move:/data/backup_sessions'')'
+    options: []
+    returns: []
+    origin: core
 -   name: nifti24dfp
     aliases: []
     path: qx_utilities.general.nifti.nifti24dfp
@@ -9117,10 +9309,15 @@ commands:
         description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
-        default: study
-        description: 'Whether to keep (''keep'') or remove (''remove'') the temporary logs once jobs are completed. When a
-            comma or pipe (''|'') separated list is given, the log will be created at the first provided location and then
-            linked or copied to other locations. The valid locations are:'
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed. A comlog that
+            recorded an error is kept whichever is asked for, and a removed one still leaves its completion status in the
+            run log.
+    -   name: comlog_folders
+        type: str
+        default: ''
+        description: 'A comma or pipe (''|'') separated list of locations the comlogs are placed in. The comlog is created
+            at the first provided location and then linked or copied to the others. The valid locations are:'
     -   name: bolds
         type: str
         default: all
@@ -9209,10 +9406,15 @@ commands:
         description: The path to the folder where logs are to be stored, if other than default.
     -   name: log
         type: str
-        default: study
-        description: 'Whether to keep (''keep'') or remove (''remove'') the temporary logs once jobs are completed. When a
-            comma or pipe (''|'') separated list is given, the log will be created at the first provided location and then
-            linked or copied to other locations. The valid locations are:'
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs once jobs are completed. A comlog that
+            recorded an error is kept whichever is asked for, and a removed one still leaves its completion status in the
+            run log.
+    -   name: comlog_folders
+        type: str
+        default: ''
+        description: 'A comma or pipe (''|'') separated list of locations the comlogs are placed in. The comlog is created
+            at the first provided location and then linked or copied to the others. The valid locations are:'
     -   name: bolds
         type: str
         default: all
@@ -9566,6 +9768,38 @@ commands:
             not yet exposed through QuNex command line options. The string will be passed to rapidtide as is.
     returns: []
     origin: core
+-   name: record_snapshot
+    aliases: []
+    path: qx_utilities.general.snapshots.record_snapshot
+    language: python
+    call: record_snapshot targetfolder=<path to folder> outfile=<path to snapshot file> [includehash=True] [exclude=None]
+    description: Creates a hierarchical snapshot of a directory structure, recording file names, modification times, sizes,
+        and optionally MD5 hashes. The snapshot is saved as a human-readable tree structure in a text file, which can later
+        be used for comparison or rollback operations.
+    type: utility
+    args:
+    -   name: targetfolder
+        type: str
+        default: null
+        description: The path to the folder to snapshot. The function recursively traverses all subdirectories and captures
+            metadata for every file. The folder must exist or an error will be raised.
+    -   name: outfile
+        type: str
+        default: null
+        description: The path to the output text file where the snapshot will be saved. If the file exists, it will be overwritten.
+            Parent directories will be created automatically if they don't exist.
+    -   name: includehash
+        type: bool or str
+        default: 'True'
+        description: 'Whether to compute and include MD5 hash for each file:'
+    -   name: exclude
+        type: list or str
+        default: None
+        description: 'Optional list of files or folders to exclude from the snapshot. Excluded items will not appear in the
+            snapshot output. Can be specified as:'
+    options: []
+    returns: []
+    origin: core
 -   name: remove_qunex_metadata
     aliases: []
     path: qx_utilities.general.img.remove_qunex_metadata
@@ -9624,6 +9858,80 @@ commands:
         type: str
         default: null
         description: Output image filename. If not provided, it replaces the original file.
+    options: []
+    returns: []
+    origin: core
+-   name: restore_files
+    aliases: []
+    path: qx_utilities.general.snapshots.restore_files
+    language: python
+    call: restore_files source=<path to backup folder or archive> [target=<path to target folder>] [overwrite=False] [filelist=None]
+    description: Restores files from a backup created by backup_files function. The backup can be in any format (original,
+        gzip, or zip). Files are restored to their original locations or to a specified target directory, with automatic decompression
+        of gzipped files when needed.
+    type: utility
+    args:
+    -   name: source
+        type: str
+        default: null
+        description: 'The path to the backup location. Can be either:'
+    -   name: target
+        type: str
+        default: None
+        description: 'The target directory where files should be restored:'
+    -   name: overwrite
+        type: bool or str
+        default: 'False'
+        description: 'Controls behavior when restored files already exist at target:'
+    -   name: filelist
+        type: list or str
+        default: None
+        description: 'Optional list of specific files to restore. If not provided, all files from the backup are restored.
+            Can be specified as:'
+    options: []
+    returns: []
+    origin: core
+-   name: rollback_snapshot
+    aliases: []
+    path: qx_utilities.general.snapshots.rollback_snapshot
+    language: python
+    call: rollback_snapshot [diff=<path to comparison file>] [before=<path to snapshot file>] [after=<path to snapshot file
+        or folder>] [includehash=True] [action="check"] [exclude=None]
+    description: 'Analyzes snapshot differences to identify added files and optionally deletes them to roll back changes.
+        Useful for reverting unwanted modifications, cleaning up failed processing runs, or undoing experimental changes.
+        Can operate in two modes: check (analyze only) or delete (perform rollback).'
+    type: utility
+    args:
+    -   name: diff
+        type: str
+        default: null
+        description: Path to a comparison file created by compare_snapshots(). If provided, this file is used directly to
+            determine what changed. If not provided, both 'before' and 'after' parameters must be specified to generate the
+            comparison on-the-fly.
+    -   name: before
+        type: str
+        default: null
+        description: Path to the "before" snapshot file (baseline state). Required if 'diff' is not provided. This snapshot
+            represents the state you want to roll back to.
+    -   name: after
+        type: str
+        default: null
+        description: Path to either a snapshot file or a directory representing the current state. Required if 'diff' is not
+            provided. If a directory is provided, a temporary snapshot will be created for comparison.
+    -   name: includehash
+        type: bool or str
+        default: 'True'
+        description: Whether to use MD5 hash when comparing files (only relevant if generating comparison on-the-fly). If
+            using an existing diff file, this parameter is ignored.
+    -   name: action
+        type: str
+        default: check
+        description: 'The action to perform:'
+    -   name: exclude
+        type: list or str
+        default: None
+        description: 'Optional list of files or folders to exclude from rollback operations. Excluded files will not be deleted
+            even if they were added. Can be specified as:'
     options: []
     returns: []
     origin: core
@@ -10101,6 +10409,10 @@ commands:
         default: ''
         description: The folder within which to save the log.
     -   name: eargs
+        type: null
+        default: null
+        description: null
+    -   name: log_settings
         type: null
         default: null
         description: null

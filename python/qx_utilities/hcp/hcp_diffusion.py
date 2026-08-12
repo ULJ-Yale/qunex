@@ -337,21 +337,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         hcp = get_hcp_paths(sinfo, options)
 
         if "hcp" not in sinfo:
-            log.raw(
-                "\n---> ERROR: There is no hcp info for session %s in batch.txt"
-                % (sinfo["id"])
-            )
+            log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
 
         # --- using a legacy parameter?
         if "hcp_dwi_pedir" in options:
-            log.warning(
-                "you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it."
-            )
-            log.raw(
-                "\n---> hcp_dwi_phasepos is currently set to %s."
-                % options["hcp_dwi_phasepos"]
-            )
+            log.warning("you are still providing the hcp_dwi_pedir parameter which has been replaced with hcp_dwi_phasepos! Please consult the documentation to see how to use it.")
+            log.step(f"hcp_dwi_phasepos is currently set to {options['hcp_dwi_phasepos']}.")
 
         # --- set up data
         direction = None
@@ -369,10 +361,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             direction = {"pos": "RL", "neg": "LR"}
             pe_dir = 1
         else:
-            log.raw(
-                "\n---> ERROR: Invalid value of the hcp_dwi_phasepos parameter [%s]"
-                % options["hcp_dwi_phasepos"]
-            )
+            log.error(f"Invalid value of the hcp_dwi_phasepos parameter [{options['hcp_dwi_phasepos']}]")
             run = False
 
         if run:
@@ -440,17 +429,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     dfiles = dwi_files[ddir].split("@")
 
                     if dfiles and dfiles != [""] and dfiles != "EMPTY":
-                        log.raw(
-                            "\n---> The following %s direction files were found:"
-                            % (ddir)
-                        )
+                        log.step(f"The following {ddir} direction files were found:")
                         for dfile in dfiles:
-                            log.raw("\n     %s" % (os.path.basename(dfile)))
+                            log.info(f"     {os.path.basename(dfile)}")
                     else:
-                        log.raw(
-                            "\n---> ERROR: No %s direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu."
-                            % ddir
-                        )
+                        log.error(f"No {ddir} direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu.")
                         run = False
                         break
 
@@ -528,7 +511,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ):
                 # echospacing read from image data
                 echospacing = dwiinfo["EchoSpacing"]
-                log.raw(f"\n---> Using image specific EchoSpacing: {echospacing} s")
+                log.step(f"Using image specific EchoSpacing: {echospacing} s")
 
                 # check validity
                 echospacing, message = _check_dwi_echospacing(echospacing)
@@ -537,7 +520,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             # if echospacing is none, set from parameter
             if not echospacing and "hcp_dwi_echospacing" in options:
                 echospacing = options["hcp_dwi_echospacing"]
-                log.raw(f"\n---> Using study general EchoSpacing: {echospacing} s")
+                log.step(f"Using study general EchoSpacing: {echospacing} s")
 
                 # check validity
                 echospacing, message = _check_dwi_echospacing(echospacing)
@@ -557,9 +540,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         if options["longitudinal"]:
             studyfolder = gc.deduce_folders(options)["basefolder"]
             if not studyfolder:
-                log.raw(
-                    "\nERROR: cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter."
-                )
+                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 run = False
             # replace path
             path = os.path.join(studyfolder, "subjects", sinfo["subject"])
@@ -683,14 +664,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     # bval
                     bval = pos.replace(".nii.gz", ".bval")
                     if not os.path.isfile(bval):
-                        log.raw(f"\n---> Creating dummy bval file for [{pos}].")
+                        log.step(f"Creating dummy bval file for [{pos}].")
                         with open(bval, "w") as f:
                             f.write("0\n")
 
                     # bvec
                     bvec = pos.replace(".nii.gz", ".bvec")
                     if not os.path.isfile(bvec):
-                        log.raw(f"\n---> Creating dummy bvec file for [{pos}].")
+                        log.step(f"Creating dummy bvec file for [{pos}].")
                         with open(bvec, "w") as f:
                             f.write("0\n0\n0\n")
 
@@ -700,14 +681,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     # bval
                     bval = neg.replace(".nii.gz", ".bval")
                     if not os.path.isfile(bval):
-                        log.raw(f"\n---> Creating dummy bval file for [{pos}].")
+                        log.step(f"Creating dummy bval file for [{pos}].")
                         with open(bval, "w") as f:
                             f.write("0\n")
 
                     # bvec
                     bvec = neg.replace(".nii.gz", ".bvec")
                     if not os.path.isfile(bvec):
-                        log.raw(f"\n---> Creating dummy bvec file for [{pos}].")
+                        log.step(f"Creating dummy bvec file for [{pos}].")
                         with open(bvec, "w") as f:
                             f.write("0\n0\n0\n")
 
@@ -746,7 +727,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if options["longitudinal"]:
                     logtags.append("long")
 
-                _, report, failed = log.run_external(
+                _, report, failed = pc.run_external_for_file(
                     tfile,
                     comm,
                     "Running HCP Diffusion Preprocessing",
@@ -758,12 +739,13 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    _log=log,
                 )
 
             # -- just checking
             else:
-                passed, report, failed = log.check_run(
-                    tfile, full_test, "HCP Diffusion", overwrite=overwrite
+                passed, report, failed = pc.check_run(
+                    tfile, full_test, "HCP Diffusion", overwrite=overwrite, _log=log
                 )
                 if passed is None:
                     log.step("HCP Diffusion can be run")
@@ -776,7 +758,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             failed = 1
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.capture(str(errormessage))
+        log.raw(str(errormessage))
         failed = 1
     except Exception:
         log.unknown_error()

@@ -32,6 +32,7 @@ import gzip as gz
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_utils import _safe_rmtree
 
 
@@ -234,13 +235,15 @@ def _unzip_dicom_file(dicom_folder):
     return r
 
 
-def _unzip_dicom(dicom_root_folder, parelements):
+def _unzip_dicom(dicom_root_folder, parelements, _log=None):
     """
     Find and unzip archived dicom folders and files.
 
     This function finds archived dicom folders created by previous import dicom
     runs
     """
+    log = gl.log_or_console(_log)
+
     with ProcessPoolExecutor(parelements) as executor:
         pending_futures = []
         for i in os.listdir(dicom_root_folder):
@@ -252,7 +255,7 @@ def _unzip_dicom(dicom_root_folder, parelements):
                 )
                 if match_result:
                     dcm_name = match_result.group("dcm_name")
-                    print("submit unzip dicom folder: {}".format(dcm_name))
+                    log.detail("submit unzip dicom folder: {}".format(dcm_name))
                     if not dcm_name.isdigit():
                         continue
                     future = executor.submit(
@@ -266,24 +269,24 @@ def _unzip_dicom(dicom_root_folder, parelements):
             if future.exception() is not None:
                 # Unhandled
                 e = future.exception()
-                print("Unhandled exception")
-                print(traceback.format_exc())
+                log.error("unhandled exception")
+                log.raw("\n" + traceback.format_exc())
                 exceptions.append(e)
                 continue
             r = future.result()
             if r["status"] == "ok":
-                print(
+                log.detail(
                     "unzipped {} -> {}".format(
                         r["args"]["dicom_packet"], r["args"]["dicom_folder"]
                     )
                 )
             else:
-                print(
+                log.error(
                     "unzip failed {} -> {}".format(
                         r["args"]["dicom_packet"], r["args"]["dicom_folder"]
                     )
                 )
-                print(r["traceback"])
+                log.raw("\n" + r["traceback"])
                 exceptions.append(r["exception"])
         # raise exception after the status of all child processes are collected
         if len(exceptions) > 0:
@@ -305,18 +308,20 @@ def _unzip_dicom(dicom_root_folder, parelements):
             if future.exception() is not None:
                 # Unhandled
                 e = future.exception()
-                print("Unhandled exception")
-                print(traceback.format_exc())
+                log.error("unhandled exception")
+                log.raw("\n" + traceback.format_exc())
                 exceptions.append(e)
                 continue
             r = future.result()
             if r["status"] == "ok":
-                print("extract gzipped dicoms {}".format(r["args"]["dicom_folder"]))
+                log.detail(
+                    "extract gzipped dicoms {}".format(r["args"]["dicom_folder"])
+                )
             else:
-                print(
+                log.error(
                     "extract gzipped dicoms failed {}".format(r["args"]["dicom_folder"])
                 )
-                print(r["traceback"])
+                log.raw("\n" + r["traceback"])
                 exceptions.append(r["exception"])
         # raise exception after the status of all child processes are collected
         if len(exceptions) > 0:
