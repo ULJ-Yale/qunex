@@ -1525,11 +1525,13 @@ def compare_nifti_images(file1, file2, ndifflines=10):
         The function performs comparison in the following order:
 
         1. **File Hash Comparison**:
+
            - Computes SHA-256 hash of both complete files
            - If hashes match, files are identical and comparison stops
            - If hashes differ, proceeds with detailed analysis
 
         2. **Header Comparison**:
+
            - Opens both files and reads NIfTI headers
            - Compares each header field individually
            - Reports field name, value from file1, and value from file2 for
@@ -1537,22 +1539,30 @@ def compare_nifti_images(file1, file2, ndifflines=10):
            - Handles both NIfTI-1 (348 byte) and NIfTI-2 (540 byte) headers
 
         3. **Extension Comparison**:
+
            - Compares the number of extensions in each file
            - Identifies extensions present in one file but not the other
            - For matching extension codes:
+
              * Compares extension hashes (SHA-256)
              * If hashes match, reports extensions as identical
              * If hashes differ and extension is text:
+
                - Performs line-by-line diff
-               - Displays rows that differ between files (limited by ndifflines)
+               - Displays rows that differ between files (limited by
+                 ndifflines)
+
              * If hashes differ and extension is binary:
+
                - Reports that extensions differ
                - Lists the size of each extension
 
         4. **Data Comparison**:
+
            - Checks if data dimensionality matches (shape of arrays)
            - If dimensions differ, reports the difference
            - If dimensions match:
+
              * Computes SHA-256 hash over the data arrays
              * Reports whether data is identical or different
              * Does not load entire data into memory for large files
