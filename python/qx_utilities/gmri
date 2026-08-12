@@ -180,6 +180,12 @@ def runCommand(command, args):
     filled = {key: value for key, value in filled.items() if key not in args}
     bargs = {**bargs, **filled}
 
+    # -- the threads the command may use. `bin/qunex.sh` sets this before it
+    #    hands over, so a run started there arrives with it set and this
+    #    changes nothing; the two are entry points to the same dispatcher and
+    #    have to run a command the same way
+    gcs.set_omp_threads(options)
+
     # -- the header may have moved the study, so the folders are deduced again.
     #    From what was actually stated rather than from the merged options: the
     #    `arglist` defaults would otherwise answer for folders nobody named

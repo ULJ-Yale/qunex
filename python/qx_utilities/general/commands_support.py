@@ -572,6 +572,53 @@ def impute_parameters(options, command):
 
 
 # ==============================================================================
+#                                                   THE THREADS A COMMAND MAY USE
+#
+MAX_OMP_THREADS = 8
+
+
+def set_omp_threads(options):
+    """
+    ``set_omp_threads(options)``
+
+    Sets `OMP_NUM_THREADS` for the command about to be run: `--omp_threads` if
+    the run states one, otherwise the cores available to this process shared
+    between the parallel jobs it was asked for, at least one and at most eight.
+
+    An environment that already states it is left alone. `bin/qunex.sh` sets
+    the same variable the same way before it hands over, so a run started
+    there arrives with it set and this changes nothing; a run started at
+    `gmri` - a step of a recipe, a scheduler job, a call from a script - used
+    to get the machine's default and oversubscribe the node.
+
+    Parameters:
+        --options   The merged options, from `process.merge_options`.
+
+    Returns:
+        The value it set, or None when the environment already stated one.
+    """
+    if options.get("omp_threads"):
+        threads = int(options["omp_threads"])
+    elif os.environ.get("OMP_NUM_THREADS"):
+        return None
+    else:
+        # the cores this process may actually run on, which is what `nproc`
+        # reports and what a scheduler restricts a job to
+        cores = (
+            len(os.sched_getaffinity(0))
+            if hasattr(os, "sched_getaffinity")
+            else os.cpu_count() or 1
+        )
+        parallel = int(options.get("parsessions", 1)) * int(
+            options.get("parelements", 1)
+        )
+        threads = min(MAX_OMP_THREADS, max(1, cores // max(1, parallel)))
+
+    os.environ["OMP_NUM_THREADS"] = str(threads)
+    return threads
+
+
+# ==============================================================================
 #                                                          PARAMETER PROVENANCE
 #
 PER_SESSION = "batch file (session)"
@@ -745,6 +792,7 @@ extra_parameters = [
     "scheduler_workdir",
     "scheduler_sleep",
     "nprocess",
+    "omp_threads",
     "logging",
     "keep_comlogs",
     "runlog_content",

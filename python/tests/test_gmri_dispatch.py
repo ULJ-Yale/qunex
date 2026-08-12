@@ -258,6 +258,31 @@ def test_a_batch_file_header_fills_in_what_a_command_was_not_told(
             assert line.endswith("command line")
 
 
+def test_a_run_started_at_gmri_gets_the_threads_the_shell_front_end_would_set(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    `bin/qunex.sh` reads `--omp_threads`, or divides the cores by the
+    parallelism asked for, and exports `OMP_NUM_THREADS` before it hands over.
+    A run that starts at `gmri` -- a step of a recipe, a scheduler job -- got
+    the machine default and oversubscribed the node.
+    """
+    monkeypatch.delenv("OMP_NUM_THREADS", raising=False)
+
+    gmri.runCommand(
+        "create_study", {"studyfolder": str(tmp_path / "a"), "omp_threads": "3"}
+    )
+    assert os.environ["OMP_NUM_THREADS"] == "3"
+
+    monkeypatch.delenv("OMP_NUM_THREADS")
+    gmri.runCommand("create_study", {"studyfolder": str(tmp_path / "b")})
+    assert 1 <= int(os.environ["OMP_NUM_THREADS"]) <= gmri.gcs.MAX_OMP_THREADS
+
+    monkeypatch.setenv("OMP_NUM_THREADS", "12")
+    gmri.runCommand("create_study", {"studyfolder": str(tmp_path / "c")})
+    assert os.environ["OMP_NUM_THREADS"] == "12", "an environment that states it wins"
+
+
 def test_the_record_a_run_wrote_itself_is_not_overwritten_at_the_boundary(tmp_path):
     """
     `process.run` writes its per-session digest and *then* raises for the
