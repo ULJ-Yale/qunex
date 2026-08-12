@@ -109,7 +109,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action(
         "Running", f"FSL F99 registration [{session}] ...", options["run"], level="info"
@@ -164,10 +164,10 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         )
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running FSL F99 command via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # check for existing F99 results
         target_file = os.path.join(f99reg_dir, "F99_anat_to_F99.nii.gz")
@@ -373,7 +373,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action("Running", f"FSL XTRACT [{session}] ...", options["run"], level="info")
 
@@ -511,10 +511,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             comm = comm + " -ref %s" % options["xtract_ref"]
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running FSL F99 command via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # check for existing XTRACT results
         target_file = os.path.join(output_dir, "tracts", "vof_r", "density.nii.gz")
@@ -674,7 +674,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action(
         "Running", f"CUDIMOT NODDI modelling [{session}] ...", options["run"], level="info"
@@ -744,10 +744,10 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         )
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running CUDIMOT NODDI modelling via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # run
         if run:

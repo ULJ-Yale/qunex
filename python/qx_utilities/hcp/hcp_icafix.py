@@ -387,7 +387,7 @@ def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
     postfix_report = None
 
     try:
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", f"BOLD image {printbold}", options["run"])
         boldok = True
 
@@ -551,7 +551,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
     postfix_report = None
 
     try:
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 

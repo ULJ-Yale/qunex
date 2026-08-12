@@ -953,7 +953,7 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
     }
 
     # extract data
-    log.raw("\n\n------------------------------------------------------------")
+    log.rule(before=1)
 
     if single_fix:
         # highpass
@@ -1065,10 +1065,10 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 
         # -- Report command
         if boldok:
-            log.raw("\n\n------------------------------------------------------------\n")
+            log.rule(before=1, after=1)
             log.raw("Running HCP Pipelines command via QuNex:\n\n")
             log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-            log.raw("\n------------------------------------------------------------\n")
+            log.rule(after=1)
 
         # -- Run
         if run and boldok:
@@ -1145,7 +1145,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         # get group data
         bolds = group["bolds"]
 
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", "DeDriftAndResample", options["run"])
         boldsok = True
 
@@ -1309,10 +1309,10 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
 
         # -- Report command
         if boldsok:
-            log.raw("\n\n------------------------------------------------------------\n")
+            log.rule(before=1, after=1)
             log.raw("Running HCP Pipelines command via QuNex:\n\n")
             log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-            log.raw("\n------------------------------------------------------------\n")
+            log.rule(after=1)
 
         # -- Run
         if run and boldsok:
@@ -1379,7 +1379,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
     }
 
     try:
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", "DeDriftAndResample", options["run"])
 
         # --- check for bold images and prepare targets parameter
@@ -1649,10 +1649,10 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
 
         # -- Report command
         if runok:
-            log.raw("\n\n------------------------------------------------------------\n")
+            log.rule(before=1, after=1)
             log.raw("Running HCP Pipelines command via QuNex:\n\n")
             log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-            log.raw("\n------------------------------------------------------------\n")
+            log.rule(after=1)
 
         # -- Run
         if run and runok:

@@ -307,10 +307,10 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
 
             # -- Report command
             if run:
-                log.raw("\n\n------------------------------------------------------------\n")
+                log.rule(before=1, after=1)
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("                --", "\n    --"))
-                log.raw("\n------------------------------------------------------------\n")
+                log.rule(after=1)
 
         # -- Run
         if run:

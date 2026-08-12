@@ -121,7 +121,7 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action("Running", f"setup_mice {session} ...", options["run"], level="info")
 
@@ -258,10 +258,10 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
                 comm += "                --voxel_increase=" + options["voxel_increase"]
 
             # report command
-            log.raw("\n\n------------------------------------------------------------\n")
+            log.rule(before=1, after=1)
             log.raw("Running setup_mice bash script through QuNex:\n\n")
             log.raw(comm.replace("                ", ""))
-            log.raw("\n------------------------------------------------------------\n")
+            log.rule(after=1)
 
             # run
             if options["run"] == "run":

@@ -306,7 +306,7 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
 
     try:
         # run HCP hand reclassification
-        log.raw("\n------------------------------------------------------------")
+        log.rule()
         log.step(f"Executing HCP Hand reclassification for bold: {printbold}\n")
         result = execute_hcp_hand_reclassification(
             sinfo, options, hcp, run, True, boldtarget, printbold
@@ -389,10 +389,10 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
 
             # -- Report command
             if boldok:
-                log.raw("\n------------------------------------------------------------\n")
+                log.rule(after=1)
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-                log.raw("\n------------------------------------------------------------\n")
+                log.rule(after=1)
 
             # -- Test files
             # postfix
@@ -491,7 +491,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
     }
 
     try:
-        log.raw("\n------------------------------------------------------------")
+        log.rule()
         log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
@@ -654,10 +654,10 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
             # -- Report command
             if groupok:
-                log.raw("\n------------------------------------------------------------\n")
+                log.rule(after=1)
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-                log.raw("\n------------------------------------------------------------\n")
+                log.rule(after=1)
 
             # -- Test files
             # postfix

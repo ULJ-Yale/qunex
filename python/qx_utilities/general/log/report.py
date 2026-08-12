@@ -59,8 +59,11 @@ from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 
-# separator used to frame the per-session reports
-REPORT_RULE = "------------------------------------------------------------"
+# separators used to frame the per-session reports. One width, whatever they
+# are drawn with: `ReportLog.rule` varies the character and never the length,
+# so rules stack into a page instead of a ragged edge
+RULE_WIDTH = 60
+REPORT_RULE = "-" * RULE_WIDTH
 
 # timestamp format used in the per-session reports
 REPORT_TIME = "%A, %d. %B %Y %H:%M:%S"
@@ -400,6 +403,29 @@ class ReportLog:
     def blank(self, count: int = 1) -> None:
         """Insert blank lines."""
         self.raw("\n" * count)
+
+    def rule(self, before: int = 0, after: int = 0, char: str = "-") -> None:
+        """
+        Draw a full width rule across the report.
+
+        The dashed rule separates one session report from the next; it is what
+        :meth:`framed` draws and what a reader scanning a runlog looks for. It
+        used to be hand-typed at every call site, which is how the tree came to
+        have two rules of different lengths appearing in the same runlog. Ask
+        for the rule rather than spelling it.
+
+        ``char`` picks what it is drawn with, so a report can separate at more
+        than one weight -- a dotted rule around a traceback reads as a lighter
+        division than the dashed one that ends a session. The **width does not
+        change with it**: rules of one length stack into a readable page, and
+        that is the property being protected here.
+
+        Parameters:
+            before: blank lines above the rule.
+            after: blank lines below it.
+            char: what to draw it with, e.g. ``"-"``, ``"."`` or ``"="``.
+        """
+        self.raw("\n" * (before + 1) + char * RULE_WIDTH + "\n" * after)
 
     def raw(self, text: str) -> None:
         """Append text verbatim, with no prefix, no indent and no added newline."""

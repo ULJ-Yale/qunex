@@ -433,7 +433,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             seen.add(key)
 
     log = ReportLog()
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info(f"Running QC for: {', '.join(modalities_canon)}")
 
@@ -863,7 +863,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             qc_report["done"] += result["report"]["done"]
             qc_report["failed"] += result["report"]["failed"]
 
-    log.raw(f"\n\nHCP run QC {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"HCP run QC {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
 
     def _format_item_list(items):
         try:

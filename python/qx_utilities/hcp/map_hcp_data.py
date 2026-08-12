@@ -578,7 +578,9 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 else:
                     log.detail(f"{boldinfo['name']} [task: '{boldinfo['task']}']")
 
-        log.raw(f"\n\nHCP data mapping completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n------------------------------------------------------------\n")
+        log.blank()
+        log.info(f"HCP data mapping completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+        log.rule(after=1)
         rstatus = (
             "T1: %(T1)s, aseg+aparc hires: %(hires aseg+aparc)s lores: %(lores aseg+aparc)s, surface: %(surface)s, bolds ok: %(boldok)d, bolds failed: %(boldfail)d, bolds skipped: %(boldskipped)d"
             % (report)

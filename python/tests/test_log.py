@@ -105,6 +105,44 @@ def test_framed_frames_content_between_rules():
     )
 
 
+def test_rule_draws_the_report_rule_with_the_asked_for_spacing():
+    """
+    One rule, one length, wherever it is drawn.
+
+    Every command used to spell the rule itself, and the tree ended up with two
+    of different lengths appearing in the same runlog. The spacing around it
+    still varies by call site, so that is a parameter; the rule is not.
+    """
+    assert _log_with(lambda log: log.rule()) == "\n" + REPORT_RULE
+    assert _log_with(lambda log: log.rule(before=1)) == "\n\n" + REPORT_RULE
+    assert _log_with(lambda log: log.rule(after=1)) == "\n" + REPORT_RULE + "\n"
+    assert (
+        _log_with(lambda log: log.rule(before=1, after=1))
+        == "\n\n" + REPORT_RULE + "\n"
+    )
+
+
+def test_rule_changes_its_character_but_never_its_width():
+    """
+    A lighter rule is a different character, not a different length.
+
+    Rules of one width stack into a page; the tree's two dash lengths and its
+    hand-typed dotted separators did not. `char` is what a caller varies.
+    """
+    for char in ".", "=", "-":
+        assert _log_with(lambda log: log.rule(char=char)) == "\n" + char * 60
+
+    assert len(REPORT_RULE) == 60
+
+
+def _log_with(draw):
+    # a bare `ReportLog`, not the `SessionLog` the other tests use: this one
+    # compares the whole text, and a session header would be in the way
+    log = ReportLog()
+    draw(log)
+    return log.text
+
+
 def test_pipeline_command_breaks_flags_onto_lines():
     log = _log()
     log.pipeline_command('cmd --alpha="1" --beta="2"')

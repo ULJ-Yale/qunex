@@ -168,7 +168,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
     log = ReportLog()
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info("Copying imaging data ...")
 
@@ -287,7 +287,9 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
                 log.error(f"Unknown error occured: \n...................................\n{traceback.format_exc()}...................................\n")
                 time.sleep(3)
 
-    log.raw(f"\n\nImaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Imaging data copy completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
 
     # the per-bold errors above are what the failure count is derived from
     return log.finish("Imaging data copy completed", name=sinfo["id"])
@@ -378,7 +380,7 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info("Creating masks for bold runs ... \n")
     log.raw(f"\n\n   Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
@@ -434,7 +436,9 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw(f"\n\nBold mask creation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Bold mask creation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d"
         % (report)
@@ -990,7 +994,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw("\n\nComputing BOLD image statistics ...")
     log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
@@ -1047,7 +1051,9 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw(f"\n\nBold statistics computation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Bold statistics computation completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, processed: %(boldok)2d, skipped: %(boldskipped)2d"
         % (report)
@@ -1405,7 +1411,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
     }
 
     try:
-        log.raw("\n---------------------------------------------------------")
+        log.rule()
         log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
         log.action("Creating", "BOLD movement and statistics report ...", options["run"], level="info")
         log.blank()
@@ -1610,14 +1616,17 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        log.info(f"BOLD statistics and movement report failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+        log.info(f"BOLD statistics and movement report failed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+        log.rule()
         preport["procok"] = "failed"
     except Exception:
         log.info(f"BOLD statistics and movement report failed with and unknown error: \n...................................\n{traceback.format_exc()}...................................\n")
         preport["procok"] = "failed"
 
     if preport["procok"] == "ok":
-        log.raw(f"\n\nBOLD statistics and movement report completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+        log.blank()
+        log.info(f"BOLD statistics and movement report completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+        log.rule()
 
     rstatus = (
         "BOLDs ok: %(boldok)2d, missing data: %(boldmissing)2d, processing: %(procok)s, skipped: %(boldskipped)s"
@@ -1808,7 +1817,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         "boldskipped": 0,
     }
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.raw("\n\nExtracting BOLD nuisance signal ...")
     log.raw(f"\n\n    Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
@@ -1865,7 +1874,9 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             report["boldfail"] += temp_report["boldfail"]
             report["boldmissing"] += temp_report["boldmissing"]
 
-    log.raw(f"\n\nBold nuisance signal extraction completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Bold nuisance signal extraction completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
     rstatus = (
         "BOLDS done: %(bolddone)2d, missing data: %(boldmissing)2d, failed: %(boldfail)2d, skipped: %(boldskipped)2d, processed: %(boldok)2d"
         % (report)
@@ -2590,7 +2601,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
 
     pc.do_options_check(options, sinfo, "preprocess_bold")
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info(f"Preprocessing {', '.join(options['bolds'].split('|'))} BOLD files as specified in --bolds.")
     log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
@@ -2643,7 +2654,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             report["ready"] += temp_report["ready"]
             report["not ready"] += temp_report["not ready"]
 
-    log.raw(f"\n\nBold preprocessing completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Bold preprocessing completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
     if options["run"] == "run":
         rstatus = (
             "bolds: %d ready [%s], %d not ready [%s], %d already processed [%s], %d ran ok [%s], %d failed [%s], %d skipped [%s]"
@@ -3472,7 +3485,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     pc.do_options_check(options, sinfo, "preprocess_conc")
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action("Running", "Preprocessing conc bundles ...", options["run"], level="info")
     log.info(f"Files in 'images{options['img_suffix']}/functional{options['bold_variant']} will be processed.")
@@ -3814,7 +3827,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 time.sleep(5)
                 failed += 1
 
-    log.raw(f"\n\nConc preprocessing (v2) completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"Conc preprocessing (v2) completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
 
     # print r
     return log.result(report, failed, sinfo["id"])
