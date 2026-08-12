@@ -2305,14 +2305,15 @@ def batch_tag2namekey(
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
-def get_sessions_for_slurm_array(batchfile=None, sessions=None, filter=None):
+def list_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=None):
     """
-    ``get_sessions_for_slurm_array [batchfile=None] [sessions=None] [filter=None]``
+    ``list_sessions [batchfile=None] [sessions=None] [filter=None] [sessionsfolder=None]``
 
-    Return the subset of sessions that will be processed for a SLURM array job.
+    Print the comma separated list of the sessions a command would run over.
 
     ..  qx_command:
         type: utility
+        aliases: get_sessions_for_slurm_array
 
     Parameters:
         --batchfile (str):
@@ -2329,10 +2330,16 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, filter=None):
             string. Only sessions that match all the key-value pairs will be
             returned.
 
+        --sessionsfolder (str):
+            The sessions folder to match the sessions against when no batchfile
+            is provided.
+
     Notes:
-        This command will return the list of session ids that will be processed
-        for a SLURM array job, based on the provided batch file and the
-        sessions/filter parameters.
+        The three parameters are resolved exactly as they are for any other
+        command, so this is what any command given the same parameters will run
+        over. Inside a SLURM job array that is the subset belonging to this
+        array task, which is what the `get_sessions_for_slurm_array` spelling
+        of this command was for.
 
     """
 
@@ -2341,7 +2348,8 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, filter=None):
         batchfile=batchfile,
         sessions=sessions,
         filter=filter,
-        command="get_sessions_for_slurm_array",
+        sessionsfolder=sessionsfolder,
+        command="list_sessions",
     )
 
     # print

@@ -427,6 +427,49 @@ def _split_sessions(sessions):
     return [e.strip() for e in re.split(r" +|,|\|", sessions.strip()) if e.strip()]
 
 
+def resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False):
+    """
+    ``resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False)``
+
+    Reads the source of the sessions and selects within it. Returns a tuple of
+    the SessionList of the selected sessions and the parameters specified in the
+    batch file header.
+
+    `batchfile` is read as a `*.list` file if it has that extension and as a
+    batch file otherwise. A `*.list` given through `sessions` is the source of
+    the sessions when there is no batch file and selects within one when there
+    is. With no batch file at all, `sessions` names the sessions themselves.
+
+    Raises BatchError on a file that can not be read or a malformed filter.
+    """
+
+    records = []
+    header = {}
+
+    if batchfile and batchfile.strip():
+        batchfile = batchfile.strip()
+        if re.match(r".*\.list$", batchfile):
+            records = read_list(batchfile, verbose=verbose)
+        else:
+            records, header = read_batch(batchfile, verbose=verbose)
+
+    # a `*.list` file is a session specification, so it can also arrive through
+    # sessions: it is the source of the sessions when there is no batch file,
+    # and selects within one when there is
+    if sessions and re.match(r"^\s*\S+\.list\s*$", sessions):
+        list_records = read_list(sessions.strip(), verbose=verbose)
+        if records:
+            sessions = ",".join([e["id"] for e in list_records if "id" in e])
+        else:
+            records, sessions = list_records, None
+
+    slist = select_sessions(
+        records, sessions=sessions, filter=filter, sessionsfolder=sessionsfolder
+    )
+
+    return slist, header
+
+
 def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
     """
     ``select_sessions(records, sessions=None, filter=None, sessionsfolder=None)``

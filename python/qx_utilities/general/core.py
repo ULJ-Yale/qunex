@@ -98,29 +98,13 @@ def resolve_sessions(
     belong to this array task are returned.
     """
 
-    records = []
-    header = {}
-
     try:
-        if batchfile and batchfile.strip():
-            batchfile = batchfile.strip()
-            if re.match(r".*\.list$", batchfile):
-                records = bio.read_list(batchfile, verbose=verbose)
-            else:
-                records, header = bio.read_batch(batchfile, verbose=verbose)
-
-        # a `*.list` file is a session specification, so it can also arrive
-        # through sessions: it is the source of the sessions when there is no
-        # batch file, and selects within one when there is
-        if sessions and re.match(r"^\s*\S+\.list\s*$", sessions):
-            list_records = bio.read_list(sessions.strip(), verbose=verbose)
-            if records:
-                sessions = ",".join([e["id"] for e in list_records if "id" in e])
-            else:
-                records, sessions = list_records, None
-
-        slist = bio.select_sessions(
-            records, sessions=sessions, filter=filter, sessionsfolder=sessionsfolder
+        slist, header = bio.resolve(
+            batchfile=batchfile,
+            sessions=sessions,
+            filter=filter,
+            sessionsfolder=sessionsfolder,
+            verbose=verbose,
         )
 
     except bio.BatchError as e:

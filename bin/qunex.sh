@@ -1387,9 +1387,9 @@ if [[ ${setflag} =~ .*-.* ]]; then
             BATCH_FILE="${CASES}"
         fi
         if [[ -n ${BATCH_FILE} ]]; then
-            SESSION_LABELS=`gmri get_sessions_for_slurm_array --batchfile="${BATCH_FILE}" --sessions="${SESSIONIDS}"`
+            SESSION_LABELS=`gmri list_sessions --batchfile="${BATCH_FILE}" --sessions="${SESSIONIDS}"`
         else
-            SESSION_LABELS=`gmri get_sessions_for_slurm_array --sessions="${CASES}"`
+            SESSION_LABELS=`gmri list_sessions --sessions="${CASES}"`
         fi
         echo "---> SLURM array ${SLURM_ARRAY_TASK_ID}, running over sessions: ${SESSION_LABELS}"
         echo ""

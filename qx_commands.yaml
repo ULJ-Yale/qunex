@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-12T00:06:21.472568+00:00'
+generated_at: '2026-08-12T09:52:00.738235+00:00'
 source:
     id: core
 commands:
@@ -72,6 +72,23 @@ commands:
         description: How many parallel processes to run the conversion with.
     options: []
     returns: []
+    origin: core
+-   name: build_qx_container
+    aliases: []
+    path: qx_container_build.build_qx_container
+    language: python
+    call: build_qx_container()
+    description: Splice `general/batch_io.py` into the generated region of `bin/qunex_container`. The container can not import
+        QuNex — it runs on the login node, outside the container — so it carries a copy of the batch file parser, and this
+        command is what keeps that copy current. Commit the result, as with `qx_commands.yaml`.
+    type: utility
+    args: []
+    options: []
+    returns:
+    -   name: path
+        type: str
+        default: null
+        description: The path of the container that was written.
     origin: core
 -   name: build_qx_registry
     aliases: []
@@ -3832,32 +3849,6 @@ commands:
         type: str
         default: null
         description: The scanner on which the data was acquired, currently only "siemens" and "philips" are supported.
-    options: []
-    returns: []
-    origin: core
--   name: get_sessions_for_slurm_array
-    aliases: []
-    path: qx_utilities.general.utilities.get_sessions_for_slurm_array
-    language: python
-    call: get_sessions_for_slurm_array [batchfile=None] [sessions=None] [filter=None]
-    description: Return the subset of sessions that will be processed for a SLURM array job.
-    type: utility
-    args:
-    -   name: batchfile
-        type: str
-        default: null
-        description: Path to a batch.txt file.
-    -   name: sessions
-        type: str
-        default: null
-        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use of grep
-            patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids. If a batchfile is
-            provided, this parameter selects within it.
-    -   name: filter
-        type: str
-        default: null
-        description: An optional parameter given as `"<key>:<value>|<key>:<value>"` string. Only sessions that match all the
-            key-value pairs will be returned.
     options: []
     returns: []
     origin: core
@@ -8492,6 +8483,37 @@ commands:
         type: str
         default: .
         description: The path to the study/sessions folder.
+    returns: []
+    origin: core
+-   name: list_sessions
+    aliases:
+    - get_sessions_for_slurm_array
+    path: qx_utilities.general.utilities.list_sessions
+    language: python
+    call: list_sessions [batchfile=None] [sessions=None] [filter=None] [sessionsfolder=None]
+    description: Print the comma separated list of the sessions a command would run over.
+    type: utility
+    args:
+    -   name: batchfile
+        type: str
+        default: null
+        description: Path to a batch.txt file.
+    -   name: sessions
+        type: str
+        default: null
+        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use of grep
+            patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids. If a batchfile is
+            provided, this parameter selects within it.
+    -   name: filter
+        type: str
+        default: null
+        description: An optional parameter given as `"<key>:<value>|<key>:<value>"` string. Only sessions that match all the
+            key-value pairs will be returned.
+    -   name: sessionsfolder
+        type: str
+        default: null
+        description: The sessions folder to match the sessions against when no batchfile is provided.
+    options: []
     returns: []
     origin: core
 -   name: manage_study

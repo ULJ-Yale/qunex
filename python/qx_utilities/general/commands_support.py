@@ -579,6 +579,7 @@ extra_parameters = [
 logskip_commands = [
     "batch_tag2namekey",
     "check_deprecated_commands",
+    "list_sessions",
     "get_sessions_for_slurm_array",
 ]
 
