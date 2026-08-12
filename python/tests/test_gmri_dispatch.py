@@ -138,6 +138,86 @@ def test_a_command_that_is_not_one_reports_that_it_failed(gmri, tmp_path):
     assert yaml.safe_load(status.read_text())["failed"] == 1
 
 
+def test_a_batch_file_that_names_a_study_puts_the_runlog_in_that_study(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    The whole reason the batch file is read before the logging is resolved.
+    The header names the study; run from somewhere else entirely, the run
+    still has to log itself inside it, or every batch run that names a study
+    leaves its runlog wherever the user happened to be standing.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    ran = []
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: ran.append(run),
+    )
+
+    gmri.runCommand("hcp_pre_freesurfer", {"batchfile": str(batch)})
+
+    assert ran, "the command was dispatched"
+    assert ran[0].logfolder.startswith(str(study)), (
+        "the runlog went to %s, not into the study the batch file named"
+        % ran[0].logfolder
+    )
+
+
+def test_the_parameters_a_command_runs_with_are_reported_before_it_runs(
+    gmri, tmp_path, capsys, monkeypatch
+):
+    """
+    The banner names every parameter the command declares and where its value
+    came from -- the diagnostic every failure mode this effort is about would
+    have been visible in.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_hcp_brainsize: 170\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    monkeypatch.setattr(
+        gmri.gp, "run", lambda qx_command, args, sessions, options, sources, run: None
+    )
+
+    gmri.runCommand(
+        "hcp_pre_freesurfer", {"batchfile": str(batch), "hcp_t2": "NONE"}
+    )
+
+    banner = capsys.readouterr().out
+    assert "Parameters for hcp_pre_freesurfer" in banner
+    assert "hcp_brainsize" in banner and "170" in banner
+    for line in banner.split("\n"):
+        if line.split()[:1] == ["hcp_brainsize"]:
+            assert line.endswith("batch file")
+        if line.split()[:1] == ["hcp_t2"]:
+            assert line.endswith("command line")
+        if line.split()[:1] == ["hcp_prefs_brain_extraction_type"]:
+            assert line.endswith("default")
+
+    runlog = next((study / "logs").rglob("Log-*.log"))
+    assert "hcp_brainsize" in runlog.read_text(), "and the same text in the runlog"
+
+
 def test_the_record_a_run_wrote_itself_is_not_overwritten_at_the_boundary(tmp_path):
     """
     `process.run` writes its per-session digest and *then* raises for the

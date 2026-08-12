@@ -16,6 +16,7 @@ import re
 
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import extensions
+from qx_utilities.general.log import INDENT
 
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
@@ -568,6 +569,106 @@ def impute_parameters(options, command):
             options[target_option] = options[source_option]
 
     return options
+
+
+# ==============================================================================
+#                                                          PARAMETER PROVENANCE
+#
+PER_SESSION = "batch file (session)"
+
+
+def update_options(session, options, sources=None):
+    """
+    ``update_options(session, options, sources=None)``
+
+    Returns a copy of the options with the parameters a batch file states for
+    this session alone - the keys it prefixes with `_` or `--` - applied over
+    them, and a copy of the sources recording those keys as having come from
+    the batch file's entry for the session.
+    """
+    soptions = dict(options)
+    ssources = dict(sources or {})
+
+    for key, value in session.items():
+        if key.startswith("_"):
+            key = key[1:]
+        elif key.startswith("--"):
+            key = key[2:]
+        else:
+            continue
+
+        soptions[key] = value
+        ssources[key] = PER_SESSION
+
+    return soptions, ssources
+
+
+def report_parameters(qx_command, options, sources, session=None):
+    """
+    ``report_parameters(qx_command, options, sources, session=None)``
+
+    Renders the parameters a command is about to be run with, each one next to
+    where its value came from. Written before the command runs, unconditionally,
+    so that a run that does something unexpected says why in its own first
+    lines.
+
+    Reported are the parameters the command declares - its signature arguments
+    and its documented options. A command that declares none that this run has
+    a value for has nothing to narrow by, and reports what was specified
+    instead: the run's ~450 defaults say nothing about a command that does not
+    take them.
+
+    Parameters:
+        --qx_command    The registry entry of the command to be run.
+        --options       The merged options, from `process.merge_options`.
+        --sources       Where each of them came from, from the same call.
+        --session       The session, when reporting the per session tier. Only
+                        the parameters that tier states are then reported, the
+                        rest having been reported for the run as a whole.
+
+    Returns:
+        The rendered table.
+    """
+    if session:
+        reported = sorted(k for k in sources if sources[k] == PER_SESSION)
+    else:
+        declared = {arg.name for arg in qx_command.args} | {
+            option.name for option in qx_command.options
+        }
+        reported = sorted(k for k in options if k in declared)
+
+        if not reported:
+            reported = sorted(k for k in options if sources.get(k) != "default")
+
+    rows = [(k, str(options[k]), sources.get(k, "default")) for k in reported]
+
+    title = "\n---> Parameters for %s%s\n\n" % (
+        qx_command.name,
+        " on session %s" % session["id"] if session else "",
+    )
+
+    def table(rows):
+        if not rows:
+            return title + INDENT + "(none)\n"
+
+        names = max(len(name) for name, _, _ in rows + [("parameter", "", "")])
+        values = max(len(value) for _, value, _ in rows + [("", "value", "")])
+        text = title + "%s%-*s   %-*s   %s\n%s%s\n" % (
+            INDENT,
+            names,
+            "parameter",
+            values,
+            "value",
+            "source",
+            INDENT,
+            "-" * (names + values + 6 + len("command line")),
+        )
+        for name, value, source in rows:
+            text += "%s%-*s   %-*s   %s\n" % (INDENT, names, name, values, value, source)
+
+        return text
+
+    return table(rows)
 
 
 # ==============================================================================

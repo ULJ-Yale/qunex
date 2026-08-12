@@ -26,7 +26,6 @@ from datetime import datetime
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
-import qx_utilities.general.log as gl
 import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
@@ -34,25 +33,6 @@ from qx_utilities.general import extensions
 # qx_mice
 from qx_utilities.general.parsing import flag, is_none
 from qx_utilities.general.parsing import true_or_false as torf
-
-
-# =======================================================================
-#                                                       SUPPORT FUNCTIONS
-def update_options(session, options):
-    """
-    ``update_options(session, options)``
-
-    Returns an updated copy of options dictionary where all keys from
-    sessions that started with an underscore '_' are mapped into options.
-    """
-    soptions = dict(options)
-    for key, value in session.items():
-        if key.startswith("_"):
-            soptions[key[1:]] = value
-        elif key.startswith("--"):
-            soptions[key[2:]] = value
-
-    return soptions
 
 
 # =======================================================================
@@ -121,11 +101,6 @@ arglist = [
     ],
     [
         "datainfo",
-        "False",
-        torf,
-    ],
-    [
-        "printoptions",
         "False",
         torf,
     ],
@@ -1125,48 +1100,105 @@ for line in flaglist:
 
 
 # ==============================================================================
+#                                                              MERGING PARAMETERS
+#
+def merge_options(command, args, header=None):
+    """
+    ``merge_options(command, args, header=None)``
+
+    Merges the parameter tiers into the one options dictionary every command is
+    run from: the `arglist` defaults, then the batch file header, then the
+    command line, each overriding the one before it.
+
+    Done once per invocation, in `gmri.runCommand`, so that every command class
+    starts from the same dictionary and the study the batch file names is known
+    before the run's logging is resolved.
+
+    Parameters:
+        --command   The name of the command to be run.
+        --args      The parsed command line arguments.
+        --header    The parameters from the batch file header, if there was one.
+
+    Returns:
+        The merged options, and for every name in them the tier its value came
+        from - one of "default", "batch file", "recipe" or "command line".
+    """
+    options = {"command_ran": command}
+    sources = {"command_ran": "default"}
+
+    def take(source, items):
+        for key, value in items:
+            options[key] = value
+            sources[key] = source
+
+    # the defaults
+    take("default", [(line[0], line[1]) for line in arglist if len(line) == 3])
+
+    # the batch file header
+    if header:
+        take("batch file", gcs.check_deprecated_parameters(header, command).items())
+
+    # the command line, where a flag stands for a value
+    for key, value in args.items():
+        if key in flist:
+            take(
+                "command line",
+                [(flist[key][0], value if value is not True else flist[key][1])],
+            )
+        else:
+            take("command line", [(key, value)])
+
+    # take care of variable expansion
+    for key in options:
+        if type(options[key]) is str:
+            options[key] = os.path.expandvars(options[key])
+
+    # recode as last step before options are used
+    for line in arglist:
+        if len(line) == 3:
+            try:
+                options[line[0]] = line[2](options[line[0]])
+            except Exception:
+                raise ge.CommandError(
+                    command,
+                    "Invalid parameter value!",
+                    "Parameter `%s` is specified but is set to an invalid value:"
+                    % (line[0]),
+                    "---> %s=%s" % (line[0], str(options[line[0]])),
+                    "Please check acceptable inputs for %s!" % (line[0]),
+                )
+
+    # impute unspecified parameters. An imputed value stays "default": nobody
+    # specified it, which is what the source says
+    options = gcs.impute_parameters(options, command)
+
+    return options, sources
+
+
+# ==============================================================================
 #                                                               RUNNING COMMANDS
 #
-def run(qx_command, args, log_settings=None):
+def run(qx_command, args, sessions, options, sources, run_context):
     """
-    ``run(qx_command, args, log_settings=None)``
+    ``run(qx_command, args, sessions, options, sources, run_context)``
 
     Runs a processing command over the sessions it was given, locally or
     through a scheduler, and records what happened in the run's runlog.
 
+    The sessions, the merged options and the run's logs are all settled by
+    `gmri.runCommand` before the dispatch - the batch file can name a different
+    study, so they have to be, or the run would log itself somewhere else.
+    What is left here is the per-session tier: the `_key` overrides a batch file
+    states for one session only.
+
     Parameters:
         --qx_command    The registry entry of the command to run.
-        --args          The parsed command line arguments.
-        --log_settings  The resolved logging settings; defaults to logging
-                        everything.
+        --args          The parsed command line arguments, for the call echo.
+        --sessions      The sessions to process.
+        --options       The merged options, from `merge_options`.
+        --sources       Where each of them came from, from the same call.
+        --run_context   The run's logs.
     """
-    if log_settings is None:
-        log_settings = gl.LogSettings()
-
-    # --------------------------------------------------------------------------
-    #                                                            Parsing options
-
-    # set command
-    options = {"command_ran": qx_command.name}
-
-    # setup default options
-    for line in arglist:
-        if len(line) == 3:
-            options[line[0]] = line[1]
-
-    # read options from batch.txt
-    for key in ["batchfile", "sessions", "filter"]:
-        if key in args:
-            options[key] = args[key]
-
-    sessions, gpref = gc.resolve_sessions(
-        batchfile=options["batchfile"],
-        sessions=options["sessions"],
-        filter=options["filter"],
-        command=qx_command.name,
-        verbose=False,
-    )
-
     processing_type = "session"
     if "subject" in qx_command.type:
         processing_type = "subject"
@@ -1189,72 +1221,16 @@ def run(qx_command, args, log_settings=None):
             )
         subjects = sessions.group_by_key("subject")
 
-    # take parameters from batch file
-    batch_args = gcs.check_deprecated_parameters(gpref, qx_command.name)
-    for k, v in batch_args.items():
-        options[k] = v
-
-    # parse command line options
-    for k, v in args.items():
-        if k in flist:
-            if v is not True:
-                options[flist[k][0]] = v
-            else:
-                options[flist[k][0]] = flist[k][1]
-        else:
-            options[k] = v
-
-    # take care of variable expansion
-    for key in options:
-        if type(options[key]) is str:
-            options[key] = os.path.expandvars(options[key])
-
-    # recode as last step before options are used
-    for line in arglist:
-        if len(line) == 3:
-            try:
-                options[line[0]] = line[2](options[line[0]])
-            except Exception:
-                raise ge.CommandError(
-                    qx_command.name,
-                    "Invalid parameter value!",
-                    "Parameter `%s` is specified but is set to an invalid value:"
-                    % (line[0]),
-                    "---> %s=%s" % (line[0], str(options[line[0]])),
-                    "Please check acceptable inputs for %s!" % (line[0]),
-                )
-
-    # impute unspecified parameters
-    options = gcs.impute_parameters(options, qx_command.name)
-
     # set key parameters
     overwrite = options["overwrite"]
     parsessions = options["parsessions"]
     parsubjects = options["parsubjects"]
     nprocess = options["nprocess"]
     printinfo = options["datainfo"]
-    printoptions = options["printoptions"]
-
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-    studyfolders = gc.deduce_folders(options, qx_command.name, timestamp)
-
-    # the run's logs: one runlog for the whole invocation, comlogs beside it
-    run_context = gl.RunContext(
-        qx_command.name,
-        args,
-        log_settings,
-        studyfolders,
-        timestamp=timestamp,
-        tag="long" if options["longitudinal"] else None,
-    )
-
-    # the batch file can move the study, so the settings this run logs by are
-    # the context's, not necessarily the ones `gmri` resolved
-    gl.set_active(run_context.settings)
 
     logfolder = run_context.logfolder
     comlogfolder = run_context.comlogfolder
-    specfolder = os.path.join(studyfolders["sessionsfolder"], "specs")
+    specfolder = os.path.join(options["sessionsfolder"], "specs")
 
     options["comlogs"] = comlogfolder
     options["logfolder"] = logfolder
@@ -1264,11 +1240,22 @@ def run(qx_command, args, log_settings=None):
     #                                                      start writing the log
     os.makedirs(comlogfolder, exist_ok=True)
 
-    # the header goes in first, so a run killed halfway still says what it was
     stati = []
-    header = run_context.header()
 
-    # `sout` is what follows the header, printed and recorded together
+    def session_options(session):
+        """The per session tier, applied and -- when there is one -- reported."""
+        soptions, ssources = gcs.update_options(session, options, sources)
+        if ssources != sources:
+            banner = gcs.report_parameters(
+                qx_command, soptions, ssources, session=session
+            )
+            print(banner)
+            run_context.write(banner)
+
+        return soptions
+
+    # `sout` follows the header and the parameter report, both of which
+    # `gmri.runCommand` has already written
     sout = ""
 
     # no parsessions for subject and multi-session commands
@@ -1282,7 +1269,7 @@ def run(qx_command, args, log_settings=None):
     # check if there are no sessions
     if not sessions or processing_type == "subject" and not subjects:
         sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessions parameter!\n"
-        print(header + "\n" + sout)
+        print(sout)
         run_context.write(sout)
         exit()
 
@@ -1292,18 +1279,8 @@ def run(qx_command, args, log_settings=None):
     else:
         sout += "\nRunning test on %s ...\n" % (options["sessions"])
 
-    print(header + "\n" + sout)
+    print(sout)
     run_context.write(sout)
-
-    # -----------------------------------------------------------------------
-    #                                                           print options
-    if printoptions:
-        print("\nFull list of options:")
-        run_context.write("\nFull list of options:\n")
-        for line in arglist:
-            if len(line) == 3:
-                print("%-25s :" % (line[0]), options[line[0]])
-                run_context.write("  %-25s : %s\n" % (line[0], str(options[line[0]])))
 
     # -----------------------------------------------------------------------
     #                                                              print info
@@ -1339,7 +1316,7 @@ def run(qx_command, args, log_settings=None):
                 # update options and prepare the all sessions string for labeling
                 # TODO: soptions may be invalid here!
                 for session in sessions:
-                    soptions = update_options(session, options)
+                    soptions, _ = gcs.update_options(session, options, sources)
 
                 message = f"\nStarting {action} of sessions {sessionid_list} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
                 print(message)
@@ -1372,7 +1349,7 @@ def run(qx_command, args, log_settings=None):
                         message = f"\nStarting {action} of session {session['id']} at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
                         print(message)
 
-                        soptions = update_options(session, options)
+                        soptions = session_options(session)
 
                         log = pending_actions(session, soptions, overwrite, c + 1)
                         log.write_to(run_context)
@@ -1408,7 +1385,7 @@ def run(qx_command, args, log_settings=None):
             if processing_type == "session":
                 for session in sessions:
                     if len(session["id"]) > 1:
-                        soptions = update_options(session, options)
+                        soptions = session_options(session)
                         message = f"\nAdding processing of session {session['id']} to the pool at {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}"
                         print(message)
 
