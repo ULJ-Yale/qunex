@@ -54,7 +54,9 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
             When a batch file is given, it selects within it.
 
         --filter (str, default ''):
-            Optional filter applied when a batch file is given.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used to select sessions
+            within the given batch file. Values may be glob patterns.
 
         --mapaction (str, default 'link'):
             How to map the data: copy, link, or move.

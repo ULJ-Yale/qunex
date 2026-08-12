@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-12T14:25:13.534168+00:00'
+generated_at: '2026-08-12T15:13:57.719107+00:00'
 source:
     id: core
 commands:
@@ -679,8 +679,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional parameter given as "key:value|key:value" string. Can be used for filtering the session data
-            within the provided batchfile.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used to select sessions within the provided batchfile. Values may be glob patterns.
     options: []
     returns: []
     origin: core
@@ -718,8 +718,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional parameter given as "key:value|key:value" string. Only sessions with the specified key-value
-            pairs in their source files will be added to the batch file.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time.
+            Only the sessions the filter selects will be added to the batch file. Values may be glob patterns.
     -   name: overwrite
         type: str
         default: 'yes'
@@ -868,8 +868,8 @@ commands:
     -   name: filter
         type: str
         default: null
-        description: If a batch.txt file is provided a string of key-value pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-            that match all the key-value pairs will be added to the list.
+        description: If a batch.txt file is provided a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND)
+            — one operator at a time. Only the sessions the filter selects will be added to the list. Values may be glob patterns.
     -   name: concfolder
         type: str
         default: <studyfolder>/<session id>/inbox/concs/
@@ -982,8 +982,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: If a batch.txt file is provided a string of key-value pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-            that match all the key-value pairs will be added to the list.
+        description: If a batch.txt file is provided a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND)
+            — one operator at a time. Only the sessions the filter selects will be added to the list. Values may be glob patterns.
     -   name: listfile
         type: str
         default: None
@@ -1085,8 +1085,9 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional "key:value|key:value" string used as a filter if a batch file is used. Only sessions for
-            which all the key:value pairs are true will be processed. All the sessions will be processed if no filter is provided.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used as a filter when a batch file is given. Only the sessions the filter selects are processed; all of them are
+            processed if no filter is provided. Values may be glob patterns.
     -   name: overwrite
         type: str
         default: 'no'
@@ -2176,7 +2177,8 @@ commands:
     -   name: filter
         type: str
         default: ''
-        description: Optional filter applied when a batch file is given.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used to select sessions within the given batch file. Values may be glob patterns.
     -   name: mapaction
         type: str
         default: link
@@ -3200,8 +3202,9 @@ commands:
     -   name: sessions
         type: str
         default: null
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use
-            of grep patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
+            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
+            may be given instead.
     -   name: filter
         type: str
         default: null
@@ -8600,14 +8603,14 @@ commands:
     -   name: sessions
         type: str
         default: null
-        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use of grep
-            patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids. If a batchfile is
-            provided, this parameter selects within it.
+        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob patterns
+            (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given
+            instead. If a batchfile is provided, this parameter selects within it.
     -   name: filter
         type: str
         default: null
-        description: An optional parameter given as `"<key>:<value>|<key>:<value>"` string. Only sessions that match all the
-            key-value pairs will be returned.
+        description: An optional parameter given as a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) —
+            one operator at a time. Only the sessions the filter selects are returned. Values may be glob patterns.
     -   name: sessionsfolder
         type: str
         default: null
@@ -9594,8 +9597,9 @@ commands:
     -   name: sessions
         type: str
         default: null
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use
-            of grep patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
+            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
+            may be given instead.
     -   name: filter
         type: str
         default: null

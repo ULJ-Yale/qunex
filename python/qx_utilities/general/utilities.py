@@ -573,8 +573,9 @@ def copy_study(
             file will be processed.
 
         --filter (str, default None):
-            An optional parameter given as "key:value|key:value" string. Can be
-            used for filtering the session data within the provided batchfile.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used to select sessions
+            within the provided batchfile. Values may be glob patterns.
 
     Notes:
         Can be used for backing up existing studies or when copying previous
@@ -844,9 +845,10 @@ def create_batch(
             separated list, grob patterns are valid session specifiers.
 
         --filter (str, default None):
-            An optional parameter given as "key:value|key:value" string. Only
-            sessions with the specified key-value pairs in their source files
-            will be added to the batch file.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time. Only the sessions the filter
+            selects will be added to the batch file. Values may be glob
+            patterns.
 
         --overwrite (str, default 'yes'):
             In case that the specified batch file already exists, whether to
@@ -1359,9 +1361,10 @@ def create_list(
             (can be glob patterns).
 
         --filter (str, default None):
-            If a batch.txt file is provided a string of key-value pairs
-            (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
-            key-value pairs will be added to the list.
+            If a batch.txt file is provided a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects will be added to the list. Values
+            may be glob patterns.
 
         --listfile (str, default None):
             The path to the generated list file. If no path is provided, the
@@ -1890,9 +1893,10 @@ def create_conc(
             (can be glob patterns).
 
         --filter (str):
-            If a batch.txt file is provided a string of key-value pairs
-            (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
-            key-value pairs will be added to the list.
+            If a batch.txt file is provided a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects will be added to the list. Values
+            may be glob patterns.
 
         --img_suffix (str, default ''):
             Specifies an optional suffix for 'images' folder when files are to
@@ -2333,14 +2337,16 @@ def list_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=Non
 
         --sessions (str):
             A string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
             If a batchfile is provided, this parameter selects within it.
 
         --filter (str):
-            An optional parameter given as `"<key>:<value>|<key>:<value>"`
-            string. Only sessions that match all the key-value pairs will be
-            returned.
+            An optional parameter given as a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects are returned. Values may be glob
+            patterns.
 
         --sessionsfolder (str):
             The sessions folder to match the sessions against when no batchfile
@@ -2404,18 +2410,20 @@ def gather_behavior(
 
         --sessions (str, None):
             Either a string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
 
         --filter (str, None):
             Optional parameter used to filter sessions to include.
 
-            It is specifed as a string in format::
+            It is specified as a string of `<key>:<value>` pairs joined by
+            `|` (OR) or by `&` (AND) — one operator at a time::
 
                 "<key>:<value>|<key>:<value>"
 
-            Only the sessions for which all the specified keys match the specified
-            values will be included in the list.
+            Only the sessions the filter selects will be included in the list.
+            Values may be glob patterns.
 
         --sourcefiles (str, 'behavior.txt'):
             A file or comma or pipe `|` separated list of files or grep patterns
@@ -2806,18 +2814,20 @@ def pull_sequence_names(
 
         --sessions (str, None):
             Either a string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
 
         --filter (str, None):
             Optional parameter used to filter sessions to include.
 
-            It is specifed as a string in format::
+            It is specified as a string of `<key>:<value>` pairs joined by
+            `|` (OR) or by `&` (AND) — one operator at a time::
 
                 "<key>:<value>|<key>:<value>"
 
-            Only the sessions for which all the specified keys match the specified
-            values will be included in the list.
+            Only the sessions the filter selects will be included in the list.
+            Values may be glob patterns.
 
         --sourcefiles (str, 'session.txt'):
             A file or comma or pipe `|` separated list of files or grep patterns
@@ -3251,10 +3261,11 @@ def create_session_info(
             The path to the text file describing the mapping.
 
         --filter (str, default None):
-            An optional "key:value|key:value" string used as a filter if a batch
-            file is used. Only sessions for which all the key:value pairs are
-            true will be processed. All the sessions will be processed if no
-            filter is provided.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used as a filter when a batch
+            file is given. Only the sessions the filter selects are processed;
+            all of them are processed if no filter is provided. Values may be
+            glob patterns.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no). Note that
