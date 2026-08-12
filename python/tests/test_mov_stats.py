@@ -31,9 +31,15 @@ four ignore blocks in its snippet.
 
 import math
 import os
+import shutil
+import sys
 
+import numpy as np
 import pytest
 
+from qx_utilities.processing import mov_stats
+
+PYTHON = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA = os.path.join(os.path.dirname(__file__), "test_data", "mov_stats")
 MOVEMENT = os.path.join(DATA, "movement")
 REFERENCE = os.path.join(DATA, "r_reference")
@@ -205,3 +211,199 @@ def test_compare_accepts_a_copy_and_catches_a_nudged_value():
     truncated = {key: list(values) for key, values in reference.items()}
     truncated[("bold1", "span")].pop()
     assert compare(truncated, reference) == ["('bold1', 'span'): 5 values, expected 6"]
+
+
+# ---> the implementation, against the reference above
+
+# create_stats_report's defaults, which are what the reference was made with
+OPTIONS = {
+    "boldname": "bold",
+    "nifti_tail": "",
+    "mov_radius": 50.0,
+    "mov_fd": 0.5,
+    "mov_dvars": 3.0,
+    "mov_dvarsme": 1.5,
+    "mov_fidl": "udvarsme",
+    "mov_post": "udvarsme",
+    "mov_pref": "",
+    "tr": 2.5,
+}
+
+
+@pytest.fixture
+def produced(tmp_path):
+    """Run the reporting over a copy of the fixture, returning where it wrote."""
+    folder = str(tmp_path / "movement")
+    shutil.copytree(MOVEMENT, folder)
+
+    reports = {
+        name: str(tmp_path / os.path.basename(path))
+        for name, path in [
+            ("mov_mreport", "bold_movement_report.txt"),
+            ("mov_preport", "bold_movement_report_post.txt"),
+            ("mov_sreport", "bold_movement_scrubbing_report.txt"),
+        ]
+    }
+
+    mov_stats.report_movement_statistics(
+        folder, BOLDS, SESSION, reports, OPTIONS, plot=""
+    )
+
+    return folder, reports
+
+
+@pytest.mark.parametrize(
+    "report",
+    ["bold_movement_report.txt", "bold_movement_report_post.txt", "bold_movement_scrubbing_report.txt"],
+)
+def test_reports_are_equivalent_to_the_r_reference(produced, report):
+    folder, reports = produced
+    written = [path for path in reports.values() if path.endswith(report)][0]
+
+    assert compare(read_report(written), reference_report(report)) == []
+
+
+def test_fidl_snippets_are_identical_to_the_r_reference(produced):
+    """
+    The snippets match byte for byte, trailing tabs included.
+
+    Equivalence is the standard everywhere else, but these cost nothing to
+    match, and a user regenerating them over unchanged data should get an empty
+    diff rather than one that has to be explained.
+    """
+    folder, _ = produced
+
+    for bold in BOLDS:
+        name = f"bold{bold}_scrub.fidl"
+        with open(os.path.join(folder, name)) as f:
+            written = f.read()
+        with open(os.path.join(REFERENCE, name)) as f:
+            assert written == f.read(), name
+
+
+def test_a_report_that_is_not_asked_for_is_not_written(tmp_path):
+    """An empty path means the report is off, not that it lands somewhere odd."""
+    folder = str(tmp_path / "movement")
+    shutil.copytree(MOVEMENT, folder)
+
+    reports = {"mov_mreport": "", "mov_preport": "", "mov_sreport": ""}
+    mov_stats.report_movement_statistics(
+        folder, BOLDS, SESSION, reports, dict(OPTIONS, mov_fidl="none"), plot=""
+    )
+
+    assert sorted(os.listdir(folder)) == sorted(os.listdir(MOVEMENT))
+
+
+def test_the_header_is_written_once_however_many_sessions_append(tmp_path):
+    """
+    Two sessions appending to one report leave one header, not two.
+
+    This is what the lock is for. Running them in sequence does not exercise
+    the concurrency, but it does exercise the decision the lock protects.
+    """
+    folder = str(tmp_path / "movement")
+    shutil.copytree(MOVEMENT, folder)
+
+    report = str(tmp_path / "movement_report.txt")
+    reports = {"mov_mreport": report, "mov_preport": "", "mov_sreport": ""}
+
+    for session in ["REF01", "REF02"]:
+        mov_stats.report_movement_statistics(
+            folder, BOLDS, session, reports, dict(OPTIONS, mov_fidl="none"), plot=""
+        )
+
+    with open(report) as f:
+        lines = f.readlines()
+
+    assert sum(line.startswith("session\t") for line in lines) == 1
+    assert len(lines) == 1 + 2 * len(BOLDS) * len(STATS)
+
+
+def test_an_unknown_criterion_is_refused_by_name(tmp_path):
+    """
+    A criterion that is not a .scrub column fails with the columns listed.
+
+    The R script indexed the column with ``sc[[fidl]]``, which yields NULL for a
+    name that is not there and writes an empty snippet -- the docstring's own
+    ``u`` and ``ume`` did exactly that.
+    """
+    folder = str(tmp_path / "movement")
+    shutil.copytree(MOVEMENT, folder)
+
+    reports = {"mov_mreport": "", "mov_preport": "", "mov_sreport": ""}
+
+    with pytest.raises(ValueError, match="not a column"):
+        mov_stats.report_movement_statistics(
+            folder, BOLDS, SESSION, reports, dict(OPTIONS, mov_fidl="ume"), plot=""
+        )
+
+
+@pytest.mark.parametrize(
+    "rejected,expected",
+    [
+        ([0, 0, 0, 0], []),
+        ([0, 1, 1, 0], [(1, 3)]),
+        # open on the first frame, and on the last: the two edges R special-cased
+        ([1, 1, 0, 0], [(0, 2)]),
+        ([0, 0, 1, 1], [(2, 4)]),
+        ([1, 1, 1, 1], [(0, 4)]),
+        ([0, 1, 0, 1], [(1, 2), (3, 4)]),
+    ],
+)
+def test_ignore_blocks_closes_runs_at_both_edges(rejected, expected):
+    """
+    Run-length encoding, including the runs that touch an edge.
+
+    The onset is an index into the frames counting from zero, because it is
+    multiplied by the TR to give a time. R found it with a 1-based ``which()``
+    over a diff, which lands on the same frame by a coincidence of index bases
+    -- worth pinning rather than reasoning about twice.
+    """
+    flags = {"frame": np.arange(len(rejected)), "x": np.array(rejected)}
+
+    assert mov_stats.ignore_blocks(flags, "x") == expected
+
+
+def test_importing_the_module_does_not_require_matplotlib():
+    """
+    The reporting half has to work on a checkout without matplotlib.
+
+    CI installs numpy but not matplotlib, and a module level import here would
+    fail at collection -- taking down every test in this file, not just the one
+    that plots. The plotting lives in mov_plots, imported inside the branch
+    that needs it.
+    """
+    import subprocess
+
+    check = (
+        "import sys;"
+        "from qx_utilities.processing import mov_stats;"
+        "sys.exit('matplotlib' in sys.modules)"
+    )
+    assert subprocess.call([sys.executable, "-c", check], cwd=PYTHON) == 0
+
+
+def test_plots_are_written(tmp_path):
+    pytest.importorskip("matplotlib")
+
+    folder = str(tmp_path / "movement")
+    shutil.copytree(MOVEMENT, folder)
+
+    reports = {"mov_mreport": "", "mov_preport": "", "mov_sreport": ""}
+    mov_stats.report_movement_statistics(
+        folder,
+        BOLDS,
+        SESSION,
+        reports,
+        dict(OPTIONS, mov_fidl="none"),
+        plot="mov_report",
+    )
+
+    written = sorted(e for e in os.listdir(folder) if e.endswith(".pdf"))
+
+    assert written == [
+        "bold_mov_report_cor.pdf",
+        "bold_mov_report_dvars.pdf",
+        "bold_mov_report_dvarsme.pdf",
+    ]
+    assert all(os.path.getsize(os.path.join(folder, e)) > 0 for e in written)
