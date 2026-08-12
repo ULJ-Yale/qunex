@@ -32,6 +32,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
 * Reimplemented `import_dicom` to remove interim steps, set aside orphaned and non-image files, and write detailed per session report.
 * Seven utility commands (`split_fidl`, `merge_sessions_list`, `import_hcp`, `import_nhp`, `map_bids2nii`, `run_nil_folder`, `bruker_to_dicom`) reported a failure by printing it and still exited 0; they now report it through the log and exit non-zero, with sessions after the failing one still processed.
+* One way to say which batch file and which sessions — `--batchfile`, `--sessions` and `--filter`, parsed once by one implementation with glob rather than regular expression matching (`--sessionids` and `--sessions=<batch file>` still work, with a warning) — the batch file header now reaching every command as fill-never-override, bash commands dispatched like every other kind, and every run reporting each parameter it uses next to the tier the value came from.
 
 ## 1.4.4
 

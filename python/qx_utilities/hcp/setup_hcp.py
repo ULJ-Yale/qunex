@@ -74,16 +74,6 @@ def setup_hcp(
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The sessions folder where all the sessions are to be mapped to. It
-            should be a folder within the <study folder>.
-
-        --sessions (str, default ''):
-            An optional parameter that specifies a comma or pipe separated list
-            of sessions from the inbox folder to be processed. Regular
-            expression patterns can be used. If provided, only sessions from the
-            list of sessions will be processed.
-
         --sourcefolder (str, default '.'):
             The base session folder that contains the nifti images and
             session.txt file.
@@ -252,9 +242,10 @@ def setup_hcp(
             `sessions` and optionally `sessionsfolder` and `parsessions`
             parameters. In this case the command will be run for each of the
             specified sessions in the sessionsfolder (current directory by
-            default). Optional `filter` and `sessionids` parameters can be used
-            to filter sessions or limit them to just specified id codes. (for
-            more information see online documentation). `sourcefolder` will be
+            default). `sessions` limits the run to the specified id codes, and
+            an optional `filter` parameter selects the sessions whose batch
+            file entry matches a key. (for more information see online
+            documentation). `sourcefolder` will be
             filled in automatically as each session's folder. Commands will
             run in parallel, where the degree of parallelism is determined by
             `parsessions` (1 by default).

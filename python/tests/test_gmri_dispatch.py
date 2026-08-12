@@ -381,3 +381,157 @@ def test_the_record_a_run_wrote_itself_is_not_overwritten_at_the_boundary(tmp_pa
 
     assert gl.write_failure_status(args, "hcp_pre_freesurfer", "died") is None
     assert yaml.safe_load(status.read_text())["sessions"][0]["id"] == "S01"
+
+
+@pytest.fixture
+def two_session_study(tmp_path):
+    """A study, its two sessions, and a batch file that groups them."""
+    study = tmp_path / "study"
+    for session in ["S01", "S02"]:
+        (study / "sessions" / session).mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_hcp_brainsize: 170\n"
+        "---\nid: S01\nsubject: S01\ngroup: control\n01: T1w\n"
+        "---\nid: S02\nsubject: S02\ngroup: patient\n01: T1w\n"
+        % (study / "sessions")
+    )
+    return study, batch
+
+
+def test_the_encoding_run_turnkey_writes_arrives_as_the_canonical_one(
+    gmri, two_session_study, monkeypatch
+):
+    """
+    The round trip of the three encodings. `run_turnkey` hard codes
+    `--sessions=<batch file> --sessionids=<ids>` in every internal call, and
+    that pair used to be converted five times along the chain, every conversion
+    guessing from whether the string `.txt` appeared. It is remapped once now,
+    at the front door, and what the resolver is asked is `--batchfile` and
+    `--sessions`.
+    """
+    _, batch = two_session_study
+    seen = {}
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: seen.update(
+            args=args, sessions=sessions
+        ),
+    )
+
+    gmri.runCommand("hcp_pre_freesurfer", {"sessions": str(batch), "sessionids": "S02"})
+
+    assert [session["id"] for session in seen["sessions"]] == ["S02"]
+    assert seen["args"]["batchfile"] == str(batch)
+    assert seen["args"]["sessions"] == "S02"
+    assert "sessionids" not in seen["args"], "the legacy spellings do not survive"
+
+
+def test_one_filter_selects_the_same_sessions_whatever_is_run(
+    gmri, two_session_study, monkeypatch, capsys
+):
+    """
+    There were two filter implementations with two dialects -- an unanchored
+    regex in the shell and in the container, a key match in python -- so
+    `--filter` selected one set for a python command, another for the
+    container's job sizing, and nothing at all for a bash command, which never
+    received the parameter. One implementation answers for all of them now.
+    """
+    _, batch = two_session_study
+    filtered = {"batchfile": str(batch), "filter": "group:control"}
+
+    processing = {}
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: processing.update(
+            sessions=sessions
+        ),
+    )
+    gmri.runCommand("hcp_pre_freesurfer", dict(filtered))
+
+    bash = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: bash.append(session) or 0,
+    )
+    gmri.runCommand("dwi_dtifit", dict(filtered))
+
+    capsys.readouterr()
+    gmri.runCommand("list_sessions", dict(filtered))
+    listed = capsys.readouterr().out.strip().split("\n")[-1]
+
+    assert [session["id"] for session in processing["sessions"]] == ["S01"]
+    assert bash == ["S01"]
+    assert listed == "S01"
+
+
+def test_a_matlab_command_is_filled_from_the_header_and_never_over_it(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    The last of the three command classes. The header reached `process.run`
+    and nothing else, so a matlab command could not see it either; the fill is
+    the same fill, and what the user typed still wins over it.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_frames: 5\n_targetf: /from the header\n"
+        "_hcp_brainsize: 170\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    called = {}
+    monkeypatch.setattr(
+        gmri.gm, "run", lambda qx_command, args, run=None: called.update(args) or 0
+    )
+
+    gmri.runCommand(
+        "fc_compute_gbc", {"batchfile": str(batch), "targetf": "/from the command line"}
+    )
+
+    assert called["frames"] == "5", "the header filled the call in"
+    assert called["targetf"] == "/from the command line", "and never over it"
+    assert "hcp_brainsize" not in called, "with what the command declares"
+
+    banner = capsys.readouterr().out
+    for line in banner.split("\n"):
+        if line.split()[:1] == ["frames"]:
+            assert line.endswith("batch file")
+        if line.split()[:1] == ["targetf"]:
+            assert line.endswith("command line")
+
+
+def test_what_a_batch_file_says_for_one_session_is_reported_for_that_session(gmri):
+    """
+    A batch file states a parameter for a single session by prefixing its key
+    with `_`. That tier is applied per session, above the header and below the
+    command line, and is reported in the session's own section: the run as a
+    whole has no one value of it to report.
+    """
+    qx_command = gmri.qx_commands.get("hcp_pre_freesurfer")
+    options = {"hcp_brainsize": "170", "hcp_t2": "NONE"}
+    sources = {"hcp_brainsize": "batch file", "hcp_t2": "command line"}
+
+    soptions, ssources = gmri.gcs.update_options(
+        {"id": "S01", "_hcp_brainsize": "150"}, options, sources
+    )
+
+    assert soptions["hcp_brainsize"] == "150"
+    assert ssources["hcp_brainsize"] == "batch file (session)"
+
+    banner = gmri.gcs.report_parameters(
+        qx_command, soptions, ssources, session={"id": "S01"}
+    )
+
+    assert "Parameters for hcp_pre_freesurfer on session S01" in banner
+    assert "hcp_brainsize" in banner and "150" in banner
+    assert "hcp_t2" not in banner, "the run's own tier was reported for the run"

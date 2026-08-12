@@ -563,9 +563,10 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
     # ---- construct gmri command
     c_base = "\ngmri " + command
 
+    # `nopt` is already free of the scheduler's own parameters; `sessionids`
+    # no longer reaches here, the front door having remapped it
     for k, v in nopt:
-        if k not in ["sessionids", "scheduler"]:
-            c_base += ' --%s="%s"' % (k, v)
+        c_base += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
     if sessions is None:

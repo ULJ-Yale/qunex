@@ -926,12 +926,21 @@ def create_batch(
 
             In order of priority, from lower to highest, they can be specified:
 
+            -  as the parameter's own default value
             -  in the header section of the study batch file
             -  in the recipe file
             -  as a command line parameter
             -  in the session section of the study batch file
             -  in the image specification of the session section of the study
                batch file
+
+            These tiers are merged once per run and apply to every command,
+            whether it is written in python, matlab or bash. A tier fills a
+            parameter in, it never overrides one stated above it, and a
+            parameter a command does not accept is not passed to it. Every run
+            prints the parameters the command is about to be run with and the
+            tier each value came from, and writes the same table to its log,
+            so what a run used is a matter of record rather than of inference.
 
             Header section of the study batch file:
                 To run most of the processing steps, a batch file needs to be
@@ -1203,7 +1212,7 @@ def create_batch(
         missing = 0
 
         if sessions is not None or batchfile is not None:
-            sessions, gopts = gc.resolve_sessions(
+            sessions, _ = gc.resolve_sessions(
                 batchfile=batchfile,
                 sessions=sessions,
                 filter=filter,
@@ -2109,7 +2118,7 @@ def create_conc(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.resolve_sessions(
+    sessions, _ = gc.resolve_sessions(
         batchfile=batchfile,
         sessions=sessions,
         filter=filter,
@@ -2628,7 +2637,7 @@ def gather_behavior(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.resolve_sessions(
+    sessions, _ = gc.resolve_sessions(
         batchfile=batchfile,
         sessions=sessions,
         filter=filter,
@@ -3022,7 +3031,7 @@ def pull_sequence_names(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.resolve_sessions(
+    sessions, _ = gc.resolve_sessions(
         batchfile=batchfile,
         sessions=sessions,
         filter=filter,

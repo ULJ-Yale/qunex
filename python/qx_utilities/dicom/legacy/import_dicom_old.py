@@ -188,7 +188,7 @@ def import_dicom_old(
             If the images are preorganized in folders, set this to True so QuNex
             will not try to reorganize them.
 
-        --clean_dicom (bool, default False):
+        --clean_dicom_folders (bool, default False):
             If set to True, after sorting dicom files into sequence folders, the
             dicom files will be inspected and any dicom files that do not
             contain image data, or that do not constitute a full volume (e.g.,

@@ -115,7 +115,7 @@ class QA:
 
         #Specific sessions
         else:
-            slist, gpref = gc.resolve_sessions(
+            slist, _ = gc.resolve_sessions(
                 batchfile=batchfile, sessions=sessions, command="run_qa"
             )
             #Iterating over a copy to allow removal from original list

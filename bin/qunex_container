@@ -1036,6 +1036,17 @@ def main(args=None):
                         to <qunexstudy>/logs if not provided, use "legacy" to
                         set to the legacy variant <qunexstudy>/processing/logs.
 
+    Selecting sessions
+    ------------------
+
+    `--batchfile`, `--sessions` and `--filter` are read by `qunex_container`
+    to work out how many sessions the run has and how to spread them over
+    jobs, and are then passed on to the command unchanged: `--batchfile` names
+    the batch file, `--sessions` selects within it by id or glob pattern, and
+    `--filter` selects by a `<key>:<value>` pair of the session's batch file
+    entry. They are resolved by the same code the suite itself uses, so the
+    sessions a job is sized for are the sessions the command runs over.
+
     RESULTS
     =======
 

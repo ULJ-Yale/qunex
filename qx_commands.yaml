@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-12T10:26:01.129319+00:00'
+generated_at: '2026-08-12T14:25:13.534168+00:00'
 source:
     id: core
 commands:
@@ -8325,9 +8325,11 @@ commands:
         default: 'False'
         description: If the images are preorganized in folders, set this to True so QuNex will not try to reorganize them.
     -   name: clean_dicom_folders
-        type: null
-        default: null
-        description: null
+        type: bool
+        default: 'False'
+        description: If set to True, after sorting dicom files into sequence folders, the dicom files will be inspected and
+            any dicom files that do not contain image data, or that do not constitute a full volume (e.g., in the case of
+            interrupted scans) will be set aside before conversion to NIfTI.
     -   name: test
         type: null
         default: null
