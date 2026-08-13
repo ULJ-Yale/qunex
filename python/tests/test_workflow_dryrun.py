@@ -6,16 +6,22 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``processing/workflow.py``'s five unguarded commands honour ``--test``.
+All seven of ``processing/workflow.py``'s commands honour ``--test``.
 
 Measured by AST: five of the file's seven registered processing commands --
 ``get_bold_data``, ``create_bold_brain_masks``, ``compute_bold_stats``,
 ``create_stats_report`` and ``extract_nuisance_signal`` -- never consulted
-``options["run"]`` anywhere in their bodies. Only ``preprocess_bold`` and
-``preprocess_conc`` did. A ``--test`` run of any of the five therefore copied
-and linked files, invoked FSL and MATLAB (and, at the time, R), and -- in
-``create_stats_report`` -- deleted the existing movement reports before
-regenerating them, all while the report said the command was being tested.
+``options["run"]`` anywhere in their bodies. A ``--test`` run of any of the five
+therefore copied and linked files, invoked FSL and MATLAB (and, at the time, R),
+and -- in ``create_stats_report`` -- deleted the existing movement reports
+before regenerating them, all while the report said the command was being
+tested.
+
+``preprocess_bold`` and ``preprocess_conc`` did consult it, but only around the
+one MATLAB call each makes, and neither said anything about that call under
+``--test``: a dry run of either named no tool at all. ``preprocess_conc``
+additionally copied its conc and event files into the session and rewrote the
+conc file from the bolds it had resolved, all three regardless of the flag.
 
 ``create_stats_report`` no longer runs anything external: its work is now
 ``processing/mov_stats.py``, called in process. The dry run still has to guard
@@ -47,23 +53,43 @@ COMMANDS = [
     "compute_bold_stats",
     "create_stats_report",
     "extract_nuisance_signal",
+    "preprocess_bold",
+    "preprocess_conc",
 ]
 
 # `create_bold_brain_masks` skips BET when the masks are already there, and the
 # fixture has to provide them for `extract_nuisance_signal` to get past its own
 # check -- so this one command is driven with overwrite on, which is what takes
-# it through the slice and the seven external calls
-OVERWRITE = {"create_bold_brain_masks": True}
+# it through the slice and the seven external calls.
+#
+# `preprocess_conc` copies its conc and event files in only when told to
+# overwrite or when they are not already there, so overwrite is what takes it
+# through the two copies -- the fixture puts both files in the session *and* in
+# the inbox for exactly that reason
+OVERWRITE = {"create_bold_brain_masks": True, "preprocess_conc": True}
+
+# what each command is driven with on top of the fixture's defaults. The two
+# preprocessing commands are pointed at a nuisance set the fixture has data
+# for: the default `V,WM,WB` wants a per-bold nuisance signal file, and adding
+# one to the shared fixture would let `extract_nuisance_signal` skip the work
+# this file exists to watch
+OPTIONS = {
+    "preprocess_bold": {"bold_nuisance": "m,1d"},
+    # `e` is what takes it down the event-file branch
+    "preprocess_conc": {"bold_nuisance": "m,e,1d", "bolds": "rest", "event_file": "rest"},
+}
 
 # the tool each command reaches with this fixture, and must name in its report
 TOOLS = {
     "get_bold_data": "g_FlipFormat",
     "create_bold_brain_masks": "bet ",
     "compute_bold_stats": "matlab",
-    # the only one of the five that no longer shells out at all: it names the
+    # the only one of the seven that no longer shells out at all: it names the
     # work rather than a tool, which is the point of dropping the subprocess
     "create_stats_report": "movement and statistics reporting",
     "extract_nuisance_signal": "matlab",
+    "preprocess_bold": "matlab",
+    "preprocess_conc": "matlab",
 }
 
 
@@ -81,7 +107,7 @@ def _tree(root):
 @pytest.fixture
 def session(tmp_path, monkeypatch):
     """
-    A session complete enough for all five commands, every external call fatal.
+    A session complete enough for all seven commands, every external call fatal.
 
     `executed` is the belt to the raised exception's braces: three of these
     commands catch ``Exception`` and record it as an unknown error, so a test
@@ -120,6 +146,25 @@ def session(tmp_path, monkeypatch):
     # regenerating it: the destructive step a dry run must not take. It lives in
     # the study's QC folder, which is where `--mov_mreport` is resolved to
     (sessions / "QC" / "movement" / "bold_mov_report.txt").write_text("keep me")
+
+    # `preprocess_conc`'s bundle. The conc names the two bolds by absolute path,
+    # which is what `gi.read_conc` reads back and what the command then rewrites
+    # -- the write a dry run must not make. Both files sit in the session, so
+    # the bundle resolves, *and* in the inbox, so the copy branch has a source
+    # to find when the command is driven with overwrite on
+    concs = functional / "concs"
+    events = functional / "events"
+    inbox = sessions / "inbox"
+    for folder in (concs, events, inbox):
+        folder.mkdir(parents=True)
+    conc = "   number_of_files:  2\n" + "".join(
+        "      file:%s\n" % (functional / (bold + ".nii.gz"))
+        for bold in ("bold1", "bold2")
+    )
+    (concs / "bold_nifti_rest.conc").write_text(conc)
+    (inbox / "s01_rest.conc").write_text(conc)
+    (events / "rest.fidl").write_text("2.5\n")
+    (inbox / "s01_rest.fidl").write_text("2.5\n")
 
     executed = []
 
@@ -162,9 +207,11 @@ THREAD = {"create_stats_report": 1}
 
 def _drive(session, command):
     sinfo, options, root, executed = session
+    options = dict(options)
+    options.update(OPTIONS.get(command, {}))
     log = getattr(wf, command)(
         sinfo,
-        dict(options),
+        options,
         overwrite=OVERWRITE.get(command, False),
         thread=THREAD.get(command, 0),
     )

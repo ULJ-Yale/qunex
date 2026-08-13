@@ -127,10 +127,12 @@ PURPOSE_WIDTH = 79
 # `compute_bold_stats`, `create_stats_report` and `extract_nuisance_signal` --
 # never consulted `options["run"]`, so `--test` did the work: it copied and
 # linked files, invoked external tools, and deleted existing reports before
-# regenerating them. `preprocess_bold` and `preprocess_conc` did guard, with
-# an inline `if options["run"] == "run":` around the one call each makes.
+# regenerating them. `preprocess_bold` and `preprocess_conc` did guard the one
+# matlab call each makes, but fell silent about it instead of naming it, and
+# `preprocess_conc` copied its conc and event files in and rewrote the conc
+# regardless of the flag.
 #
-# The three helpers below are the same guard for the side effects the five
+# The four helpers below are the same guard for the side effects the commands
 # repeat, spelled once instead of at 30 sites, and they follow
 # `processing/fs.py`'s: a dry run reports what it *would* do rather than
 # falling silent, so the report is worth reading. The one-off side effects --
@@ -161,6 +163,15 @@ def _link_or_copy(_log, options, source, target, **kwargs):
         return None
 
     return gc.link_or_copy(source, target, **kwargs)
+
+
+def _copy(_log, options, source, target):
+    """Copy a file, or -- under ``--test`` -- report the copy and change nothing."""
+    if options["run"] != "run":
+        _log.detail(f"test, not copied: {os.path.basename(source)}")
+        return
+
+    shutil.copy2(source, target)
 
 
 def _remove(_log, options, path):
@@ -2901,31 +2912,34 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
         )
 
         # r += '\n ... running: %s' % (comm)
-        if options["run"] == "run":
-            if already_done and not overwrite:
-                log.raw("\n\nProcessing already completed! Set overwrite to yes to redo processing!\n")
-            else:
-                if options["print_command"] == "yes":
-                    log.raw("\n\nRunning\n" + comm + "\n")
-                endlog, status, failed = pc.run_external_for_file(
-                    f["bold_final"],
-                    comm,
-                    "running matlab/octave fc_preprocess on %s bold %s"
-                    % (d["s_bold"], boldnum),
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=[
-                        options["bold_variant"],
-                        options["glm_name"],
-                        options["logtag"],
-                        "B%s" % (boldnum),
-                    ],
-                    shell=True,
-                    _log=log,
-                )
+        if already_done and not overwrite:
+            log.raw("\n\nProcessing already completed! Set overwrite to yes to redo processing!\n")
+        else:
+            if options["print_command"] == "yes":
+                log.raw("\n\nRunning\n" + comm + "\n")
+            endlog, status, failed = _run_external(
+                log,
+                options,
+                f["bold_final"],
+                comm,
+                "running matlab/octave fc_preprocess on %s bold %s"
+                % (d["s_bold"], boldnum),
+                overwrite=overwrite,
+                thread=sinfo["id"],
+                remove=options["log"] == "remove",
+                task=options["command_ran"],
+                logfolder=options["comlogs"],
+                logtags=[
+                    options["bold_variant"],
+                    options["glm_name"],
+                    options["logtag"],
+                    "B%s" % (boldnum),
+                ],
+                shell=True,
+            )
+            # the check reads what the guarded call would have written, so it
+            # belongs inside the branch that does the work
+            if options["run"] == "run":
                 status = pc.check_for_file(
                     f["bold_final"],
                     bad=f"Matlab/Octave has failed preprocessing BOLD using command: \n---> {mcomm}\n",
@@ -3590,8 +3604,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     if tf:
                         log.detail(f"getting conc data from {tf}")
                         if os.path.exists(f_conc):
-                            os.remove(f_conc)
-                        shutil.copy2(tf, f_conc)
+                            _remove(log, options, f_conc)
+                        _copy(log, options, tf, f_conc)
 
                     else:
                         log.error(f"Conc data file ({tconc}) does not exist in the expected locations! Skipping this conc bundle.", depth=1)
@@ -3608,8 +3622,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                         if tf:
                             log.detail(f"getting event data from {tf}")
                             if os.path.exists(f_fidl):
-                                os.remove(f_fidl)
-                            shutil.copy2(tf, f_fidl)
+                                _remove(log, options, f_fidl)
+                            _copy(log, options, tf, f_fidl)
                         else:
                             log.error(f"Event data file ({tfidl}) does not exist in the expected locations! Skipping this conc bundle.", depth=1)
                             failed += 1
@@ -3751,7 +3765,10 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     failed += 1
                     continue
 
-                gi.write_conc(f_conc, nconc)
+                if options["run"] == "run":
+                    gi.write_conc(f_conc, nconc)
+                else:
+                    log.detail(f"test, not rewritten: {f_conc}")
 
                 # --- run matlab preprocessing script
 
@@ -3820,7 +3837,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 if options["print_command"] == "yes":
                     log.raw("\n" + comm + "\n")
                 if options["run"] == "run":
-                    endlog, status, failed = pc.run_external_for_file(
+                    # the third return is this call's failure flag, not the
+                    # count of failed conc bundles this loop is accumulating
+                    endlog, status, _ = pc.run_external_for_file(
                         done,
                         comm,
                         "running matlab/octave fc_preprocess_conc on bolds [%s]"
@@ -3853,6 +3872,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                         report += " => processing failed"
                         failed += 1
                 else:
+                    log.detail(f"test, not run: {comm}", depth=1)
                     if os.path.exists(done):
                         report += " => already done"
                     else:
