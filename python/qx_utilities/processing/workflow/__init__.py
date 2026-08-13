@@ -9,8 +9,8 @@
 ``workflow/``
 
 This package holds the code for running functional connectivity
-preprocessing and GLM computation workflow. It consists of one module per
-command, each named after the command it holds:
+preprocessing and GLM computation workflow. **No module here holds more than
+one command**, and a module that holds one is named after it:
 
 --get_bold_data             Maps NIL preprocessed data to images folder.
 --create_bold_brain_masks   Extracts the first frame of each BOLD file.
@@ -19,9 +19,25 @@ command, each named after the command it holds:
 --extract_nuisance_signal   Extracts the nuisance signal for regressions.
 --preprocess_bold           Processes a single BOLD file.
 --preprocess_conc           Processes concatenated BOLD files.
+--run_qc_summary            Compiles the study's QC information into a summary.
 
-The side-effect guards the commands share, and the MATLAB command they are
-run with, are in ``dryrun.py``.
+The rule is one command per module, not that every module is a command:
+supporting code that serves a single command belongs here beside it, so that
+a feature is read in one place rather than spread across two folders. What is
+here on that footing today:
+
+--dryrun                    The side-effect guards the commands share, and the
+                            MATLAB command they are run with.
+--qc_summary                The measures ``run_qc_summary`` reads, one function
+                            per processing stage.
+--qc_summary_bold           Its BOLD half, split off when the first grew past
+                            the file size the tree prefers.
+--qc_summary_report         Its interactive report.
+
+Code read from outside this package goes one level up instead, beside
+``processing/mov_stats.py``, which ``compute_bold_stats``,
+``create_stats_report`` and the QC summary all read the movement tables
+through.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -44,6 +60,7 @@ from qx_utilities.processing.workflow.create_stats_report import create_stats_re
 from qx_utilities.processing.workflow.extract_nuisance_signal import extract_nuisance_signal
 from qx_utilities.processing.workflow.preprocess_bold import preprocess_bold
 from qx_utilities.processing.workflow.preprocess_conc import preprocess_conc
+from qx_utilities.processing.workflow.run_qc_summary import run_qc_summary
 
 __all__ = [
     "get_bold_data",
@@ -53,4 +70,5 @@ __all__ = [
     "extract_nuisance_signal",
     "preprocess_bold",
     "preprocess_conc",
+    "run_qc_summary",
 ]

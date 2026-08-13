@@ -412,6 +412,37 @@ arglist = [
         "",
         str,
     ],
+    ["# ---- QC summary options"],
+    [
+        "qc_summary_report",
+        "yes",
+        torf,
+    ],
+    [
+        "qc_summary_tsnr",
+        "yes",
+        torf,
+    ],
+    [
+        "qc_summary_warp_jac",
+        "yes",
+        torf,
+    ],
+    [
+        "qc_summary_modules",
+        "prefs fs postfs bold dwi",
+        gc.pcslist,
+    ],
+    [
+        "qc_summary_mni_template",
+        "",
+        is_none,
+    ],
+    [
+        "qc_summary_diag_k",
+        "3.0",
+        float,
+    ],
     ["# ---- CIFTI related options"],
     [
         "surface_smooth",
