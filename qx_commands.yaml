@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-12T22:43:42.501681+00:00'
+generated_at: '2026-08-13T00:37:21.295138+00:00'
 source:
     id: core
 commands:
@@ -529,7 +529,7 @@ commands:
     origin: core
 -   name: compute_bold_stats
     aliases: []
-    path: qx_utilities.processing.workflow.compute_bold_stats
+    path: qx_utilities.processing.workflow.compute_bold_stats.compute_bold_stats
     language: python
     call: compute_bold_stats [... processing options]
     description: Process specified BOLD files and save images/function/movement files.
@@ -714,7 +714,7 @@ commands:
     origin: core
 -   name: create_bold_brain_masks
     aliases: []
-    path: qx_utilities.processing.workflow.create_bold_brain_masks
+    path: qx_utilities.processing.workflow.create_bold_brain_masks.create_bold_brain_masks
     language: python
     call: create_bold_brain_masks [... processing options]
     description: Extract the brain and create a brain mask for each BOLD image.
@@ -1071,7 +1071,7 @@ commands:
     origin: core
 -   name: create_stats_report
     aliases: []
-    path: qx_utilities.processing.workflow.create_stats_report
+    path: qx_utilities.processing.workflow.create_stats_report.create_stats_report
     language: python
     call: create_stats_report [... processing options]
     description: Process movement correction parameters and computed BOLD statistics to create per session plots and fidl
@@ -2179,7 +2179,7 @@ commands:
     origin: core
 -   name: extract_nuisance_signal
     aliases: []
-    path: qx_utilities.processing.workflow.extract_nuisance_signal
+    path: qx_utilities.processing.workflow.extract_nuisance_signal.extract_nuisance_signal
     language: python
     call: extract_nuisance_signal [... processing options]
     description: Extract nuisance signal from volume BOLD files.
@@ -3833,7 +3833,7 @@ commands:
     origin: core
 -   name: get_bold_data
     aliases: []
-    path: qx_utilities.processing.workflow.get_bold_data
+    path: qx_utilities.processing.workflow.get_bold_data.get_bold_data
     language: python
     call: get_bold_data [... processing options]
     description: Map NIL preprocessed data into the session's images folder.
@@ -9221,7 +9221,7 @@ commands:
     origin: core
 -   name: preprocess_bold
     aliases: []
-    path: qx_utilities.processing.workflow.preprocess_bold
+    path: qx_utilities.processing.workflow.preprocess_bold.preprocess_bold
     language: python
     call: preprocess_bold [... processing options]
     description: Prepares BOLD files for further analysis. It performs spatial smoothing, temporal filtering, removal of nuisance
@@ -9320,7 +9320,7 @@ commands:
     origin: core
 -   name: preprocess_conc
     aliases: []
-    path: qx_utilities.processing.workflow.preprocess_conc
+    path: qx_utilities.processing.workflow.preprocess_conc.preprocess_conc
     language: python
     call: preprocess_conc [... processing options]
     description: Preproces conc bundles of BOLD images.

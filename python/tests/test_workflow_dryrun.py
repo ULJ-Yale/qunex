@@ -41,6 +41,7 @@ being written, changed or removed, which is what :func:`_tree` records.
 
 import os
 import subprocess
+import time
 
 import pytest
 
@@ -176,7 +177,7 @@ def session(tmp_path, monkeypatch):
         monkeypatch.setattr(subprocess, name, no_external)
     # the catch-all handlers nap before returning; a test that trips one should
     # fail fast rather than sleep
-    monkeypatch.setattr(wf.time, "sleep", lambda *_: None)
+    monkeypatch.setattr(time, "sleep", lambda *_: None)
 
     options = default_options(
         sessionsfolder=str(sessions),
