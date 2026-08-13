@@ -15,6 +15,7 @@ an interactive report.
 import csv
 import json
 import os
+import sys
 import traceback
 from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
@@ -244,7 +245,14 @@ def run_qc_summary(sinfo, options, overwrite=False, thread=0):
                 --qc_summary_modules="prefs fs postfs" \\
                 --qc_summary_report=no
     """
-    log = ReportLog()
+    # echoing, unlike almost every other command's log. `general.process` calls
+    # a study level command once for the whole study and prints its report when
+    # it returns, so between the two there is nothing on the console at all --
+    # and this one reads every session of the study, which on a real study is
+    # minutes of silence with no way to tell work from a hang. Echoing shows
+    # each line as it is recorded; `write_to` then knows not to print the report
+    # a second time.
+    log = ReportLog(echo=sys.stdout)
 
     log.rule()
     log.info(f"Study QC summary \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
@@ -263,24 +271,34 @@ def run_qc_summary(sinfo, options, overwrite=False, thread=0):
     # sessions are read independently, so they can be read at once -- but not
     # under `--test`, where there is nothing to read and a serial report is the
     # readable one
+    sessions = list(sinfo)
     parelements = options["parelements"] if options["run"] == "run" else 1
-    log.step(f"Compiling information for sessions, {parelements} at a time")
-
-    read = partial(session_metrics, options=options, modules=modules)
-    if parelements == 1:
-        results = [read(session) for session in sinfo]
-    else:
-        with ProcessPoolExecutor(parelements) as pool:
-            results = list(pool.map(read, sinfo))
+    log.step(f"Compiling information for {len(sessions)} sessions, "
+             f"{parelements} at a time")
 
     rows, runs, traces, bases = [], [], {}, {}
-    for result in results:
+
+    def merge(result):
         log.raw(result["r"])
         rows.append(result["row"])
         runs.extend(result["runs"])
         traces.update(result["traces"])
         if result["base"]:
             bases[result["row"]["session"]] = result["base"]
+
+    # merged as they arrive rather than collected first: `pool.map` yields in
+    # order as the workers finish, so consuming the iterator is what turns the
+    # echoing log into a progress report. Building the list first would hold
+    # every session's text back until the last one was done, which is the
+    # silence this is here to avoid
+    read = partial(session_metrics, options=options, modules=modules)
+    if parelements == 1:
+        for session in sessions:
+            merge(read(session))
+    else:
+        with ProcessPoolExecutor(parelements) as pool:
+            for result in pool.map(read, sessions):
+                merge(result)
 
     if "prefs" in modules:
         log.step("Comparing each session's registration against the study")

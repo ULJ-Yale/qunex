@@ -13,6 +13,8 @@ tailing the file -- plus the one thing that is new: a log with no id of its own
 is filed under the run's command name, where ``proc_response`` said "Unknown".
 """
 
+import sys
+
 import pytest
 
 import qx_utilities.general.log as gl
@@ -73,6 +75,43 @@ def test_an_id_the_command_gave_is_not_overwritten(run):
     log.write_to(run)
 
     assert log.status[0] == "sess-01"
+
+
+def test_a_log_that_echoed_every_line_is_not_printed_again(run, capsys):
+    # a study level command runs as one unit, so it echoes to show progress --
+    # `general.process` prints nothing between its start and its end. The report
+    # must then not be printed a second time when it returns
+    log = ReportLog(echo=sys.stdout)
+    log.step("Working on s01 ...")
+    log.step("Working on s02 ...")
+
+    # read once here: the lines have to be on the console *before* the command
+    # returns, which is the whole point, and reading now is what tells that
+    # apart from a report printed once at the end
+    live = capsys.readouterr().out
+    assert "Working on s01" in live and "Working on s02" in live
+
+    log.finish("two sessions")
+    log.write_to(run)
+
+    assert capsys.readouterr().out == ""
+
+    # and the runlog still holds it once: it is the durable record either way
+    with open(run.path) as runlog:
+        assert runlog.read().count("Working on s01") == 1
+
+
+def test_a_log_that_echoed_only_some_lines_is_printed_in_full(run, capsys):
+    # a comlog attached partway sends records to the comlog instead of the echo,
+    # so not every line reached the console. A duplicated line costs less than a
+    # lost one, and the whole report is printed
+    log = ReportLog(echo=sys.stdout)
+    log.step("echoed")
+    log._echoed = 0                     # as if that record had gone elsewhere
+    log.finish("done")
+    log.write_to(run)
+
+    assert capsys.readouterr().out.count("echoed") == 2
 
 
 def test_a_disabled_run_still_reports_but_writes_nothing(tmp_path, capsys):

@@ -217,6 +217,7 @@ class ReportLog:
         self._errors = 0
         self._comlog = None
         self._echo = echo
+        self._echoed = 0
         self._external_calls = 0
 
         self.sid = None
@@ -272,6 +273,7 @@ class ReportLog:
         if self._comlog is None and self._echo is not None:
             self._echo.write(rendered)
             self._echo.flush()
+            self._echoed += 1
 
     # --------------------------------------------------------- the comlog
 
@@ -538,13 +540,25 @@ class ReportLog:
         :class:`ReportLog` -- is filed under the run's command name, which is
         what the final report then lists it as. The command does not have to
         repeat its own name to say so.
+
+        **A log that echoed every line as it recorded it is not printed
+        again.** A study level command runs as one unit -- ``general.process``
+        prints nothing between its start and its end -- so a long one has to
+        echo if it is to show progress at all, and printing the whole report
+        afterwards would then show everything twice. The runlog is written
+        either way: it is the durable record and it holds the report once.
+        The test is deliberately "every record", not "any record": a log that
+        echoed only some of them -- a comlog was attached partway, and
+        :meth:`_record` sends a line to one or the other -- is printed in full,
+        because a duplicated line costs less than a lost one.
         """
         if self.sid is None:
             self.sid = run.command
 
         text = self.text
         run.write(text + "\n")
-        print(text)
+        if self._echoed < len(self._records):
+            print(text)
 
     def finish(self, summary, failed=None, name=None):
         """
