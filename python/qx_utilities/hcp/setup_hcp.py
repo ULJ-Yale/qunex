@@ -260,8 +260,8 @@ def setup_hcp(
             `parsessions` (1 by default).
 
             If `scheduler` parameter is set, the command will be run using the
-            specified scheduler settings (see `qunex ?schedule` for more
-            information). If set in combination with `sessions` parameter,
+            specified scheduler settings (see `qunex schedule --help` for
+            more information). If set in combination with `sessions` parameter,
             sessions will be processed over multiple nodes, `parsessions`
             parameter specifying how many sessions to run per node. Optional
             `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,

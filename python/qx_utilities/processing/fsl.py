@@ -17,7 +17,7 @@ consists of functions:
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-- ``qunex ?<command>`` for command specific help
+- ``qunex <command> --help`` for command specific help
 There are additional support functions that are not to be used
 directly.
 
