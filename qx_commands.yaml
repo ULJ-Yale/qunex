@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-13T12:10:36.590832+00:00'
+generated_at: '2026-08-13T19:58:07.771583+00:00'
 source:
     id: core
 commands:
@@ -623,7 +623,7 @@ commands:
     -   name: mov_bad
         type: str
         default: udvarsme
-        description: 'Which criteria to use for identification of bad frames (mov, dvars, dvarsme, idvars, uvars, idvarsme,
+        description: 'Which criteria to use for identification of bad frames (mov, dvars, dvarsme, idvars, idvarsme, udvars,
             udvarsme). See movement scrubbing documentation for further information. Criteria for identification of bad frames
             can be one out of:'
     returns: []

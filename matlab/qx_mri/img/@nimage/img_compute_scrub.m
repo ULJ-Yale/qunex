@@ -29,7 +29,7 @@ function [img, param] = img_compute_scrub(img, comm)
 %                  median normalised RMSE (dvarsmet) threshold is exceeded
 %               idvars
 %                  both fdt and dvarsmt are exceeded (i for intersection)
-%               uvars
+%               udvars
 %                  either fdt or dvarsmt are exceeded (u for union)
 %               idvarsme
 %                  both fdt and dvarsmet are exceeded
