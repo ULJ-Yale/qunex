@@ -33,6 +33,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Reimplemented `import_dicom` to remove interim steps, set aside orphaned and non-image files, and write detailed per session report.
 * Seven utility commands (`split_fidl`, `merge_sessions_list`, `import_hcp`, `import_nhp`, `map_bids2nii`, `run_nil_folder`, `bruker_to_dicom`) reported a failure by printing it and still exited 0; they now report it through the log and exit non-zero, with sessions after the failing one still processed.
 * `create_stats_report` and `check_fidl` are now implemented in Python with matplotlib figures instead of calling R scripts, which also fixes `check_fidl --fidlfile` and `--plotfile`, never having worked, and the `--mov_fidl`/`--mov_post` value `fd`, which should have read `mov`; no QuNex code is written in R any more.
+* Added `run_qc_summary`, a study level command that compiles the quality control information the processing pipelines already wrote into study tables and a self-contained interactive HTML report; `create_stats_report` was fixed along the way to read the movement tables the current `compute_bold_stats` writes and to report, rather than crash, on a session with no usable BOLD run, and a study level command now shows its progress on the console as it works instead of only when it finishes.
 
 ## 1.4.4
 
