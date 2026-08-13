@@ -37,6 +37,7 @@ import sys
 import numpy as np
 import pytest
 
+import qx_utilities.general.log as gl
 from qx_utilities.processing import mov_stats
 
 PYTHON = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -455,3 +456,55 @@ def test_plots_are_written(tmp_path):
         "bold_mov_report_dvarsme.pdf",
     ]
     assert all(os.path.getsize(os.path.join(folder, e)) > 0 for e in written)
+
+
+def test_a_session_with_no_bold_run_is_reported_rather_than_crashing(tmp_path):
+    """
+    Plotting over an empty run list said ``max() iterable argument is empty``.
+
+    Seen on three sessions of a real study: two had no BOLD run named in the
+    batch file at all and one had a run whose movement files were missing, so
+    ``report_movement_statistics`` reached the plotting step with nothing
+    plotted and ``plot_movement`` took ``max()`` over an empty list. A session
+    with no BOLD data is a normal state -- it is one of the things a QC report
+    exists to say -- so it is reported and the run carries on.
+    """
+    pytest.importorskip("matplotlib")
+
+    folder = str(tmp_path / "movement")
+    os.makedirs(folder)
+
+    reports = {"mov_mreport": "", "mov_preport": "", "mov_sreport": ""}
+    log = gl.ReportLog()
+    mov_stats.report_movement_statistics(
+        folder, [], SESSION, reports, dict(OPTIONS, mov_fidl="none"),
+        plot="mov_report", _log=log,
+    )
+
+    assert "no BOLD run had data to plot" in log.text
+    assert [e for e in os.listdir(folder) if e.endswith(".pdf")] == []
+
+
+def test_create_stats_report_says_so_when_a_session_has_no_bold_data(tmp_path):
+    """
+    The command's half of the same finding: it reports, and it does not claim
+    success at having done nothing.
+    """
+    import qx_utilities.processing.workflow as wf
+    from tests.utils import default_options
+
+    sessions = tmp_path / "sessions"
+    (sessions / SESSION / "images" / "functional" / "movement").mkdir(parents=True)
+
+    options = default_options(sessionsfolder=str(sessions), run="run")
+    for name, value in list(options.items()):
+        if value is None and ("tail" in name or "variant" in name or "pref" in name):
+            options[name] = ""
+    options.update(OPTIONS, event_file="")
+
+    # a session the batch file lists with no BOLD run of its own
+    log = wf.create_stats_report({"id": SESSION}, options, thread=1)
+
+    assert "nothing to report for this session" in log.text
+    assert "processing: no data" in log.status[1]
+    assert log.status[2] == 0

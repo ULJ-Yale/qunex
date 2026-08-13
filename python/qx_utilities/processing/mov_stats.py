@@ -312,7 +312,13 @@ def report_movement_statistics(folder, bolds, session, reports, options, plot, *
             append_report(target, header, rows)
             log.detail(f"appended {os.path.basename(target)}")
 
-    if plot:
+    if plot and not plotted:
+        # a session can reach here with nothing to draw: no BOLD run selected at
+        # all, or every one of them missing its movement files. There is no
+        # figure to be had from that, and `plot_movement` takes the frame count
+        # as `max()` over the runs, which on an empty list raises
+        log.detail("no BOLD run had data to plot, so no movement figures were drawn")
+    elif plot:
         # imported here, not at the top: matplotlib is not installed on a bare
         # checkout, and everything above this line has to work without it
         from qx_utilities.processing import mov_plots

@@ -412,87 +412,99 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             else:
                 report[tf] = ""
 
-        runs = [options["boldname"] + e + options["nifti_tail"] for e in procbolds]
-
-        # one line for both arms: `action` is what spells it "Test running ..."
-        # under `--test`, so the run mode is the log's business and not a branch
-        log.action(
-            "Running",
-            f"movement and statistics reporting for {', '.join(runs)}",
-            options["run"],
-        )
-
-        if options["run"] != "run":
-            for tf in ["mov_mreport", "mov_sreport", "mov_preport"]:
-                if report[tf] != "":
-                    log.detail(f"test, not written: {report[tf]}")
-            if options["mov_fidl"] != "none":
-                for run in runs:
-                    log.detail(f"test, not written: {os.path.join(d['s_bold_mov'], run + '_scrub.fidl')}")
-            preport["procok"] = "test"
-        else:
-            # failure arrives as an exception now, caught by the handlers below
-            ms.report_movement_statistics(
-                d["s_bold_mov"], procbolds, sinfo["id"], report, options, plot, _log=log
+        # a session can arrive here with nothing to report: no BOLD run named in
+        # the batch file, or every one of them missing its movement files. That is
+        # information, not a failure -- but running the report over an empty list
+        # writes nothing, copies figures that were never drawn, and claims success
+        # for it, so the session says what it has instead
+        if not procbolds:
+            log.warning(
+                "no BOLD run has the movement and statistics files this report is "
+                "built from, so there is nothing to report for this session"
             )
-            preport["procok"] = "ok"
+            preport["procok"] = "no data"
+        else:
+            runs = [options["boldname"] + e + options["nifti_tail"] for e in procbolds]
 
-        if options["mov_plot"] != "" and options["mov_pdf"] != "no":
-            for sf in ["cor", "dvars", "dvarsme"]:
-                tfolder = os.path.join(d["qc_mov"], options["mov_pdf"], sf)
-                if not os.path.exists(tfolder):
-                    if options["run"] != "run":
-                        log.detail(f"test, not created: {tfolder}")
-                    else:
-                        os.makedirs(tfolder)
-
-                froot = "%s%s_%s%s_%s.pdf" % (
-                    options["boldname"],
-                    options["nifti_tail"],
-                    options["mov_pref"],
-                    options["mov_plot"],
-                    sf,
-                )
-                if os.path.exists(
-                    os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot))
-                ):
-                    dryrun.remove(
-                        log,
-                        options,
-                        os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
-                    )
-                dryrun.link_or_copy(
-                    log,
-                    options,
-                    os.path.join(d["s_bold_mov"], froot),
-                    os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
-                )
-                if options["run"] == "run":
-                    log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
-
-        if (
-            options["mov_fidl"] in ms.CRITERIA
-            and options["event_file"] != ""
-            and options["bolds"] != ""
-        ):
-            concf = os.path.join(d["s_bold_concs"], options["bolds"] + ".conc")
-            fidlf = os.path.join(d["s_bold_events"], options["event_file"] + ".fidl")
-            ipatt = "_%s_scrub.fidl" % (options["mov_fidl"])
+            # one line for both arms: `action` is what spells it "Test running ..."
+            # under `--test`, so the run mode is the log's business and not a branch
+            log.action(
+                "Running",
+                f"movement and statistics reporting for {', '.join(runs)}",
+                options["run"],
+            )
 
             if options["run"] != "run":
-                log.detail(
-                    f'test, not written: {fidlf.replace(".fidl", ipatt)}'
-                )
-            elif os.path.exists(concf) and os.path.exists(fidlf):
-                try:
-                    gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace(".fidl", ipatt))
-                except Exception:
-                    log.warning(
-                        f"Failed to create a melted fidl file! ({sinfo['id']})"
-                    )
-                    raise
+                for tf in ["mov_mreport", "mov_sreport", "mov_preport"]:
+                    if report[tf] != "":
+                        log.detail(f"test, not written: {report[tf]}")
+                if options["mov_fidl"] != "none":
+                    for run in runs:
+                        log.detail(f"test, not written: {os.path.join(d['s_bold_mov'], run + '_scrub.fidl')}")
+                preport["procok"] = "test"
             else:
-                log.warning("Files missing, failed to create a melted fidl file!")
+                # failure arrives as an exception now, caught by the handlers below
+                ms.report_movement_statistics(
+                    d["s_bold_mov"], procbolds, sinfo["id"], report, options, plot, _log=log
+                )
+                preport["procok"] = "ok"
+
+            if options["mov_plot"] != "" and options["mov_pdf"] != "no":
+                for sf in ["cor", "dvars", "dvarsme"]:
+                    tfolder = os.path.join(d["qc_mov"], options["mov_pdf"], sf)
+                    if not os.path.exists(tfolder):
+                        if options["run"] != "run":
+                            log.detail(f"test, not created: {tfolder}")
+                        else:
+                            os.makedirs(tfolder)
+
+                    froot = "%s%s_%s%s_%s.pdf" % (
+                        options["boldname"],
+                        options["nifti_tail"],
+                        options["mov_pref"],
+                        options["mov_plot"],
+                        sf,
+                    )
+                    if os.path.exists(
+                        os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot))
+                    ):
+                        dryrun.remove(
+                            log,
+                            options,
+                            os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
+                        )
+                    dryrun.link_or_copy(
+                        log,
+                        options,
+                        os.path.join(d["s_bold_mov"], froot),
+                        os.path.join(tfolder, "%s-%s" % (sinfo["id"], froot)),
+                    )
+                    if options["run"] == "run":
+                        log.detail(f"copying {os.path.join(d['s_bold_mov'], froot)} to {os.path.join(tfolder, '%s-%s' % (sinfo['id'], froot))}")
+
+            if (
+                options["mov_fidl"] in ms.CRITERIA
+                and options["event_file"] != ""
+                and options["bolds"] != ""
+            ):
+                concf = os.path.join(d["s_bold_concs"], options["bolds"] + ".conc")
+                fidlf = os.path.join(d["s_bold_events"], options["event_file"] + ".fidl")
+                ipatt = "_%s_scrub.fidl" % (options["mov_fidl"])
+
+                if options["run"] != "run":
+                    log.detail(
+                        f'test, not written: {fidlf.replace(".fidl", ipatt)}'
+                    )
+                elif os.path.exists(concf) and os.path.exists(fidlf):
+                    try:
+                        gm.meltmovfidl(concf, ipatt, fidlf, fidlf.replace(".fidl", ipatt))
+                    except Exception:
+                        log.warning(
+                            f"Failed to create a melted fidl file! ({sinfo['id']})"
+                        )
+                        raise
+                else:
+                    log.warning("Files missing, failed to create a melted fidl file!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
