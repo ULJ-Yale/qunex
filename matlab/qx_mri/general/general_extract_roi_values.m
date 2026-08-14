@@ -2,7 +2,10 @@ function [report] = general_extract_roi_values(roif, mfs, sefs, vnames, output, 
 
 %``general_extract_roi_values(roif, mfs, sefs, vnames, output, stats, verbose)``
 %
-%   Extracts desired statistics from provided files for each ROI.
+%   Extract desired statistics from provided files for each ROI.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --roif (str):

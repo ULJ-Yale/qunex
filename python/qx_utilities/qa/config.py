@@ -8,14 +8,13 @@
 """
 ``config.py``
 
-Config related functions for 'run_qa' Quality Assurance. 
+Config related functions for 'run_qa' Quality Assurance.
 """
 
-"""
-Created by Samuel Brege on 2024-04-19.
-"""
+# Created by Samuel Brege on 2024-04-19.
 import yaml
-import general.exceptions as ge
+
+import qx_utilities.general.exceptions as ge
 
 #Valid datatypes for run_qa
 valid_datatypes = ['raw_data', 'check_config']
@@ -28,9 +27,9 @@ default - Unused for types dict, Required otherwise.
     Default value for this parameter. If of type dict, this is not used.
 
 accept_list - Unused for types dict, Required otherwise.
-    Whether it will accept a list of values (so long as they are of the defined type) as input. However, it does not 
+    Whether it will accept a list of values (so long as they are of the defined type) as input. However, it does not
     require input to be a list.
-    eg. 
+    eg.
         accept_list:True and type:[int], the input [1, 2, 3] is accepted.
         accept_list:True and type:[str], the input "T1w" is accepted.
         accept_list:False and type:[bool], the input [True, False] is NOT accepted.
@@ -42,7 +41,7 @@ only_valid - Required for types dict, unused otherwise.
         json has only_valid:False, because sub-parameters are matched against the loaded file and not checked.
 
 type - Required
-    The expected type of the input. This is defined in a list, allowing multiple types to be specified, though this is 
+    The expected type of the input. This is defined in a list, allowing multiple types to be specified, though this is
     not currently used. When used with accept_list:True, it will ensure all values in the list are of correct type.
 
 required - Required
@@ -119,11 +118,11 @@ config_template = {"datatypes": {"default":None, "accept_list":False, "only_vali
                             },
                             "description":"Actual parameters to check in data, using rules defined under '- other'"
                             }
-                            
+
 
                         },
                         "description":"Parameters for validation of user-defined files, highly customizable."
-                        }  
+                        }
                     },
                     "description":"run after import_datatype, it allows for QA and mapping validation"},
                     "config":{"default":None, "accept_list":False, "only_valid":False, "type":[dict], "required":False,
@@ -137,11 +136,12 @@ config_template = {"datatypes": {"default":None, "accept_list":False, "only_vali
                 "description":"run_qa datatype parameters"}
             }
 
+
 def print_template():
     """
     Print template dict in a human readable format.
     """
-    
+
     #This is similar information to the doc above, but with dev related info removed
     out="Config key descriptions:\n"\
         "Input is validated against a template, consisting of nesting dicts. Each parameter has the follow keys:\n"\
@@ -181,7 +181,7 @@ def print_template():
         "description\n"\
         "    Description of the parameter, self-explanatory. Also printed to log when config parse fails.\n\n"\
         "Template Config Parameters:\n"
-    
+
     def rec_print(template, padding):
         """
         Recursively prints out the template in a more readable format than pprint
@@ -202,17 +202,18 @@ def print_template():
                     out += f"{padding}{key}: {template[key]}\n"
 
         return out
-    
+
     out += rec_print(config_template, "")
     print(out)
     return
+
 
 def parse_config(config_file):
     """
     Parses a .yaml config file for QA by checking it against a defined template.
     Outputs a nested dict.
     """
-    if config_file == None:
+    if config_file is None:
         print("No config yaml file supplied, skipping parse...")
         return None
 
@@ -229,13 +230,14 @@ def parse_config(config_file):
 
     return parsed_config
 
+
 def recursive_parse(name, template, config):
     """
     Helper function for parse_config, allows for the parsing of nested dicts.
     """
     p_config = {}
     #if defined in template as dict of lists (yaml sequence) of dictionaries then must be parsed differently
-    if template['type'][0] == dict and template['accept_list'] == True:
+    if template['type'][0] is dict and template['accept_list'] is True:
         for param in config:
             param_name = list(param.keys())[0]
             list_dict = recursive_parse(param_name, template['parameters'][param_name], param[param_name])
@@ -245,11 +247,11 @@ def recursive_parse(name, template, config):
                 id_name = template['parameters'][param_name]['ID']
                 try:
                     param_id = list_dict[id_name]
-                except:
+                except Exception:
                     raise ge.CommandError(
                         "run_qa",
                         f"Missing required ID parameter {id_name} for {name}!\nKey Description: {template['description']}",
-                        f"Supplied parameter has incorrect type."
+                        "Supplied parameter has incorrect type."
                     )
                 #ensure all lists have the same length, if so add that length
                 num_items = check_lengths(list_dict)
@@ -264,7 +266,7 @@ def recursive_parse(name, template, config):
             else:
                 p_config[param_name] = list_dict
     #if defined as a dict it will repeat
-    elif template['type'][0] == dict:
+    elif template['type'][0] is dict:
         for param_name in config.keys():
             #undefined parameters
             if param_name not in template['parameters'].keys():
@@ -272,7 +274,7 @@ def recursive_parse(name, template, config):
                     raise ge.CommandError(
                         "run_qa",
                         f"Supplied parameter {param_name} invalid! \nValid parameters are: {list(template['parameters'].keys())}\nKey Description: {template['description']}",
-                        f"Supplied parameter invalid."
+                        "Supplied parameter invalid."
                     )
                 else:
                     #directly assigned because these lack a template to validate against
@@ -289,23 +291,23 @@ def recursive_parse(name, template, config):
     else:
         #check types are valid
         bad_val, error = check_type(config, template['type'], template['accept_list'])
-        if bad_val != None:
+        if bad_val is not None:
             raise ge.CommandError(
                 "run_qa",
                 f"Parameter {name}: {bad_val} parse error. {error}\nKey Description: {template['description']}",
-                f"Incorrect parameter type"
+                "Incorrect parameter type"
             )
         if template['accept_list']:
-            if type(config) != list:
+            if type(config) is not list:
                 config = [config]
-            elif template['type'][0] == list:
+            elif template['type'][0] is list:
                 #if a list is nested, all elements must be lists with same length
                 #if not nested, make it nested
                 if not check_nested(config):
                     config = [config]
 
         return config
-    
+
     #keys in template that haven't been parsed
     remaining_keys = set(template['parameters'].keys()).difference(set(p_config.keys()))
     for r_key in remaining_keys:
@@ -318,14 +320,15 @@ def recursive_parse(name, template, config):
             raise ge.CommandError(
                 "run_qa",
                 f"Missing required parameter {r_key}!\nKey Description: {template['parameters'][r_key]['description']}",
-                f"Missing required parameter in config."
+                "Missing required parameter in config."
             )
         else:
-            if template['parameters'][r_key]['type'][0] == dict:
+            if template['parameters'][r_key]['type'][0] is dict:
                 p_config[r_key] = recursive_parse(r_key, template['parameters'][r_key], {})
             else:
                 p_config[r_key] = template['parameters'][r_key]['default']
     return p_config
+
 
 def check_lengths(dictionary):
     """
@@ -343,7 +346,7 @@ def check_lengths(dictionary):
                     raise ge.CommandError(
                         "run_qa",
                         f"Invalid config {key}:{value}. If using lists to specify values, all lists for a scan must have the same length!",
-                        f"Inconsistent list length."
+                        "Inconsistent list length."
                     )
         elif isinstance(value, list):
             if len(value) > 1:
@@ -353,21 +356,22 @@ def check_lengths(dictionary):
                     raise ge.CommandError(
                         "run_qa",
                         f"Invalid config {key}:{value}. If using lists to specify values, all lists for a scan must have the same length!",
-                        f"Inconsistent list length."
+                        "Inconsistent list length."
                     )
-    if length == None:
+    if length is None:
         return 1
     #These values cannot be 1 if length is greater than 1
     length_keys = ['image_number']
     for key in length_keys:
         if key in dictionary.keys():
-            if dictionary[key] != None and len(dictionary[key]) != length:
+            if dictionary[key] is not None and len(dictionary[key]) != length:
                 raise ge.CommandError(
                         "run_qa",
                         f"Invalid config {key}:{dictionary[key]}. This value must have the same number of elements as other defined lists",
-                        f"Inconsistent list length."
+                        "Inconsistent list length."
                     )
     return length
+
 
 #Once list lengths are checked, set them to length n_items
 def set_lengths(dictionary, n_items):
@@ -383,6 +387,7 @@ def set_lengths(dictionary, n_items):
 
     return dictionary
 
+
 def check_type(value, type_list, accept_list):
     """
     Helper function for parsing config, checks wether param type matches accepted type
@@ -390,32 +395,33 @@ def check_type(value, type_list, accept_list):
 
     bad_val = None
     error = None
- 
+
     #If data is meant to be a list for each scan (eg. data_shape)
-    if type_list[0] == list:
-        if type(value) == list:
+    if type_list[0] is list:
+        if type(value) is list:
                 for val in value:
                     bad_val, error = check_type(val, type_list[1:], accept_list)
-                    if bad_val != None:
+                    if bad_val is not None:
                         return bad_val, error
         else:
             return value, "Param value must be a list!"
-        
+
     else:
-        if type(value) == list:
+        if type(value) is list:
             if accept_list:
                 for val in value:
                     bad_val, error = check_type(val, type_list, False)
-                    if bad_val != None:
+                    if bad_val is not None:
                         return bad_val, error
 
             else:
                 return value, "Param value cannot be a list!"
         else:
-            if type(value) != type_list[0]:
+            if type(value) is not type_list[0]:
                 return value, f"Param value must be {str(type_list[0])}!"
-            
+
     return bad_val, error
+
 
 def check_nested(val_list):
     """
@@ -425,9 +431,9 @@ def check_nested(val_list):
     is_nested = False
     length = None
     for val in val_list:
-        if type(val) == list:
+        if type(val) is list:
             is_nested = True
-            if length == None:
+            if length is None:
                 length = len(val)
             elif length != len(val):
                 pass #FAIL

@@ -14,18 +14,19 @@ Definition of exceptions used in gmri.
 
 class CommandError(Exception):
     """There was an error in calling the command."""
-    
+
     def __init__(self, function=None, error=None, *hints):
         if function is None:
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = "Error '%s' occurred in %s" % (error, function)
         super(CommandError, self).__init__(msg)
         self.function = function
         self.error    = error
         self.hints    = hints
         self.report   = (error,) + hints
+
 
 class CommandFailed(Exception):
     """A command has failed to carry out fully."""
@@ -35,7 +36,7 @@ class CommandFailed(Exception):
             function = "unknown function"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured in %s" % (error, function)
+        msg = "Error '%s' occurred in %s" % (error, function)
         super(CommandFailed, self).__init__(msg)
         self.function = function
         self.error    = error
@@ -58,22 +59,23 @@ class CommandNull(Exception):
         self.hints    = hints
         self.report   = (error,) + hints
 
+
 class SpecFileSyntaxError(Exception):
     """There was an error when parsing qunex spec files
-    
-    spec files include 
-      - session file 
+
+    spec files include
+      - session file
       - batch file
       - parameter file
       - list file
     """
-    
+
     def __init__(self, filename=None, error=None, *hints):
         if filename is None:
             filename = "unknown file"
         if error is None:
             error = "unspecified"
-        msg = "Error '%s' occured when parsing %s" % (error, filename)
+        msg = "Error '%s' occurred when parsing %s" % (error, filename)
         super(SpecFileSyntaxError, self).__init__(msg)
         self.filename = filename
         self.error    = error
@@ -81,29 +83,28 @@ class SpecFileSyntaxError(Exception):
         self.report   = (error,) + hints
 
 
-def reportCommandFailed(comm, e):
+def report_command_failed(comm, e):
     if e.function == comm:
-        eString = "\n---> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
+        e_string = "\n---> ERROR in completing %s:\n     %s\n" % (comm, "\n     ".join(e.report))
     else:
-        eString = "\n---> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
-    return eString
+        e_string = "\n---> ERROR in completing %s at %s:\n     %s\n" % (comm, e.function, "\n     ".join(e.report))
+    return e_string
 
-def reportCommandError(comm, e):
+
+def report_command_error(comm, e):
     if e.function == comm:
-        eString = "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
+        e_string = "\nERROR in running %s:\n%s" % (comm, "\n".join(e.report))
     else:
-        eString =  "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
-    return eString
+        e_string =  "\nERROR in running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+    return e_string
 
-def reportCommandNull(comm, e):
+
+def report_command_null(comm, e):
     if e.function == comm:
-        eString = "\nWhen running %s:\n%s" % (comm, "\n".join(e.report))
+        e_string = "\nWhen running %s:\n%s" % (comm, "\n".join(e.report))
     else:
-        eString =  "\nWhen running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
-    return eString
-
-def reportSyntaxError(comm, e):
-    pass
+        e_string =  "\nWhen running %s at %s:\n%s" % (comm, e.function, "\n".join(e.report))
+    return e_string
     # if e.filename == comm:
     #     eString = "\nWhen running %s:\n%s" % (comm, "\n".join(e.report))
     # else:

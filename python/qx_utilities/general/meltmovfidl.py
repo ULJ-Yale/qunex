@@ -9,10 +9,8 @@
 ``meltmovfidl``
 """
 
-"""
-Created by Grega Repovs on 2011-07-30
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2011-07-30
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import sys
 import getopt
@@ -21,7 +19,8 @@ import os
 import os.path
 import glob
 
-import general.img as gi
+import qx_utilities.general.img as gi
+
 
 class Usage(Exception):
     def __init__(self, msg):
@@ -32,44 +31,62 @@ def meltmovfidl(cfile, ifile, iffile, offile):
     """
     ``meltmovfidl <concfile> <ignore_fidl_pattern> <input_fidl_file> <output_fidl_file>``
 
-    Checks movement folder for each bold file specified in 
-    <concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
-    It then melts information on frames to be ignored into the <input_fidl_file> 
-    and saves it to <output_fidl_file>.
+    Merge movement ignore frames to fidl based on conc file.
 
-    Take into account that it expects bold runs and ignore .fidl files to both
-    match b.*[1-9] pattern.
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --cfile (str):
+            Concatenation file listing bold files with their offsets.
+
+        --ifile (str):
+            Ignore fidl file pattern to match in movement folders.
+
+        --iffile (str):
+            Input fidl file to melt ignore frames into.
+
+        --offile (str):
+            Output fidl file with melted ignore frames.
+
+    Notes:
+        Checks movement folder for each bold file specified in
+        <concfile> for corresponding scrub fidl file matching <ignore_fild_pattern>
+        It then melts information on frames to be ignored into the <input_fidl_file>
+        and saves it to <output_fidl_file>.
+
+        Take into account that it expects bold runs and ignore .fidl files to both
+        match b.*[1-9] pattern.
     """
 
     # ---> read the original fidl file
-    
+
     ofidl = gi.fidl(iffile)
-    
+
     # ---> create list of bolds with their offset times in conc
-    
-    bolds = gi.readConc(cfile)
+
+    bolds = gi.read_conc(cfile)
     c = 0
     for bold in bolds:
-        
+
         # ---> add matching fidl ignore file
-        
+
         ifidl = glob.glob(os.path.join(os.path.dirname(bold[0]), 'movement', "*"+ifile))
         m = re.compile(r".*b.*?%s[^0-9].*" % bold[1])
         ifidl = [e for e in ifidl if m.match(os.path.basename(e))]
 
         if len(ifidl) != 1:
             raise Usage("ERROR: Can not match ignore fidl file to: %s (%s)" % (bold[0], bold[1]))
-        
+
         ifidl = gi.fidl(ifidl[0])
-        ifidl.adjustTime(c)
+        ifidl.adjust_time(c)
         ofidl.merge(ifidl, addcodes=False)
-        
+
         # ---> read and add information on length
-        info = gi.readBasicInfo(bold[0])
-        c += ofidl.TR * info['frames']    
-        
+        info = gi.read_basic_info(bold[0])
+        c += ofidl.TR * info['frames']
+
     ofidl.save(offile)
-        
 
 
 def main(argv=None):
@@ -81,7 +98,7 @@ def main(argv=None):
             opts, args = getopt.getopt(argv[1:], "hv", ["help", "verbose"])
         except getopt.error as msg:
             raise Usage(msg)
-    
+
         # option processing
         for option, _ in opts:
             if option == "-v":
@@ -91,20 +108,18 @@ def main(argv=None):
         print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
         print("for help use --help", file=sys.stderr)
         return 2
-    
+
     cfile  = args[0]
     ifile  = args[1]
     iffile = args[2]
     offile = args[3]
-    
+
     try:
         meltmovfidl(cfile, ifile, iffile, offile)
     except Usage as err:
         print(sys.argv[0].split("/")[-1] + ": " + str(err.msg), file=sys.stderr)
         print("for help use --help", file=sys.stderr)
         return 2
-    
-    
 
 
 if __name__ == "__main__":

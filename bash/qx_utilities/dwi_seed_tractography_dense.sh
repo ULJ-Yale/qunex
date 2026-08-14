@@ -25,6 +25,10 @@ It produces the following outputs:
 - Dense scalar seed tractography file:
   ``<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii``
 
+..  qx_command:
+    type: processing.session
+    language: bash
+
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.

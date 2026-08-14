@@ -6,7 +6,10 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 
 %``general_glm_predict(flist, effects, targetf, options)``
 %
-%   Computes predicted and residual signal based on GLM.
+%   Compute predicted and residual signal based on GLM.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   The function is based on the provided GLM file and (optionally) raw bold
 %   data.
@@ -19,7 +22,7 @@ function [] = general_glm_predict(flist, effects, targetf, options)
 %           session, as well as raw bold or conc files if residuals are
 %           requested.
 %
-%       --effects (cell array | str):
+%       --effects (str|cell array):
 %           Either a cell array or a comma separated string listing the names of
 %           the effects that should be included in the prediction.
 %

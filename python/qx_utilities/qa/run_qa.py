@@ -8,27 +8,26 @@
 """
 ``run_qa.py``
 
-Wrapper functions for Quality Assurance, run under the main function 'run_qa'. 
+Wrapper functions for Quality Assurance, run under the main function 'run_qa'.
 """
 
-"""
-Created by Samuel Brege on 2024-03-19.
-"""
+# Created by Samuel Brege on 2024-03-19.
 
 import os
 import yaml
 import numpy as np
-import general.exceptions as ge
-import general.core as gc
-import general.filelock as fl
-import general.parser as parser
-import qa.core as qa
-import qa.config as config
 import pprint
+
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.filelock as fl
+import qx_utilities.qa.core as qa
+import qx_utilities.qa.config as config
+
 
 def run_qa(
     datatype=None,
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
     configfile=None,
     tag=None,
@@ -36,9 +35,12 @@ def run_qa(
     ):
 
     """
-    ``run_qa [datatype=None] [sessionsfolder=.] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
+    ``run_qa [datatype=None] [sessionsfolder=.] [batchfile=None] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
 
-    Runs Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+    Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
+
+    ..  qx_command:
+        type: qa
 
     Parameters:
         --datatype (str):
@@ -47,6 +49,10 @@ def run_qa(
         --sessionsfolder (str):
             The location of the <study>/sessions folder.
 
+        --batchfile (str, default None):
+            An optional path to a batch file or a list file to take the sessions
+            from. `sessions` then selects within it.
+
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
             will be processed. They are to be specified as a pipe or comma
@@ -54,7 +60,7 @@ def run_qa(
             parameter also accepts session .list files.
 
         --configfile (str, default None):
-            The location of a .yaml file providing instructions and key-value 
+            The location of a .yaml file providing instructions and key-value
             pairs for QA to verify. If left blank, minimal QA will be run.
 
         --tag (str, default None):
@@ -67,31 +73,31 @@ def run_qa(
             command run, previous results are lost.
 
     Notes:
-        This command will generate four files. These consist of 2 sessions .list 
-        files (pass and fail sessions lists), a report .txt file, and a more detailed 
-        report .yaml file. List files will go in processing/lists, reports in 
+        This command will generate four files. These consist of 2 sessions .list
+        files (pass and fail sessions lists), a report .txt file, and a more detailed
+        report .yaml file. List files will go in processing/lists, reports in
         processing/reports (a new directory for QA reports).
 
-        The .list files are QuNex compatible, they can be used as input into any 
-        datatype using the ``--sessions`` flag, as well as with ``qunex_container``. They 
-        are in format ``session id: <id>``, and contain no extra info. Intended use is 
-        that the ``passQA`` sessions list will be used as input for futher QuNex datatypes, 
+        The .list files are QuNex compatible, they can be used as input into any
+        datatype using the ``--sessions`` flag, as well as with ``qunex_container``. They
+        are in format ``session id: <id>``, and contain no extra info. Intended use is
+        that the ``passQA`` sessions list will be used as input for futher QuNex datatypes,
         and ``failQA`` sessions lists will be manually gone over and investigated.
 
-        The .txt report file provides further information for the ``failQA`` sessions list, 
-        including what caused the session to fail, why it failed, as well as recommended 
+        The .txt report file provides further information for the ``failQA`` sessions list,
+        including what caused the session to fail, why it failed, as well as recommended
         action.
 
         The data type:
-            
+
             ``--dataype=raw_data``
 
-            Raw Data QA checks whether found scans are in-line with the scan Protocol, 
-            defined by the user in the supplied config. Run after the import datatype, 
-            this does various checks to ensure data is valid before processing. The main 
-            goal is to identify problematic sessions before you start processing, saving 
-            time and resources. It should also prevent users from needing to manually 
-            check each session_hcp.txt file for correct mapping, as raw_data will 
+            Raw Data QA checks whether found scans are in-line with the scan Protocol,
+            defined by the user in the supplied config. Run after the import datatype,
+            this does various checks to ensure data is valid before processing. The main
+            goal is to identify problematic sessions before you start processing, saving
+            time and resources. It should also prevent users from needing to manually
+            check each session_hcp.txt file for correct mapping, as raw_data will
             identify missing/misordered scans.
 
             ``--dataype=check_config``
@@ -102,8 +108,8 @@ def run_qa(
 
         The config file:
 
-            In addition to basic checks (such as whether specified session folders exist 
-            and have the correct paths), run_qa can do extensive QA through the use of a 
+            In addition to basic checks (such as whether specified session folders exist
+            and have the correct paths), run_qa can do extensive QA through the use of a
             user created config .yaml file, which can vary from simple to complex.
 
             Here is a basic config for one scan for 'raw_data' QA:
@@ -114,14 +120,14 @@ def run_qa(
                     raw_data:
                         - scan:
                             series_description: T1w_MPR
-                            mapping_name: T1w 
+                            mapping_name: T1w
                             dicoms: 208
-                            json: 
-                                normalized: True 
+                            json:
+                                normalized: True
 
-            This means that run_qa will ensure every sessions has an image with 
+            This means that run_qa will ensure every sessions has an image with
             series_description T1w_MPR, 208 dicoms, and is normalized.
-            
+
             It can also be more complicated:
 
             ::
@@ -139,18 +145,18 @@ def run_qa(
                                 normalized: [True, False]
 
             In series_description, pipes '|' can be used to define multiple valid strings,
-            and also accepts unix-style pattern matching (eg. wildcard '*'). There are 
-            multiple subcategories (session, nifti, and json) depending on the data source. 
-            If there are multiple files with the same description, the QA will adapt. 
-            For example, if you specify ``image_count: 2``, it will expect 2 images to match 
-            the series_description, and ensure at least 1 matches the parameters. Parameters 
-            can also be specified as lists (eg. ``normalized: [True, False]``), so if you expect 
-            these images to have different values for certain parameters, you can specifiy that. 
-            Or, if you expect the values to be identical, you leave it just as one value 
-            (eg. ``EchoTime: 0.564``). Position does matter, so in this above case the normalized 
+            and also accepts unix-style pattern matching (eg. wildcard '*'). There are
+            multiple subcategories (session, nifti, and json) depending on the data source.
+            If there are multiple files with the same description, the QA will adapt.
+            For example, if you specify ``image_count: 2``, it will expect 2 images to match
+            the series_description, and ensure at least 1 matches the parameters. Parameters
+            can also be specified as lists (eg. ``normalized: [True, False]``), so if you expect
+            these images to have different values for certain parameters, you can specifiy that.
+            Or, if you expect the values to be identical, you leave it just as one value
+            (eg. ``EchoTime: 0.564``). Position does matter, so in this above case the normalized
             scan should have an RT of 3.2, and the non-normalized scan should have an RT of 3.3.
 
-            Scans are defined as a .yaml sequence, so when specifying multiple scans, you 
+            Scans are defined as a .yaml sequence, so when specifying multiple scans, you
             simply add another ``- scan:`` block below it:
 
             ::
@@ -198,14 +204,14 @@ def run_qa(
             files be located in each session's directory
 
             ::
-                        
+
                         - other:
                             file_name: "test.yml"
                             values:
                                 foo: bar
                                 snafu:  #with certain file-types, even dicts can be accepted!
-                                    apple: [3,66,7] 
-                                
+                                    apple: [3,66,7]
+
             Here is a list of all possible parameters:
 
             ::
@@ -233,24 +239,24 @@ def run_qa(
                             index_column: #Optional, only for deliminated data. Whether to use a specific column as the index (If blank, will use line index)
                             required: #Whether it's required for QA to pass
                             values: #Required, what values to check for in the data
-                                key: value 
+                                key: value
                     config: #Misc config options for raw_data.
                         data_type: #Currently, only dicom is accepted, used for ``dicoms`` parameter.
 
     """
 
     out_dir, tag = param_check(datatype, sessionsfolder, configfile, tag, overwrite)
-    
+
     pass_out = f"{out_dir}/lists/QA_pass_{datatype}{tag}.list"
     fail_out = f"{out_dir}/lists/QA_fail_{datatype}{tag}.list"
     report_out = f"{out_dir}/reports/QA_report_{datatype}{tag}.txt"
     yaml_out = f"{out_dir}/reports/QA_report_{datatype}{tag}.yml"
 
     outputs = [pass_out, fail_out, report_out, yaml_out]
-    
+
     print("\nCreating QA instance...")
-    qa_instance = qa.QA(sessions, sessionsfolder, configfile)
-    
+    qa_instance = qa.QA(sessions, sessionsfolder, configfile, batchfile)
+
     print("\nQA instance created successfully! Parsed as:\n")
     pp = pprint.PrettyPrinter(indent=1)
     pp.pprint(qa_instance.config)
@@ -258,13 +264,13 @@ def run_qa(
 
     if qa_overwrite(outputs, overwrite):
         print("QA complete due to existing outputs. Change tag, check folders, or use --overwrite=yes to re-run")
-        return 
-    
+        return
+
     if datatype == 'check_config':
         return
 
     elif datatype == 'raw_data':
-        qa_instance.QA_raw_data()
+        qa_instance.qa_raw_data()
 
     create_list_file(qa_instance.slist, pass_out)
     create_list_file(qa_instance.failQA, fail_out)
@@ -273,6 +279,7 @@ def run_qa(
         yaml.dump(slist2yaml(qa_instance.failQA), f)
 
     return
+
 
 def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
     """
@@ -293,7 +300,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
                 f"Valid datatypes for run_qa: {list(config.valid_datatypes)}",
             "Use run_qa --help for more information.",
         )
-    
+
     if sessionsfolder == '.':
         print("WARNING: --sessionsfolder left blank or '.', current directory will be treated as sessionsfolder.")
     else:
@@ -304,9 +311,9 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
             )
         else:
             print(f"Sessions folder {sessionsfolder} found.")
-    
+
     if datatype == "raw_data":
-        if configfile == None:
+        if configfile is None:
             print("WARNING: No config file set, only minimal QA will run")
         else:
             if not os.path.exists(configfile):
@@ -320,19 +327,19 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
     if not os.path.exists(out_dir):
         raise ge.CommandError(
                 "run_qa",
-                f"ERROR: Processing folder does not exist! Check your paths!"
+                "ERROR: Processing folder does not exist! Check your paths!"
         )
-    
+
     if not os.path.exists(f'{out_dir}/lists'):
         os.makedirs(f'{out_dir}/lists')
-    
+
     if not os.path.exists(f'{out_dir}/reports'):
         os.makedirs(f'{out_dir}/reports')
-    
-    if tag == None:
+
+    if tag is None:
         print("No tag specified...")
         print("   Trying config file name...")
-        if configfile != None:
+        if configfile is not None:
             tag = '_' + os.path.basename(configfile).split('.')[0]
         else:
             print("   No configfile set, leaving tag empty.")
@@ -340,7 +347,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
     else:
         print(f"Tag set to {tag}.")
         tag = "_" + tag
-    
+
     if overwrite.lower() == "no" or overwrite.lower() == "yes":
         print(f"Overwrite set to: {overwrite}.")
     else:
@@ -351,6 +358,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
 
     print("Parameter check complete!")
     return out_dir, tag
+
 
 def qa_overwrite(outputs, overwrite):
     """
@@ -366,14 +374,16 @@ def qa_overwrite(outputs, overwrite):
                 return True
     return False
 
+
 def create_list_file(sessions, outname):
     """
     Helper function for run_qa output. Formats and re-writes slist into a QuNex style sessions .list.
     """
-    l = ""
+    ln = ""
     for session in sessions:
-        l += f"session id: {session['id']}\n"
-    fl.safe_write(l,outname)
+        ln += f"session id: {session['id']}\n"
+    fl.safe_write(ln,outname)
+
 
 def slist2yaml(slist):
     """
@@ -391,7 +401,7 @@ def slist2yaml(slist):
         elif isinstance(s, np.ndarray):
             return s.tolist()
         return s
-    
+
     yaml_slist = []
 
     for s in slist:

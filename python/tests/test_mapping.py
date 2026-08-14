@@ -1,17 +1,18 @@
 from .utils import get_test_data_path
-from general.parser import (
+from qx_utilities.general.parser import (
+    _parse_session_file_lines,
     read_generic_session_file,
     read_hcp_session_file,
     read_mapping_file,
-    _parse_session_file_lines,
 )
-from general.utilities import (
-    _reserved_bold_numbers,
+from qx_utilities.general.utilities import (
+    _match_or_rule,
     _process_pipeline_hcp_mapping,
+    _reserved_bold_numbers,
     _serialize_session,
     _simple_glob_match,
 )
-from general.exceptions import CommandError, SpecFileSyntaxError
+from qx_utilities.general.exceptions import CommandError, SpecFileSyntaxError
 import pytest
 
 
@@ -233,33 +234,33 @@ def test_mapping_manual_se_fm():
 def test_glob_match_patterns():
     """Test the _simple_glob_match function with various patterns"""
     # Test exact match
-    assert _simple_glob_match("T1w", "T1w") == True
-    assert _simple_glob_match("T1w", "T2w") == False
+    assert _simple_glob_match("T1w", "T1w") is True
+    assert _simple_glob_match("T1w", "T2w") is False
 
     # Test * at the beginning
-    assert _simple_glob_match("rfMRI_REST_AP", "*_AP") == True
-    assert _simple_glob_match("rfMRI_REST_PA", "*_AP") == False
-    assert _simple_glob_match("BOLD_Task", "*BOLD_Task") == True
+    assert _simple_glob_match("rfMRI_REST_AP", "*_AP") is True
+    assert _simple_glob_match("rfMRI_REST_PA", "*_AP") is False
+    assert _simple_glob_match("BOLD_Task", "*BOLD_Task") is True
 
     # Test * at the end
-    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*") == True
-    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*") == True
-    assert _simple_glob_match("tfMRI_REST_AP", "rfMRI_*") == False
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*") is True
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*") is True
+    assert _simple_glob_match("tfMRI_REST_AP", "rfMRI_*") is False
 
     # Test * in the middle
-    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*_AP") == True
-    assert _simple_glob_match("rfMRI_TASK_AP", "rfMRI_*_AP") == True
-    assert _simple_glob_match("rfMRI_REST_PA", "rfMRI_*_AP") == False
+    assert _simple_glob_match("rfMRI_REST_AP", "rfMRI_*_AP") is True
+    assert _simple_glob_match("rfMRI_TASK_AP", "rfMRI_*_AP") is True
+    assert _simple_glob_match("rfMRI_REST_PA", "rfMRI_*_AP") is False
 
     # Test multiple *
-    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*_AP_*") == True
-    assert _simple_glob_match("rfMRI_TASK_AP_Run1", "rfMRI_*_AP_*") == True
-    assert _simple_glob_match("rfMRI_REST_PA_SBRef", "rfMRI_*_AP_*") == False
+    assert _simple_glob_match("rfMRI_REST_AP_SBRef", "rfMRI_*_AP_*") is True
+    assert _simple_glob_match("rfMRI_TASK_AP_Run1", "rfMRI_*_AP_*") is True
+    assert _simple_glob_match("rfMRI_REST_PA_SBRef", "rfMRI_*_AP_*") is False
 
     # Test * at both ends
-    assert _simple_glob_match("prefix_middle_suffix", "*middle*") == True
-    assert _simple_glob_match("just_middle", "*middle*") == True
-    assert _simple_glob_match("no_match", "*middle*") == False
+    assert _simple_glob_match("prefix_middle_suffix", "*middle*") is True
+    assert _simple_glob_match("just_middle", "*middle*") is True
+    assert _simple_glob_match("no_match", "*middle*") is False
 
 
 def test_mapping_glob_basic():
@@ -290,3 +291,173 @@ def test_mapping_glob_conflict():
     assert "conflicting" in error_msg.lower()
     assert "rfMRI_REST_AP_SBRef" in error_msg
 
+
+def test_mapping_phenc_in_source_and_rule_agree():
+    """phenc defined in both source and mapping with the same value is allowed.
+
+    once the source session file carries auto-detected phenc tags, a mapping
+    rule repeating the same phenc must not be treated as a conflict.
+    """
+    t, _ = _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_dup.txt")
+    images = t["images"]
+    # image 04 (boldref) and 05 (bold) both define phenc(AP) on both sides
+    assert images[(4,)]["phenc"] == "AP"
+    assert images[(5,)]["phenc"] == "AP"
+
+
+def test_mapping_phenc_in_source_and_rule_conflict():
+    """phenc defined in both source and mapping with different values errors."""
+    with pytest.raises(SpecFileSyntaxError) as exc_info:
+        _run_mapping_test("session_phenc_dup.txt", "mapping_phenc_conflict.txt")
+
+    error_msg = str(exc_info.value.error)
+    print(error_msg)
+    assert "phenc" in error_msg.lower()
+    assert "AP" in error_msg and "PA" in error_msg
+
+
+# ---- "or" rule tests (|| variants) ----
+
+
+def test_mapping_or_first_variant():
+    """When the first variant exists, it is used."""
+    _, lines = _run_mapping_test("session_or1.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or1_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_fallback_variant():
+    """When the first variant is missing, the second is used."""
+    _, lines = _run_mapping_test("session_or2.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or2_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_no_match():
+    """When none of the variants exist, no rule is applied."""
+    _, lines = _run_mapping_test("session_or3.txt", "mapping_or1.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or3_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_mapping_or_glob_variants():
+    """Or-rules with glob patterns: second glob variant matches."""
+    _, lines = _run_mapping_test("session_or4.txt", "mapping_or2.txt")
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    expected = _load_expected_mapping("session_or4_hcp.txt")
+    print("\n".join(lines))
+    assert result == expected
+
+
+def test_or_rule_parsing():
+    """Verify that the parser stores or-rules correctly."""
+    mapping_file = get_test_data_path("mapping_or1.txt")
+    m = read_mapping_file(mapping_file)
+
+    or_rules = m["group_rules"]["or"]
+    assert len(or_rules) == 2
+
+    # first or-rule: T1w_HiRes || T1w_LowRes => T1w
+    assert or_rules[0]["variants"] == ["T1w_HiRes", "T1w_LowRes"]
+    assert or_rules[0]["rule"]["hcp_image_type"] == ("T1w",)
+
+    # second or-rule: T2w_HiRes || T2w_LowRes => T2w
+    assert or_rules[1]["variants"] == ["T2w_HiRes", "T2w_LowRes"]
+    assert or_rules[1]["rule"]["hcp_image_type"] == ("T2w",)
+
+    # regular rules should not be affected
+    assert "SpinEchoFieldMap_AP" in m["group_rules"]["name"]
+    assert len(m["group_rules"]["or"]) == 2
+
+
+def test_or_rule_parsing_with_globs():
+    """Verify that or-rules with glob patterns are parsed correctly."""
+    mapping_file = get_test_data_path("mapping_or2.txt")
+    m = read_mapping_file(mapping_file)
+
+    or_rules = m["group_rules"]["or"]
+    assert len(or_rules) == 1
+    assert or_rules[0]["variants"] == ["rfMRI_REST1*", "rfMRI_REST2*", "tfMRI*"]
+    assert or_rules[0]["rule"]["hcp_image_type"] == ("bold", None, "rest")
+
+
+def test_match_or_rule_exact_name():
+    """_match_or_rule matches exact-name variants per image."""
+    or_rules = [
+        {"variants": ["T1w_HiRes", "T1w_LowRes"], "rule": {"hcp_image_type": ("T1w",)}},
+    ]
+    # first variant matches
+    assert _match_or_rule("T1w_HiRes", or_rules) == {"hcp_image_type": ("T1w",)}
+    # second variant matches
+    assert _match_or_rule("T1w_LowRes", or_rules) == {"hcp_image_type": ("T1w",)}
+    # neither matches
+    assert _match_or_rule("SomethingElse", or_rules) is None
+
+
+def test_match_or_rule_glob():
+    """_match_or_rule handles glob-pattern variants per image."""
+    or_rules = [
+        {
+            "variants": ["rfMRI_REST1*", "rfMRI_REST2*"],
+            "rule": {"hcp_image_type": ("bold", None, "rest")},
+        },
+    ]
+    # first glob matches
+    assert _match_or_rule("rfMRI_REST1_AP", or_rules) == {
+        "hcp_image_type": ("bold", None, "rest")
+    }
+    # second glob matches
+    assert _match_or_rule("rfMRI_REST2_AP", or_rules) == {
+        "hcp_image_type": ("bold", None, "rest")
+    }
+    # no match
+    assert _match_or_rule("tfMRI_WM_AP", or_rules) is None
+
+
+def test_match_or_rule_priority():
+    """Earlier variants take priority for the same image name."""
+    rule_a = {"hcp_image_type": ("T1w",), "additional_tags": []}
+    rule_b = {"hcp_image_type": ("T2w",), "additional_tags": []}
+    or_rules = [
+        {"variants": ["T1w*", "T1w_LowRes"], "rule": rule_a},
+        {"variants": ["T1w_LowRes"], "rule": rule_b},
+    ]
+    # first or-rule's first alt matches via glob
+    assert _match_or_rule("T1w_LowRes", or_rules) is rule_a
+
+
+def test_or_rule_parser_rejects_empty_variant():
+    """Parser should reject or-rules with an empty variant."""
+    from qx_utilities.general.parser import _parse_mapping_file_lines
+
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_mapping_file_lines(["T1w_HiRes ||  => T1w"])
+
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_mapping_file_lines([" || T1w_LowRes => T1w"])
+
+
+def test_fm_precomputed_image_type():
+    """FM-Precomputed is parsed as the Precomputed fieldmap subtype."""
+    lines = [
+        "session: TEST001",
+        "51  :FM-Precomputed  :Test Precomputed: fm(1)",
+    ]
+    result = _parse_session_file_lines(lines, "pipeline:hcp")
+    assert result["images"][(51,)]["hcp_image_type"] == ("FM", "Precomputed")
+
+
+def test_fm_real_no_longer_supported():
+    """FM-Real was renamed to FM-Precomputed and is no longer a valid label."""
+    lines = [
+        "session: TEST001",
+        "51  :FM-Real         :Test Precomputed: fm(1)",
+    ]
+    with pytest.raises(SpecFileSyntaxError):
+        _parse_session_file_lines(lines, "pipeline:hcp")

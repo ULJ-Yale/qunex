@@ -9,20 +9,18 @@
 ``fidl.py``
 """
 
-"""
-Created by Grega Repovs on 2013-10-07.
-Adapted from previous join fidl python script
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-10-07.
+# Adapted from previous join fidl python script
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import re
 import os
 import os.path
 import glob
-import subprocess
 
-import general.img as gi
-import general.exceptions as ge
+import qx_utilities.general.img as gi
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [3]': 'zlen', 'matrix size [4]': 'frames', 'scaling factor (mm/pixel) [1]': 'xsize', 'scaling factor (mm/pixel) [2]': 'ysize', 'scaling factor (mm/pixel) [3]': 'zsize'}
 
@@ -30,22 +28,11 @@ ifh2info = {'matrix size [1]': 'xlen', 'matrix size [2]': 'ylen', 'matrix size [
 class Usage(Exception):
     def __init__(self, msg):
         self.msg = msg
-
-
-def readLines(filename):
-    file = open(filename, 'r')
-    s = file.read()
-    s = s.replace("\r", "\n")
-    s = s.replace("\n\n", "\n")
-    s = s.split("\n")
-    return s
-
-
-def boldInfo(boldfile):
+def bold_info(boldfile):
     if ".4dfp.img" in boldfile:
         ifhfile = boldfile.replace('.img', '.ifh')
         ifh = gi.ifhhdr(ifhfile)
-        hdr = ifh.toNIfTI()
+        hdr = ifh.to_nifti()
     elif ".nii" in boldfile:
         hdr = gi.niftihdr(boldfile)
     else:
@@ -54,34 +41,41 @@ def boldInfo(boldfile):
     return hdr
 
 
-def readFidl(fidlf):
-    s = readLines(fidlf)
+def read_fidl(fidlf):
+    s = gi.read_text_file_to_lines(fidlf)
 
     header = s.pop(0)
-    TR = float(header.split()[0])
+    tr = float(header.split()[0])
 
     s = [e.split() for e in s]
     s = [[float(e[0])] + e[1:] for e in s if len(e) > 1]
 
-    return {'header': header, 'TR': TR, 'events': s, 'source': fidlf}
+    return {'header': header, 'TR': tr, 'events': s, 'source': fidlf}
 
 
-def readConc(concf, TR):
-    s = readLines(concf)
+def read_conc(concf, tr, _log=None):
+    """
+    Read the bold runs a conc file declares, or record why it could not.
+
+    An empty return means the conc file could not be used. The error is
+    recorded rather than printed, so the command that asked for it is reported
+    as failed instead of exiting 0 with an error on the terminal.
+    """
+    log = gl.log_or_console(_log)
+
+    s = gi.read_text_file_to_lines(concf)
     nfiles = int(s[0].split(":")[1])
-    print(" ... %d bolds:" % (nfiles), end=" ")
     s = [e for e in s if "file:" in e]
 
     if len(s) != nfiles:
-        print("---> ERROR: number of bolds does not match the declaration! [%d vs %d]" % (len(s), nfiles))
+        log.error(f"number of bolds does not match the declaration! [{len(s)} vs {nfiles}]")
         return []
 
     boldfiles = [e.split(":")[1].strip() for e in s]
 
     for boldfile in boldfiles:
         if not os.path.exists(boldfile):
-            print
-            print("---> ERROR: image does not exist! (%s)" % (boldfile))
+            log.error(f"image does not exist! ({boldfile})")
             return []
 
     # m = re.compile(r'_b.*?([0-9]+)')
@@ -90,22 +84,22 @@ def readConc(concf, TR):
     start = 0
     for boldfile in boldfiles:
         boldname = m.match(boldfile).group(1)
-        print(boldname, end=" ")
-        length = boldInfo(boldfile).volumes * TR
+        length = bold_info(boldfile).volumes * tr
         bolds.append([boldname, start, length, boldfile])
         start += length
 
-    print
+    log.detail(f'{nfiles} bolds: {" ".join([e[0] for e in bolds])}')
     return bolds
 
 
-def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
+def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None, _log=None):
     """
     ``join_fidl concfile=<reference_concfile> fidlroot=<fidl_files_root_pattern> [outfolder=<output_folder>] [fidlname=<optional fidl name>]``
 
-    Combines all the fidl files matching root based on the information in conc
-    file. To determine the length of each bold file, it reads the bold files
-    specified in the conc file.
+    Combines all the fidl files matching root based on the information in conc file.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --concfile (str):
@@ -128,6 +122,8 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
                 --fidlroot=OP33-WM
     """
 
+    log = gl.log_or_console(_log)
+
     # ---> find all fidl files, sort them, read them, get TR info
 
     if fidlname is None:
@@ -135,10 +131,10 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     fidlf = glob.glob(fidlroot + '*.fidl')
     fidlf.sort()
-    fidldata = [readFidl(f) for f in fidlf]
+    fidldata = [read_fidl(f) for f in fidlf]
     try:
-        TR = fidldata[0]['TR']
-    except:
+        tr = fidldata[0]['TR']
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("join_fidl", "No fidl files", "No fidl files correspond to concfile: %s, fidlroot: %s!" % (concfile, fidlroot))
         else:
@@ -146,16 +142,19 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
 
     # ---> read the conc file, check if the number matches
 
-    print("\n---> reading %s" % (os.path.basename(concfile)))
-    bolddata = readConc(concfile, TR)
+    log.step(f"reading {os.path.basename(concfile)}")
+    bolddata = read_conc(concfile, tr, _log=log)
 
     if len(fidldata) != len(bolddata):
-        print("\n========= ERROR ==========\nNumber of fidl files: \n - %s \nand bold runs: \n - %s \ndo not match!\n===========================\n" % ("\n - ".join(fidlf), "\n - ".join([e[3] for e in bolddata])))
+        log.error(f"Number of fidl [{len(fidldata)}] and bold [{len(bolddata)}] files do not match!")
+        log.detail(f'fidl files: {", ".join([os.path.basename(e) for e in fidlf])}')
+        log.detail(f'bold runs:  {", ".join([os.path.basename(e[3]) for e in bolddata])}')
         raise ge.CommandFailed("join_fidl", "File number mismatch", "Number of fidl [%d] and bold [%d] files do not match!" % (len(fidldata), len(bolddata)), "Please check report!")
 
     # ---> start the matching loop
 
-    print("---> Matching bold and fidl files\n     \tBOLD file\tfidl file\tbold [s]\tfidl [s]\tdiff [s]\t ")
+    log.step("Matching bold and fidl files")
+    log.detail("\tBOLD file\tfidl file\tbold [s]\tfidl [s]\tdiff [s]")
     tfidl = []
     c = 0
     for bold in bolddata:
@@ -167,7 +166,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
             if len(sfidl['events'][-1]) > 2:
                 levent = sfidl['events'][-1][0] + float(sfidl['events'][-1][2])
             else:
-                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * TR
+                levent = sfidl['events'][-1][0] - float(sfidl['events'][-1][1]) * tr
         else:
             levent = 0
             w = "WARNING: Empty fidl file [%s]!" % (sfidl['source'])
@@ -181,7 +180,7 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
             # print("WARNING: last event in %s %.1fs [at: %.1f] after end of bold %d [%s length: %.1fs]" % (os.path.basename(fidlf[c]), -dlen, sfidl['events'][-1][0], c+1, os.path.basename(bold[3]), bold[2]))
             w = "WARNING: fidl too long for bold!"
 
-        print("     \t%s\t%s\t%.1f\t%.1f\t%.1f\t%s" % (os.path.basename(bold[3]), os.path.basename(fidlf[c]), bold[2], levent, dlen, w))
+        log.detail(f"\t{os.path.basename(bold[3])}\t{os.path.basename(fidlf[c])}\t{bold[2]:.1f}\t{levent:.1f}\t{dlen:.1f}\t{w}")
 
         tfidl = tfidl + [[e[0] + bold[1]] + e[1:] for e in sfidl['events'] if e[0] < bold[2]]
         c += 1
@@ -189,26 +188,28 @@ def join_fidl(concfile, fidlroot, outfolder=None, fidlname=None):
     jointfile = fidlroot + fidlname + '.fidl'
     if outfolder is not None:
         if not os.path.exists(outfolder):
-            print("---> Creating output folder:", outfolder)
+            log.step(f"Creating output folder: {outfolder}")
             os.makedirs(outfolder)
         jointfile = os.path.join(outfolder, os.path.basename(jointfile))
 
     out = open(jointfile, 'w')
     print(sfidl['header'], file=out)
 
-    for l in tfidl:
-        print("%g\t%s" % (l[0], "\t".join(l[1:])), file=out)
+    for ln in tfidl:
+        print("%g\t%s" % (ln[0], "\t".join(ln[1:])), file=out)
 
     out.close()
     return
 
 
-def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None):
+def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None, _log=None):
     """
     ``join_fidl_folder concfolder=<folder_with_concfiles> [fidlfolder=<folder_with_fidl_files>] [outfolder=<folder_in_which_to_save_joint_files>] [fidlname=<folder_with_fidl_files>]``
 
-    Uses join_fidl to join all the fidl files that match the name of each conc
-    file in the concfolder.
+    Join all the fidl files that match the name of each conc file in the concfolder.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --concfolder (str):
@@ -232,6 +233,8 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
                 --fidlfolder=fidls
     """
 
+    log = gl.log_or_console(_log)
+
     if fidlfolder is None:
         fidlfolder = concfolder
 
@@ -247,24 +250,27 @@ def join_fidl_folder(concfolder, fidlfolder=None, outfolder=None, fidlname=None)
     for concfile in concfiles:
         root = os.path.join(fidlfolder, os.path.basename(concfile).replace('.conc', ""))
         try:
-            join_fidl(concfile, root, outfolder, fidlname)
+            join_fidl(concfile, root, outfolder, fidlname, _log=log)
         except ge.CommandFailed as e:
-            failed.append([concfolder, e.error])
+            failed.append([concfile, e.error])
 
     if failed:
-        print("ERROR: Joining fidls failed for the following conc files:")
+        log.error("Joining fidls failed for the following conc files:")
         for concfile, error in failed:
-            print("       - %s [%s]" % (concfile, error))
+            log.detail(f"{concfile} [{error}]")
 
         raise ge.CommandFailed("join_fidl_folder", "Processing of %d session(s) failed" % (len(failed)), "Please check report!")
 
 
-def split_fidl(concfile, fidlfile, outfolder=None):
+def split_fidl(concfile, fidlfile, outfolder=None, _log=None):
     """
     ``split_fidl concfile=<reference_concfile> fidlfile=<fidl_file_to_split> [outfolder=<folder_to_save_results>]``
 
     Splits a multi-bold fidl file into run specific bold files based on the
     sequence of bold files in conc file and their lengths.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --concfile (str):
@@ -287,16 +293,23 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
     # ---> read the fidl and conc info
 
-    fidldata = readFidl(fidlfile)
+    fidldata = read_fidl(fidlfile)
     try:
-        TR = fidldata['TR']
-    except:
+        tr = fidldata['TR']
+    except Exception:
         if len(fidldata) == 0:
             raise ge.CommandFailed("split_fidl", "No fidl file", "No fidl files correspond to %s!" % (concfile))
         else:
             raise ge.CommandFailed("split_fidl", "Processing error", "Error in processing concfile: %s, fidlfile: %s!" % (concfile, fidlfile))
 
-    bolddata = readConc(concfile, TR)
+    bolddata = read_conc(concfile, tr, _log=_log)
+
+    # ---> an empty read means the conc file could not be used; without this
+    #      the loop below runs over nothing and the command exits cleanly
+    #      having split nothing
+
+    if not bolddata:
+        raise ge.CommandFailed("split_fidl", "Could not read the conc file", "No usable bold information in concfile: %s!" % (concfile), "Please check the report!")
 
     # ---> start the split loop
 
@@ -321,9 +334,9 @@ def split_fidl(concfile, fidlfile, outfolder=None):
 
         # ---> print contents
 
-        for l in fidldata['events']:
-            if l[0] >= bstart and l[0] < bend:
-                print("%.2f\t%s" % (l[0] - bstart, "\t".join(l[1:])), file=ffile)
+        for ln in fidldata['events']:
+            if ln[0] >= bstart and ln[0] < bend:
+                print("%.2f\t%s" % (ln[0] - bstart, "\t".join(ln[1:])), file=ffile)
 
         # ---> close fidl file
 
@@ -334,27 +347,48 @@ def split_fidl(concfile, fidlfile, outfolder=None):
     return
 
 
-def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
+def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None, _log=None):
     """
     ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``
 
-    Prints figures showing fidl events and their duration.
+    Print figures showing fidl events and their duration.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
-        --fidlfile (str, default detailed below):
+        --fidlfile (str):
             The path to the fidl file to plot. By default all the fidl files in
             the folder if none specified.
 
         --fidlfolder (str, default '.'):
             The folder from which to plot the fidl files.
 
-        --plotfile (str, optional):
+        --plotfile (str):
             The name of the file to save the plot to. Only makes sense if
             fidlfile is specified.
 
         --allcodes (bool, default False):
             Whether to plot line for all fidl codes even if no event has a
             particular code.
+
+    Notes:
+        Use:
+            The figure shows one row per event code, each event drawn as a bar
+            spanning its duration, and a row of onset marks along the top. Each
+            row is named beside it, so a code can be read off the figure without
+            counting rows.
+
+            Plots are written to a `fidlplots` folder. With `--fidlfolder` that
+            folder is created inside it; with `--fidlfile` it is created beside
+            the fidl file, so a single file plotted on its own lands in the same
+            place it would have as one of a folder. `--plotfile` names the file
+            within that folder.
+
+            By default a code that no event uses gets no row, which keeps the
+            figure to the height the data needs. Pass `--allcodes` to give every
+            code the header declares a row of its own, whether it is used or
+            not, which is what makes two sessions comparable row for row.
 
     Examples:
         ::
@@ -363,26 +397,41 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
                 --fidlfolder=jfidls
     """
 
+    log = gl.log_or_console(_log)
+
     if fidlfile:
         if not os.path.exists(fidlfile):
             raise ge.CommandFailed("check_fidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
+        files = [os.path.abspath(fidlfile)]
     else:
-        if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
+        files = sorted(glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")))
+        if not files:
             raise ge.CommandFailed("check_fidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")
 
-    command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'check_fidl.R')]
-    command.append('-fidlfolder=%s' % (fidlfolder))
+    # beside the fidl file, whether that file was named or found -- with a
+    # single file the folder option says nothing about where the file is
+    target_folder = os.path.join(os.path.dirname(files[0]), "fidlplots")
+    os.makedirs(target_folder, exist_ok=True)
 
-    if fidlfile is not None:
-        command.append("-fidlfile=" + fidlfile)
-    if plotfile is not None:
-        command.append("-plotfile=" + plotfile)
-    if allcodes is not None:
-        command.append("-allcodes")
+    # imported here, not at the top: matplotlib is not installed on a bare
+    # checkout, and nothing else in this file needs it
+    from qx_utilities.general import fidl_plots
 
-    if subprocess.call(command):
-        raise ge.CommandFailed("check_fidl", "Running check_fidl.R failed", "Call: %s" % (" ".join(command)))
+    log.step(f"plotting {len(files)} fidl file(s) to {target_folder}")
+
+    if plotfile and len(files) > 1:
+        log.warning("--plotfile names one file but several are being plotted; ignoring it")
+        plotfile = None
+
+    for path in files:
+        name = plotfile or os.path.basename(path).replace(".fidl", "-fidlplot.pdf")
+        target = os.path.join(target_folder, name)
+
+        try:
+            fidl_plots.plot_fidl(read_fidl(path), target, allcodes=bool(allcodes))
+        except ValueError as error:
+            raise ge.CommandFailed("check_fidl", "Malformed fidl file", str(error), "Please check your data!")
+
+        log.detail(f"{os.path.basename(path)} -> {os.path.basename(target)}")
 
     return
-
-

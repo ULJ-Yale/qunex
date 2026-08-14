@@ -3,6 +3,9 @@ function [out] = general_remove_meta(fin, fout)
 %
 %   Remove QuNex metadata from file.
 %
+%   .. qx_command:
+%       type: matlab
+%
 %   Parameters:
 %       --fin (str):
 %           A path to the file from which to remove metadata.
@@ -10,8 +13,8 @@ function [out] = general_remove_meta(fin, fout)
 %       --fout (str, default ''):
 %           A path to save the output file. If empty, overwrites the input file.
 %
-%   Outputs:
-%       --out (nimage)
+%   Returns:
+%       --out (nimage):
 %           A nimage object with the extracted glm volumes.
 %
 %   Notes:

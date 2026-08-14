@@ -2,12 +2,16 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 
 %``fc_extract_trial_timeseries_masked(flist, roif, targetf, tevents, frames, scrubvar)``
 %
-%   Extracts trial timeseries for each of the specified ROI.
+%   Extract trial timeseries for each of the specified ROI.
 %
-%   NOTE: Please, note that fc_extract_trial_timeseries_masked function is being 
-%         deprecated. The function will no longer be developed and will be 
-%         removed in future releases of QuNex. Instead, consider using 
-%         fc_extract_roi_timeseries, which offers additional functionality.
+%   NOTE: 
+%       Please, note that fc_extract_trial_timeseries_masked function is being 
+%       deprecated. The function will no longer be developed and will be 
+%       removed in future releases of QuNex. Instead, consider using 
+%       fc_extract_roi_timeseries, which offers additional functionality.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -22,11 +26,11 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %       --targetf (str):
 %           The target matlab file with results.
 %
-%       --tevents (cell array):
+%       --tevents (string | cell array):
 %           The indeces of the events for which to extract timeseries, can be a
 %           cell array of combinations of event indeces.
 %
-%       --frames (vector):
+%       --frames (numeric | vector):
 %           Limits of frames to include in the extracted timeseries.
 %
 %       --scrubvar (str, default ''):
@@ -42,7 +46,7 @@ function [data] = fc_extract_trial_timeseries_masked(flist, roif, targetf, teven
 %           - 'udvarsme' - mov OR dvarsme.
 %
 %   Returns:
-%       data(n)
+%       --data (structure array):
 %           A structure with extracted trial timeseries for each session:
 %       
 %           - .session

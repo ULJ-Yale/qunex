@@ -25,8 +25,9 @@ import os.path
 import glob
 import re
 
-import general.core as gc
-import general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.log as gl
 
 from datetime import datetime
 
@@ -57,30 +58,37 @@ set seq = ""
 recode = {True: "ok", False: "missing"}
 
 
-def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
+def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _log=None):
     """
     ``run_nil_folder [folder=.] [pattern=OP*] [overwrite=no] [sourcefile=session.txt]``
 
-    Goes through the folder and runs run_nil on all the subfolders that match the
-    pattern. Setting overwrite to overwrite.
+    Run run_nil on all the subfolders that match the pattern.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --folder          the base study sessions folder (e.g. WM44/sessions) where
-                       OP folders and the inbox folder with the new packages
-                       from the scanner reside.
-    --pattern         which sessionsfolders to match (default OP*).
-    --overwrite       whether to overwrite existing (params and BOLD) files.
-    --sourcefile      the name of the session file.
+    Parameters:
+        --folder (str, default '.'):
+            The base study sessions folder (e.g. WM44/sessions) where OP folders
+            and the inbox folder with the new packages from the scanner reside.
 
-    EXAMPLE USE
-    ===========
+        --pattern (str, default 'OP*'):
+            Which sessionsfolders to match.
 
-    ::
+        --overwrite (bool, default False):
+            Whether to overwrite existing (params and BOLD) files.
 
-        qunex run_nil_folder folder=. pattern=OP* overwrite=no sourcefile=session.txt
+        --sourcefile (str, default 'session.txt'):
+            The name of the session file.
+
+    Examples:
+
+        ::
+
+            qunex run_nil_folder folder=. pattern=OP* overwrite=no sourcefile=session.txt
     """
+
+    log = gl.log_or_console(_log)
 
     if pattern is None:
         pattern = "OP*"
@@ -108,60 +116,86 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None):
     ]
 
     do = []
-    print("\n---=== Running NIL preprocessing on folder %s ===---\n" % folder)
-    print("List of sessions to process\n")
-    print("%-15s%-15s%-15s%-10s" % ("session", "session.txt", "DICOM-Report", "params"))
-    for subj, stxt, sdicom, sparam in subjs:
-        print(
-            "%-15s%-15s%-15s%-10s --->"
-            % (os.path.basename(subj), recode[stxt], recode[sdicom], recode[sparam]),
-            end=" ",
+    log.raw(f"\n\n---=== Running NIL preprocessing on folder {folder} ===---")
+    with log.section("List of sessions to process"):
+        log.detail(
+            f'{"session":<15}{"session.txt":<15}{"DICOM-Report":<15}{"params":<10}'
         )
-        if not stxt:
-            print("skipping processing")
-        else:
-            if not sdicom:
-                print("estimating TR as 2.49836", end=" ")
-            if not sparam:
-                print("creating param file", end=" ")
-            elif overwrite:
-                print("overwriting existing params file", end=" ")
+        for subj, stxt, sdicom, sparam in subjs:
+            # the row used to be assembled by four prints with `end=" "`; a
+            # record is a whole line, so the notes are collected first
+            if not stxt:
+                notes = ["skipping processing"]
             else:
-                print("working with existing params file", end=" ")
-            do.append(subj)
-        print("")
+                notes = []
+                if not sdicom:
+                    notes.append("estimating TR as 2.49836")
+                if not sparam:
+                    notes.append("creating param file")
+                elif overwrite:
+                    notes.append("overwriting existing params file")
+                else:
+                    notes.append("working with existing params file")
+                do.append(subj)
+            log.detail(
+                f'{os.path.basename(subj):<15}{recode[stxt]:<15}{recode[sdicom]:<15}{recode[sparam]:<10} ---> {" ".join(notes)}'
+            )
 
+    failed = []
     for s in do:
+        # seam: `run_nil` still prints, and a record renders as "\n<line>"
+        # where a print emits "<line>\n" -- without this newline the two run
+        # together. Goes when `run_nil` is converted.
+        log.raw("\n")
         try:
             run_nil(s, overwrite, sourcefile)
-        except:
-            print("---> Failed running NIL preprocessing on", s)
+        except Exception as e:
+            # the exception used to be swallowed and the failure printed, so
+            # the command reported a failed session and still exited 0
+            failed.append(os.path.basename(s))
+            log.error(f"Failed running NIL preprocessing on {s}: {str(e)}")
 
-    print("\n---=== Done NIL preprocessing on folder %s ===---\n" % (folder))
+    log.raw(f"\n\n---=== Done NIL preprocessing on folder {folder} ===---")
+
+    # raised after the loop, so one failing session does not abort its siblings
+    if failed:
+        raise ge.CommandFailed(
+            "run_nil_folder",
+            "NIL preprocessing failed",
+            "NIL preprocessing failed for %d of %d sessions: %s"
+            % (len(failed), len(do), ", ".join(failed)),
+            "Please check the report!",
+        )
 
 
 def run_nil(folder=".", overwrite=None, sourcefile=None):
     """
     ``run_nil [folder=.] [overwrite=no] [sourcefile=session.txt]``
 
-    Runs NIL preprocessing script on the session data in specified folder.
+    Run NIL preprocessing script on the session data in the specified folder.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --folder          session's folder with nii and dicom folders and
-                      session.txt file.
-    --overwrite       whether to overwrite existing parameters file or existing
-                      BOLD data.
-    --sourcefile      the name of the session file.
+    Parameters:
+        --folder (str, default '.'):
+            The session folder where the session.txt file, nii and dicom folders
+            reside.
 
-    USE
-    ===
+        --overwrite (bool, default False):
+            Whether to overwrite existing (params and BOLD) files.
 
-    Runs NIL preprocessing script on the session data in specified folder.
-    Uses session.txt to identify structural and BOLD runs and DICOM-report.txt
-    to get TR value. The processing is saved to a datestamped log in the 4dfp
-    folder.
+        --sourcefile (str, default 'session.txt'):
+            The name of the session file.
+
+    Notes:
+        The function expects a folder structure where the session folder has
+        session.txt file, a dicom folder with DICOM-Report.txt file and a nii
+        folder with nii files.
+        Runs NIL preprocessing script on the session data in specified folder.
+        Uses session.txt to identify structural and BOLD runs and DICOM-Report.txt
+        to get TR value. The processing is saved to a datestamped log in the 4dfp
+        folder.
     """
 
     if overwrite is None:
@@ -181,7 +215,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info = gc.read_session_data(os.path.join(folder, sourcefile))
+    info, _ = gc.read_batch(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 
@@ -221,23 +255,23 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
         # ---- check for dicom and TR
 
-        TR = None
+        tr = None
         if os.path.exists(os.path.join(folder, "dicom", "DICOM-Report.txt")):
             with open(os.path.join(folder, "dicom", "DICOM-Report.txt")) as f:
                 for line in f:
-                    if ("BOLD" in line and not "C-BOLD" in line) or ("bold" in line):
+                    if ("BOLD" in line and "C-BOLD" not in line) or ("bold" in line):
                         m = re.search(r"TR +([0-9.]+),", line)
                         if m:
-                            TR = m.group(1)
-                            TR = float(TR) / 1000
+                            tr = m.group(1)
+                            tr = float(tr) / 1000
                             print(
                                 "...  Extracted TR info from DICOM-Report, using TR of",
-                                TR,
+                                tr,
                             )
                             break
-        if TR is None or TR == 0.0:
-            "...  No DICOM-Report, assuming TR of 2.49836"
-            TR = 2.49836
+        if tr is None or tr == 0.0:
+            print("...  No DICOM-Report, assuming TR of 2.49836")
+            tr = 2.49836
 
         # ---- create params content
 
@@ -246,7 +280,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace("{{data}}", data)
         params = params.replace("{{inpath}}", raw)
         params = params.replace("{{patid}}", sid)
-        params = params.replace("{{TR}}", str(TR))
+        params = params.replace("{{TR}}", str(tr))
         if t1:
             params = params.replace("{{t1}}", t1 + "-o.nii.gz")
         if t2:
@@ -254,9 +288,8 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         params = params.replace("{{boldnums}}", " ".join(["%s" % (b) for k, b in bold]))
         params = params.replace("{{bolds}}", " ".join([k + ".nii.gz" for k, b in bold]))
 
-        pfile = open(os.path.join(folder, "4dfp", "params"), "w")
-        print(params, file=pfile)
-        pfile.close()
+        with open(os.path.join(folder, "4dfp", "params"), "w") as pfile:
+            print(params, file=pfile)
 
     else:
         print("...  using existing params file")
@@ -304,15 +337,14 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     logname = "preprocess." + datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f") + ".log"
     print("...  running NIL preprocessing, saving log to %s " % (logname))
-    logfile = open(os.path.join(folder, "4dfp", logname), "w")
-
-    r = subprocess.call(
-        ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
-        stdout=logfile,
-        stderr=subprocess.STDOUT,
-    )
-
-    logfile.close()
+    # `with`: the explicit close this replaces was skipped whenever the call
+    # raised -- and with the 4dfp tooling absent, that is every call
+    with open(os.path.join(folder, "4dfp", logname), "w") as logfile:
+        r = subprocess.call(
+            ["preproc_avi_nifti", os.path.join(folder, "4dfp", "params")],
+            stdout=logfile,
+            stderr=subprocess.STDOUT,
+        )
 
     if r:
         print(
@@ -326,31 +358,37 @@ def map2pals(volume, metric, atlas="711-2C", method="interpolated", mapping="afm
     """
     ``map2pals volume=<volume file> metric=<metric file> [atlas=711-2C] [method=interpolated] [mapping=afm]``
 
-    Maps volume files to metric surface files using PALS12 surface atlas.
+    Map volume files to metric surface files using PALS12 surface atlas.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --volume       a volume file or a space separated list of volume files - put
-                   in quotes
-    --metric       the name of the metric file that stores the mapping
-    --atlas        volume atlas from which to map (711-2C by default or 711-2B,
-                   AFNI, FLIRT, FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99,
-                   MRITOTAL)
-    --method       interpolated, maximum, enclosing, strongest, Gaussian
-                   (for other options see caret_command)
-    --mapping      a single mapping option or a space separated list in quotes.
-                   [afm] The options are:
+    Parameters:
+        --volume (str):
+            A volume file or a space separated list of volume files - put in quotes.
 
-                   - afm (average fiducial mapping)
-                   - mfm (average of mapping to all PALS cases (multifiducial
-                     mapping))
-                   - min (minimum of mapping to all PALS cases)
-                   - max (maximum of mapping to all PALS cases)
-                   - std-dev (sample standard deviation of mapping to all PALS
-                     cases)
-                   - std-error (standard error of mapping to all PALS cases)
-                   - all-cases (mapping to each of the PALS12 cases)
+        --metric (str):
+            The name of the metric file that stores the mapping.
+
+        --atlas (str, default '711-2C'):
+            Volume atlas from which to map (711-2C by default or 711-2B, AFNI, FLIRT,
+            FNIRT, SPM2, SPM5, SPM95, SPM96, SPM99, MRITOTAL).
+
+        --method (str, default 'interpolated'):
+            Interpolated, maximum, enclosing, strongest, Gaussian (for other options
+            see caret_command).
+
+        --mapping (str, default 'afm'):
+            A single mapping option or a space separated list in quotes.
+
+            The options are:
+            - afm (average fiducial mapping)
+            - mfm (average of mapping to all PALS cases (multifiducial mapping))
+            - min (minimum of mapping to all PALS cases)
+            - max (maximum of mapping to all PALS cases)
+            - std-dev (sample standard deviation of mapping to all PALS cases)
+            - std-error (standard error of mapping to all PALS cases)
+            - all-cases (mapping to each of the PALS12 cases)
     """
 
     methods = {
@@ -397,24 +435,26 @@ def map2hcp(volume, method="trilinear"):
     """
     ``map2hcp volume=<volume file> [method=trilinear]``
 
-    Maps volume files to dense scalar files using HCP templates.
+    Map volume files to dense scalar files using HCP templates.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --volume      a volume file or a space separated list of volume files - put
-                  in quotes
-    --method      one of: trilinear, enclosing, cubic, ribbon constrained
+    Parameters:
+        --volume (str):
+            A volume file or a space separated list of volume files - put in quotes.
 
-    USE
-    ===
+        --method (str, default 'trilinear'):
+            One of: trilinear, enclosing, cubic, ribbon constrained.
 
-    Maps volume files to dense scalar files using HCP templates. It expects
-    "HCPATLAS" environment variable to be set, to be able to find the right
-    templates.
+    Notes:
+
+        Maps volume files to dense scalar files using HCP templates. It expects
+        "HCPATLAS" environment variable to be set, to be able to find the right
+        templates.
     """
 
-    if not "HCPATLAS" in os.environ:
+    if "HCPATLAS" not in os.environ:
         raise ge.CommandError(
             "map2hcp",
             "HCPATLAS environment variable not set.",

@@ -15,10 +15,8 @@ Functions for importing non-human primate (NHP) data into QuNex:
 The commands are accessible from the terminal using the gmri utility.
 """
 
-"""
-Copyright (c) Grega Repovs and Jure Demsar.
-All rights reserved.
-"""
+# Copyright (c) Grega Repovs and Jure Demsar.
+# All rights reserved.
 
 # general imports
 import os
@@ -27,26 +25,33 @@ import zipfile
 import tarfile
 import glob
 import re
-from datetime import datetime
 
 # qx imports
-import general.exceptions as ge
-import general.core as gc
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 
 
-def map_to_qunex(file, sessionsfolder, sessions, overwrite):
+def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
     """
     Maps a file to QuNex NHP data structure.
+
+    A file whose name cannot be parsed records an error rather than printing
+    one: `False` is also what this returns for a legitimate skip, so the
+    caller's `if result:` cannot tell the two apart and the failure was
+    invisible to the run's status.
+
+    The manual prefix the lines carried is gone: `import_nhp` opens a
+    `log.section` per package and the log spells the nesting.
     """
 
-    # log prefix
-    prefix = "        "
+    log = gl.log_or_console(_log)
 
     # remove trailing /
     try:
         if sessionsfolder[-1] == "/":
             sessionsfolder = sessionsfolder[:-1]
-    except:
+    except Exception:
         pass
 
     # find separator
@@ -61,7 +66,7 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
         file_split = file.split(pathsep)
 
         if "dMRI" not in file_split:
-            print(prefix + "---> skipping %s, not a dMRI file" % (file))
+            log.step(f"skipping {file}, not a dMRI file")
             return False
         else:
             session = file_split[-3]
@@ -71,21 +76,21 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite):
 
             # store data
             data_file = file_split[-1]
-    except:
-        print("ERROR: Could not parse file:", file)
+    except Exception:
+        log.error(f"Could not parse file: {file}")
         return False
 
     # target folder and file
     tfile = os.path.join(sessionsfolder, session, "NHP", "dMRI", data_file)
-    print(prefix + "---> Processing session %s, file %s" % (session, data_file))
+    log.step(f"Processing session {session}, file {data_file}")
 
     # overwrite?
     if os.path.exists(tfile):
         if overwrite == "yes" or overwrite is True:
-            print(prefix + "---> file %s already exists: deleting ..." % (tfile))
+            log.step(f"file {tfile} already exists: deleting ...")
             os.remove(tfile)
         else:
-            print(prefix + "---> file %s already exists: skipping ..." % (tfile))
+            log.step(f"file {tfile} already exists: skipping ...")
             return False
 
     return [session, tfile]
@@ -98,107 +103,90 @@ def import_nhp(
     action="link",
     overwrite="no",
     archive="leave",
+    _log=None,
 ):
     """
     ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=leave]``
 
     Maps NHP data to the QuNex Suite file structure.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --sessionsfolder    The sessions folder where all the sessions are to be
-                        mapped to. It should be a folder within the
-                        <study folder>. [.]
+    Parameters:
+        --sessionsfolder (str, default '.'):
+            The sessions folder where all the sessions are to be mapped to.
+            It should be a folder within the <study folder>.
 
-    --inbox             The location of the NHP dataset. It can be a folder
-                        that contains the NHP datasets or compressed `.zip`
-                        or `.tar.gz` packages that contain a single
-                        session or a multi-session dataset. For instance the user
-                        can specify "<path>/<nhp_file>.zip" or "<path>" to
-                        a folder that contains multiple packages. The default
-                        location where the command will look for a NHP dataset
-                        is [<sessionsfolder>/inbox/NHP].
+        --inbox (str, default '<sessionsfolder>/inbox/NHP'):
+            The location of the NHP dataset or a dataset archive. It can be a folder
+            that contains the NHP datasets or compressed `.zip`  or `.tar.gz`
+            packages that contain a single session or a multi-session dataset.
+            For instance the user can specify "<path>/<nhp_file>.zip" or "<path>"
+            to a folder that contains multiple packages.
 
-    --sessions          An optional parameter that specifies a comma or pipe
-                        separated list of sessions from the inbox folder to be
-                        processed. Regular expression patterns can be used.
-                        If provided, only packets or folders within the inbox
-                        that match the list of sessions will be processed. If
-                        `inbox` is a file `sessions` will not be applied.
-                        Note: the session will match if the string is found
-                        within the package name or the session id. So
-                        "NHP" with match any zip file that contains string
-                        "NHP" or any session id that contains "NHP"!
+        --sessions (str, default ''):
+            An optional parameter that specifies a comma or pipe separated list
+            of sessions from the inbox folder to be processed. Regular expression
+            patterns can be used. If provided, only packets or folders within
+            the inbox that match the list of sessions will be processed. If `
+            inbox` is a file `sessions` will not be applied. Note: the session
+            will match if the string is found within the package name or the
+            session id. So "NHP" with match any zip file that contains string
+            "NHP" or any session id that contains "NHP"!
 
-    --action            How to map the files to QuNex structure. ["link"]
-                        The following actions are supported:
+        --action (str, default 'link'):
+            How to map files: link, copy, or move.
 
-                        - link (files will be mapped by creating hard links if
-                          possible, otherwise they will be copied)
-                        - copy (files will be copied)
-                        - move (files will be moved)
+        --overwrite (str, default 'no'):
+            Whether to overwrite existing data (yes) or not (no).
 
-    --overwrite         The parameter specifies what should be done with
-                        data that already exists in the locations to which NHP
-                        data would be mapped to ["no"]. Note that if overwrite
-                        is enabled, the previous data is deleted before the run,
-                        so in the case of a failed command run, previous results
-                        are lost. Options are:
+        --archive (str, default 'leave'):
+            What to do with the archive after mapping.
 
-                        - no (do not overwrite the data and skip processing of
-                          the session)
-                        - yes (remove exising files in `nii` folder and redo the
-                          mapping)
+            Options are:
 
-    --archive           What to do with the files after they were mapped.
-                        ["move"] Options are:
+            - leave (leave the specified archive where it is)
+            - move (move the specified archive to `<sessionsfolder>/archive/NHP`)
+            - copy (copy the specified archive to `<sessionsfolder>/archive/NHP`)
+            - delete (delete the archive after processing if no errors were identified)
 
-                        - leave (leave the specified archive where it is)
-                        - move (move the specified archive to
-                          `<sessionsfolder>/archive/NHP`)
-                        - copy (copy the specified archive to
-                          `<sessionsfolder>/archive/NHP`)
-                        - delete (delete the archive after processing if no
-                          errors were identified)
+            Please note that there can be an interaction with the `action`
+            parameter. If files are moved during action, they will be missing if
+            `archive` is set to "move" or "copy.
 
-                        Please note that there can be an
-                        interaction with the `action` parameter. If files are
-                        moved during action, they will be missing if `archive`
-                        is set to "move" or "copy".
 
-    OUTPUTS
-    =======
 
-    After running the `import_nhp` command the NHP dataset will be mapped
-    to the QuNex folder structure and image files will be prepared for further
-    processing along with required metadata.
+    Outputs:
+        After running the `import_nhp` command the NHP dataset will be mapped
+        to the QuNex folder structure and image files will be prepared for further
+        processing along with required metadata.
 
-    - dMRI images for each session will be stored in:
+        - dMRI images for each session will be stored in:
 
-        ``<sessionsfolder>/<session>/dMRI``
+            ``<sessionsfolder>/<session>/dMRI``
 
-    USE
-    ===
+    Notes:
+        The `import_nhp` command first inspects the location of the NHP dataset
+        (specified by the `inbox` parameter) for suitable data. When looking for
+        suitable data QuNex looks for dMRI subfolder inside each of the <session>
+        folders (whether in the `inbox` folder or in archived data). Meaning that
+        the data inside `inbox` folder or achives should be structured as:
 
-    The `import_nhp` command first inspects the location of the NHP dataset
-    (specified by the `inbox` parameter) for suitable data. When looking for
-    suitable data QuNex looks for dMRI subfolder inside each of the <session>
-    folders (whether in the `inbox` folder or in archived data). Meaning that
-    the data inside `inbox` folder or achives should be structured as:
+            ``/<session>/<dMRI>/<image files>``
 
-        ``/<session>/<dMRI>/<image files>``
+    Examples:
 
-    EXAMPLE CALL
-    ============
+        ::
 
-    ::
-
-        qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
+            qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
     """
 
-    print("Running import_nhp")
-    print("==================")
+    log = gl.log_or_console(_log)
+
+    # `raw` because a title over its own rule is not a record shape; no
+    # trailing newline, since every record that follows opens with one
+    log.raw("\nRunning import_nhp\n==================")
 
     # check inputs
     if action not in ["link", "copy", "move"]:
@@ -224,22 +212,21 @@ def import_nhp(
         inbox = os.path.join(sessionsfolder, "inbox", "NHP")
 
     all_ok = True
-    errors = ""
 
     # check for folders
     if not os.path.exists(os.path.join(sessionsfolder, "inbox", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "inbox", "NHP"))
-        print("---> creating inbox NHP folder")
+        log.step("creating inbox NHP folder")
 
     if not os.path.exists(os.path.join(sessionsfolder, "archive", "NHP")):
         os.makedirs(os.path.join(sessionsfolder, "archive", "NHP"))
-        print("---> creating archive NHP folder")
+        log.step("creating archive NHP folder")
 
     # identification of files
     if sessions:
         sessions = [e.strip() for e in re.split(r" +|\| *|, *", sessions)]
 
-    print("---> identifying files in %s" % (inbox))
+    log.step(f"identifying files in {inbox}")
 
     source_files = []
 
@@ -282,138 +269,142 @@ def import_nhp(
         )
 
     # mapping data to sessions" folders
-    print("---> mapping files to QuNex NHP folders")
+    log.step("mapping files to QuNex NHP folders")
     report = {}
     for file in source_files:
         if file.endswith(".zip"):
-            print("    ---> processing zip package [%s]" % (file))
+            with log.section("processing zip package [%s]" % (file)):
+                try:
+                    z = zipfile.ZipFile(file, "r")
+                    for sf in z.infolist():
+                        if sf.filename[-1] != "/":
+                            result = map_to_qunex(
+                                sf.filename,
+                                sessionsfolder,
+                                sessions,
+                                overwrite,
+                                _log=log,
+                            )
+                            if result:
+                                tfile = result[1]
+                                fdata = z.read(sf)
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
 
-            try:
-                z = zipfile.ZipFile(file, "r")
-                for sf in z.infolist():
-                    if sf.filename[-1] != "/":
-                        result = map_to_qunex(
-                            sf.filename, sessionsfolder, sessions, overwrite
-                        )
-                        if result:
-                            tfile = result[1]
-                            fdata = z.read(sf)
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
+                                # append mapped file
+                                if result[0] not in report:
+                                    report[result[0]] = [tfile]
+                                else:
+                                    report[result[0]].append(tfile)
+                    z.close()
 
-                            # append mapped file
-                            if not result[0] in report:
-                                report[result[0]] = [tfile]
-                            else:
-                                report[result[0]].append(tfile)
-                z.close()
-
-                print("        ---> done!")
-            except:
-                print(
-                    "           ERROR: Processing of zip package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                all_ok = False
-                raise
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        f"Processing of zip package {file} failed. "
+                        "Please check the package!"
+                    )
+                    all_ok = False
+                    raise
 
         elif ".tar" in file or ".tgz" in file:
-            print("   ---> processing tar package [%s]" % (file))
+            with log.section("processing tar package [%s]" % (file)):
+                try:
+                    tar = tarfile.open(file)
+                    for member in tar.getmembers():
+                        if member.isfile():
+                            result = map_to_qunex(
+                                member.name,
+                                sessionsfolder,
+                                sessions,
+                                overwrite,
+                                _log=log,
+                            )
+                            if result:
+                                tfile = result[1]
+                                fobj = tar.extractfile(member)
+                                fdata = fobj.read()
+                                fobj.close()
+                                fout = open(tfile, "wb")
+                                fout.write(fdata)
+                                fout.close()
 
-            try:
-                tar = tarfile.open(file)
-                for member in tar.getmembers():
-                    if member.isfile():
-                        result = map_to_qunex(
-                            member.name, sessionsfolder, sessions, overwrite
-                        )
-                        if result:
-                            tfile = result[1]
-                            fobj = tar.extractfile(member)
-                            fdata = fobj.read()
-                            fobj.close()
-                            fout = open(tfile, "wb")
-                            fout.write(fdata)
-                            fout.close()
+                                # append mapped file
+                                if result[0] not in report:
+                                    report[result[0]] = [tfile]
+                                else:
+                                    report[result[0]].append(tfile)
+                    tar.close()
 
-                            # append mapped file
-                            if not result[0] in report:
-                                report[result[0]] = [tfile]
-                            else:
-                                report[result[0]].append(tfile)
-                tar.close()
-
-                print("        ---> done!")
-            except:
-                print(
-                    "           ERROR: Processing of tar package failed. Please check the package!"
-                )
-                errors += "\n    .. Processing of package %s failed!" % (file)
-                all_ok = False
+                    log.step("done!")
+                except Exception:
+                    log.error(
+                        f"Processing of tar package {file} failed. "
+                        "Please check the package!"
+                    )
+                    all_ok = False
 
         else:
-            result = map_to_qunex(file, sessionsfolder, sessions, overwrite)
+            result = map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=log)
             if result:
                 tfile = result[1]
-                status, msg = gc.moveLinkOrCopy(
-                    file, tfile, action, r="", prefix="    .. "
-                )
+                status = gc.move_link_or_copy(file, tfile, action, _log=log)
                 all_ok = all_ok and status
-                if not status:
-                    errors += msg
-                else:
+                if status:
                     # append mapped file
-                    if not result[0] in report:
+                    if result[0] not in report:
                         report[result[0]] = [tfile]
                     else:
                         report[result[0]].append(tfile)
 
     # ---> archiving the dataset
-    if errors:
-        print("   ---> The following errors were encountered when mapping the files:")
-        print(errors)
+    if not all_ok:
+        log.error(
+            "Some files could not be mapped -- see the errors above. The dataset "
+            "was not archived, so nothing has been moved, copied or deleted."
+        )
     else:
         if os.path.isfile(inbox) or not os.path.samefile(
             inbox, os.path.join(sessionsfolder, "inbox", "NHP")
         ):
             try:
                 if archive == "move":
-                    print("---> moving dataset to archive")
+                    log.step("moving dataset to archive")
                     shutil.move(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "copy":
-                    print("---> copying dataset to archive")
+                    log.step("copying dataset to archive")
                     shutil.copy2(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "delete":
-                    print("---> deleting dataset")
+                    log.step("deleting dataset")
                     if os.path.isfile(inbox):
                         os.remove(inbox)
                     else:
                         shutil.rmtree(inbox)
-            except:
-                print("---> %s failed!" % (archive))
+            except Exception:
+                log.warning(f"{archive} failed!")
         else:
             files = glob.glob(os.path.join(inbox, "*"))
             for file in files:
                 try:
                     if archive == "move":
-                        print("---> moving dataset to archive")
+                        log.step("moving dataset to archive")
                         shutil.move(
                             file, os.path.join(sessionsfolder, "archive", "NHP")
                         )
                     elif archive == "copy":
-                        print("---> copying dataset to archive")
+                        log.step("copying dataset to archive")
                         shutil.copy2(
                             file, os.path.join(sessionsfolder, "archive", "NHP")
                         )
                     elif archive == "delete":
-                        print("---> deleting dataset")
+                        log.step("deleting dataset")
                         if os.path.isfile(file):
                             os.remove(file)
                         else:
                             shutil.rmtree(file)
-                except:
-                    print("---> %s of %s failed!" % (archive, file))
+                except Exception:
+                    log.warning(f"{archive} of {file} failed!")
 
     if not all_ok:
         raise ge.CommandFailed(
@@ -422,11 +413,12 @@ def import_nhp(
 
     # final report and session.txt creation
     if len(report) > 0:
-        print("\nFinal report\n============\n")
+        log.raw("\n\nFinal report\n============")
 
         for s in report:
-            # print session info
-            print("Session %s: " % s)
+            # report session info
+            log.blank()
+            log.step(f"Session {s}: ")
 
             # basic data
             sfolder = os.path.join(sessionsfolder, s)
@@ -434,7 +426,11 @@ def import_nhp(
             subjectid = s.split("_")[0]
 
             # create session.txt
-            sout = gc.createSessionFile(
+            # seam: `create_session_file` still prints, and a record renders as
+            # "\n<line>" where a print emits "<line>\n" -- without this newline
+            # the two run together. Goes when that helper takes a log.
+            log.raw("\n")
+            sout = gc.create_session_file(
                 "import_nhp", sfolder, s, subjectid, overwrite, prefix="    "
             )
 
@@ -442,7 +438,7 @@ def import_nhp(
             if os.path.exists(sfile):
                 if overwrite == "yes" or overwrite is True:
                     os.remove(sfile)
-                    print("    ---> removed existing session_nhp.txt file")
+                    log.detail("removed existing session_nhp.txt file")
                 else:
                     raise ge.CommandFailed(
                         "import_nhp",
@@ -452,7 +448,7 @@ def import_nhp(
                     )
 
             sout_nhp = open(sfile, "w")
-            gc.print_qunex_header(file=sout_nhp)
+            gl.print_qunex_header(file=sout_nhp)
             print("#", file=sout_nhp)
             print("session:", s, file=sout_nhp)
             print("subject:", subjectid, file=sout_nhp)
@@ -464,7 +460,7 @@ def import_nhp(
             i = 1
             for f in report[s]:
                 # report
-                print("    ---> mapped file %s" % f)
+                log.detail(f"mapped file {f}")
 
                 # add to subject
                 out = "%02d: %s" % (i, f)
@@ -473,6 +469,3 @@ def import_nhp(
 
                 # increase index
                 i = i + 1
-
-            # for nicer output
-            print("")

@@ -11,19 +11,20 @@ from inspect import signature, Parameter
 module_names = []
 modules      = {}
 
-commands = {}  # decorator `qx` puts simple commands in here, it is then read out in `general.commands` 
+commands = {}  # legacy: the `qx` decorator populates this; the old `general.commands` reader was retired in favor of qx_registry
 arglist = []
 calist = []
 lalist = []
 malist = []
 salist = []
 
+
 # -- process extensions
 def load_extensions():
     if "QXEXTENSIONSPY" in os.environ:
         #print('=> processing extensions')
         extensions_paths = [e.strip() for e in os.environ['QXEXTENSIONSPY'].split(':') if e]
-        
+
         # -- loop through paths and check that we have qx_modules file
         for extensions_path in extensions_paths:
             if os.path.exists(os.path.join(extensions_path, 'qx_modules')):
@@ -41,7 +42,7 @@ def load_extensions():
                             try:
                                 modules[module_name] = importlib.import_module(module_name)
                                 module_names.append(module_name)
-                            except:
+                            except Exception:
                                 print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
 
         # -- load the modules
@@ -101,47 +102,48 @@ def qx(qx_cmd=None):
 
 
 def qx_process(command_type="parallel", short_name=None, long_name=None, description=None):
-    
+
     def inner_decorator(f):
         global arglist, calist, lalist, malist, salist
         nonlocal command_type, short_name, long_name, description
-        
+
         f_signature = signature(f)
-        
+
         # check arguments
         if (not list(f_signature.parameters.keys())[0] == 'sinfo'):
             first_arg = list(f_signature.parameters.keys())[0]
             print(f"First argument of QuNex processing command must be 'sinfo', but got {first_arg}. Not registering {f.__name__}")
             return f
-        if not 'overwrite' in f_signature.parameters:
+        if 'overwrite' not in f_signature.parameters:
             print('A QuNex extension function must have a keyword argument "overwrite". Not registering {f.__name__}')
             return f
-        if not 'thread' in f_signature.parameters:
+        if 'thread' not in f_signature.parameters:
             print('A QuNex extension function must have a keyword argument "thread". Not registering {f.__name__}')
             return f
-        
+
         def f_decorated(sinfo, options, overwrite, thread):
-            kwargs = {k: options[k] for k in f_signature.parameters if not k in ['sinfo', 'options', 'overwrite', 'thread']}
+            kwargs = {k: options[k] for k in f_signature.parameters if k not in ['sinfo', 'options', 'overwrite', 'thread']}
             return f(sinfo, options, overwrite=overwrite, thread=thread, **kwargs)
-        
+
         f_decorated.__doc__ = f.__doc__
-        
+
         # --- add options to arglist ---
         def _check_default(x):
             if x == Parameter.empty:
                 return ""
             else:
                 return x
+
         def _check_annotation(x):
             if x == Parameter.empty:
                 return str
             else:
                 return x
-        
+
         arglist += [
             [arg, _check_default(param.default), _check_annotation(param.annotation), ""]
             for arg, param in f_signature.parameters.items()
-            if not arg in ['sinfo', 'overwrite', 'thread']
+            if arg not in ['sinfo', 'overwrite', 'thread']
         ]
 
         # --- add function to qunex command list ---
@@ -151,10 +153,10 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
             long_name = f.__name__
         if description is None:
             if f.__doc__ is not None:
-                description = f.__doc__.splitlines()[0].strip()    
+                description = f.__doc__.splitlines()[0].strip()
             else:
                 description = ""
-            
+
         dict(
             parallel=calist,
             single=salist,
@@ -162,8 +164,8 @@ def qx_process(command_type="parallel", short_name=None, long_name=None, descrip
             multisession=malist,
         )[command_type].append(
             [short_name, long_name, f_decorated, description]
-        )   
-        
+        )
+
         return f
-    
+
     return inner_decorator

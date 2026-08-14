@@ -2,26 +2,29 @@ function [r, doIt] = general_qa_concfile(file, doIt, target)
 
 %``general_qa_concfile(file, doIt, target)``
 %
-%   Computes the specified statistics on images specified in the conc file and
-%   saves them to the target file.
+%   Compute the specified statistics on images specified in the conc file and
+%   save them to the target file.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --file (str):
 %           The conc file that specifies the images.
 %
-%       --do (str, default 'm,sd'):
+%       --doIt (str, default 'm,sd'):
 %           A string specifying what statistics to compute.
 %
 %       --target (str, default ''):
 %           The root name for the files to save the results to.
 %
 %   Returns:
-%       r
+%       --r (nimage array):
 %           An array of nimage objects with the resulting images, one volume for
 %           each file. The volumes are in the order of files in the conc file.
 %           The objects are in the order of statistics specified.
 %
-%       do
+%       --doIt (cell array):
 %           A cell array of statistics done.
 %
 %   Notes:

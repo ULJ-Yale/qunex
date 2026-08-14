@@ -11,11 +11,11 @@
 #
 # Wrapper to run dwi_pre_tractography function
 #
-# ## DESCRIPTION 
-#   
+# ## DESCRIPTION
+#
 # This script, dwi_pre_tractography.sh, implements ROI extraction
 # using a pre-specified ROI file in NIFTI or CIFTI format
-# 
+#
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
 # * QuNex Suite
@@ -25,7 +25,7 @@
 # See output of usage function: e.g. $./dwi_pre_tractography.sh --help
 #
 # ## PREREQUISITE PRIOR PROCESSING
-# 
+#
 # * The necessary input files are imaging data from previous processing and ROI file
 #
 #~ND~END~
@@ -38,12 +38,15 @@ usage() {
     cat << EOF
 ``dwi_pre_tractography``
 
-This function runs the Pretractography Dense trajectory space generation.
+Run the Pretractography Dense trajectory space generation.
 
-Note that this is a very quick function to run (less than 5min) so no overwrite
-options exist.
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Warning:
+    This is a very quick function to run (less than 5min) so no overwrite
+    options exist.
 
     It explicitly assumes the Human Connectome Project folder structure for
     preprocessing and completed diffusion and bedpostX processing.
@@ -56,6 +59,8 @@ Warning:
 
         <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
 
+    This can be changed via the --diffusion_folder parameter.
+
 Parameters:
     --sessionsfolder (str):
         Path to study folder that contains sessions.
@@ -63,16 +68,13 @@ Parameters:
     --sessions (str):
         Comma separated list of sessions to run.
 
-    --scheduler (str):
-        A string for the cluster scheduler (e.g. PBS or SLURM) followed by
-        relevant options e.g. for SLURM the string would look like this::
-
-            --scheduler='SLURM,jobname=<name_of_job>,time=<job_duration>,cpus-per-task=<cpu_number>,mem-per-cpu=<memory>,partition=<queue_to_send_job_to>'
+    --diffusion_folder (str):
+        Path to the diffusion folder.
 
 Examples:
     ::
 
-        qunex pretractography_dense \\
+        qunex dwi_pre_tractography \\
             --sessionsfolder='<path_to_study_sessions_folder>' \\
             --sessions='<comma_separarated_list_of_cases>' \\
             --scheduler='<name_of_scheduler_and_options>'
@@ -91,27 +93,68 @@ exit 0
 }
 
 # ------------------------------------------------------------------------------
-# -- Check for help
+# -- Parse options
 # ------------------------------------------------------------------------------
 
-if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]] || [ "$3" == "" ]; then
+# -- Parses the command line for a flagged option, as the other qx_utilities
+#    scripts do
+get_options() {
+    sopt="$1"
+    shift 1
+    for fn in "$@" ; do
+        if [ `echo "$fn" | grep -c -- "^${sopt}="` -gt 0 ]; then
+            echo "$fn" | sed "s/^${sopt}=//"
+            return 0
+        fi
+    done
+}
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
     usage
 fi
 
 scriptsdir="${HCPPIPEDIR_dMRITractFull}"/pre_tractography
 configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 
-StudyFolder=$1
-Session=$2
-MSMflag=$3
+# -- Flagged call, the way every other QuNex command is called. The positional
+#    form below is what the shell front end used and what the usage documents
+#    as direct use; both are kept.
+if [[ $1 == --* ]]; then
+    SessionsFolder=`get_options "--sessionsfolder" "$@"`
+    Session=`get_options "--sessions" "$@"`
+    if [[ -z ${Session} ]]; then
+        Session=`get_options "--session" "$@"`
+    fi
+    DiffusionFolder=`get_options "--diffusion_folder" "$@"`
+    MSMflag=0
+
+    if [[ -z ${SessionsFolder} ]] || [[ -z ${Session} ]]; then
+        usage
+    fi
+
+    # the folder the hcp data of this session sits in, which is what the
+    # positional call was handed by bin/qunex.sh
+    StudyFolder="${SessionsFolder}/${Session}/hcp"
+else
+    if [ "$3" == "" ]; then
+        usage
+    fi
+    StudyFolder=$1
+    Session=$2
+    MSMflag=$3
+    DiffusionFolder=$4
+fi
 
 WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
-LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt 
+LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt
 RightCerebralTrajectoryLabels=${configdir}/RightCerebralFreeSurferTrajectoryLabelTableLut.txt
 FreeSurferLabels=${configdir}/FreeSurferAllLut.txt
 
-T1wDiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
-DiffusionResolution=`${FSLDIR}/bin/fslval ${T1wDiffusionFolder}/data pixdim1`
+if [[ -z ${DiffusionFolder} ]]; then
+    DiffusionFolder="${StudyFolder}/${Session}/T1w/Diffusion"
+fi
+
+DiffusionResolution=`${FSLDIR}/bin/fslval ${DiffusionFolder}/data pixdim1`
 DiffusionResolution=`printf "%0.2f" ${DiffusionResolution}`
 ResultsFolder="${StudyFolder}/${Session}/MNINonLinear/Results/Tractography"
 LowResMesh=32

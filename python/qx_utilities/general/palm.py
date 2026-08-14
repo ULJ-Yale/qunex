@@ -21,10 +21,8 @@ and concatenation. The specific commands implemented here are:
 The functions are to be run using the gmri terminal command.
 """
 
-"""
-Created by Grega Repovs on 2016-08-30.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2016-08-30.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import os
 import os.path
@@ -35,9 +33,9 @@ import glob
 import re
 from functools import reduce
 
-import general.exceptions as ge
-import general.core as gc
-import general.img as gi
+import qx_utilities.general.exceptions as ge
+import qx_utilities.general.core as gc
+import qx_utilities.general.img as gi
 
 
 def run_palm(
@@ -54,7 +52,10 @@ def run_palm(
     """
     ``run_palm image=<image file(s)> [design=<design string>] [palm_args=<arguments string>] [root=<root name for the output>] [surface=no] [mask=<mask file>] [parelements=<number of elements to run in parallel>] [overwite=no] [cleanup=yes]``
 
-    Runs second level analysis using PALM permutation resampling.
+    Run second level analysis using PALM permutation resampling.
+
+    ..  qx_command:
+        type: utility
 
     Warning:
         For the PALM processing to run successfully, the input image and the
@@ -82,6 +83,8 @@ def run_palm(
 
     Parameters:
         --image (str):
+            Input image file(s) on which PALM is to be run.
+
             One or multiple files can be specified as input. If multiple files
             are specified, they will be all passed to PALM. If they are cifti
             files and topography based multiple comparisons correction was
@@ -98,6 +101,8 @@ def run_palm(
                 image='rs_connectivity.dtseries.nii|task_activation.dtseries.nii'
 
         --design (str, default 'name:palm|d:d|t:t|f:f|eb:eb'):
+            Design specification string.
+
             The design name and the specific tails (if the defaults are not
             used) are specified by a design string. Design string is a pipe
             separated list of key:value pairs that specify the following (with
@@ -151,9 +156,10 @@ def run_palm(
             instead.
 
         --palm_args (str, default 'n:100|zstat'):
-            Additional arguments to palm can be specified using the arguments
-            string. The arguments string is a pipe separated list of arguments
-            and optional values. The format of the string is::
+            Additional arguments to palm specified as a pipe-separated list of
+            arguments and optional values.
+
+            The format of the string is::
 
                 '<arg 1>|<arg 2>|<arg 3>:<value 1>:<value 2>|<arg 4>:<value>'.
 
@@ -193,7 +199,7 @@ def run_palm(
             --C <z>
                 Enable cluster inference for univariate tests with z cutoff.
 
-            NOTE
+            Note:
 
             The colon symbols used above to denote::
 
@@ -205,26 +211,27 @@ def run_palm(
             colons will result in an error - use normal colons with the command
             instead.
 
-        --T2DHEC (str, default '2:1:26'):
-            Sets H, E and C parameters for 2D part of analysis.
+            --T2DHEC <h>:<e>:<c>
+                Sets H, E and C parameters for 2D part of analysis.
 
-            Sometimes it is desired to specify TFCE parameters that differ from
-            the default values. As the function allows combined surface/volume
-            processing of cifti files, it is useful to be able to set them
-            separately for 2D and 3D analysis. All three values need to be
-            provided when the parameter is specified, for example::
+                Sometimes it is desired to specify TFCE parameters that differ from
+                the default values. As the function allows combined surface/volume
+                processing of cifti files, it is useful to be able to set them
+                separately for 2D and 3D analysis. All three values need to be
+                provided when the parameter is specified, for example::
 
-                palm_args='T2HEC:2:0.5:26'
+                    palm_args='T2HEC:2:0.5:26'
 
-            Defaults to H=2, E=1, C=26.
+                Defaults to H=2, E=1, C=26.
 
-        --T3DHEC (str, default detailed below):
-            Sets H, E and C parameters for 3D part of analysis.
-            Defaults to H=2, E=0.5 (C value is not listed in PALM
-            documentation). All three values need to be provided when the
-            parameter is specified, for example::
+            --T3DHEC <h>:<e>:<c>
+                Sets H, E and C parameters for 3D part of analysis.
 
-                palm_args='T3DHEC:4:1:6'
+                Defaults to H=2, E=0.5 (C value is not listed in PALM
+                documentation). All three values need to be provided when the
+                parameter is specified, for example::
+
+                    palm_args='T3DHEC:4:1:6'
 
         --surface (str, default 'no'):
             Should the command only analyze left and right surfaces from
@@ -240,14 +247,17 @@ def run_palm(
 
         --parelements (int | str, default 'all'):
             Number of elements to run in parallel for grayordinate
-            decomposition. If specified as None or 'all', all available elements
+            decomposition.
+
+            If specified as None or 'all', all available elements
             (3 max for left surface, right surface and volume files) will be
             used. One element per CPU core is processed at a time.
 
         --overwrite (str, default 'no'):
-            Whether to overwrite existing data (yes) or not (no). Note that
-            previous data is deleted before the run, so in the case of a failed
-            command run, previous results are lost.
+            Whether to overwrite existing data (yes) or not (no).
+
+            Note that previous data is deleted before the run, so in the case of
+            a failed command run, previous results are lost.
 
         --cleanup (str, default 'yes'):
             Should the command clean all the temporary generated files
@@ -313,7 +323,7 @@ def run_palm(
     print("Running PALM\n============")
     print(" ---> checking environment")
 
-    if not "QUNEXPATH" in os.environ:
+    if "QUNEXPATH" not in os.environ:
         raise ge.CommandError(
             "run_palm",
             "QUNEXPATH environment variable not set.",
@@ -682,7 +692,7 @@ def run_palm(
         # --- run PALM
         if iformat == "nifti":
             print(" ---> running PALM for NIfTI input")
-            infiles = setInFiles(root, "volume.nii", nimages)
+            infiles = set_in_files(root, "volume.nii", nimages)
             inargs = ["-m", mask_volume]
             command = (
                 ["palm"] + infiles + inargs + dargs + sargs + ["-o", root + "_volume"]
@@ -697,7 +707,7 @@ def run_palm(
 
         elif not recombine:
             print(" ---> running PALM for ptseries CIFTI input")
-            infiles = setInFiles(root, "cifti" + ext, nimages)
+            infiles = set_in_files(root, "cifti" + ext, nimages)
             if mask_cifti:
                 inargs = ["-m", mask_cifti]
             else:
@@ -717,7 +727,7 @@ def run_palm(
 
             if not surface:
                 print("     ... Volume")
-                infiles = setInFiles(root, "volume.nii", nimages)
+                infiles = set_in_files(root, "volume.nii", nimages)
                 inargs = ["-m", mask_volume]
                 command = (
                     ["palm"]
@@ -738,7 +748,7 @@ def run_palm(
                     command += [t3set]
 
             print("     ... Left Surface")
-            infiles = setInFiles(root, "left.func.gii", nimages)
+            infiles = set_in_files(root, "left.func.gii", nimages)
             inargs = [
                 "-m",
                 mask_left,
@@ -759,7 +769,7 @@ def run_palm(
             )
 
             print("     ... Right Surface")
-            infiles = setInFiles(root, "right.func.gii", nimages)
+            infiles = set_in_files(root, "right.func.gii", nimages)
             inargs = [
                 "-m",
                 mask_right,
@@ -781,9 +791,7 @@ def run_palm(
 
             print(" ---> running PALM for CIFTI input")
 
-            completed = gc.runExternalParallel(
-                calls, cores=parelements, prepend="     ... "
-            )
+            completed = gc.run_external_parallel(calls, cores=parelements)
 
             errors = []
             for complete in completed:
@@ -849,20 +857,20 @@ def run_palm(
                     "zmv_tsqstat",
                     "zmv_hotellingtsq",
                 ]:
-                    for volumeUnit, surfaceUnit, unitKind in [
+                    for volume_unit, surface_unit, unit_kind in [
                         ("vox", "dpv", "reg"),
                         ("tfce", "tfce", "tfce"),
                         ("clustere", "clustere", "clustere"),
                         ("clusterm", "clusterm", "clusterm"),
                     ]:
                         rvolumes = glob.glob(
-                            "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval)
+                            "%s_volume_%s_%s%s*.nii" % (root, volume_unit, stat, pval)
                         )
                         rleftsurfaces = glob.glob(
-                            "%s_L_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval)
+                            "%s_L_%s_%s%s*.gii" % (root, surface_unit, stat, pval)
                         )
                         rrightsurfaces = glob.glob(
-                            "%s_R_%s_%s%s*.gii" % (root, surfaceUnit, stat, pval)
+                            "%s_R_%s_%s%s*.gii" % (root, surface_unit, stat, pval)
                         )
                         # print("     ... testing for: ", "%s_volume_%s_%s%s*.nii" % (root, volumeUnit, stat, pval), "found:", len(rvolumes))
 
@@ -910,7 +918,7 @@ def run_palm(
                             # --- compile target name
                             targetfile = "%s_%s_%s%s%s_C%s.dscalar.nii" % (
                                 root,
-                                unitKind,
+                                unit_kind,
                                 stat,
                                 pval,
                                 M,
@@ -1005,7 +1013,7 @@ def run_palm(
                             else:
                                 print("... ops! File was not created!")
 
-    except:
+    except Exception:
         if cleanup == "yes":
             for f in toclean:
                 if os.path.exists(f):
@@ -1019,7 +1027,7 @@ def run_palm(
                 os.remove(f)
 
 
-def setInFiles(root, tail, nimages):
+def set_in_files(root, tail, nimages):
     out = []
     for n in range(nimages):
         out += ["-i", "%s_i%d_%s" % (root, n + 1, tail)]
@@ -1030,58 +1038,62 @@ def mask_map(image=None, masks=None, output=None, minv=None, maxv=None, join="OR
     """
     ``mask_map image=<image file> masks=<list of masks to use> [output=<output image name>] [minv=<list of thresholds>] [maxv=<list of thresholds>] [join=<OR or AND>]``
 
-    Enables easy masking of CIFTI images.
+    Mask CIFTI images using provided masks and thresholds.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --image       The image file to be masked.
-    --masks       A comma separated list of masks to be used.
-    --output      An optional image name for the resulting masked image, if
-                  none is provided the original image name will be used with
-                  tail "_masked" appended.
-    --minv        The minimum threshold value.
-    --maxv        The maximum threshold value.
-    --join        Whether multiple masks should be joined using logical OR or
-                  logical AND operator. [OR]
+    Parameters:
+        --image (str):
+            The image file to be masked.
 
-    Join operation
-    --------------
+        --masks (str):
+            A comma separated list of masks to be used.
 
-    If more than one mask is provided, the final mask used can be either the
-    intersection of all the individual masks (logical AND) or a union of all
-    the individual masks (logical OR).
+        --output (str, default None):
+            An optional image name for the resulting masked image, if none is
+            provided the original image name will be used with tail "_masked"
+            appended.
 
-    Thresholds
-    ----------
+        --minv (str, default None):
+            The minimum threshold value.
 
-    At least minv or maxv needs to be specified.
+        --maxv (str, default None):
+            The maximum threshold value.
 
-    - If only minv is given, images will be masked with: ``mask >= minv``.
-    - If only maxv is given, images will be masked with: ``mask <= maxv``.
-    - If both are given, images will be masked with:
-      ``minv <= mask <= maxv``.
+        --join (str, default 'OR'):
+            Whether multiple masks should be joined using logical OR or logical
+            AND operator.
 
-    If there is just one minv or maxv value, all the masks will be thresholded
-    using the same value. If more values are provided as comma separated list,
-    they should match the number of masks.
+    Notes:
+        If more than one mask is provided, the final mask used can be either the
+        intersection of all the individual masks (logical AND) or a union of all
+        the individual masks (logical OR).
 
-    USE
-    ===
+        Thresholds
 
-    mask_map is a wb_command wrapper that enables easy masking of CIFTI images
-    (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
-    p-values imaages from PALM) and thresholds. More than one mask can be used
-    in which case they can be combined using a logical OR or AND operator.
+        At least minv or maxv needs to be specified.
 
-    EXAMPLE USE
-    ===========
+        - If only minv is given, images will be masked with: ``mask >= minv``.
+        - If only maxv is given, images will be masked with: ``mask <= maxv``.
+        - If both are given, images will be masked with:
+          ``minv <= mask <= maxv``.
 
-    ::
+        If there is just one minv or maxv value, all the masks will be thresholded
+        using the same value. If more values are provided as comma separated list,
+        they should match the number of masks.
 
-        qunex mask_map image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
-            masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
-            maxv=0.017
+        mask_map is a wb_command wrapper that enables easy masking of CIFTI images
+        (e.g. ztstat image from PALM), using the provided list of mask files (e.g.
+        p-values imaages from PALM) and thresholds. More than one mask can be used
+        in which case they can be combined using a logical OR or AND operator.
+
+    Examples:
+        ::
+
+            qunex mask_map image=sustained_anova_reg_zfstat_C0.dscalar.nii \\
+                masks="FU3s_sustained_anova_tfce_zfstat_fwep_C0.dscalar.nii" \\
+                maxv=0.017
     """
 
     print("Running mask_map\n===============")
@@ -1184,35 +1196,39 @@ def join_maps(images=None, output=None, names=None, originals=None):
     """
     ``join_maps images=<image file list> output=<output file name> [names=<volume names list>] [originals=<remove or keep>]``
 
-    Concatenates the listed cifti images and names the individual volumes.
+    Concatenate the listed cifti images and name the individual volumes.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --images         A comma separated list of images to be concatenated
-    --output         The name of the resulting file.
-    --names          A comma separated list of image names.
-    --originals      Whether to keep or remove the original images after the
-                     concatenation. [keep]
+    Parameters:
+        --images (str):
+            A comma separated list of images to be concatenated.
 
-    USE
-    ===
+        --output (str):
+            The name of the resulting file.
 
-    join_maps is a wb_command wrapper that concatenates the listed cifti images
-    and names the individual volumes, if names are provided.
+        --names (str, default None):
+            A comma separated list of image names.
 
-    EXAMPLE USE
-    ===========
+        --originals (str, default 'keep'):
+            Whether to keep or remove the original images after the concatenation.
+            Options are 'keep' or 'remove'.
 
-    ::
+    Notes:
+        join_maps is a wb_command wrapper that concatenates the listed cifti images
+        and names the individual volumes, if names are provided.
 
-        qunex join_maps images="sustained_AvsB_p.017.dscalar.nii, \\
-                              sustained_BvsC_p.017.dscalar.nii, \\
-                              sustained_AvsC_p.017.dscalar.nii, \\
-                              sustained_aov_p.017.dscalar.nii" \\
-                      names="A > B, B > C, A > C, ANOVA" \\
-                      output="sustained_results.dscalar.nii" \\
-                      originals=remove
+    Examples:
+        ::
+
+            qunex join_maps images="sustained_AvsB_p.017.dscalar.nii, \\
+                                  sustained_BvsC_p.017.dscalar.nii, \\
+                                  sustained_AvsC_p.017.dscalar.nii, \\
+                                  sustained_aov_p.017.dscalar.nii" \\
+                          names="A > B, B > C, A > C, ANOVA" \\
+                          output="sustained_results.dscalar.nii" \\
+                          originals=remove
     """
 
     print("Running join_maps\n================")
@@ -1292,7 +1308,7 @@ def join_maps(images=None, output=None, names=None, originals=None):
 
 
 #
-def fNuissance(n):
+def f_nuissance(n):
     """
     Support function for create_ws_palm_design function.
     """
@@ -1312,7 +1328,10 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     """
     ``create_ws_palm_design factors=<factor string> nsubjects=<number of subjects> root=<design root name>``
 
-    Prepares the design file.
+    Prepare design files for a single group within-subject PALM designs.
+
+    ..  qx_command:
+        type: utility
 
     Parameters:
         --factors (str):
@@ -1390,7 +1409,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     nlevels = reduce(lambda x, y: x * y, factors)
 
     for n in factors:
-        blocks.append(fNuissance(n))
+        blocks.append(f_nuissance(n))
 
     # -------------------------------------------------------------
     #                                            create design file
@@ -1475,11 +1494,11 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
                             i234 = [i * j * k for i in f2l for j in f3l for k in f4l]
 
                             i1234 = [
-                                i * j * k * l
+                                i * j * k * ln
                                 for i in f1l
                                 for j in f2l
                                 for k in f3l
-                                for l in f3l
+                                for ln in f3l
                             ]
 
                             line += (
@@ -1510,7 +1529,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
 
     ebf = open(root + "_eb.csv", "w")
     for s in range(nsubjects):
-        for l in range(nlevels):
+        for ln in range(nlevels):
             print(s + 1, file=ebf)
 
     # -------------------------------------------------------------
@@ -1551,9 +1570,9 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     # --- open and save t-contralst file
     tf = open(root + "_t.csv", "w")
 
-    for l in range(ndvars):
+    for ln in range(ndvars):
         line = [0 for e in range(ndvars + nsubjects)]
-        line[l] = 1
+        line[ln] = 1
         print(",".join([str(e) for e in line]), file=tf)
     tf.close()
 
@@ -1564,7 +1583,7 @@ def create_ws_palm_design(factors=None, nsubjects=None, root=None):
     code = {True: 1, False: 0}
 
     ff = open(root + "_f.csv", "w")
-    for l in range(nfac):
-        line = [code[l == e] for e in range(nfac) for i in range(tlen[e])]
+    for ln in range(nfac):
+        line = [code[ln == e] for e in range(nfac) for i in range(tlen[e])]
         print(",".join([str(e) for e in line]), file=ff)
     ff.close()

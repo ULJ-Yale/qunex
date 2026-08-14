@@ -1,0 +1,745 @@
+# SPDX-FileCopyrightText: 2026 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""
+Tests for what ``gmri`` does around a command, rather than for the command.
+
+``gmri`` is a script without a ``.py`` extension, so it is loaded by path.
+What is pinned here is the run level bookkeeping: a run writes the status
+record a parent process asked it for. `run_recipe` is that parent today, and
+it reads the record to report what each of its steps did.
+"""
+
+import fnmatch
+import importlib.machinery
+import importlib.util
+import os
+from pathlib import Path
+
+import pytest
+import yaml
+
+import qx_utilities.general.log as gl
+import qx_utilities.general.log.context as glc
+import qx_utilities.general.log.settings as gls
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def registry_of_this_tree(monkeypatch):
+    """
+    Dispatching a command reads the command registry, which is loaded from
+    ``$QUNEXPATH/qx_commands.yaml``. This tree carries its own committed
+    registry, so the tests name it and run without the suite's environment.
+    """
+    monkeypatch.setenv("QUNEXPATH", str(REPO_ROOT))
+
+
+@pytest.fixture(autouse=True)
+def no_user_settings(tmp_path, monkeypatch):
+    """The user's own settings file must not decide what these tests see."""
+    monkeypatch.setattr(
+        gls, "USER_SETTINGS_PATHS", [str(tmp_path / "user" / "qunex_settings.yaml")]
+    )
+
+
+@pytest.fixture(autouse=True)
+def one_run_per_test(monkeypatch):
+    """
+    `_status_written` is per process, which is per run everywhere but here:
+    the suite runs many in one process, so each test starts having written
+    nothing.
+    """
+    monkeypatch.setattr(glc, "_status_written", False)
+
+
+@pytest.fixture(scope="module")
+def gmri():
+    path = os.path.join(os.path.dirname(__file__), "..", "qx_utilities", "gmri")
+    loader = importlib.machinery.SourceFileLoader("gmri_under_test", path)
+    spec = importlib.util.spec_from_loader(loader.name, loader)
+    module = importlib.util.module_from_spec(spec)
+    loader.exec_module(module)
+    return module
+
+
+def reported_as(banner, parameter):
+    """
+    A parameter's row of a report banner with its name taken off the front,
+    so that a test reads the source without counting columns. The source is
+    the second column and the value the last, unpadded, because a value can
+    be a hundred characters wide and a source read off the far side of one is
+    a source nobody reads.
+    """
+    for line in banner.split("\n"):
+        if line.split()[:1] == [parameter]:
+            return line.split(parameter, 1)[1].strip()
+    return ""
+
+
+def test_a_single_utility_call_writes_the_status_record_it_was_asked_for(
+    gmri, tmp_path
+):
+    """
+    The sessions loop and `process.run` both wrote one; a utility command run
+    as a single call wrote none, so every utility step of a recipe was
+    reported as "no status reported" however well it went.
+    """
+    status = tmp_path / "status.yaml"
+
+    gmri.runCommand(
+        "create_study",
+        {"studyfolder": str(tmp_path / "study"), "logstatus": str(status)},
+    )
+
+    record = yaml.safe_load(status.read_text())
+    assert record["command"] == "create_study"
+    assert record["failed"] == 0
+    assert record["sessions"][0]["summary"].startswith("completed")
+    assert (tmp_path / "study" / "sessions").is_dir(), "the command still ran"
+
+
+def test_a_bash_command_reports_what_its_exit_code_said(gmri, tmp_path, monkeypatch):
+    """
+    The matlab and bash paths had the exit code and did nothing with it but
+    print it, so such a step of a recipe had no status at all. The runner is
+    stubbed: what is pinned is the record, not the pipeline behind it.
+
+    A non-zero code also fails the run, the way it did at the shell front end
+    (`bin/qunex.sh`'s `qunex_failed` exits 1) and the way every other command
+    class does; this path used to exit 0 whatever the script said.
+    """
+    monkeypatch.setattr(
+        gmri.gb, "run", lambda qx_command, args, run=None, session=None: 3
+    )
+    status = tmp_path / "status.yaml"
+
+    with pytest.raises(gmri.ge.CommandFailed):
+        gmri.runCommand(
+            "dwi_dtifit",
+            {"studyfolder": str(tmp_path / "study"), "logstatus": str(status)},
+        )
+
+    record = yaml.safe_load(status.read_text())
+    assert record["failed"] == 1
+    assert record["sessions"][0]["summary"] == "failed with exit code 3"
+
+
+def test_a_bash_command_is_run_once_per_session_with_the_header_filled_in(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    A bash script is written for one session, and the shell front end called it
+    once per session, in the loop each of its wrappers sits in. It also passed it
+    nothing the batch file's header said, because it never read one: the
+    routing has to keep the first and add the second.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / "sessions" / "S02").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_species: macaque\n_hcp_brainsize: 170\n"
+        "---\nid: S01\nsubject: S01\n01: T1w\n"
+        "---\nid: S02\nsubject: S02\n01: T1w\n" % (study / "sessions")
+    )
+
+    calls = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: calls.append((args, session))
+        or 0,
+    )
+
+    gmri.runCommand("dwi_dtifit", {"batchfile": str(batch)})
+
+    assert [session for _, session in calls] == ["S01", "S02"]
+    assert calls[0][0]["species"] == "macaque", "the header filled the call in"
+    assert "hcp_brainsize" not in calls[0][0], "with what the command declares"
+
+
+def test_a_bash_comlog_is_named_the_way_run_turnkey_looks_for_it(gmri):
+    """
+    `run_turnkey` decides whether a step ran by globbing its log folder for
+    `*<step name>*<session>*log`, and its QC steps are named after the command
+    *and the modality* -- `run_qc_t1w`, `run_qc_bold`. So the name parts the
+    shell front end put in a comlog are a contract, not decoration.
+    """
+    run_qc = gmri.qx_commands.get("run_qc")
+
+    name = gmri.gb.comlog_name(run_qc, {"modality": "T1w"}, session="S01")
+
+    assert name == "run_qc_t1w_S01"
+    assert fnmatch.fnmatch(name + ".log", "*run_qc_t1w*S01*log")
+    assert gmri.gb.comlog_name(run_qc, {}) == "run_qc", "and nothing else is added"
+
+
+def test_a_bash_script_is_passed_the_run_parameters_it_declares(gmri, monkeypatch):
+    """
+    `run_bash` dropped the run level parameters a script did not declare and
+    asked the *signature*, which a bash command does not have -- its parameters
+    are documented ones -- so it dropped `--sessionsfolder` and `--batchfile`
+    with `--parsessions`, and `dwi_dtifit` reached its script with no arguments
+    at all.
+    """
+    ran = []
+    monkeypatch.setattr(gmri.gb.gl, "run_and_log", lambda com, name, run=None: ran.append(com) or 0)
+    monkeypatch.setattr(gmri.gb.os.path, "exists", lambda path: True)
+
+    gmri.gb.run(
+        gmri.qx_commands.get("dwi_dtifit"),
+        {"sessionsfolder": "/study/sessions", "parsessions": "2", "batchfile": "b.txt"},
+        session="S01",
+    )
+
+    assert "--sessionsfolder='/study/sessions'" in ran[0]
+    assert "--sessions='S01'" in ran[0]
+    assert "--parsessions" not in ran[0], "the run's parameters are not the script's"
+    assert "--batchfile" not in ran[0], "nor is a file it cannot read"
+
+
+def test_a_run_that_dies_still_reports_that_it_failed(gmri, tmp_path):
+    """
+    The record is written at the exit boundary for the runs that never build
+    one. Without it the step that failed hardest was the one `run_recipe`
+    could say least about.
+    """
+    status = tmp_path / "status.yaml"
+
+    with pytest.raises(OSError):
+        gmri.main(
+            [
+                "create_study",
+                "--studyfolder=/dev/null/study",
+                "--logstatus=%s" % status,
+            ]
+        )
+
+    record = yaml.safe_load(status.read_text())
+    assert record["failed"] == 1
+    assert record["runlog"] is None, "there was no runlog to name"
+    assert "Not a directory" in record["sessions"][0]["summary"]
+
+
+def test_a_command_that_is_not_one_reports_that_it_failed(gmri, tmp_path):
+    """A typo in a recipe exits rather than raises, and still has to report."""
+    status = tmp_path / "status.yaml"
+
+    with pytest.raises(SystemExit):
+        gmri.main(["no_such_command", "--logstatus=%s" % status, "--x=1"])
+
+    assert yaml.safe_load(status.read_text())["failed"] == 1
+
+
+def test_a_batch_file_that_names_a_study_puts_the_runlog_in_that_study(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    The whole reason the batch file is read before the logging is resolved.
+    The header names the study; run from somewhere else entirely, the run
+    still has to log itself inside it, or every batch run that names a study
+    leaves its runlog wherever the user happened to be standing.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    ran = []
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: ran.append(run),
+    )
+
+    gmri.runCommand("hcp_pre_freesurfer", {"batchfile": str(batch)})
+
+    assert ran, "the command was dispatched"
+    assert ran[0].logfolder.startswith(str(study)), (
+        "the runlog went to %s, not into the study the batch file named"
+        % ran[0].logfolder
+    )
+
+
+def test_the_parameters_a_command_runs_with_are_reported_before_it_runs(
+    gmri, tmp_path, capsys, monkeypatch
+):
+    """
+    The banner names every parameter the command declares and where its value
+    came from -- the diagnostic every failure mode this effort is about would
+    have been visible in.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_hcp_brainsize: 170\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    monkeypatch.setattr(
+        gmri.gp, "run", lambda qx_command, args, sessions, options, sources, run: None
+    )
+
+    gmri.runCommand(
+        "hcp_pre_freesurfer", {"batchfile": str(batch), "hcp_t2": "NONE"}
+    )
+
+    banner = capsys.readouterr().out
+    assert "Parameters for hcp_pre_freesurfer" in banner
+    assert "hcp_brainsize" in banner and "170" in banner
+    assert reported_as(banner, "hcp_brainsize").startswith("batch file")
+    assert reported_as(banner, "hcp_t2").startswith("command line")
+    assert reported_as(banner, "use_sequence_info").startswith("default")
+
+    runlog = next((study / "logs").rglob("Log-*.log"))
+    assert "hcp_brainsize" in runlog.read_text(), "and the same text in the runlog"
+
+
+def test_a_batch_file_header_fills_in_what_a_command_was_not_told(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    The brief's first problem: `import_dicom` declares `unzip` and `gzip`, the
+    batch file states them for the whole study, and the two never met -- the
+    header reached `process.run` and nothing else. What the user typed still
+    wins over what the file says.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_unzip: no\n_gzip: folder\n---\nid: S01\nsubject: S01\n"
+        "01: T1w\n" % (study / "sessions")
+    )
+
+    called = {}
+
+    def record(function, args, run=None, tags=None):
+        called.update(args)
+        return gmri.gc.CallOutcome("import_dicom", 0, None, None)
+
+    monkeypatch.setattr(gmri.gc, "run_with_log", record)
+
+    gmri.runCommand("import_dicom", {"batchfile": str(batch), "unzip": "yes"})
+
+    assert called["gzip"] == "folder", "the header filled in what nobody typed"
+    assert called["unzip"] == "yes", "and never overrode what somebody did"
+
+    banner = capsys.readouterr().out
+    assert reported_as(banner, "gzip").startswith(
+        "batch file"
+    ), "and the banner says where it came from"
+    assert reported_as(banner, "unzip").startswith("command line")
+
+
+def unset_run(gmri, tmp_path, monkeypatch, args, header=None, session=None):
+    """
+    Runs `import_dicom` over a batch file whose header and session entry are
+    given, and returns what the command was called with. `import_dicom`
+    declares `unzip` and `gzip`, which is what makes it readable here.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n%s---\nid: S01\nsubject: S01\n%s01: T1w\n"
+        % (study / "sessions", header or "", session or "")
+    )
+
+    called = {}
+
+    def record(function, args, run=None, tags=None):
+        called.update(args)
+        return gmri.gc.CallOutcome("import_dicom", 0, None, None)
+
+    monkeypatch.setattr(gmri.gc, "run_with_log", record)
+
+    # the sessions folder on the command line, not from the header alone:
+    # `all` unsets the header's `_sessionsfolder` too, which is right -- it
+    # means all -- and would otherwise leave the run with no study to log in
+    gmri.runCommand(
+        "import_dicom",
+        {
+            "batchfile": str(batch),
+            "sessionsfolder": str(study / "sessions"),
+            **args,
+        },
+    )
+    return called
+
+
+@pytest.mark.parametrize(
+    "spelling",
+    ["unzip", "unzip,gzip", "un*", "*", "all"],
+    ids=["a name", "a comma separated list", "a glob", "*", "all"],
+)
+def test_the_run_can_say_what_not_to_take_from_the_batch_file_header(
+    gmri, tmp_path, monkeypatch, spelling
+):
+    """
+    The header reaches every command class now, so a name it states can land
+    somewhere its author did not have in mind -- `targetfile` is declared by
+    four commands that write four different files. This is how a run says
+    "not from there".
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": spelling},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    # fill, never override: only what a tier states is passed on, so a value
+    # that was not taken is a parameter the command is not given at all and
+    # keeps its own default for
+    assert "unzip" not in called, "the header value was not taken"
+
+    if spelling in ("*", "all", "unzip,gzip"):
+        assert "gzip" not in called, "and neither was any other it names"
+    else:
+        assert called["gzip"] == "folder", "and nothing it does not name is touched"
+
+
+def test_an_unset_header_parameter_does_not_beat_the_command_line(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    An unset removes a tier, never the user's own word: what was typed still
+    applies, and still wins.
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "unzip", "unzip": "yes"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    assert called["unzip"] == "yes"
+
+
+def test_what_the_unset_took_out_is_named_in_the_banner(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    A pattern is not a list: `un*` removes whatever this study's header
+    happens to state today, so the run says what it actually removed rather
+    than leaving a reader to work it out from the release it ran on. The
+    parameter table above it reports what applied; this reports what did not.
+    """
+    unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "*zip"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    banner = capsys.readouterr().out
+    assert "not taken from the batch file header: gzip, unzip" in banner
+    assert not reported_as(banner, "gzip"), "and the table above reports what applied"
+
+
+def test_a_header_name_nobody_stated_is_a_no_op(gmri, tmp_path, monkeypatch, capsys):
+    """A typo unsets nothing, and the report is what makes that visible."""
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": "unzpi"},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    assert called["unzip"] == "no"
+    assert "not taken from the batch file header" not in capsys.readouterr().out
+
+
+@pytest.mark.parametrize("spelling", ["log", "comlog_folders", "comlog_*"])
+def test_a_deprecated_header_spelling_can_be_unset_from_either_side(
+    gmri, tmp_path, monkeypatch, spelling
+):
+    """
+    The names a header *states* and the names it *contributes* are not the
+    same set: `_log: study` arrives as `log` **and** `comlog_folders`, the
+    second under a name nobody wrote. Both spellings have to work, which is
+    why the filter runs on both sides of the remap.
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": spelling},
+        header="_log: study\n_unzip: no\n",
+    )
+
+    assert "comlog_folders" not in called
+    assert called["unzip"] == "no", "and only what was named went"
+
+
+def test_the_run_can_say_what_not_to_take_from_a_session_s_own_entry(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    The other batch tier. Applied by `gp.run` alone, so a processing command
+    is the only kind that ever sees it -- `import_dicom` is a utility, so this
+    asserts on `update_options` itself, which is where it is applied.
+
+    **Unsetting a tier is not deleting a parameter.** This tier is the highest
+    of them, so what unsetting it means is that the tier below is left to
+    stand, not that the command is left without a value.
+    """
+    session = {"id": "S01", "_hcp_brainsize": "130", "_hcp_t2": "NONE"}
+    options = {
+        "hcp_brainsize": "170",  # what the tiers below this one settled on
+        "unset_batch_session_parameters": "hcp_brainsize",
+    }
+
+    soptions, ssources = gmri.gcs.update_options(
+        session, options, {"hcp_brainsize": "batch file"}
+    )
+
+    assert soptions["hcp_brainsize"] == "170", "the tier below stands, unoverridden"
+    assert ssources["hcp_brainsize"] == "batch file", "and still reports as its own"
+    assert soptions["hcp_t2"] == "NONE", "and nothing it does not name is touched"
+    assert ssources["hcp_t2"] == gmri.gcs.PER_SESSION
+
+    everything, _ = gmri.gcs.update_options(
+        session, {**options, "unset_batch_session_parameters": "all"}, {}
+    )
+    assert everything["hcp_brainsize"] == "170", "`all` leaves every one of them"
+    assert "hcp_t2" not in everything, "one the tiers below never stated"
+
+
+def test_neither_unset_reaches_the_command_it_steers(gmri):
+    """
+    They steer the run, like `batchfile` and `filter`, so they are run level:
+    registered, which is what stops `gmri` rejecting them as unknown, and
+    dropped before the callable, which is what stops them being a TypeError.
+    """
+    assert gmri.gcs.UNSET_BATCH_HEADER in gmri.gcs.extra_parameters
+    assert gmri.gcs.UNSET_BATCH_SESSION in gmri.gcs.extra_parameters
+
+    cargs = {
+        "unset_batch_header_parameters": "all",
+        "unset_batch_session_parameters": "hcp_*",
+        "unzip": "yes",
+    }
+    gmri.gc._drop_run_parameters(
+        gmri.qx_commands.get("import_dicom").load_callable(), cargs
+    )
+
+    assert cargs == {"unzip": "yes"}
+
+
+def test_a_run_started_at_gmri_gets_the_threads_the_shell_front_end_would_set(
+    gmri, tmp_path, monkeypatch
+):
+    """
+    `bin/qunex.sh` reads `--omp_threads`, or divides the cores by the
+    parallelism asked for, and exports `OMP_NUM_THREADS` before it hands over.
+    A run that starts at `gmri` -- a step of a recipe, a scheduler job -- got
+    the machine default and oversubscribed the node.
+    """
+    monkeypatch.delenv("OMP_NUM_THREADS", raising=False)
+
+    gmri.runCommand(
+        "create_study", {"studyfolder": str(tmp_path / "a"), "omp_threads": "3"}
+    )
+    assert os.environ["OMP_NUM_THREADS"] == "3"
+
+    monkeypatch.delenv("OMP_NUM_THREADS")
+    gmri.runCommand("create_study", {"studyfolder": str(tmp_path / "b")})
+    assert 1 <= int(os.environ["OMP_NUM_THREADS"]) <= gmri.gcs.MAX_OMP_THREADS
+
+    monkeypatch.setenv("OMP_NUM_THREADS", "12")
+    gmri.runCommand("create_study", {"studyfolder": str(tmp_path / "c")})
+    assert os.environ["OMP_NUM_THREADS"] == "12", "an environment that states it wins"
+
+
+def test_the_record_a_run_wrote_itself_is_not_overwritten_at_the_boundary(tmp_path):
+    """
+    `process.run` writes its per-session digest and *then* raises for the
+    sessions that failed. The digest is the better record of the two.
+    """
+    status = tmp_path / "status.yaml"
+    args = {"logstatus": str(status)}
+
+    settings = gl.LogSettings()
+    run = gl.RunContext("hcp_pre_freesurfer", args, settings, {"logfolder": str(tmp_path)})
+    run.write_status([("S01", "PreFS failed", 1)])
+
+    assert gl.write_failure_status(args, "hcp_pre_freesurfer", "died") is None
+    assert yaml.safe_load(status.read_text())["sessions"][0]["id"] == "S01"
+
+
+@pytest.fixture
+def two_session_study(tmp_path):
+    """A study, its two sessions, and a batch file that groups them."""
+    study = tmp_path / "study"
+    for session in ["S01", "S02"]:
+        (study / "sessions" / session).mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_hcp_brainsize: 170\n"
+        "---\nid: S01\nsubject: S01\ngroup: control\n01: T1w\n"
+        "---\nid: S02\nsubject: S02\ngroup: patient\n01: T1w\n"
+        % (study / "sessions")
+    )
+    return study, batch
+
+
+def test_the_encoding_run_turnkey_writes_arrives_as_the_canonical_one(
+    gmri, two_session_study, monkeypatch
+):
+    """
+    The round trip of the three encodings. `run_turnkey` hard codes
+    `--sessions=<batch file> --sessionids=<ids>` in every internal call, and
+    that pair used to be converted five times along the chain, every conversion
+    guessing from whether the string `.txt` appeared. It is remapped once now,
+    at the front door, and what the resolver is asked is `--batchfile` and
+    `--sessions`.
+    """
+    _, batch = two_session_study
+    seen = {}
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: seen.update(
+            args=args, sessions=sessions
+        ),
+    )
+
+    gmri.runCommand("hcp_pre_freesurfer", {"sessions": str(batch), "sessionids": "S02"})
+
+    assert [session["id"] for session in seen["sessions"]] == ["S02"]
+    assert seen["args"]["batchfile"] == str(batch)
+    assert seen["args"]["sessions"] == "S02"
+    assert "sessionids" not in seen["args"], "the legacy spellings do not survive"
+
+
+def test_one_filter_selects_the_same_sessions_whatever_is_run(
+    gmri, two_session_study, monkeypatch, capsys
+):
+    """
+    There were two filter implementations with two dialects -- an unanchored
+    regex in the shell and in the container, a key match in python -- so
+    `--filter` selected one set for a python command, another for the
+    container's job sizing, and nothing at all for a bash command, which never
+    received the parameter. One implementation answers for all of them now.
+    """
+    _, batch = two_session_study
+    filtered = {"batchfile": str(batch), "filter": "group:control"}
+
+    processing = {}
+    monkeypatch.setattr(
+        gmri.gp,
+        "run",
+        lambda qx_command, args, sessions, options, sources, run: processing.update(
+            sessions=sessions
+        ),
+    )
+    gmri.runCommand("hcp_pre_freesurfer", dict(filtered))
+
+    bash = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: bash.append(session) or 0,
+    )
+    gmri.runCommand("dwi_dtifit", dict(filtered))
+
+    capsys.readouterr()
+    gmri.runCommand("list_sessions", dict(filtered))
+    listed = capsys.readouterr().out.strip().split("\n")[-1]
+
+    assert [session["id"] for session in processing["sessions"]] == ["S01"]
+    assert bash == ["S01"]
+    assert listed == "S01"
+
+
+def test_a_matlab_command_is_filled_from_the_header_and_never_over_it(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    The last of the three command classes. The header reached `process.run`
+    and nothing else, so a matlab command could not see it either; the fill is
+    the same fill, and what the user typed still wins over it.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n_frames: 5\n_targetf: /from the header\n"
+        "_hcp_brainsize: 170\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        % (study / "sessions")
+    )
+
+    called = {}
+    monkeypatch.setattr(
+        gmri.gm, "run", lambda qx_command, args, run=None: called.update(args) or 0
+    )
+
+    gmri.runCommand(
+        "fc_compute_gbc", {"batchfile": str(batch), "targetf": "/from the command line"}
+    )
+
+    assert called["frames"] == "5", "the header filled the call in"
+    assert called["targetf"] == "/from the command line", "and never over it"
+    assert "hcp_brainsize" not in called, "with what the command declares"
+
+    banner = capsys.readouterr().out
+    assert reported_as(banner, "frames").startswith("batch file")
+    assert reported_as(banner, "targetf").startswith("command line")
+
+
+def test_what_a_batch_file_says_for_one_session_is_reported_for_that_session(gmri):
+    """
+    A batch file states a parameter for a single session by prefixing its key
+    with `_`. That tier is applied per session, above the header and below the
+    command line, and is reported in the session's own section: the run as a
+    whole has no one value of it to report.
+    """
+    qx_command = gmri.qx_commands.get("hcp_pre_freesurfer")
+    options = {"hcp_brainsize": "170", "hcp_t2": "NONE"}
+    sources = {"hcp_brainsize": "batch file", "hcp_t2": "command line"}
+
+    soptions, ssources = gmri.gcs.update_options(
+        {"id": "S01", "_hcp_brainsize": "150"}, options, sources
+    )
+
+    assert soptions["hcp_brainsize"] == "150"
+    assert ssources["hcp_brainsize"] == "batch file (session)"
+
+    banner = gmri.gcs.report_parameters(
+        qx_command, soptions, ssources, session={"id": "S01"}
+    )
+
+    assert "Parameters for hcp_pre_freesurfer on session S01" in banner
+    assert "hcp_brainsize" in banner and "150" in banner
+    assert "hcp_t2" not in banner, "the run's own tier was reported for the run"

@@ -14,26 +14,31 @@ usage() {
     cat << EOF
 ``dwi_legacy_gpu``
 
-This function runs the DWI preprocessing using the FUGUE method for legacy data
-that are not TOPUP compatible.
+Run DWI preprocessing using the FUGUE method for legacy data that are not TOPUP
+compatible.
 
-It explicitly assumes the the Human Connectome Project folder structure for
-preprocessing.
-
-DWI data needs to be in the following folder::
-
-    <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
-
-T1w data needs to be in the following folder::
-
-    <study_folder>/<session>/hcp/<session>/T1w
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Warning:
-    - If PreFreeSurfer component of the HCP Pipelines was run the function will
-      make use of the T1w data [Results will be better due to superior brain
-      stripping].
-    - If PreFreeSurfer component of the HCP Pipelines was NOT run the
-      function will start from raw T1w data [Results may be less optimal]. -
+    The command assumes the Human Connectome Project folder structure for
+    preprocessing.
+
+    DWI data needs to be in the following folder::
+
+        <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
+
+    T1w data needs to be in the following folder::
+
+        <study_folder>/<session>/hcp/<session>/T1w
+
+    If PreFreeSurfer component of the HCP Pipelines was run the function will
+    make use of the T1w data [Results will be better due to superior brain
+    stripping].
+
+    If PreFreeSurfer component of the HCP Pipelines was NOT run the
+    function will start from raw T1w data [Results may be less optimal].
 
 Parameters:
     --sessionsfolder (str, default '.'):
@@ -53,8 +58,23 @@ Parameters:
         'y-' for AP/PA; may been to try out both -/+ combinations.
 
     --usefieldmap (str):
-        Whether to use the standard field map ('yes' | 'no'). If set to <yes>
-        then the parameter --te becomes mandatory.
+        Whether to use the standard field map ('yes' | 'no'). The field map
+        images are expected in::
+
+            <study_folder>/<session>/hcp/<session>/unprocessed/FieldMap1
+
+        If set to <yes>
+        then the parameter --te becomes mandatory. Mutually exclusive with
+        --usesefieldmap.
+
+    --usesefieldmap (str):
+        Whether to use a Spin Echo (SE) field map pair for distortion
+        correction ('yes' | 'no'). The SE field map images are expected in::
+
+            <study_folder>/<session>/hcp/<session>/unprocessed/SpinEchoFieldMap1
+
+        as <session>*AP_SB_SE.nii.gz and <session>*PA_SB_SE.nii.gz.
+        Mutually exclusive with --usefieldmap.
 
     --diffdatasuffix (str):
         Name of the DWI image; e.g. if the data is called
@@ -152,6 +172,20 @@ Examples:
             --overwrite='yes' \\
             --nogpu='yes'
 
+    Example with Spin Echo FieldMap distortion correction:
+
+    ::
+
+        qunex dwi_legacy_gpu \\
+            --sessionsfolder='<folder_with_sessions>' \\
+            --sessions='<comma_separarated_list_of_cases>' \\
+            --pedir='2' \\
+            --echospacing='0.69' \\
+            --unwarpdir='y-' \\
+            --diffdatasuffix='DWI_dir91_LR' \\
+            --usesefieldmap='yes' \\
+            --overwrite='yes'
+
 EOF
 exit 0
 }
@@ -167,7 +201,7 @@ fi
 # -- Get the command line options for this script
 get_options() {
     local script_name=$(basename ${0})
-    local arguments=($@)
+    local arguments=("$@")
 
     # -- initialize global output variables
     unset sessionsfolder
@@ -179,6 +213,7 @@ get_options() {
     unset diffdatasuffix
     unset overwrite
     unset usefieldmap
+    unset usesefieldmap
     unset nogpu
     unset extra_eddy_args
     runcmd=""
@@ -200,47 +235,53 @@ get_options() {
                 exit 0
                 ;;
             --sessionsfolder=*)
-                sessionsfolder=${argument/*=/""}
+                sessionsfolder=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
-            --session=*)
-                session=${argument/*=/""}
+            # --sessions is the documented spelling and the one qunex passes;
+            # --session is what the shell front end passed and is kept
+            --session=*|--sessions=*)
+                session=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --pedir=*)
-                pedir=${argument/*=/""}
+                pedir=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --echospacing=*)
-                echospacing=${argument/*=/""}
+                echospacing=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --te=*)
-                te=${argument/*=/""}
+                te=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --unwarpdir=*)
-                unwarpdir=${argument/*=/""}
+                unwarpdir=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --diffdatasuffix=*)
-                diffdatasuffix=${argument/*=/""}
+                diffdatasuffix=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --overwrite=*)
-                overwrite=${argument/*=/""}
+                overwrite=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --usefieldmap=*)
-                usefieldmap=${argument/*=/""}
+                usefieldmap=${argument#*=}
+                index=$(( index + 1 ))
+                ;;
+            --usesefieldmap=*)
+                usesefieldmap=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --nogpu=*)
-                nogpu=${argument/*=/""}
+                nogpu=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             --extra_eddy_args=*)
-                extra_eddy_args=${argument/*=/""}
+                extra_eddy_args=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
             *)
@@ -270,11 +311,15 @@ get_options() {
         echo "ERROR: <unwarp-direction> not specified"
         exit 1
     fi
-    if [ -z ${usefieldmap} ]; then
-        echo "Note: <fieldmap> specification not set"
+    if [ -z ${usefieldmap} ] && [ -z ${usesefieldmap} ]; then
+        echo "ERROR: Either <usefieldmap> or <usesefieldmap> must be specified"
         exit 1
     fi
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ] && [ "${usesefieldmap}" == "yes" ]; then
+        echo "ERROR: <usefieldmap> and <usesefieldmap> are mutually exclusive"
+        exit 1
+    fi
+    if [ "${usefieldmap}" == "yes" ]; then
         if [ -z ${te} ]; then
             echo "ERROR: <te> not specified"
             exit 1
@@ -290,14 +335,19 @@ get_options() {
     echo "-- ${script_name}: Specified Command-Line Options - Start --"
     echo "   Sessionsfolder: ${sessionsfolder}"
     echo "   Session: ${session}"
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ]; then
         echo "   Using fieldmap: ${usefieldmap}"
         echo "   PEdir: ${pedir}"
         echo "   Echospacing: ${echospacing}"
         echo "   TE: ${te}"
         echo "   Unwarpdir: ${unwarpdir}"
+    elif [ "${usesefieldmap}" == "yes" ]; then
+        echo "   Using SE fieldmap: ${usesefieldmap}"
+        echo "   PEdir: ${pedir}"
+        echo "   Echospacing: ${echospacing}"
+        echo "   Unwarpdir: ${unwarpdir}"
     else
-        echo "   Using fieldmap: ${usefieldmap}"
+        echo "   Using fieldmap: no"
     fi
     echo "   Diffusion data sufix: ${diffdatasuffix}"
     echo "   Overwrite: ${overwrite}"
@@ -313,7 +363,7 @@ get_options() {
 
 main() {
     # -- Get Command Line Options
-    get_options $@
+    get_options "$@"
 
     ##############################
     # Setup folders and variables
@@ -429,19 +479,20 @@ main() {
         rm -rf "$difffolder"/eddy/"$diffdata"* > /dev/null 2>&1
         rm -rf "$difffolder"/reg/"$diffdata"* > /dev/null 2>&1
         rm -rf "$difffolder"/fieldmap > /dev/null 2>&1
+        rm -rf "$difffolder"/topup > /dev/null 2>&1
         rm -rf "$difffolder"/acqparams/"$diffdata" > /dev/null 2>&1
         rm -rf "$t1wdifffolder"/* > /dev/null 2>&1
     else
         timestamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
-        if [ -d $difffolder ]; then
-            echo "--- Backing up previous ${difffolder} as $difffolder_${timestamp} ..."
+        if [ -d "$difffolder" ]; then
+            echo "--- Backing up previous ${difffolder} as ${difffolder}_${timestamp} ..."
             echo ""
-            cp $difffolder $difffolder_${timestamp}
+            cp -r "$difffolder" "${difffolder}_${timestamp}"
         fi
-        if [ -d $t1wdifffolder ]; then
-            echo "--- Backing up previous ${t1wdifffolder} as $t1wdifffolder_${timestamp} ..."
+        if [ -d "$t1wdifffolder" ]; then
+            echo "--- Backing up previous ${t1wdifffolder} as ${t1wdifffolder}_${timestamp} ..."
             echo ""
-            cp $t1wdifffolder $t1wdifffolder_${timestamp}
+            cp -r "$t1wdifffolder" "${t1wdifffolder}_${timestamp}"
         fi
     fi
 
@@ -473,7 +524,7 @@ main() {
         cp "${unproc_file}.nii.gz" "${difffolder}/"
     fi
 
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ]; then
         unproc_fm="${sessionsfolder}/${session}/hcp/${session}/unprocessed/FieldMap1/${session}"
         if [ -f "${unproc_fm}_FieldMap_Magnitude.nii.gz" ]; then
             echo "Copying ${unproc_fm}_FieldMap_Magnitude.nii.gz"
@@ -483,6 +534,18 @@ main() {
             echo "Copying ${unproc_fm}_FieldMap_Phase.nii.gz"
             cp "${unproc_fm}_FieldMap_Phase.nii.gz" "${difffolder}/"
         fi
+    elif [ "${usesefieldmap}" == "yes" ]; then
+        unproc_se="${sessionsfolder}/${session}/hcp/${session}/unprocessed/SpinEchoFieldMap1"
+        se_ap=$(ls ${unproc_se}/${session}*AP_SB_SE.nii.gz 2>/dev/null | head -1)
+        se_pa=$(ls ${unproc_se}/${session}*PA_SB_SE.nii.gz 2>/dev/null | head -1)
+        if [ -z "${se_ap}" ] || [ -z "${se_pa}" ]; then
+            echo "ERROR: Spin Echo field map images not found in ${unproc_se}"
+            exit 1
+        fi
+        echo "Copying ${se_ap}"
+        cp "${se_ap}" "${difffolder}/SE_AP.nii.gz"
+        echo "Copying ${se_pa}"
+        cp "${se_pa}" "${difffolder}/SE_PA.nii.gz"
     fi
 
     #########################################
@@ -520,7 +583,7 @@ main() {
     # STEP 2 - Prepare FieldMaps and T1w Images
     ############################################
 
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ]; then
         echo "--- Preparing FieldMaps and T1w images..."
         echo ""
         echo "Running conservative BET on the FieldMap Magnitude image..."
@@ -530,6 +593,47 @@ main() {
         echo "Running fsl_prepare_fieldmap assuming SIEMENS data..."
         echo ""
         fsl_prepare_fieldmap SIEMENS "$difffolder"/"$session"_FieldMap_Phase.nii.gz "$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain.nii.gz "$difffolder"/fieldmap/"$session"_fmap_rads "$te"
+        echo ""
+    elif [ "${usesefieldmap}" == "yes" ]; then
+        echo ""
+        echo "--- Preparing Spin Echo FieldMaps using TOPUP..."
+        echo ""
+
+        # -- Create the acquisition parameters file for TOPUP
+        # -- Compute readout time from the SE image dimensions
+        mkdir -p "$difffolder"/topup 2> /dev/null
+        rm -f "$difffolder"/topup/acqparams_topup.txt
+        if [ "$pedir" == "1" ]; then
+            se_voxel_number=`fslval "$difffolder"/SE_AP dim1`
+            se_readout_time=`echo "scale=6; $dwelltimesec*($se_voxel_number-1)" | bc`
+            echo "1 0 0 $se_readout_time" >> "$difffolder"/topup/acqparams_topup.txt
+            echo "-1 0 0 $se_readout_time" >> "$difffolder"/topup/acqparams_topup.txt
+        else
+            se_voxel_number=`fslval "$difffolder"/SE_AP dim2`
+            se_readout_time=`echo "scale=6; $dwelltimesec*($se_voxel_number-1)" | bc`
+            echo "0 1 0 $se_readout_time" >> "$difffolder"/topup/acqparams_topup.txt
+            echo "0 -1 0 $se_readout_time" >> "$difffolder"/topup/acqparams_topup.txt
+        fi
+
+        # -- Merge SE AP and PA images for TOPUP
+        echo "Merging SE AP and PA images..."
+        fslmerge -t "$difffolder"/topup/SE_AP_PA "$difffolder"/SE_AP "$difffolder"/SE_PA
+        echo ""
+
+        # -- Run TOPUP
+        echo "Running TOPUP..."
+        echo ""
+        topup --imain="$difffolder"/topup/SE_AP_PA --datain="$difffolder"/topup/acqparams_topup.txt --config=b02b0.cnf --out="$difffolder"/topup/topup_results --fout="$difffolder"/topup/topup_field --iout="$difffolder"/topup/topup_unwarped -v
+        if [ $? -ne 0 ]; then
+            echo "ERROR: TOPUP failed. Check that echospacing is specified in milliseconds (e.g. 0.69)."
+            exit 1
+        fi
+        echo ""
+
+        # -- Create a brain mask from the TOPUP-corrected SE images
+        echo "Creating brain mask from TOPUP-corrected SE images..."
+        fslmaths "$difffolder"/topup/topup_unwarped -Tmean "$difffolder"/topup/topup_unwarped_mean
+        bet "$difffolder"/topup/topup_unwarped_mean "$difffolder"/topup/topup_unwarped_mean_brain -m -f 0.35 -v
         echo ""
     else
         echo ""
@@ -637,11 +741,23 @@ main() {
     # -- This gives the EPI ---> T1 transformation given the FieldMap.
     # -- This yields a transformation matrix that can then be applied to the DWI data.
 
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ]; then
         echo ""
         echo "--- Running epi_reg for EPI--T1 data with fieldmap specification..."
         echo ""
         epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --fmap="$difffolder"/fieldmap/"$session"_fmap_rads --wmseg="$wmsegimage" --fmapmag="$difffolder"/"$session"_FieldMap_Magnitude --fmapmagbrain="$difffolder"/fieldmap/"$session"_FieldMap_Magnitude_brain --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
+    elif [ "${usesefieldmap}" == "yes" ]; then
+        echo ""
+        echo "--- Applying TOPUP-derived distortion correction to DWI B0..."
+        echo ""
+        applytopup --imain="$difffolder"/rawdata/"$diffdata"_nodif --topup="$difffolder"/topup/topup_results --datain="$difffolder"/topup/acqparams_topup.txt --inindex=1 --method=jac --out="$difffolder"/rawdata/"$diffdata"_nodif_dc -v
+        echo ""
+        echo "Running BET on the TOPUP-corrected B0 image..."
+        bet "$difffolder"/rawdata/"$diffdata"_nodif_dc "$difffolder"/rawdata/"$diffdata"_nodif_dc_brain -m -f 0.35 -v
+        echo ""
+        echo "--- Running epi_reg for EPI--T1 data with SE fieldmap specification..."
+        echo ""
+        epi_reg --epi="$difffolder"/rawdata/"$diffdata"_nodif_dc_brain --t1="$t1wimage" --t1brain="$t1wbrainimage" --out="$difffolder"/reg/"$diffdata"_nodif2T1 --wmseg="$wmsegimage" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
     else
         echo ""
         echo "--- Running epi_reg for EPI--T1 data without fieldmap specification..."
@@ -670,9 +786,15 @@ main() {
     echo ""
 
     # -- Registers the DWI data to T1w space
-    if [ ${usefieldmap} == "yes" ]; then
+    if [ "${usefieldmap}" == "yes" ]; then
         echo "Applying the warp for $diffdata to T1w space with fieldmap specification..."; echo ""
         applywarp -i "$difffolder"/eddy/"$diffdata"_eddy_corrected -r "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -o "$t1wdifffolder"/data -w "$difffolder"/reg/"$diffdata"_nodif2T1_warp --interp=spline --rel -v
+    elif [ "${usesefieldmap}" == "yes" ]; then
+        echo "Applying TOPUP distortion correction + epi_reg affine for $diffdata to T1w space with SE fieldmap..."; echo ""
+        # -- First apply TOPUP distortion correction to the eddy-corrected data
+        applytopup --imain="$difffolder"/eddy/"$diffdata"_eddy_corrected --topup="$difffolder"/topup/topup_results --datain="$difffolder"/topup/acqparams_topup.txt --inindex=1 --method=jac --out="$difffolder"/eddy/"$diffdata"_eddy_corrected_dc -v
+        # -- Then apply the epi_reg affine transformation to register to T1w space
+        flirt -in "$difffolder"/eddy/"$diffdata"_eddy_corrected_dc -ref "$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" -applyxfm -init "$difffolder"/reg/"$diffdata"_nodif2T1.mat -out "$t1wdifffolder"/data -interp spline -v
     else
         echo "Applying the warp for $diffdata to T1w space without fieldmap specification via epi_reg..."; echo ""
         epi_reg --epi="$difffolder"/eddy/"$diffdata"_eddy_corrected --t1="$t1wdifffolder"/T1w_downsampled2diff_"$diffresext" --t1brain="$t1wdifffolder"/T1w_brain_downsampled2diff_"$diffresext" --out="$t1wdifffolder"/data --wmseg="$t1wdifffolder"/T1w_wmsegimage_"$diffresext" --echospacing="$dwelltimesec" --pedir="$unwarpdir" -v
@@ -773,4 +895,4 @@ main() {
 # -- Invoke the main function to get things started -------
 # ---------------------------------------------------------
 
-main $@
+main "$@"

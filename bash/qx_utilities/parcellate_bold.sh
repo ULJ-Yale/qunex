@@ -14,9 +14,12 @@ usage() {
 cat << EOF
 ``parcellate_bold``
 
-This function implements parcellation on the BOLD dense files using a
-whole-brain parcellation (e.g. Glasser parcellation with subcortical labels
-included).
+Run parcellation on the BOLD dense files using a whole-brain parcellation (e.g. 
+Glasser parcellation with subcortical labels included).
+
+..  qx_command:
+    type: processing.session
+    language: bash
 
 Parameters:
     --sessionsfolder (str):

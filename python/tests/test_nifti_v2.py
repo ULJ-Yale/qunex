@@ -19,12 +19,7 @@ import struct
 import tempfile
 import io
 
-# Add the parent directory to the path to import qx_utilities
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
-
-from general.img import niftihdr, printniftihdr
+from qx_utilities.general.img import niftihdr, printniftihdr
 
 
 # =============================================================================
@@ -44,7 +39,7 @@ def test_nifti_v1_creation():
     assert hdr.vox_offset == 352
 
     # Pack the header
-    packed = hdr.packHdr()
+    packed = hdr.pack_hdr()
     assert len(packed) == 352, f"Expected 352 bytes, got {len(packed)}"
 
     # Check header size marker
@@ -60,13 +55,13 @@ def test_nifti_v2_creation():
     """Test creating a NIfTI-2 header"""
     print("\nTesting NIfTI-2 header creation...")
     hdr = niftihdr()
-    hdr.convertToV2()
+    hdr.convert_to_v2()
 
     assert hdr.nifti_version == 2
     assert hdr.vox_offset == 544
 
     # Pack the header
-    packed = hdr.packHdr()
+    packed = hdr.pack_hdr()
     assert len(packed) == 544, f"Expected 544 bytes, got {len(packed)}"
 
     # Check header size marker
@@ -90,7 +85,7 @@ def test_nifti_header_string_repr():
     assert "Version 1" in str1
 
     hdr2 = niftihdr()
-    hdr2.convertToV2()
+    hdr2.convert_to_v2()
     str2 = str(hdr2)
     assert "Version 2" in str2
 
@@ -111,7 +106,7 @@ def test_nifti_v1_to_v2_conversion():
     hdr.frames = 100
 
     # Convert to V2
-    hdr.convertToV2()
+    hdr.convert_to_v2()
 
     assert hdr.nifti_version == 2
     assert hdr.sizex == 256
@@ -126,13 +121,13 @@ def test_nifti_v2_to_v1_conversion():
     """Test converting NIfTI-2 to NIfTI-1"""
     print("\nTesting NIfTI-2 to NIfTI-1 conversion...")
     hdr = niftihdr()
-    hdr.convertToV2()
+    hdr.convert_to_v2()
     hdr.sizex = 128
     hdr.sizey = 128
     hdr.sizez = 90
 
     # Convert back to V1
-    hdr.convertToV1()
+    hdr.convert_to_v1()
 
     assert hdr.nifti_version == 1
     assert hdr.sizex == 128
@@ -146,18 +141,18 @@ def test_nifti_v2_large_dimensions_conversion():
     """Test that large dimensions prevent conversion to NIfTI-1"""
     print("\nTesting NIfTI-2 large dimensions conversion restriction...")
     hdr = niftihdr()
-    hdr.convertToV2()
+    hdr.convert_to_v2()
     hdr.sizex = 50000  # Larger than int16 can hold
     hdr.sizey = 256
     hdr.sizez = 180
 
     # Pack and verify
-    packed = hdr.packHdr()
+    packed = hdr.pack_hdr()
     assert len(packed) == 544
 
     # Try to convert to V1 (should fail)
     try:
-        hdr.convertToV1()
+        hdr.convert_to_v1()
         assert False, "Should have raised ValueError for dimensions too large"
     except ValueError as e:
         assert "too large" in str(e)
@@ -185,12 +180,12 @@ def test_nifti_v1_roundtrip():
     hdr1.descrip = "Test NIfTI-1 image"
 
     # Pack it
-    packed = hdr1.packHdr()
+    packed = hdr1.pack_hdr()
 
     # Unpack it
     hdr2 = niftihdr()
     stream = io.BytesIO(packed)
-    hdr2.unpackHdr(stream)
+    hdr2.unpack_hdr(stream)
 
     # Verify
     assert hdr2.nifti_version == 1
@@ -212,7 +207,7 @@ def test_nifti_v2_roundtrip():
 
     # Create a NIfTI-2 header
     hdr1 = niftihdr()
-    hdr1.convertToV2()
+    hdr1.convert_to_v2()
     hdr1.sizex = 256
     hdr1.sizey = 256
     hdr1.sizez = 180
@@ -226,12 +221,12 @@ def test_nifti_v2_roundtrip():
     hdr1.qoffset_z = 85.5
 
     # Pack it
-    packed = hdr1.packHdr()
+    packed = hdr1.pack_hdr()
 
     # Unpack it
     hdr2 = niftihdr()
     stream = io.BytesIO(packed)
-    hdr2.unpackHdr(stream)
+    hdr2.unpack_hdr(stream)
 
     # Verify
     assert hdr2.nifti_version == 2
@@ -256,19 +251,19 @@ def test_nifti_v2_large_dimensions_roundtrip():
 
     # Create a NIfTI-2 header with large dimensions
     hdr1 = niftihdr()
-    hdr1.convertToV2()
+    hdr1.convert_to_v2()
     hdr1.sizex = 40000  # Exceeds int16 max
     hdr1.sizey = 256
     hdr1.sizez = 180
     hdr1.frames = 10
 
     # Pack it
-    packed = hdr1.packHdr()
+    packed = hdr1.pack_hdr()
 
     # Unpack it
     hdr2 = niftihdr()
     stream = io.BytesIO(packed)
-    hdr2.unpackHdr(stream)
+    hdr2.unpack_hdr(stream)
 
     # Verify
     assert hdr2.nifti_version == 2
@@ -286,23 +281,23 @@ def test_nifti_version_detection():
 
     # Create V1 header
     hdr1 = niftihdr()
-    packed1 = hdr1.packHdr()
+    packed1 = hdr1.pack_hdr()
 
     # Detect version from packed data
     hdr_test1 = niftihdr()
     stream1 = io.BytesIO(packed1)
-    hdr_test1.unpackHdr(stream1)
+    hdr_test1.unpack_hdr(stream1)
     assert hdr_test1.nifti_version == 1
 
     # Create V2 header
     hdr2 = niftihdr()
-    hdr2.convertToV2()
-    packed2 = hdr2.packHdr()
+    hdr2.convert_to_v2()
+    packed2 = hdr2.pack_hdr()
 
     # Detect version from packed data
     hdr_test2 = niftihdr()
     stream2 = io.BytesIO(packed2)
-    hdr_test2.unpackHdr(stream2)
+    hdr_test2.unpack_hdr(stream2)
     assert hdr_test2.nifti_version == 2
 
     print("✓ NIfTI version auto-detection passed")
@@ -318,9 +313,9 @@ def test_nifti_affine_transforms():
     hdr1_v1.srow_y = [0.0, 2.0, 0.0, -126.0]
     hdr1_v1.srow_z = [0.0, 0.0, 2.0, -72.0]
 
-    packed_v1 = hdr1_v1.packHdr()
+    packed_v1 = hdr1_v1.pack_hdr()
     hdr2_v1 = niftihdr()
-    hdr2_v1.unpackHdr(io.BytesIO(packed_v1))
+    hdr2_v1.unpack_hdr(io.BytesIO(packed_v1))
 
     assert hdr2_v1.srow_x == hdr1_v1.srow_x
     assert hdr2_v1.srow_y == hdr1_v1.srow_y
@@ -328,14 +323,14 @@ def test_nifti_affine_transforms():
 
     # Test with V2
     hdr1_v2 = niftihdr()
-    hdr1_v2.convertToV2()
+    hdr1_v2.convert_to_v2()
     hdr1_v2.srow_x = [1.5, 0.0, 0.0, -120.0]
     hdr1_v2.srow_y = [0.0, 1.5, 0.0, -150.0]
     hdr1_v2.srow_z = [0.0, 0.0, 2.5, -80.0]
 
-    packed_v2 = hdr1_v2.packHdr()
+    packed_v2 = hdr1_v2.pack_hdr()
     hdr2_v2 = niftihdr()
-    hdr2_v2.unpackHdr(io.BytesIO(packed_v2))
+    hdr2_v2.unpack_hdr(io.BytesIO(packed_v2))
 
     for i in range(4):
         assert abs(hdr2_v2.srow_x[i] - hdr1_v2.srow_x[i]) < 0.001
@@ -368,7 +363,7 @@ def test_write_and_read_nifti_v1_file():
         hdr1.pixdim_y = 2.5
         hdr1.pixdim_z = 3.0
         hdr1.descrip = "Test V1 file"
-        hdr1.writeHeader(tmpfile)
+        hdr1.write_header(tmpfile)
 
         # Read it back
         hdr2 = niftihdr(tmpfile)
@@ -403,7 +398,7 @@ def test_write_and_read_nifti_v2_file():
     try:
         # Create and write a header
         hdr1 = niftihdr()
-        hdr1.convertToV2()
+        hdr1.convert_to_v2()
         hdr1.sizex = 128
         hdr1.sizey = 128
         hdr1.sizez = 64
@@ -412,7 +407,7 @@ def test_write_and_read_nifti_v2_file():
         hdr1.pixdim_y = 1.5
         hdr1.pixdim_z = 2.0
         hdr1.descrip = "Test V2 file"
-        hdr1.writeHeader(tmpfile)
+        hdr1.write_header(tmpfile)
 
         # Read it back
         hdr2 = niftihdr(tmpfile)
@@ -451,7 +446,7 @@ def test_printniftihdr_function():
         hdr.sizey = 64
         hdr.sizez = 32
         hdr.descrip = "Test printniftihdr"
-        hdr.writeHeader(tmpfile)
+        hdr.write_header(tmpfile)
 
         # This should not raise an error (suppress output for cleaner test results)
         import io as stdio

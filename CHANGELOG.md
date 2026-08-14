@@ -6,6 +6,40 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.0
+
+* Made a major under the hood code refactor that should make QuNex more stable and faster.
+* Integrated the HCP Pipelines `hcp_fmri_stats` command into QuNex.
+* Integrated the HCP Pipelines `hcp_corr_thick` command into QuNex.
+* Added support for the whole HCP Transmit Bias pipeline `hcp_transmit_bias_individual_align`, `hcp_transmit_bias_group_average_fit`, `hcp_transmit_bias_individual_adjustment`, `hcp_transmit_bias_group_average_corrected_maps`, and the utility command `create_transmit_bias_voltages_file` to generate voltages file for phase 4.
+* Changed the QC image resolution to 2560x1080.
+* Added the parameter `--clean_dicom_folders` to the `import_dicom` command. This will perform some basic checks on the input dicom files and filter out data that is definitely not OK (e.g., empty files...).
+* Made FreeSurfer manual edits easier in the `hcp_freesurfer` command via the `hcp_fs_edits` parameter.
+* Improvements to the `run_recipe` framework to make it more robust and flexible.
+* Fixed some bugs in the QuNex environment setup that popped up on certain systems.
+* Mapping now supports an or operator (`||`), for example `HiRes_T1w || LowRes_T1w => T1w` will map `HiRes_T1w` as T1w if available and fallback to `LowRes_T1w` if not available.
+* Mapping now supports the asterisk operator (`*`), for example `*_T1w` will match to any label that ends with `_T1w`.
+* Added support for `TOPUP_MISMATCH` and `PRECOMPUTED_FIELDMAP` in `hcp_fmri_volume`. To be used when spin echos do not match the BOLD data in their acquisition parameters or when the fieldmap is the proper inhomogenity field (topup output).
+* Fixed a bug that sometimes caused `hcp_diffusion` to crash when the data had only one dir.
+* Several diffusion commands now have the optional `--diffusion_folder` parameter, which can be used to configure the input data that will be used.
+* Fixed a bug in longitudinal `hcp_fmri_surface` that looked for the presence of irrelevant files before running.
+* `dwi_legacy_gpu` now supports SE based distortion correction.
+* Implemented a number of internal utilities for making output folder/file backups and tracking changes through time (`record_snapshot`, `compare_snapshots`, `rollback_snapshot`, `backup_files`, `restore_files`). These are used by the processing pipelines and are not invocable as `qunex` commands.
+* Fixed a set of log bookkeeping bugs: the runlog folder is no longer mis-derived for study paths containing `comlogs`, the session id is written to the runlog instead of the console, the final report of a parallel run again shows the log path, and serial runs no longer record a spurious "Unknown" status next to the real one for every session.
+* Added NHP (non-human primate) support to all HCP commands that now support it. This is mainly accessible through the `hcp_species` parameter, while there is a completely new command for HCP FreeSurfer (`hcp_nhp_freesurfer`).
+* Log structure rework, logs are now in the logs folder in the study and are group per each command invocation.
+* Reworked logging into a single implementation: one runlog per invocation and one comlog per command, configurable per study or user in `qunex_settings.yaml` and per call with `--logging`, `--comlog_folders`, `--keep_comlogs` and `--runlog_content`; `--log` now sets comlog retention only, and a run in which any session fails exits non-zero.
+* QuNex study structure is now simplified, only a couple of core folders will be created initially, others are added as needed.
+* Reimplemented `import_dicom` to remove interim steps, set aside orphaned and non-image files, and write detailed per session report.
+* Seven utility commands (`split_fidl`, `merge_sessions_list`, `import_hcp`, `import_nhp`, `map_bids2nii`, `run_nil_folder`, `bruker_to_dicom`) reported a failure by printing it and still exited 0; they now report it through the log and exit non-zero, with sessions after the failing one still processed.
+* `create_stats_report` and `check_fidl` are now implemented in Python with matplotlib figures instead of calling R scripts, which also fixes `check_fidl --fidlfile` and `--plotfile`, never having worked, and the `--mov_fidl`/`--mov_post` value `fd`, which should have read `mov`.
+* Added `run_qc_summary`, a study level command that compiles the quality control information the processing pipelines already wrote into study tables and a self-contained interactive HTML report.
+
+## 1.4.4
+
+* QC scene optimizations.
+* `dwi_xtract` outputs organization improvements.
+
 ## 1.4.3
 
 * Fixed a bug in longitudinal pipelines were some log contents were overwritten by others.
@@ -230,7 +264,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 ## 0.99.0
 
-* `fc_compute_wrapper` now checks if input files exist.
+* `compute_bold_fc` now checks if input files exist.
 * Removed some race conditions in parallel runs.
 * Added better reporting in case FM numbers are missing in the batch file.
 * Allowed custom setup of POS/NEG pairs in `hcp_diffusion`.

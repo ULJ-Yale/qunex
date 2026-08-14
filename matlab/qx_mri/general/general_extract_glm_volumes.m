@@ -2,8 +2,11 @@ function [out] = general_extract_glm_volumes(flist, outf, effects, frames, saveo
 
 %``general_extract_glm_volumes(flist, outf, effects, frames, saveoption, values, verbose, txtf)``
 %
-%   For sessions specified in the session list it extracts the GLM estimates of
+%   For sessions specified in the session list extract the GLM estimates of
 %   the effects of interests and saves them in the specified file.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --flist (str):
@@ -15,11 +18,11 @@ function [out] = general_extract_glm_volumes(flist, outf, effects, frames, saveo
 %       --outf (str, default ''):
 %           Root file name for the results. If empty, the flist name is used.
 %
-%       --effects (cell array | str, default ''):
+%       --effects (str|cell array, default ''):
 %           A cell array of strings or a comma separated list of effects of
 %           interest. If empty all effects but Baseline and Trend are extracted.
 %
-%       --frames (int, default ''):
+%       --frames (int):
 %           Frame indeces to extract. If empty, all frames are extracted.
 %
 %       --saveoption (str, default 'by_session'):

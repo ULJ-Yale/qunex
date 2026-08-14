@@ -13,18 +13,17 @@ for internal use and not called directly. It also implements the modniftihdr
 command.
 """
 
-"""
-Created by Grega Repovs on 2013-04-13.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-04-13.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import numpy as np
 import gzip
 import os.path
 
-import general.img as gi
+import qx_utilities.general.img as gi
 
-def removeExt(s, ext):
+
+def remove_ext(s, ext):
     if type(ext) not in (tuple, list):
         ext = [ext]
     for e in ext:
@@ -74,37 +73,37 @@ class qximg(object):
     def readimage(self, filename, frames=None):
         """Calls the appropriate read function based on the image format."""
         if ".4dfp.img" in filename:
-            self = self.read4DFP(filename, frames)
+            self = self.read_4dfp(filename, frames)
         elif ".nii" in filename:
-            self = self.readNIfTI(filename, frames)
+            self = self.read_nifti(filename, frames)
         elif ".conc" in filename:
-            self = self.readConcImage(filename, frames)
+            self = self.read_conc_image(filename, frames)
         else:
             raise Exception("Read Image: Filename not of a known type!")
 
     def saveimage(self, filename=None, frames=None, extra=None):
         """Calls the appropriate save function based on the image format."""
 
-        if filename == None:
+        if filename is None:
             filename = self.filename
 
         if self.imageformat == ".4dfp.img":
-            self.save4DFP(filename, frames, extra)
+            self.save_4dfp(filename, frames, extra)
         elif self.imageformat in ['.nii', '.nii.gz']:
-            self.saveNIfTI(filename, frames, extra)
+            self.save_nifti(filename, frames, extra)
 
-    def readConcImage(self, filename, frames=None):
+    def read_conc_image(self, filename, frames=None):
         pass
 
-    def read4DFP(self, filename, frames=None):
+    def read_4dfp(self, filename, frames=None):
         pass
 
-    def readNIfTI(self, filename, frames=None):
+    def read_nifti(self, filename, frames=None):
         """Reads a NIfTI file."""
 
         # ---> check data format
 
-        sform = gi.getImgFormat(filename)
+        sform = gi.get_img_format(filename)
         if sform == '.nii.gz':
             sf = gzip.open(filename, 'r')
         else:
@@ -113,10 +112,10 @@ class qximg(object):
         # ---> read the header info
 
         nihdr = gi.niftihdr()
-        nihdr.unpackHdr(sf)
-        dataType = np.dtype(nihdr.e + nihdr.dType)
+        nihdr.unpack_hdr(sf)
+        data_type = np.dtype(nihdr.e + nihdr.dType)
 
-        if frames != None:
+        if frames is not None:
             nihdr.frames = frames
 
         self.hdrnifti    = nihdr
@@ -135,12 +134,11 @@ class qximg(object):
 
         sf.seek(int(nihdr.vox_offset))
         # self.data = np.fromstring(sf.read(self.voxels*nihdr.bitpix/8), dtype=dataType)
-        self.data = np.fromstring(sf.read(), dtype=dataType)
+        self.data = np.fromstring(sf.read(), dtype=data_type)
         sf.close()
         self.data.shape  = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
 
-
-    def save4DFP(self, filename=None, frames=None, extra=None):
+    def save_4dfp(self, filename=None, frames=None, extra=None):
         """Saves a 4dfp file."""
 
         # ... check filename
@@ -154,41 +152,39 @@ class qximg(object):
         # ... see if we need to transform from NIfTI
 
         if self.imageformat in ['.nii', '.nii.gz']:
-            self.hdr4dfp = self.hdrnifti.toIFH()
+            self.hdr4dfp = self.hdrnifti.to_ifh()
             self.data = self.data[:,:,::-1,...]
             self.imageformat = '.4dfp.img'
-            self.filename = removeExt(self.filename, ['.gz', '.nii'])
+            self.filename = remove_ext(self.filename, ['.gz', '.nii'])
             self.filename += '.4dfp.img'
 
-        fname = removeExt(self.filename, ['.img', '.4dfp'])
+        fname = remove_ext(self.filename, ['.img', '.4dfp'])
 
         # ... save IFH header
 
-        self.hdr4dfp.writeHeader(os.path.join(path, fname + '.4dfp.ifh'))
+        self.hdr4dfp.write_header(os.path.join(path, fname + '.4dfp.ifh'))
 
         # ... save data
 
         if 'imagedata byte order' in self.hdr4dfp.ifh:
             if self.hdr4dfp.ifh['imagedata byte order'] == 'littleendian':
-                dataType = np.dtype('<f4')
+                data_type = np.dtype('<f4')
             else:
-                dataType = np.dtype('>f4')
+                data_type = np.dtype('>f4')
         else:
             self.hdr4dfp.ifh['imagedata byte order'] = 'littleendian'
-            dataType = np.dtype('<f4')
+            data_type = np.dtype('<f4')
 
         tf = open(os.path.join(path, fname + '.4dfp.img'), 'w')
-        tf.write(self.data.astype(dataType).tostring())
+        tf.write(self.data.astype(data_type).tostring())
         tf.close
 
+    def save_nifti(self, filename=None, frames=None, extra=None):
 
-
-    def saveNIfTI(self, filename=None, frames=None, extra=None):
-
-        if filename == None:
+        if filename is None:
             filename = self.filename
 
-        tform = gi.getImgFormat(filename)
+        tform = gi.get_img_format(filename)
         if tform == '.nii.gz':
             tf = gzip.open(filename, 'w')
         else:
@@ -196,7 +192,7 @@ class qximg(object):
 
         # ---> check if image has to be trimmed
 
-        if frames == None:
+        if frames is None:
             data = self.data
         else:
             data = self.data[0:frames,:,:,:]
@@ -204,10 +200,10 @@ class qximg(object):
 
         # ---> save image data
 
-        dataType = np.dtype(self.hdrnifti.e + self.hdrnifti.dType)
+        data_type = np.dtype(self.hdrnifti.e + self.hdrnifti.dType)
 
-        tf.write(self.hdrnifti.packHdr())
-        tf.write(data.astype(dataType).tostring())
+        tf.write(self.hdrnifti.pack_hdr())
+        tf.write(data.astype(data_type).tostring())
         tf.close
 
 
@@ -227,5 +223,5 @@ def modniftihdr(filename, s):
     """
 
     image = qximg(filename)
-    image.hdrnifti.modifyHeader(s)
+    image.hdrnifti.modify_header(s)
     image.saveimage()

@@ -2,7 +2,10 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 
 %``stats_ttest_independent(filea, fileb, target, output, vartype, exclude, verbose)``
 %
-%   Computes t-test of differences between two independent groups.
+%   Compute t-test of differences between two independent groups.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --filea (str):
@@ -30,7 +33,7 @@ function [] = stats_ttest_independent(filea, fileb, target, output, vartype, exc
 %           String specifying whether the variances of the two groups are equal
 %           ('equal') or not ('unequal').
 %
-%       --exclude (vector, default ''):
+%       --exclude (numeric, default ''):
 %           Values to be excluded from computation.
 %
 %       --verbose (bool, default false):

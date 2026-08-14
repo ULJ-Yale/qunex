@@ -5,21 +5,43 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
+# ruff: noqa: E402
+# The qx_utilities imports below intentionally follow the sys.path surgery in
+# this file's bootstrap block, so they cannot sit at the top of the module.
+
+
+# ------------------------------------------------------------------------------
+#                                              prevent mulitiple path to imports
+#
+# To prevent double imports from both qx_utilities and qx_utilities.general
+# we remove the alias path from sys.path before importing anything from
+# qx_utilities directly.
+
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+BAD = ROOT / "qx_utilities"
+sys.path[:] = [p for p in sys.path if p and Path(p).resolve() != BAD.resolve()]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+# --- continue with imports
+
+import copy
 import os
 import os.path
-import sys
-import copy
-
 from datetime import datetime
-from general import scheduler as gs
-from general import utilities as gu
-from general import process as gp
-from general import matlab as gm
-from general import core as gc
-from general import exceptions as ge
-from general import all_commands as gac
-from general import commands as gcom
-from general import commands_support as gcs
+from qx_utilities.general import scheduler as gs
+from qx_utilities.general import process as gp
+from qx_utilities.general import matlab as gm
+from qx_utilities.general import run_bash as gb
+from qx_utilities.general import core as gc
+from qx_utilities.general import exceptions as ge
+from qx_utilities.general import commands_support as gcs
+from qx_utilities.general import log as gl
+from qx_registry import qx_commands
+
 
 help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 (qx_utilities) commands can be invoked via the "qunex <command>" call.
@@ -50,11 +72,46 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 """
 
 
-def runCommand(command, args):
-    folders = gc.deduceFolders(args)
+def _call_summary(outcome):
+    """
+    What one call through `run_with_log` is reported as, in one line.
 
-    if folders["basefolder"]:
-        gu.check_study(folders["basefolder"])
+    The same spelling for the run's final report and for the status record a
+    parent reads, so the two cannot drift: the error when the call raised, and
+    the comlog to read when there is one.
+    """
+    return "%s%s" % (
+        outcome.error
+        or ("completed with errors" if outcome.failed else "completed"),
+        " [log: %s]" % outcome.comlog if outcome.comlog else "",
+    )
+
+
+def _bash_sessions(qx_command, sessions, args):
+    """
+    The sessions a bash script is called once for, or `[None]` for one call
+    with whatever session specification the run carries.
+
+    A bash script is written for a single session -- of the thirteen routed
+    here only `compute_bold_fc` and `run_qc` loop over a list of their own --
+    and the shell front end called it once per session, in the loop at
+    `bin/qunex.sh:1735` and its per command copies. The exception is a run that
+    works *across* sessions: `bin/qunex.sh:2315` hands a group run the whole
+    list in one call, and so does this.
+    """
+    if not sessions or args.get("runtype") in ["group", "list"]:
+        return [None]
+
+    if not (gcs.declared_parameters(qx_command) & {"session", "sessions"}):
+        return [None]
+
+    return [session["id"] for session in sessions]
+
+
+def runCommand(command, args):
+    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+
+    folders = gc.deduce_folders(args, command, timestamp)
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -63,47 +120,67 @@ def runCommand(command, args):
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
 
-    # --- sort commands by type
-    if command in gcom.commands:
-        pass
-    elif command in gp.allactions:
-        gp.run(command, args)
-        return
-    elif command in gm.functions:
-        if "scheduler" in args:
-            gs.runThroughScheduler(
-                command, sessions=None, args=args, logfolder=folders["logfolder"]
-            )
-        else:
-            gm.run(command, args)
-        return
-    else:
-        print(
-            "ERROR: Command %s not recognized. Please run gmri -l to see list of valid commands."
-            % (command)
-        )
+    qx_command = qx_commands.get(command.strip())
+
+    # -- is this a valid qunex command?
+    if qx_command is None:
+        print(f"ERROR: Command '{command}' not recognized. Please run qunex -l to see list of valid commands.")
         sys.exit(1)
 
-    # --- process commands
+    # -- which sessions, and the parameters the batch file's header states.
+    #    Resolved here, for every command class, and above everything below:
+    #    the header can name a different study, and the study is what the
+    #    logging settings and the log folder are read from
+    processing = qx_command.language == "python" and qx_command.type.startswith(
+        "processing"
+    )
+
+    sessions, batch_header, unset_from_header = None, None, []
+    if processing or "sessions" in args or "batchfile" in args:
+        if folders["sessionsfolder"] is None:
+            folders["sessionsfolder"] = "."
+
+        sessions, batch_header = gc.resolve_sessions(
+            batchfile=args.get("batchfile"),
+            sessions=args.get("sessions"),
+            filter=args.get("filter"),
+            sessionsfolder=folders["sessionsfolder"],
+            command=command,
+            verbose=False,
+        )
+
+        # what the run said not to take from the header, taken out here rather
+        # than at the merge: the header is read again below to deduce the
+        # folders, and a parameter that is not to be taken is not to be taken
+        # for that either.
+        #
+        # Twice, around the remap of the deprecated spellings, because the
+        # names a header *states* and the names it *contributes* are not the
+        # same set -- a header saying `log:` contributes `log` and
+        # `comlog_folders`, one of them under a name nobody wrote. Filtering on
+        # both sides is what makes either spelling work. `merge_options` remaps
+        # again and finds nothing left to do, the remap being idempotent.
+        unset = gcs.unset_patterns(args.get(gcs.UNSET_BATCH_HEADER))
+        batch_header, as_written = gcs.without_unset(batch_header, unset)
+        batch_header = gcs.check_deprecated_parameters(batch_header, command)
+        batch_header, as_remapped = gcs.without_unset(batch_header, unset)
+        unset_from_header = sorted(set(as_written) | set(as_remapped))
+
     # -- sort arguments
     bargs = {}
     eargs = {}
     for k, v in args.items():
-        if k in gcom.commands[command]["args"]:
+        if qx_command.has_arg(k):
             bargs[k] = v
         else:
             eargs[k] = v
 
-    # -- check extra arguments, except for run_recipe
-    if eargs and command != "run_recipe":
-        bad = []
-        for k, v in eargs.items():
-            if k not in gcs.extra_parameters:
-                bad.append(k)
-                print(
-                    "ERROR: Extra argument %s is not valid! Please check your command!"
-                    % (k)
-                )
+    # -- what a python utility command will and will not accept. Checked before
+    #    anything is logged: a call that is rejected leaves no log folder behind
+    if qx_command.language == "python" and not processing and command != "run_recipe":
+        bad = [k for k in eargs if k not in gcs.extra_parameters]
+        for k in bad:
+            print(f"ERROR: Extra argument {k} is not valid! Please check your command!")
         if bad:
             raise ge.CommandError(
                 "gmri",
@@ -111,30 +188,175 @@ def runCommand(command, args):
                 "Provided unknown arguments: [%s]!" % (", ".join(bad)),
             )
 
-    # -- process extra arguments
-    sessions = None
-    if "sessions" in eargs:
-        if command != "run_recipe" and not any(
-            [e in gcom.commands[command]["args"] for e in ["sourcefolder", "folder"]]
+        # a batch file is not a request to run over its sessions -- it is also
+        # where the header comes from, and every command takes that -- so only
+        # a session list a command cannot act on is an error
+        if "sessions" in eargs and not any(
+            [qx_command.has_arg(e) for e in ["sourcefolder", "folder"]]
         ):
             raise ge.CommandError(
                 "gmri",
                 "Incompatible command",
                 "Command %s can not be run on multiple sessions!" % (command),
             )
-        if folders["sessionsfolder"] is None:
-            folders["sessionsfolder"] = "."
 
-        sessions_param = eargs["sessions"]
-        sessions, _ = gc.get_sessions_list(
-            sessions_param,
-            filter=eargs.get("filter"),
-            sessionids=eargs.get("sessionids"),
-            sessionsfolder=folders["sessionsfolder"],
-            verbose=False,
+    # -- the one merged options dictionary every dispatcher below starts from
+    options, sources, stated = gp.merge_options(command, args, batch_header)
+
+    # -- and, for a python command, which is called with parameters rather than
+    #    with the whole dictionary, the ones it declares that it was not given
+    #    on the command line. Fill, never override: what the user typed reaches
+    #    the command as the user typed it. Nothing is dropped here -- what a
+    #    command cannot take, it was never passed before either.
+    filled, _ = gcs.select_parameters(stated, sources, qx_command)
+    filled = {key: value for key, value in filled.items() if key not in args}
+    bargs = {**bargs, **filled}
+
+    # -- the threads the command may use. `bin/qunex.sh` sets this before it
+    #    hands over, so a run started there arrives with it set and this
+    #    changes nothing; the two are entry points to the same dispatcher and
+    #    have to run a command the same way
+    gcs.set_omp_threads(options)
+
+    # -- the header may have moved the study, so the folders are deduced again.
+    #    From what was actually stated rather than from the merged options: the
+    #    `arglist` defaults would otherwise answer for folders nobody named
+    if batch_header:
+        folders = gc.deduce_folders({**batch_header, **args}, command, timestamp)
+
+    # -- how, and whether, this run is logged
+    log_settings = gl.resolve_logging(
+        command,
+        args,
+        qx_command=qx_command,
+        studyfolder=folders["basefolder"],
+        legacy_skip=gcs.logskip_commands,
+    )
+
+    # the helpers at the bottom of `processing.core` hold no context; this is
+    # the only way the answer reaches them
+    gl.set_active(log_settings)
+
+    # -- one runlog per run, shared by every call this invocation makes; built
+    #    before any dispatch, so every path gets the same one
+    run = gl.RunContext(
+        command,
+        args,
+        log_settings,
+        folders,
+        timestamp=timestamp,
+        tag="long" if options.get("longitudinal") else None,
+    )
+
+    # -- the runlog header, and then what the command is about to be run with
+    #    and where each of it came from. Before the dispatch, so a run that
+    #    does something unexpected says why in its own first lines.
+    #
+    #    A command that writes no log writes no banner either: those are the
+    #    commands whose stdout is read as data by a shell call site, and a
+    #    banner in it would be read as a session list.
+    #    `run_recipe` over no sessions is a dispatcher rather than a command:
+    #    it builds its own run context and writes its own runlog, and a second
+    #    one from here would only duplicate it
+    recipe_runs_itself = (
+        command == "run_recipe" and sessions is None and "scheduler" not in args
+    )
+
+    if log_settings.enabled and not recipe_runs_itself:
+        header = run.header()
+
+        # the header reaches the console on the processing path alone, as it
+        # did when `process.run` built the context and printed it there
+        if processing:
+            print(header)
+
+        # a processing command is handed the merged dictionary and reports it;
+        # every other class is called with parameters, and reports those, so
+        # that the banner and the call agree on how a value is spelled
+        banner = gcs.report_parameters(
+            qx_command, options if processing else {**options, **stated}, sources
         )
 
-    logname = eargs.get("logname")
+        # what an unset took out never enters the options, so the table above
+        # reports what applied and this reports what did not. Named rather than
+        # counted, because a pattern is not a list: `hcp_*` removes what this
+        # study's header happens to state today
+        banner += gcs.report_unset(unset_from_header, options)
+
+        print(banner)
+        run.write(banner)
+
+    # -- is this a processing command?
+    if processing:
+        gp.run(qx_command, args, sessions, options, sources, run)
+        return
+
+    # -- is this a matlab or a bash command?
+    if qx_command.language in ["matlab", "bash"]:
+        cargs = {**args, **filled}
+
+        if "scheduler" in args:
+            # the job is submitted, not run: what it did is for the run on the
+            # node to report, so there is no record to write here. A bash
+            # command is scheduled per session, as `bin/qunex.sh` scheduled it
+            # (one submission inside its per session loop)
+            gs.run_through_scheduler(
+                command,
+                sessions=sessions if qx_command.language == "bash" else None,
+                args=args,
+                parsessions=int(args.get("parsessions", 1)),
+                run=run,
+            )
+            return
+
+        if qx_command.language == "matlab":
+            codes = [(command, gm.run(qx_command, cargs, run=run))]
+        else:
+            codes = [
+                ("%s: %s" % (command, sid) if sid else command,
+                 gb.run(qx_command, cargs, run=run, session=sid))
+                for sid in _bash_sessions(qx_command, sessions, cargs)
+            ]
+
+        # the record a parent asked for. The exit code was the only thing
+        # these paths reported and it reached the console alone, so a
+        # matlab or bash step of a recipe had no status at all
+        run.write_status(
+            [
+                (
+                    name,
+                    "completed" if not code else "failed with exit code %s" % code,
+                    1 if code else 0,
+                )
+                for name, code in codes
+            ]
+        )
+
+        # and, as everywhere else, a command that failed fails the run.
+        # `bin/qunex.sh` exited 1 for these (`qunex_failed`); this path
+        # returned 0 whatever the script did
+        if any(code for _, code in codes):
+            raise ge.CommandFailed(
+                command,
+                "The command did not complete successfully",
+                "Please check the logs in %s" % (run.logfolder),
+            )
+        return
+
+    # -- any other (unsupported) language
+    if qx_command.language != "python":
+        print(f"ERROR: Commands in {qx_command.language} are not yet supported through gmri command line interface. Please see QuNex documentation for usage instructions.")
+        sys.exit(1)
+
+    # -- continue with regular python command
+
+    # -- a command runs over the sessions only when the dispatcher has a way to
+    #    hand it one: it either takes a session's folder, or it forwards the
+    #    run's parameters on (`eargs`) and fans out itself. Everything else is
+    #    called once, with the batch file's header filled in -- a command that
+    #    declares `batchfile` resolves the sessions on its own
+    if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder", "eargs"]):
+        sessions = None
 
     calls = []
 
@@ -153,13 +375,12 @@ def runCommand(command, args):
                     all_sessions.append(session["session"])
 
             if "scheduler" in eargs:
-                gs.runThroughScheduler(
+                gs.run_through_scheduler(
                     command,
                     sessions=sessions,
                     args=args,
                     parsessions=parsessions,
-                    logfolder=folders["logfolder"],
-                    logname=logname,
+                    run=run,
                 )
 
             else:
@@ -173,17 +394,18 @@ def runCommand(command, args):
                     slist = [
                         all_sessions.pop(0) for e in range(parsessions) if all_sessions
                     ]
-                    recipe_args["sessionids"] = ",".join(slist)
+                    recipe_args["sessions"] = ",".join(slist)
 
                     # pass all sessions if in slurm array
                     if "SLURM_ARRAY_TASK_ID" in os.environ:
-                        recipe_args["sessionids"] = (",").join(untouched_all_sessions)
+                        recipe_args["sessions"] = (",").join(untouched_all_sessions)
 
                     # copy recipe args to eargs
                     run_recipe_kwargs = [
                         "recipe_file",
                         "recipe",
                         "steps",
+                        "startwith",
                         "xnat",
                         "logfolder",
                         "verbose",
@@ -200,121 +422,88 @@ def runCommand(command, args):
 
                     recipe_args["eargs"] = recipe_eargs
 
+                    # the recipe builds its own RunContext from these -- the
+                    # recipe file can move the study -- but every parallel
+                    # recipe of one invocation logs into one folder
+                    recipe_args["log_settings"] = log_settings
+                    if not recipe_args.get("logfolder"):
+                        recipe_args["logfolder"] = run.logfolder
+
                     # disable within recipe parallelism
                     recipe_eargs["parsessions"] = 1
 
                     calls.append(
                         {
                             "name": "run_recipe_%d" % (c),
-                            "function": gcom.commands[command]["com"],
+                            "function": qx_command.load_callable(),
                             "args": recipe_args,
-                            "logfile": None,
                         }
                     )
 
         else:
             # -- if using a scheduler schedule the whole run_recipe commmand
             if "scheduler" in eargs:
-                run_recipe_folder = folders["logfolder"]
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                run_recipe_folder = os.path.join(run_recipe_folder, "batchlogs")
-
-                # create folder if it does not exist
-                if not os.path.isdir(run_recipe_folder):
-                    os.makedirs(run_recipe_folder)
-
-                logstamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-                logname = os.path.join(run_recipe_folder, "Log-%s-%s.log") % (
-                    "run_recipe",
-                    logstamp,
-                )
-
-                gs.runThroughScheduler(
-                    command, args=args, logfolder=run_recipe_folder, logname=logname
-                )
+                gs.run_through_scheduler(command, args=args, run=run)
 
             else:
                 bargs["eargs"] = eargs
-                gcom.commands[command]["com"](**bargs)
-                print("\n---> Successful completion of task")
+                bargs["log_settings"] = log_settings
+                qx_commands.get(command).load_callable()(**bargs)
+                print(f"\n---> Successful completion of task at {datetime.now()}")
 
     # -- all other commands
     else:
         parsessions = int(eargs.get("parsessions", "1"))
 
-        # if we have sessions and sessionids filter and remove one
-        if "sessions" in args and "sessionids" in args:
-            args_filter = None
-            if "filter" in args:
-                args_filter = args["filter"]
-
-            sessions_dict, _ = gc.get_sessions_list(
-                args["sessions"],
-                filter=args_filter,
-                sessionids=args["sessionids"],
-                verbose=False,
-            )
-
-            sessions_list = []
-            for session in sessions_dict:
-                if "id" in session:
-                    sessions_list.append(session["id"])
-                elif "session" in session:
-                    sessions_list.append(session["session"])
-
-            # store the batchfile
-            if ".txt" in args["sessions"]:
-                args["batchfile"] = args["sessions"]
-            args["sessions"] = ",".join(sessions_list)
-
-            del args["sessionids"]
-
         # -- are we using a scheduler
         if "scheduler" in eargs:
-            gs.runThroughScheduler(
+            gs.run_through_scheduler(
                 command,
                 sessions=sessions,
                 args=args,
                 parsessions=parsessions,
-                logfolder=folders["logfolder"],
-                logname=logname,
+                run=run,
             )
 
         # -- a basic call
         elif sessions is None:
-            # logfolder
-            if not folders["logfolder"]:
-                folders["logfolder"] = "."
+            cargs = {**args, **filled}
 
-                # createstudy exception
-                if command == "create_study" and "studyfolder" in args:
-                    folders["logfolder"] = args["studyfolder"] + "/processing/logs"
-                elif command == "create_study":
-                    folders["logfolder"] = "./processing/logs"
-
-            suffix = ""
-            if "sessionids" in args:
-                suffix = "_" + args["sessionids"]
-
-            logfile = os.path.join(
-                folders["logfolder"], "comlogs", "%s%s.log" % (command, suffix)
-            )
-            # run without log for exceptions
-            # remove logs for exceptions
-            if command in gcs.logskip_commands:
-                # remove non-command args
-                args = {k: v for k, v in args.items() if k in gcom.commands[command]["args"]}
+            # commands that are not logged run bare, without a comlog
+            if not log_settings.enabled:
+                # drop the run-level parameters the command itself does not take
+                callable = qx_commands.get(command).load_callable()
+                gc._drop_run_parameters(callable, cargs)
                 # execute
-                gcom.commands[command]["com"](**args)
+                callable(**cargs)
             # run with log
             else:
-                _, result, _, _ = gc.runWithLog(
-                    gcom.commands[command]["com"], args=args, logfile=logfile
+                outcome = gc.run_with_log(
+                    qx_commands.get(command).load_callable(),
+                    args=cargs,
+                    run=run,
+                    tags=[command, args.get("sessions")],
                 )
+
+                # and, when a parent process asked for it, what this call did
+                # as data. The sessions loop below and `gp.run` both write
+                # theirs; a single utility call wrote none, so every utility
+                # step of a recipe was reported as "no status reported" --
+                # which is also what the step's caller has instead of an exit
+                # code once the call is one of several in a recipe
+                run.write_status([(command, _call_summary(outcome), outcome.failed)])
+
+                # a failed command exits non-zero, the way the parallel path
+                # below already does: `bin/qunex.sh` returns gmri's status
+                # verbatim, so this is how a shell, a scheduler job or CI
+                # learns the command did not do what it was asked
+                if outcome.failed:
+                    raise ge.CommandFailed(
+                        command,
+                        "The command did not complete successfully",
+                        "Please check the log in %s"
+                        % (outcome.comlog or run.logfolder),
+                    )
 
         # -- sessions loop
         else:
@@ -322,27 +511,22 @@ def runCommand(command, args):
                 targs = dict(bargs)
                 name = command + ": " + session["id"]
                 sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
-                if folders["logfolder"]:
-                    logfile = os.path.join(
-                        folders["logfolder"],
-                        "comlogs",
-                        "%s_%s.log" % (command, session["id"]),
-                    )
                 for targ in ["sourcefolder", "folder"]:
-                    if targ in gcom.commands[command]["args"]:
+                    if qx_command.has_arg(targ):
                         targs[targ] = sessionsfolder
 
                 calls.append(
                     {
                         "name": name,
-                        "function": gcom.commands[command]["com"],
+                        "function": qx_command.load_callable(),
                         "args": targs,
-                        "logfile": logfile,
+                        "tags": [command, session["id"]],
                     }
                 )
 
     # -- Have we set up calls to run in parallel?
     if calls:
+
         callInfo = "Running %s" % (command)
         callInfo += "\n" + "".join(["=" for e in range(len(callInfo))])
         print(callInfo)
@@ -351,81 +535,92 @@ def runCommand(command, args):
             "\n---> Running %s through %d sessions in parallel" % (command, parsessions)
         )
 
-        results = gc.runInParallel(calls, cores=parsessions, prepend="     ... ")
+        results = gc.run_in_parallel(
+            calls, cores=parsessions, prepend="     ... ", run=run
+        )
 
-        ok = True
-        print("\n---> Final report for command", command)
-        results.sort(key=lambda x: x[0])
-        for name, result, targetLog, prepend in results:
-            if result:
-                ok = False
-            else:
-                result = "completed"
-            if targetLog:
-                print("%s %s %s" % (prepend, name, result))
-            else:
-                print("%s %s %s [log: %s]" % (prepend, name, result, targetLog))
-        if ok:
-            print("\n---> Successful completion of task")
+        # the same digest a processing command produces, from the same method:
+        # the results are adapted to the (id, summary, failed) contract, with
+        # the comlog path folded into the summary. `failed` comes from
+        # run_with_log, which counts a recorded error as well as a raise; this
+        # path is deleted when utility commands that run over sessions become
+        # processing commands and go through `gp.run`.
+        stati = [
+            (outcome.name, _call_summary(outcome), outcome.failed)
+            for outcome in sorted(results, key=lambda outcome: outcome.name)
+        ]
+        run.final_report(stati)
+        run.write_status(stati)
+
+        # `failed is None` is a call that did not complete -- a worker that
+        # died -- and it fails the run as squarely as a call that reported a
+        # failure does
+        if any(failed is None or failed for _, _, failed in stati):
+            raise ge.CommandFailed(
+                command,
+                "Not all tasks completed fully",
+                "Please check the logs in %s" % (run.logfolder),
+            )
+
+
+def print_bash_help(cmd):
+    # Print the command's usage() heredoc, i.e. the exact text the author wrote
+    # (this is the same text the registry parsed the doc from). Mirrors the
+    # python path, which prints the raw docstring.
+    qunexpath = os.environ.get("QUNEXPATH", "").strip()
+    script = Path(qunexpath) / "bash" / cmd.path if qunexpath else Path(cmd.path)
+    doc = None
+    try:
+        from qx_registry_build import _bash_usage_heredoc
+        doc = _bash_usage_heredoc(script.read_text(encoding="utf-8"))
+    except Exception:
+        doc = None
+
+    if doc:
+        print("\nqunex", doc.strip(), "\n")
+        return
+
+    # fallback: reconstruct from the registry fields
+    print(f"\nqunex {cmd.call or cmd.name}\n")
+    if cmd.description:
+        print(f"{cmd.description}\n")
+    for o in cmd.options:
+        print(f"  --{o.name}: {o.description or ''}")
+    print()
 
 
 def print_help(com):
+
     # --- print list of available commands, required for qunex.sh checks
     if com == "available":
-        available_commands = []
-        # -> gmri commands
-        for c, _ in gcom.commands.items():
-            available_commands.append(c)
-        # -> processing commands
-        for l in gp.calist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> longitudinal processing commands
-        for l in gp.lalist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> multi-sesssion processing commands
-        for l in gp.malist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> simple processing commands
-        for l in gp.salist:
-            if len(l):
-                available_commands.append(l[0])
-        # -> matlab wrapped commands
-        for l in gm.functions.keys():
-            available_commands.append(l)
-
-        # print the commands
-        available_commands.sort()
+        available_commands = qx_commands.gmri_commands()        
         print(" ".join(available_commands))
 
     # --- print all commands
     elif com in ["a", "all", "allcommands"]:
-        for full_name, description, _ in gac.all_qunex_commands:
-            print("- " + full_name.split(".")[-1] + ": " + description)
+        for name, path, description, _ in qx_commands.to_qunex_list():
+            print(f"- {name}: {description}")
 
-    # --- print help for gmri local commands
-    elif com in gcom.commands:
-        print("\nqunex", gcom.commands[com]["com"].__doc__.strip(), "\n")
+    else: 
+        cmd = qx_commands.get(com)
+        # --- print help for python commands
+        if cmd and cmd.language == "python":
+            print("\nqunex", qx_commands.load_callable(com).__doc__.strip(), "\n")
 
-    # --- print help for processing actions
-    elif com in gp.allactions:
-        print("\nqunex", gp.allactions[com].__doc__.strip(), "\n")
+        # --- print help for matlab functions
+        elif cmd and cmd.language == "matlab":
+            gm.help(com)
 
-    # --- print help for matlab functions
-    elif com in gm.functions:
-        gm.help(com)
+        # --- print help for bash commands
+        elif cmd and cmd.language == "bash":
+            print_bash_help(cmd)
 
-    # --- print error
-    else:
-        print(
-            "\nERROR: %s ---> Requested command is not supported. Refer to general QuNex usage.\n"
-            % com
-        )
+        else:
+            print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 
 
 def main(args=None):
+
     if args is None:
         args = sys.argv[1:]
 
@@ -439,6 +634,13 @@ def main(args=None):
     opts = dict()
 
     try:
+        if comm == 'build_qx_registry':
+            print("Building command registry...")
+            from qx_registry_build import build_qx_registry
+            build_qx_registry()
+            print("Command registry successfully built!")
+            sys.exit(0)      
+
         help_request = False
         if comm in ["a", "A", "allcommands", "available"]:
             help_request = True
@@ -465,25 +667,33 @@ def main(args=None):
                 comm = gcs.check_deprecated_commands(comm)
                 print_help(comm)
             except:
-                print(
-                    "ERROR: '%s' is not a recognized command!\n-----------------------"
-                    % (comm[1:])
-                )
+                print(f"ERROR: '{comm}' is not a recognized command!\n-----------------------")
                 print(help)
                 raise
         else:
             runCommand(comm, opts)
 
+    # A parent that asked for a status record gets one however this ends. The
+    # run writes its own when it gets far enough to build one, and this fills
+    # in for the runs that do not: a command that raised before its loop, a
+    # worker that never came back, a name that is not a command. Without it
+    # `run_recipe` reported such a step as "no status reported" -- the step
+    # that failed hardest being the one it could say least about. A record
+    # already written is kept: `write_failure_status` no-ops after one.
     except ge.CommandNull as e:
-        print(ge.reportCommandNull(comm, e))
+        # nothing to do is not a failure, and the record says so
+        gl.write_failure_status(opts, comm, e, failed=0)
+        print(ge.report_command_null(comm, e))
         print()
         sys.exit(0)
     except ge.CommandFailed as e:
-        print(ge.reportCommandFailed(comm, e))
+        gl.write_failure_status(opts, comm, e)
+        print(ge.report_command_failed(comm, e))
         print()
         sys.exit(1)
     except ge.CommandError as e:
-        print(ge.reportCommandError(comm, e))
+        gl.write_failure_status(opts, comm, e)
+        print(ge.report_command_error(comm, e))
         print(
             "\nThe call received was: \n(please note that when run through scheduler, all possible parameters, \neven non relevant ones are passed) \n\nqunex %s "
             % (" \\\n    ".join(oargs))
@@ -494,6 +704,7 @@ def main(args=None):
         )
         sys.exit(1)
     except ValueError as e:
+        gl.write_failure_status(opts, comm, e)
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\nERROR: Execution of qunex command %s failed!"
             % (comm)
@@ -505,8 +716,15 @@ def main(args=None):
         )
         raise
     except SystemExit as e:
+        # the paths that exit rather than raise -- an unrecognised command, an
+        # unsupported language -- and which a recipe reaches by way of a typo
+        if e.code:
+            gl.write_failure_status(opts, comm, "exited with status %s" % e.code)
         sys.exit(e)
     except:
+        # the clause stays bare: it is what keeps a KeyboardInterrupt from
+        # being swallowed here, so the exception is read rather than bound
+        gl.write_failure_status(opts, comm, sys.exc_info()[1])
         print(
             "\n--------------------------------- QuNex failed ---------------------------------\n\nERROR: Execution of command `%s` failed!"
             % (comm)

@@ -2,8 +2,11 @@ function [] = stats_compute_behavioral_correlations(imgfile, datafile, target)
 
 %``stats_compute_behavioral_correlations(imgfile, datafile, target)``
 %
-%   Computes correlations between given images and provided data
-%   and outputs resulting images per each behavioral variable.
+%   Compute correlations between given images and provided data
+%   and output resulting images per each behavioral variable.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --imgfile (str):

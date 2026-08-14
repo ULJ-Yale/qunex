@@ -2,7 +2,10 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 
 %``stats_ttest_dependent(filea, fileb, target, output, exclude, verbose)``
 %
-%   Computes t-test of differences between two dependent groups.
+%   Compute t-test of differences between two dependent groups.
+%
+%   .. qx_command:
+%       type: matlab
 %
 %   Parameters:
 %       --filea (str):
@@ -26,7 +29,7 @@ function [] = stats_ttest_dependent(filea, fileb, target, output, exclude, verbo
 %           - 'p' ... p-value for each voxel
 %           - 'z' ... Z-score for each voxel.
 %
-%       --exclude (vector, default ''):
+%       --exclude (numeric, default ''):
 %           Values to be excluded from computation.
 %
 %       --verbose (bool, default false):

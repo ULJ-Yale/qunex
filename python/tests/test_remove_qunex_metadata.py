@@ -8,15 +8,9 @@ Test suite for remove_qunex_metadata function.
 import sys
 import os
 import tempfile
-import shutil
 import struct
 
-# Add the parent directory to the path to import qx_utilities
-parent_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, parent_dir)
-sys.path.insert(0, os.path.join(parent_dir, 'qx_utilities'))
-
-from general.img import niftihdr, remove_qunex_metadata, print_nifti_metadata
+from qx_utilities.general.img import niftihdr, remove_qunex_metadata, print_nifti_metadata
 
 
 def create_test_file(filename, add_cifti=False, add_qunex=False):
@@ -51,7 +45,7 @@ def create_test_file(filename, add_cifti=False, add_qunex=False):
     # Write the file manually with proper metadata extensions
     with open(filename, 'wb') as f:
         # Write header (348 bytes + 4 byte extension flag = 352 bytes)
-        header_bytes = hdr.packHdr()
+        header_bytes = hdr.pack_hdr()
         f.write(header_bytes)
 
         # Write metadata blocks
@@ -77,7 +71,7 @@ def test_no_metadata():
         # Try to remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
 
-        assert result == False, "Should return False when no metadata exists"
+        assert result is False, "Should return False when no metadata exists"
         print("\n✓ Test passed: Correctly handled file with no metadata\n")
 
     finally:
@@ -101,7 +95,7 @@ def test_no_qunex_metadata():
         # Try to remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
 
-        assert result == False, "Should return False when no QuNex metadata exists"
+        assert result is False, "Should return False when no QuNex metadata exists"
 
         # Verify CIFTI metadata is still there
         hdr = niftihdr(tmpfile)
@@ -136,7 +130,7 @@ def test_remove_qunex_only():
         # Remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
 
-        assert result == True, "Should return True when QuNex metadata removed"
+        assert result is True, "Should return True when QuNex metadata removed"
 
         # Verify it's gone
         hdr_after = niftihdr(tmpfile)
@@ -173,7 +167,7 @@ def test_remove_qunex_keep_cifti():
         # Remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
 
-        assert result == True, "Should return True when QuNex metadata removed"
+        assert result is True, "Should return True when QuNex metadata removed"
 
         # Verify QuNex is gone but CIFTI remains
         hdr_after = niftihdr(tmpfile)
@@ -214,7 +208,7 @@ def test_remove_with_output_file():
         # Remove QuNex metadata to new file
         result = remove_qunex_metadata(tmpfile, outfile)
 
-        assert result == True, "Should return True when QuNex metadata removed"
+        assert result is True, "Should return True when QuNex metadata removed"
 
         # Verify original file is unchanged
         hdr_original = niftihdr(tmpfile)
@@ -278,7 +272,7 @@ def test_multiple_qunex_blocks():
 
         # Write file manually with metadata extensions
         with open(tmpfile, 'wb') as f:
-            header_bytes = hdr.packHdr()
+            header_bytes = hdr.pack_hdr()
             f.write(header_bytes)
 
             for msize, mcode, mdata in hdr.meta:
@@ -292,13 +286,13 @@ def test_multiple_qunex_blocks():
         for idx, (ms, mc, md) in enumerate(hdr_before.meta):
             print(f"  Block {idx+1}: code={mc}, size={ms}")
 
-        # This test might find fewer blocks if packHdr doesn't write them all correctly
+        # This test might find fewer blocks if pack_hdr doesn't write them all correctly
         # Let's just verify we can remove QuNex blocks that exist
         qunex_count = sum(1 for _, mc, _ in hdr_before.meta if mc == 64)
         print(f"Found {qunex_count} QuNex block(s)")
 
         if qunex_count == 0:
-            print("\n⚠ Test skipped: No QuNex blocks found (packHdr may need investigation)\n")
+            print("\n⚠ Test skipped: No QuNex blocks found (pack_hdr may need investigation)\n")
             return
 
         print("\nBefore removal:")
@@ -307,7 +301,7 @@ def test_multiple_qunex_blocks():
         # Remove QuNex metadata
         result = remove_qunex_metadata(tmpfile)
 
-        assert result == True, "Should return True when QuNex metadata removed"
+        assert result is True, "Should return True when QuNex metadata removed"
 
         # Verify QuNex blocks are gone
         hdr_after = niftihdr(tmpfile)

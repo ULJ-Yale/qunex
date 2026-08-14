@@ -20,9 +20,8 @@ import os.path
 import time
 import re
 
-import general.exceptions as ge
-import general.core as gc
-import general.process as gp
+import qx_utilities.general.exceptions as ge
+from qx_registry import qx_commands
 
 from datetime import datetime
 
@@ -40,201 +39,189 @@ def schedule(
     parelements=1,
 ):
     """
-    ::
+    ``schedule [command=<command string>] [script=<path to script>] settings=<settings string> [replace=<"key:value|key:value" string>] [workdir=<path to working directory>] [environment=<path to environment setup script>] [output=<string specifying how to process output>]``
 
-        schedule [command=<command string>] [script=<path to script>] \\
-                 settings=<settings string> \\
-                 [replace=<"key:value|key:value" string>] \\
-                 [workdir=<path to working directory>] \\
-                 [environment=<path to environment setup script>] \\
-                 [output=<string specifying how to process output>]
+    Schedule the provided command.
 
-    Schedules the provided command.
+    ..  qx_command:
+        type: utility
 
-    INPUTS
-    ======
+    Parameters:
+        --command (str):
+            The command string to be executed by the scheduler.
 
-    Required parameters
-    -------------------
+        --script (str):
+            The path to a script to be executed by the scheduler.
 
-    To run successfully, one of the following has to be provided:
+        --settings (str):
+            A string specifying the scheduler to be used and the additional
+            settings for it.
 
-    --command   The string to be executed. It can be a single command or a
-                complex multiline script.
-    --script    The path to a script to be executed.
+            Settings string should be a comma separated list of parameters. The first
+            parameter has to be the scheduler name (PBS, SLURM or GridEngine), the rest
+            of the parameters are key-value pairs that are to be passed as settings to
+            the scheduler.
 
-    The settings need to be specified by:
+            Example settings strings::
 
-    --settings  A string specifying the scheduler to be used and the additional
-                settings for it.
+                "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
 
-    Settings string should be a comma separated list of parameters. The first
-    parameter has to be the scheduler name (PBS, SLURM or GridEngine), the rest
-    of the parameters are key-value pairs that are to be passed as settings to
-    the scheduler.
+        --replace (str):
+            A string of key-value pairs that specify the specific values
+            to be imputed into the script or command.
 
-    Example settings strings::
+        --workdir (str):
+            A path to the working directory in which the command or
+            script is to be executed.
 
-        "SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+        --environment (str):
+            A path to a script to be executed before all other commands
+            to set up the environment for execution.
 
-    Optional parameters
-    -------------------
+        --output (str):
+            A string specifying whether to return or redirect the
+            standard output and error. See "REDIRECTING OUTPUT" for
+            details
 
-    --replace       A string of key-value pairs that specify the specific values
-                    to be imputed into the script or command.
-    --workdir       A path to the working directory in which the command or
-                    script is to be executed.
-    --environment   A path to a script to be executed before all other commands
-                    to set up the environment for execution.
-    --output        A string specifying whether to return or redirect the
-                    standard output and error. See "REDIRECTING OUTPUT" for
-                    details
-    --bash          Used if any additional commands have to be run in the
-                    compute node before the execution of the QuNex command
-                    itself. Use a semicolon separated list to chain multiple
-                    commands. ['']
+        --bash (str):
+            Used if any additional commands have to be run in the
+            compute node before the execution of the QuNex command
+            itself. Use a semicolon separated list to chain multiple
+            commands.
 
-    If the optional parameters are not specified, they will not be used.
+    Notes:
 
-    VALUE EMBEDDING
-    ---------------
+        Schedules the provided command the referenced script to be run by the
+        specified scheduler (PBS, SLURM and GridEngine are currently supported).
 
-    If replace parameter is set, all instances of {{key}} in the command or
-    script will be replaced with the provided value. The key/value pairs need
-    to be separated by the pipe character, whereas key and value need to be
-    separated by a colon. An example replacement string::
+        command, script and settings are required parameters. If the optional
+        parameters are not specified, they will not be used.
 
-        "session:AP23791|folder:/studies/WM/sessions/AP23791"
+        Value substitution in command or script
 
-    REDIRECTING OUTPUT
-    ------------------
+        If replace parameter is set, all instances of {{key}} in the command or
+        script will be replaced with the provided value. The key/value pairs need
+        to be separated by the pipe character, whereas key and value need to be
+        separated by a colon. An example replacement string::
 
-    If no output is specified, the job's standard output and error (stdout,
-    stderr) are left as is and processed by the scheduler, and the result of
-    submitting the job is printed to standard output. Output string can specify
-    four different directives provided by "<key>:<value>" strings separated by
-    pipe:
+            "session:AP23791|folder:/studies/WM/sessions/AP23791"
 
-    - stdout  (specifies a path to a log file that should store standard output
-      of the submitted job.)
-    - stderr  (specified a path to a log file that should store error output
-      of the submitted job.)
-    - both    (specifies a path to a log file that should store joint standard
-      and error outputs of the submitted job.)
-    - return  (specifies whether standard output ('stdout'), error outpout
-      ('stderr'), both ('both') or none ('none') should be returned as
-      a string from the job submission call.)
+        Redirecting output
 
-    Specify "return" value only when schedule is used as a function called from
-    another python script or function to process the result.
+        If no output is specified, the job's standard output and error (stdout,
+        stderr) are left as is and processed by the scheduler, and the result of
+        submitting the job is printed to standard output. Output string can specify
+        four different directives provided by "<key>:<value>" strings separated by
+        pipe:
 
-    Examples
-    ~~~~~~~~
+        - stdout  (specifies a path to a log file that should store standard output
+          of the submitted job.)
+        - stderr  (specified a path to a log file that should store error output
+          of the submitted job.)
+        - both    (specifies a path to a log file that should store joint standard
+          and error outputs of the submitted job.)
+        - return  (specifies whether standard output ('stdout'), error outpout
+          ('stderr'), both ('both') or none ('none') should be returned as
+          a string from the job submission call.)
 
-    ::
+        Specify "return" value only when schedule is used as a function called from
+        another python script or function to process the result.
 
-        "stdout:processing.log"
+        Examples:
 
-    ::
+        ::
 
-        "stdout:processing.output.log|stderr:processing.error.log"
+            "stdout:processing.log"
 
-    ::
+        ::
 
-        "both:processing.log|return:true"
+            "stdout:processing.output.log|stderr:processing.error.log"
 
-    Do not specify error and standard outputs both using --output parameter and
-    scheduler specific options within settings string.
+        ::
 
-    SCHEDULER SPECIFICS
-    -------------------
+            "both:processing.log|return:true"
 
-    Each of the supported scheduler systems has a somewhat different way of
-    specifying job parameters. Please see documentation for each of the
-    supported schedulers to provide the correct settings. Below are the
-    information for each of the schedulers on how to specify --settings.
+        Do not specify error and standard outputs both using --output parameter and
+        scheduler specific options within settings string.
 
-    PBS settings
-    ~~~~~~~~~~~~
+        Scheduler specifics:
 
-    PBS uses various flags to specify parameters. Be careful that the settings
-    string includes only comma separated 'key=value' pairs. Scheduler will then
-    do its best to use the right flags. Specifically:
+            Each of the supported scheduler systems has a somewhat different way of
+            specifying job parameters. Please see documentation for each of the
+            supported schedulers to provide the correct settings. Below are the
+            information for each of the schedulers on how to specify --settings.
 
-    Keys: mem, walltime, software, file, procs, pmem, feature, host,
-    naccesspolicy, epilogue, prologue will be submitted using::
+            PBS settings:
 
-        "#PBS -l <key>=<value>"
+                PBS uses various flags to specify parameters. Be careful that the settings
+                string includes only comma separated 'key=value' pairs. Scheduler will then
+                do its best to use the right flags. Specifically:
 
-    Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
+                Keys: mem, walltime, software, file, procs, pmem, feature, host,
+                naccesspolicy, epilogue, prologue will be submitted using::
 
-        "#PBS -<key> <value>"
+                    "#PBS -l <key>=<value>"
 
-    Key: depend will be submitted using::
+                Keys: j, m, o, S, a, A, M, q, t, e, N, l will be submitted using::
 
-        "#PBS -W depend=<value>"
+                    "#PBS -<key> <value>"
 
-    Key: umask will be submitted using::
+                Key: depend will be submitted using::
 
-        "#PBS -W umask=<value>"
+                    "#PBS -W depend=<value>"
 
-    Key: nodes is a special case. It will be submitted as::
+                Key: umask will be submitted using::
 
-        "#PBS -l <value>"
+                    "#PBS -W umask=<value>"
 
-    SLURM settings
-    ~~~~~~~~~~~~~~
+                Key: nodes is a special case. It will be submitted as::
 
-    For SLURM any provided key/value pair will be passed in the form::
+                    "#PBS -l <value>"
 
-        "#SBATCH --<key>=<value>"
+            SLURM settings:
 
-    Some of the possible parameters to set are:
+                For SLURM any provided key/value pair will be passed in the form::
 
-    - partition        (The partition (queue) to use.)
-    - nodes            (Total number of nodes to run on.)
-    - cpus-per-task    (Number of cores per task.)
-    - time             (Maximum wall time DD-HH:MM:SS.)
-    - constraint       (Specific node architecture.)
-    - mem-per-cpu      (Memory requested per CPU in MB.)
-    - mail-user        (Email address to send notifications to.)
-    - mail-type        (On what events to send emails.)
+                    "#SBATCH --<key>=<value>"
 
-    GridEngine settings
-    ~~~~~~~~~~~~~~~~~~~
+                Some of the possible parameters to set are:
 
-    For GridEngine the comma separated list of settings will be unwrapped and
-    each setting will be passed to the scheduler "as is". For example:
+                - partition        (The partition (queue) to use.)
+                - nodes            (Total number of nodes to run on.)
+                - cpus-per-task    (Number of cores per task.)
+                - time             (Maximum wall time DD-HH:MM:SS.)
+                - constraint       (Specific node architecture.)
+                - mem-per-cpu      (Memory requested per CPU in MB.)
+                - mail-user        (Email address to send notifications to.)
+                - mail-type        (On what events to send emails.)
 
-        ---scheduler="GridEngine,N example_job,l h_rt=24:00:00,pe smp 1,l mem_free=32G"
+            GridEngine settings:
 
-    Will be converted to the following GridEngine header:
+                For GridEngine the comma separated list of settings will be unwrapped and
+                each setting will be passed to the scheduler "as is". For example:
 
-        #$ -N example_job
-        #$ -l h_rt=24:00:00
-        #$ -pe smp 1
-        #$ -l mem_free=32G
+                    ---scheduler="GridEngine,N example_job,l h_rt=24:00:00,pe smp 1,l mem_free=32G"
 
-    USE
-    ===
+                Will be converted to the following GridEngine header:
 
-    Schedules the provided command the referenced script to be run by the
-    specified scheduler (PBS, SLURM and GridEngine are currently supported).
+                    #$ -N example_job
+                    #$ -l h_rt=24:00:00
+                    #$ -pe smp 1
+                    #$ -l mem_free=32G
 
-    EXAMPLE USE
-    ===========
+    Examples:
 
-    ::
+        ::
 
-        qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
+            qunex schedule command="bet t1.nii.gz brain.nii.gz" \\
+                           settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week"
 
-    ::
+        ::
 
-        qunex schedule command="bet {{in}} {{out}}" \\
-                       replace="in:t1.nii.gz|out:brain.nii.gz" \\
-                       settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week" \\
-                       workdir="/studies/WM/sessions/AP23791/images/structural"
+            qunex schedule command="bet {{in}} {{out}}" \\
+                           replace="in:t1.nii.gz|out:brain.nii.gz" \\
+                           settings="SLURM,jobname=bet1,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=2500,partition=week" \\
+                           workdir="/studies/WM/sessions/AP23791/images/structural"
     """
 
     # --- check inputs
@@ -288,7 +275,7 @@ def schedule(
 
         comname = settings_dict.pop("comname", "")
         jobnum = settings_dict.pop("jobnum", "")
-    except:
+    except Exception:
         raise ge.CommandError(
             "schedule",
             "Misspecified parameter",
@@ -500,10 +487,27 @@ def schedule(
 #                                                  general scheduler code
 
 
-def runThroughScheduler(
-    command, sessions=None, args=[], parsessions=1, logfolder=None, logname=None
-):
+def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=None):
+    """
+    Submits `command` to the scheduler, one job per chunk of sessions.
+
+    The submission record -- what was submitted, with which arguments, and
+    which job ids came back -- is printed and appended to the run's runlog.
+    The runlog belongs to the run, not to the scheduler: it already holds the
+    header and whatever the caller wrote before submitting, so it is never
+    opened for writing here. The jobs' own output goes to
+    ``<run.logfolder>/batchlogs``.
+
+    For internal use only.
+    """
     jobs = []
+
+    def record(*parts):
+        """Print a line of the submission record and add it to the runlog."""
+        text = " ".join(str(part) for part in parts)
+        print(text)
+        if run:
+            run.write(text + "\n")
 
     # ---- setup options to pass to each job
     nopt = []
@@ -519,13 +523,7 @@ def runThroughScheduler(
         ]:
             nopt.append((k, v))
 
-    # ---- open log
-    if logname:
-        flog = open(logname, "w")
-    else:
-        flog = None
-
-    gc.printAndLog("---> Running scheduler for command %s" % (command), file=flog)
+    record("---> Running scheduler for command %s" % (command))
 
     # ---- setup scheduler options
     settings = args["scheduler"]
@@ -558,24 +556,22 @@ def runThroughScheduler(
     # ---- setup bash (commands to run inside compute node before the QuNex command)
     bash = args.get("bash", None)
 
-    # --- set logfolder
-    if logfolder is None:
-        logfolder = os.path.abspath(".")
-    else:
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
+    # --- the jobs' own output goes beside the run's other logs
+    logfolder = os.path.join(run.logfolder, "batchlogs") if run else os.path.abspath(".")
+    os.makedirs(logfolder, exist_ok=True)
 
     # ---- construct gmri command
-    cBase = "\ngmri " + command
+    c_base = "\ngmri " + command
 
+    # `nopt` is already free of the scheduler's own parameters; `sessionids`
+    # no longer reaches here, the front door having remapped it
     for k, v in nopt:
-        if k not in ["sessionids", "scheduler"]:
-            cBase += ' --%s="%s"' % (k, v)
+        c_base += ' --%s="%s"' % (k, v)
 
     # ---- if sessions is None
     if sessions is None:
-        gc.printAndLog("\n---> submitting %s" % (command), file=flog)
-        gc.printAndLog(cBase, file=flog)
+        record("\n---> submitting %s" % (command))
+        record(c_base)
 
         if test == "run":
             exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -583,7 +579,7 @@ def runThroughScheduler(
                 logfolder, "%s_%s.%s.log" % (scheduler, command, exectime)
             )
             result, jobid = schedule(
-                command=cBase,
+                command=c_base,
                 settings=settings,
                 workdir=workdir,
                 environment=environment,
@@ -605,13 +601,13 @@ def runThroughScheduler(
         for s in settings_list:
             # parameters with values
             if "=" in s:
-                sSplit = s.split("=", 1)
+                s_split = s.split("=", 1)
 
                 # SLURM job array?
-                if scheduler == "SLURM" and sSplit[0].strip() == "array":
+                if scheduler == "SLURM" and s_split[0].strip() == "array":
                     slurm_array = True
 
-                settings[sSplit[0].strip()] = sSplit[1].strip()
+                settings[s_split[0].strip()] = s_split[1].strip()
             # flags
             else:
                 # SLURM job array?
@@ -625,12 +621,13 @@ def runThroughScheduler(
                     settings[s.strip()] = None
 
         # only allow HCP MPP commands with job array
+        qx_command = command.split(" ")[0]
         if slurm_array:
-            qx_command = command.split(" ")[0]
 
             array_commands = [
                 "hcp_pre_freesurfer",
                 "hcp_freesurfer",
+                "hcp_nhp_freesurfer",
                 "hcp_post_freesurfer",
                 "hcp_fmri_volume",
                 "hcp_fmri_surface",
@@ -639,7 +636,7 @@ def runThroughScheduler(
             if qx_command not in array_commands:
                 raise ge.CommandError(
                     qx_command,
-                    "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.",
+                    "SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines: hcp_pre_freesurfer, hcp_freesurfer, hcp_nhp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume and hcp_fmri_surface.",
                 )
 
         settings["jobname"] = settings.get("jobname", command)
@@ -662,8 +659,9 @@ def runThroughScheduler(
         if chunks < parjobs:
             parjobs = chunks
 
-        # do not create multiple jobs if running a multi-session command
-        if command in gp.mactions or command in gp.lactions:
+        # do not create multiple jobs if running a multi-session command (registered commands only)
+        sched_command = qx_commands.get(qx_command)
+        if sched_command and "processing.study" in sched_command.type:
             parjobs = 1
 
         # init queues
@@ -694,48 +692,49 @@ def runThroughScheduler(
             # increase start index
             start = start + chunk_size
 
-        # print out details
-        print(
+        # report how the sessions were divided among the jobs
+        record(
             "\n---> QuNex will run the command over %s sessions. It will utilize:\n"
             % n_sessions
         )
-        print("    Scheduled jobs: %s " % parjobs)
-        print("    Maximum sessions run in parallel for a job: %s." % parsessions)
-        print("    Maximum elements run in parallel for a session: %s." % parelements)
-        print(
+        record("    Scheduled jobs: %s " % parjobs)
+        record("    Maximum sessions run in parallel for a job: %s." % parsessions)
+        record("    Maximum elements run in parallel for a session: %s." % parelements)
+        record(
             "    Up to %s processes will be utilized for a job.\n"
             % (parelements * parsessions)
         )
 
         if slurm_array:
-            print("    Using SLURM job array over sessions: %s" % sessionids_array[0])
+            record("    Using SLURM job array over sessions: %s" % sessionids_array[0])
         else:
             for i in range(0, parjobs):
-                print(
+                record(
                     "    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i])
                 )
 
         if test == "run":
             for i in range(parjobs):
-                # ---- set sessionids
-                cStr = cBase + ' --sessionids="%s"' % sessionids_array[i]
+                # ---- set the sessions this job runs; the later value wins over
+                #      the one c_base carries
+                c_str = c_base + ' --sessions="%s"' % sessionids_array[i]
 
                 # ---- set sheduler settings
                 if parjobs > 1:
                     settings["jobnum"] = str(i)
                 if scheduler != "GridEngine":
-                    sString = (
+                    s_string = (
                         scheduler
                         + ","
                         + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
                     )
                 else:
-                    sString = scheduler
+                    s_string = scheduler
                     for k, v in settings.items():
                         if v:
-                            sString = "%s,%s" % (sString, k + "=" + v)
+                            s_string = "%s,%s" % (s_string, k + "=" + v)
                         else:
-                            sString = "%s,%s" % (sString, k)
+                            s_string = "%s,%s" % (s_string, k)
 
                 exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
@@ -753,12 +752,12 @@ def runThroughScheduler(
 
                 jobname = "%s_#%02d" % (command, i)
 
-                gc.printAndLog("\n---> submitting %s" % (jobname), file=flog)
-                gc.printAndLog(cStr, file=flog)
+                record("\n---> submitting %s" % (jobname))
+                record(c_str)
 
                 result, jobid = schedule(
-                    command=cStr,
-                    settings=sString,
+                    command=c_str,
+                    settings=s_string,
                     workdir=workdir,
                     environment=environment,
                     output="both:%s|return:both" % (logfile),
@@ -768,16 +767,12 @@ def runThroughScheduler(
                 )
                 jobs.append((jobid, jobname))
 
-                gc.printAndLog("...\n", result, file=flog)
+                record("...\n", result)
 
                 time.sleep(sleeptime)
 
     # --- print report
     if jobs:
-        gc.printAndLog("\n---> Submitted jobs", file=flog)
+        record("\n---> Submitted jobs")
         for jobid, jobname in jobs:
-            gc.printAndLog("     %s -> %s" % (jobid, jobname), file=flog)
-
-    # --- close log if specified
-    if flog:
-        flog.close()
+            record("     %s -> %s" % (jobid, jobname))

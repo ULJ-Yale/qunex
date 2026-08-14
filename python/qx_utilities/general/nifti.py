@@ -18,35 +18,37 @@ implemented here are:
 These functions are primarily intended for internal use by other gmri commands.
 """
 
-"""
-Created by Grega Repovs on 2013-04-08.
-Copyright (c) Grega Repovs. All rights reserved.
-"""
+# Created by Grega Repovs on 2013-04-08.
+# Copyright (c) Grega Repovs. All rights reserved.
 
 import numpy as np
 import gzip
 
-import general.img as gi
-import general.qximg as qxi
+import qx_utilities.general.img as gi
+import qx_utilities.general.qximg as qxi
+
 
 def fz2zf(inf, outf=None):
     """
     ``fz2zf inf=<input_image> [outf=<output_image>]``
 
-    Converts the xyfz order of data to xyzf (needed for Philips functionals, 
-    DTIs, ...).
+    Convert the xyfz order of data to xyzf.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --inf       input image filename to be shuffled
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+    Parameters:
+        --inf (str):
+            Input image filename to be shuffled.
+
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
+
     """
 
     # ---> check data format
 
-    sform = gi.getImgFormat(inf)
+    sform = gi.get_img_format(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -55,13 +57,13 @@ def fz2zf(inf, outf=None):
     # ---> read the header info
 
     nihdr = gi.niftihdr()
-    nihdr.unpackHdr(sf)
-    dataType = np.dtype(nihdr.e + nihdr.dType)
+    nihdr.unpack_hdr(sf)
+    data_type = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    image = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=data_type)
     sf.close()
     image.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
 
@@ -72,7 +74,7 @@ def fz2zf(inf, outf=None):
     if outf is None:
         outf = inf
 
-    tform = gi.getImgFormat(outf)
+    tform = gi.get_img_format(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -80,46 +82,50 @@ def fz2zf(inf, outf=None):
 
     # ---> save image data
 
-    tf.write(nihdr.packHdr())
-    tf.write(out.astype(dataType).tostring())
+    tf.write(nihdr.pack_hdr())
+    tf.write(out.astype(data_type).tostring())
     tf.close
 
-#
+
 def reslice(inf, slices, outf=None):
     """
     ``reslice inf=<input_image> slices=<slices_per_volume> [outf=<output_image>]``
 
-    Removes extra slices for interrupted BOLD sequences.
+    Remove extra slices for interrupted BOLD sequences.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --inf         input image filename to be reordered.
-    --slices      number of slices per volume.
-    --outf        output image filename. If not provided, it replaces the 
-                  original file.
+    Parameters:
+        --inf (str):
+            Input image filename to be reordered.
 
-    USE
-    ===
+        --slices (int):
+            Number of slices per volume.
 
-    Removes extra slices for interrupted BOLD sequences and creates an image with good
-    frames with data in xyzf order.
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
 
-    WARNING: it assumes ascending interpolated acquisition of slices!
+    Notes:
 
-    EXAMPLE USE
-    ===========
+        Removes extra slices for interrupted BOLD sequences and creates an image with good
+        frames with data in xyzf order.
 
-    ::
-        
-        qunex reslice 07.nii.gz 48
+    Warning:
+        It assumes ascending interpolated acquisition of slices!
+
+    Examples:
+
+        ::
+
+            qunex reslice 07.nii.gz 48
     """
 
     slices = int(slices)
 
     # ---> check data format
 
-    sform = gi.getImgFormat(inf)
+    sform = gi.get_img_format(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -128,13 +134,13 @@ def reslice(inf, slices, outf=None):
     # ---> read the header info
 
     nihdr = gi.niftihdr()
-    nihdr.unpackHdr(sf)
-    dataType = np.dtype(nihdr.e + nihdr.dType)
+    nihdr.unpack_hdr(sf)
+    data_type = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    image = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=data_type)
     sf.close()
     image.shape = (nihdr.sizez, nihdr.frames, nihdr.sizey, nihdr.sizex)
 
@@ -156,7 +162,6 @@ def reslice(inf, slices, outf=None):
 
     # image = np.delete(image, indeces, 0)
 
-
     # ---> recompute the size
 
     nihdr.sizez  = slices
@@ -173,7 +178,7 @@ def reslice(inf, slices, outf=None):
     if outf is None:
         outf = inf
 
-    tform = gi.getImgFormat(outf)
+    tform = gi.get_img_format(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -181,27 +186,31 @@ def reslice(inf, slices, outf=None):
 
     # ---> save image data
 
-    tf.write(nihdr.packHdr())
-    tf.write(out.astype(dataType).tostring())
+    tf.write(nihdr.pack_hdr())
+    tf.write(out.astype(data_type).tostring())
     tf.close
+
 
 def reorder(inf, outf=None):
     """
     ``reorder inf=<input_image> [outf=<output_image>]``
 
-    Reorders the slices (y dimension) for images that are upside down.
+    Reorder the slices (y dimension) for images that are upside down.
 
-    INPUTS
-    ======
+    ..  qx_command:
+        type: utility
 
-    --inf       input image filename to be reordered
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+    Parameters:
+        --inf (str):
+            Input image filename to be reordered.
+
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
     """
 
     # ---> check data format
 
-    sform = gi.getImgFormat(inf)
+    sform = gi.get_img_format(inf)
     if sform == '.nii.gz':
         sf = gzip.open(inf, 'r')
     else:
@@ -210,13 +219,13 @@ def reorder(inf, outf=None):
     # ---> read the header info
 
     nihdr = gi.niftihdr()
-    nihdr.unpackHdr(sf)
-    dataType = np.dtype(nihdr.e + nihdr.dType)
+    nihdr.unpack_hdr(sf)
+    data_type = np.dtype(nihdr.e + nihdr.dType)
 
     # ---> read and reshuffle the data
 
     sf.seek(int(nihdr.vox_offset))
-    image = np.fromstring(sf.read(), dtype=dataType)
+    image = np.fromstring(sf.read(), dtype=data_type)
     sf.close()
     image.shape = (nihdr.frames, nihdr.sizez, nihdr.sizey, nihdr.sizex)
 
@@ -227,7 +236,7 @@ def reorder(inf, outf=None):
     if outf is None:
         outf = inf
 
-    tform = gi.getImgFormat(outf)
+    tform = gi.get_img_format(outf)
     if tform == '.nii.gz':
         tf = gzip.open(outf, 'w')
     else:
@@ -235,22 +244,26 @@ def reorder(inf, outf=None):
 
     # ---> save image data
 
-    tf.write(nihdr.packHdr())
-    tf.write(out.astype(dataType).tostring())
+    tf.write(nihdr.pack_hdr())
+    tf.write(out.astype(data_type).tostring())
     tf.close
+
 
 def nifti24dfp(inf, outf=None):
     """
     ``nifti24dfp inf=<input_image> [outf=<output_image>]``
 
-    Converts a NIfTI file to a 4dfp file.
-    
-    INPUTS
-    ======
+    Convert a NIfTI file to a 4dfp file.
 
-    --inf       input image filename to be converted.
-    --outf      output image filename. If not provided, it replaces the original
-                file.
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --inf (str):
+            Input image filename to be converted.
+
+        --outf (str):
+            Output image filename. If not provided, it replaces the original file.
     """
 
     if outf is None:
@@ -258,6 +271,5 @@ def nifti24dfp(inf, outf=None):
 
     # ---> read image
 
-
     image = qxi.qximg(inf)
-    image.save4DFP(outf)
+    image.save_4dfp(outf)

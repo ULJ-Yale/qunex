@@ -1,0 +1,73 @@
+# SPDX-FileCopyrightText: 2026 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+name: tests
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: ruff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # pinned on purpose, a new ruff release adds rules and would otherwise
+      # turn an untouched branch red; bump this deliberately
+      - name: install ruff
+        run: python -m pip install --upgrade "ruff==0.15.12"
+
+      # only python/ is linted, qx_library is a separate repository.
+      # bin/qunex_container is named explicitly: it is python with no .py
+      # extension, so a glob misses it, and it is generated — general/batch_io.py
+      # is spliced into it, and a splice that strands imports halfway down the
+      # file is exactly what linting it here catches
+      - name: ruff check
+        run: ruff check python bin/qunex_container
+
+  pytest:
+    name: pytest
+    runs-on: ubuntu-latest
+    steps:
+      # qx_library is a private sibling repository (../library) that the python
+      # tests do not read, so the submodule is deliberately left unchecked out
+      - uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # everything the suite imports; pandas (qa/core.py) and pymatreader (the
+      # matlab tests) are deliberately left out because nothing that runs here
+      # touches them. matplotlib is in because the movement and fidl figures
+      # are tested, and without it those tests skip themselves and the figures
+      # become the one part of the tree with no coverage here
+      - name: install dependencies
+        run: python -m pip install --upgrade pytest nibabel numpy pydicom pyyaml matplotlib
+
+      # pytest.ini at the repository root sets testpaths and pythonpath.
+      # test_fc_functions.py drives the matlab/octave qx_mri functions against
+      # reference data in the qx_library submodule and is excluded here; the
+      # remaining tests that need external binaries (palm, wb_command) skip
+      # themselves when those are not on PATH.
+      - name: pytest
+        run: pytest --ignore=python/tests/test_fc_functions.py

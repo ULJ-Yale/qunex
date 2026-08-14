@@ -11,12 +11,9 @@
 A collection of parses for qunex file formats
 """
 
-"""
-Created by Lining Pan on 2022-05-19.
-"""
+# Created by Lining Pan on 2022-05-19.
 import re
-import general.exceptions as ge
-
+import qx_utilities.general.exceptions as ge
 
 # compile once but might slow down start up time
 # RE_IMAGE_NUM = re.compile(r"^\d+$")
@@ -31,11 +28,10 @@ RE_TAG_BOLD_NUM = re.compile(r"^bold_num\((\w+)\)$")
 RE_TAG_WITH_VALUE = re.compile(r"^(\w+)\((\w+)\)$")
 
 RE_IMAGE_TYPE_SE_PATTERN = re.compile(r"^SE-FM-PA|SE-FM-AP|SE-FM-LR|SE-FM-RL$")
-RE_IMAGE_TYPE_FM_PATTERN = re.compile(r"^FM-Magnitude|FM-Phase$")
+RE_IMAGE_TYPE_FM_PATTERN = re.compile(r"^FM-Magnitude|FM-Phase|FM-Precomputed$")
 RE_IMAGE_TYPE_RB1COR_PATTERN = re.compile(r"^RB1COR-Head|RB1COR-Body$")
 RE_IMAGE_TYPE_TB1TFL_PATTERN = re.compile(r"^TB1TFL-Magnitude|TB1TFL-Phase$")
 RE_IMAGE_TYPE_BOLD_PATTERN = re.compile(r"^(bold|boldref)(\d*)$")
-
 
 def read_generic_session_file(session_file_path):
     """Parse and return the content of a session file
@@ -145,10 +141,10 @@ def read_mapping_file(mapping_file_path):
     with open(mapping_file_path) as f:
         lines = f.readlines()
         # remove comments
-        lines = [l.split("#")[0] for l in lines]
-        lines = [l.strip() for l in lines]
+        lines = [ln.split("#")[0] for ln in lines]
+        lines = [ln.strip() for ln in lines]
         # remove empty lines
-        lines = [l for l in lines if l]
+        lines = [ln for ln in lines if ln]
 
     # convert to a proper data structure
     try:
@@ -167,8 +163,8 @@ def _read_session_file(session_file_path, session_file_type):
     with open(session_file_path) as f:
         lines = f.readlines()
         # remove comments
-        lines = [l.split("#")[0] for l in lines]
-        lines = [l.strip() for l in lines]
+        lines = [ln.split("#")[0] for ln in lines]
+        lines = [ln.strip() for ln in lines]
 
     # convert to a proper data structure
     try:
@@ -192,8 +188,8 @@ def _parse_session_file_lines(lines, session_file_type):
         "images": {},
         "custom_tags": {},
     }
-    for l in lines:
-        tokens = [e.strip() for e in l.split(":")]
+    for ln in lines:
+        tokens = [e.strip() for e in ln.split(":")]
         if len(tokens) == 1 and tokens[0] == "":
             continue
 
@@ -224,7 +220,7 @@ def _parse_session_file_lines(lines, session_file_type):
             session["images"][img["image_number"]] = img
 
         else:
-            session["custom_tags"][tokens[0]] = l.split(":", 1)[1].strip()
+            session["custom_tags"][tokens[0]] = ln.split(":", 1)[1].strip()
 
     return session
 
@@ -245,20 +241,40 @@ def _parse_mapping_file_lines(lines):
     }
     """
 
-    result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}}}
-    for l in lines:
-        if l == "":
+    result = {"group_rules": {"image_number": {}, "name": {}, "glob": {}, "or": []}}
+    for ln in lines:
+        if ln == "":
             continue
-        tokens = [e.strip() for e in l.split("=>")]
+        tokens = [e.strip() for e in ln.split("=>")]
         if len(tokens) != 2:
             raise ge.SpecFileSyntaxError(error="invalid mapping rule")
 
         tag_tokens = [e.strip() for e in tokens[1].split(":")]
         rule = _parse_image_line_tags(tag_tokens, "mapping:hcp")
 
-        if RE_IMAGE_NUM.match(tokens[0]):
+        if "||" in tokens[0]:
+            # "or" rule: e.g. T1w_HiRes || T1w_LowRes => T1w
+            variants = [alt.strip() for alt in tokens[0].split("||")]
+            if len(variants) < 2:
+                raise ge.SpecFileSyntaxError(
+                    error="'or' rule requires at least two variants separated by ||"
+                )
+            for alt in variants:
+                if not alt:
+                    raise ge.SpecFileSyntaxError(error="empty variant in 'or' rule")
+            result["group_rules"]["or"].append(
+                {
+                    "variants": variants,
+                    "rule": rule,
+                }
+            )
+        elif RE_IMAGE_NUM.match(tokens[0]):
             rule_key = _parse_image_number(tokens[0])
             rule_set = result["group_rules"]["image_number"]
+            if rule_key in rule_set:
+                raise ge.SpecFileSyntaxError(error="duplicated rules")
+            else:
+                rule_set[rule_key] = rule
         else:
             rule_key = tokens[0]
             if "*" in rule_key:
@@ -266,10 +282,10 @@ def _parse_mapping_file_lines(lines):
             else:
                 rule_set = result["group_rules"]["name"]
 
-        if rule_key in rule_set:
-            raise ge.SpecFileSyntaxError(error="duplicated rules")
-        else:
-            rule_set[rule_key] = rule
+            if rule_key in rule_set:
+                raise ge.SpecFileSyntaxError(error="duplicated rules")
+            else:
+                rule_set[rule_key] = rule
 
     _check_fieldmap_multiplicity(result)
 
@@ -281,11 +297,13 @@ def _check_fieldmap_multiplicity(mapping_rules):
     Check if there are multiple FM-Magnitude images and warn the user to correct
     the mapping file.
     """
-    name_dict = mapping_rules['group_rules']['name']
+    name_dict = mapping_rules["group_rules"]["name"]
 
     # Count occurrences of ('FM', 'Magnitude')
     count = sum(
-        1 for item in name_dict.values() if item.get('hcp_image_type') == ('FM', 'Magnitude') and item.get('fm') is None
+        1
+        for item in name_dict.values()
+        if item.get("hcp_image_type") == ("FM", "Magnitude") and item.get("fm") is None
     )
 
     if count > 1:

@@ -14,14 +14,20 @@ usage() {
     cat << EOF
 ``dwi_bedpostx_gpu``
 
-This function runs the FSL bedpostx command, by default it will facilitate
-GPUs to speed the processing.
+Run FSL bedpostx command wile making use of GPUs to speed up the processing.
 
-It explicitly assumes the Human Connectome Project folder structure for
-preprocessing and completed diffusion processing. DWI data is expected to
-be in the following folder::
+..  qx_command:
+    type: processing.session
+    language: bash
 
-    <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+Warning:
+    The command explicitly assumes the Human Connectome Project folder structure 
+    for preprocessing and completed diffusion processing. DWI data is expected to
+    be in the following folder::
+
+        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+
+This can be changed with the --diffusion_folder parameter.
 
 Parameters:
     --sessionsfolder (str):
@@ -29,6 +35,9 @@ Parameters:
 
     --sessions (str):
         Comma separated list of sessions to run.
+
+    --diffusion_folder (str):
+        Path to the diffusion folder.
 
     --fibers (str, default '3'):
         Number of fibres per voxel.
@@ -129,7 +138,7 @@ fi
 #  -- Parse arguments
 # ------------------------------------------------------------------------------
 
-########################################## INPUTS ########################################## 
+########################################## INPUTS ##########################################
 
 # DWI Data and T1w data needed in HCP-style format
 
@@ -171,8 +180,12 @@ get_options() {
     overwrite=`opts_getopt "--overwrite" $@`
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
+    # the documented spelling, and the one qunex passes; --session is what the
+    # shell front end passed and is kept
+    if [ -z "$session" ]; then session=`opts_getopt "--sessions" $@`; fi
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
     nogpu=`opts_getopt "--nogpu" $@`
+    diffusion_folder=`opts_getopt "--diffusion_folder" $@`
 
     # -- Check required parameters
     if [ -z "$sessionsfolder" ]; then echo "Error: sessions folder"; exit 1; fi
@@ -263,7 +276,10 @@ main() {
     get_options $@
 
     # -- Establish global directory paths
-    if [[ ${species} == "macaque" ]]; then
+    if [[ -n ${diffusion_folder} ]]; then
+        # Use the provided diffusion folder
+        bedpostx_folder=${diffusion_folder}.bedpostX
+    elif [[ ${species} == "macaque" ]]; then
         diffusion_folder=${sessionsfolder}/${session}/NHP/dMRI
         bedpostx_folder=${sessionsfolder}/${session}/NHP/dMRI.bedpostX
     else
@@ -302,7 +318,7 @@ main() {
     fi
 
     # -- Gradnon lin
-    # -- Set automatically by default 
+    # -- Set automatically by default
     if [ -z "$gradnonlin" ]; then
         if [ -f "$diffusion_folder"/grad_dev.nii.gz ]; then
             echo ""
@@ -351,7 +367,7 @@ main() {
         exit 0
     else
         echo ""
-        echo "---> bedpostx run not found or incomplete for $session. Something went wrong." 
+        echo "---> bedpostx run not found or incomplete for $session. Something went wrong."
         echo "    Check output: ${bedpostx_folder}"
         echo ""
         echo "ERROR: bedpostx run did not complete successfully"
