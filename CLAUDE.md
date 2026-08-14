@@ -162,8 +162,11 @@ prints it. `general/log/` owns the runlog:
 Ruff is the default Python linter. At the end of Python changes, run and report:
 
 ```bash
-ruff check python
+ruff check python bin/qunex_container
 ```
+
+(`bin/qunex_container` is named explicitly because it is python with no `.py` extension, so
+ruff's own discovery skips it. It is also generated — see **Generated files** below.)
 
 Run tests from the `python` folder (testpaths and pythonpath are configured in `pytest.ini`):
 
@@ -235,6 +238,32 @@ post-change code on the same fixture (in `--test` mode) and require identical no
 logging refactor that the suite alone did not.
 
 Do not fix only issues created by you — fix everything you notice. Fix pre-existing issues as well.
+
+## Generated files
+
+Two files are generated from the source around them and committed alongside it. Rebuild and
+commit both when you touch what they are built from:
+
+```bash
+qunex build_qx_registry     # qx_commands.yaml, from the qx_command docstrings
+qunex build_qx_container    # bin/qunex_container, from general/batch_io.py and VERSION.md
+```
+
+- `qx_commands.yaml` — the command registry. Rebuilding is idempotent: `generated_at` is the one
+  field that moves on every build, and `write_registry_file` keeps the committed timestamp when
+  nothing else changed, so a no-op rebuild leaves no diff.
+- `bin/qunex_container` — the launcher that runs on the login node, outside the container, in the
+  host python. It can not import QuNex, so `qx_container_build.py` splices `general/batch_io.py`
+  into it. The splice writes three things: the `# Version <x> [QIO]` line in the header, from
+  `VERSION.md`; the imports batch_io needs, **merged into the container's own import block** at
+  the top, which is what keeps the file free of E402/F811; and the module body, between the
+  `BEGIN GENERATED`/`END GENERATED` markers. Only that body region is off limits by hand — the
+  import block is ordinary code the command adds to and never prunes, so an import that stops
+  being needed is removed by deleting it there.
+
+`.github/workflows/generated.yml` rebuilds both on every pull request and pushes the result back
+to the branch (a fork's token is read only, so there it reports and fails instead).
+`tests/test_registry_drift.py` and `tests/test_container_drift.py` are the backstop.
 
 ## Multi-language guardrails
 

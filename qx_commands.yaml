@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-13T19:58:07.771583+00:00'
+generated_at: '2026-08-14T09:56:47.360917+00:00'
 source:
     id: core
 commands:
@@ -115,9 +115,10 @@ commands:
     path: qx_container_build.build_qx_container
     language: python
     call: build_qx_container()
-    description: Splice `general/batch_io.py` into the generated region of `bin/qunex_container`. The container can not import
-        QuNex — it runs on the login node, outside the container — so it carries a copy of the batch file parser, and this
-        command is what keeps that copy current. Commit the result, as with `qx_commands.yaml`.
+    description: Splice `general/batch_io.py` into the generated region of `bin/qunex_container` and stamp the container's
+        version line from `VERSION.md`. The container can not import QuNex — it runs on the login node, outside the container
+        — so it carries a copy of the batch file parser, and this command is what keeps that copy current. Commit the result,
+        as with `qx_commands.yaml`.
     type: utility
     args: []
     options: []

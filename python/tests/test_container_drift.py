@@ -15,7 +15,9 @@ disagrees, the same arrangement ``test_registry_drift.py`` has with
 ``qx_commands.yaml``. The fix is always to run ``qunex build_qx_container`` and
 commit the result.
 
-The second test loads the container and exercises the spliced code, which is
+The remaining tests cover the two things the splice writes outside that region —
+the version line in the header and the imports merged into the container's own
+import block — and load the container to exercise the spliced code, which is
 also what proves the region is wired in rather than merely present.
 """
 
@@ -56,12 +58,37 @@ def load_container():
 def test_committed_container_matches_batch_io():
     assert CONTAINER.exists(), f"missing {CONTAINER}"
 
-    rebuilt = qx_container_build.render(CONTAINER.read_text(), BATCH_IO.read_text())
+    rebuilt = qx_container_build.render(
+        CONTAINER.read_text(), BATCH_IO.read_text(), qx_container_build.read_version()
+    )
 
     assert rebuilt == CONTAINER.read_text(), (
-        "the generated region in bin/qunex_container is out of date or has been "
-        "hand edited — run `qunex build_qx_container` and commit."
+        "bin/qunex_container is out of date or has been hand edited — run "
+        "`qunex build_qx_container` and commit."
     )
+
+
+def test_the_container_states_the_suite_version():
+    version = (REPO_ROOT / "VERSION.md").read_text().strip()
+
+    assert f"# Version {version} [{qx_container_build.CODENAME}]" in CONTAINER.read_text()
+
+
+def test_the_spliced_region_carries_no_imports():
+    """
+    The splice moves batch_io's imports into the container's own import block.
+
+    Left where they are they land halfway down the file, which is E402 six times
+    over and F811 for the two the container already imports.
+    """
+    text = CONTAINER.read_text()
+    region = text[text.index(qx_container_build.BEGIN) : text.index(qx_container_build.END)]
+
+    stranded = [
+        line for line in region.split("\n") if line.startswith(("import ", "from "))
+    ]
+
+    assert not stranded, "imports left in the generated region: %s" % stranded
 
 
 def test_the_container_resolves_and_filters(tmp_path):

@@ -9,6 +9,10 @@
 
 from __future__ import division, print_function
 
+# `general/batch_io.py` is spliced in below, and `qunex build_qx_container`
+# merges the imports it needs into this block
+import fnmatch
+import glob
 import math
 import os
 import re
@@ -16,6 +20,8 @@ import shlex
 import subprocess
 import sys
 import time
+from collections import UserList
+from copy import deepcopy
 from datetime import datetime
 
 
@@ -422,14 +428,8 @@ def schedule(
 
 # --- BEGIN GENERATED from general/batch_io.py — do not edit; run `qunex build_qx_container` ---
 # the container runs on a login node with no QuNex on the path, so it carries a
-# copy of the one parser rather than importing it
-
-import fnmatch
-import glob
-import os
-import re
-from collections import UserList
-from copy import deepcopy
+# copy of the one parser rather than importing it. what this needs is imported
+# at the top of the file, with the container's own imports
 
 
 class BatchError(ValueError):
@@ -831,7 +831,9 @@ def _split_sessions(sessions):
     return [e.strip() for e in re.split(r" +|,|\|", sessions.strip()) if e.strip()]
 
 
-def resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False):
+def resolve(
+    batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False
+):
     """
     ``resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False)``
 
@@ -906,6 +908,8 @@ def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
         slist = SessionList([{"id": e} for e in ids])
 
     return slist.filter_by_string(filter)
+
+
 # --- END GENERATED ---
 
 
@@ -1718,9 +1722,9 @@ def main(args=None):
                         ]
                         # pass variables into the Singularity/Apptainer container
                         container_command += "--env "
-                        container_command += ",".join([
-                            f"{p}=${p}" for p in slurm_array_params
-                        ])
+                        container_command += ",".join(
+                            [f"{p}=${p}" for p in slurm_array_params]
+                        )
                         # add trailing space
                         container_command += " "
 

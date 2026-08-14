@@ -427,7 +427,9 @@ def _split_sessions(sessions):
     return [e.strip() for e in re.split(r" +|,|\|", sessions.strip()) if e.strip()]
 
 
-def resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False):
+def resolve(
+    batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False
+):
     """
     ``resolve(batchfile=None, sessions=None, filter=None, sessionsfolder=None, verbose=False)``
 

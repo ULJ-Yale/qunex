@@ -1,0 +1,98 @@
+# SPDX-FileCopyrightText: 2026 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Two files in the tree are generated from the source around them and committed
+# alongside it: qx_commands.yaml, written by `qunex build_qx_registry` from the
+# qx_command docstrings, and bin/qunex_container, which `qunex build_qx_container`
+# splices general/batch_io.py into and stamps with the version from VERSION.md.
+# Forgetting to rebuild one is the common way they go stale, so this rebuilds both
+# on every pull request and pushes the result back to the branch.
+#
+# tests.yml is the backstop: test_registry_drift.py and test_container_drift.py
+# fail on a stale file wherever this workflow can not push, a fork included.
+
+name: generated files
+
+on:
+  pull_request:
+    branches: [master, develop]
+  workflow_dispatch:
+
+# needed to push the rebuilt files back to the branch
+permissions:
+  contents: write
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rebuild:
+    name: rebuild
+    runs-on: ubuntu-latest
+    env:
+      # the branch the rebuild is committed to: the pull request's own branch,
+      # or whichever branch workflow_dispatch was fired on. the merge ref a
+      # pull_request checkout defaults to is detached and can not be pushed
+      HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+      HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+    steps:
+      # qx_library holds no registered commands and nothing the splice reads, so
+      # the submodule is left unchecked out, as in tests.yml
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
+          ref: ${{ github.event.pull_request.head.ref || github.ref_name }}
+          submodules: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # the registry writes yaml; the container splice is stdlib only
+      - name: install dependencies
+        run: python -m pip install --upgrade pyyaml
+
+      # called directly rather than through bin/qunex, which wants the whole
+      # environment sourced; this is what the drift tests do too
+      - name: rebuild qx_commands.yaml
+        env:
+          PYTHONPATH: python
+          QUNEXPATH: ${{ github.workspace }}
+        run: |
+          python -c "import qx_registry_build as b; b.build_qx_registry(build_extensions=False)"
+
+      - name: rebuild bin/qunex_container
+        env:
+          PYTHONPATH: python
+        run: |
+          python -c "import qx_container_build as b; b.build_qx_container()"
+
+      - name: check for drift
+        id: drift
+        run: |
+          if git diff --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "both generated files are up to date"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff --stat
+          fi
+
+      # a pull request from a fork gets a read only token, so there the rebuild
+      # can only report what it found
+      - name: report drift on a fork
+        if: steps.drift.outputs.changed == 'true' && env.HEAD_REPO != github.repository
+        run: |
+          echo "::error::a generated file is out of date. Run 'qunex build_qx_registry' and 'qunex build_qx_container', then commit the result."
+          git --no-pager diff
+          exit 1
+
+      - name: commit the rebuild
+        if: steps.drift.outputs.changed == 'true' && env.HEAD_REPO == github.repository
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit --all --message "chore: rebuild qx_commands.yaml and bin/qunex_container"
+          git push origin "HEAD:${HEAD_REF}"

@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 
-
 """
 Build-time half of the command registry: scans python/matlab/bash source for
 qx_command docstrings and writes qx_commands.yaml. Imported only by the
@@ -42,6 +41,7 @@ _PARAM_HEADER_RE = re.compile(r"^\s*Parameters:\s*$")
 _RET_HEADER_RE = re.compile(r"^\s*Returns:\s*$")
 _SECTION_HEADER_RE = re.compile(r"^\s*[A-Z][A-Za-z0-9_ ]+:\s*$")
 _WS_RE = re.compile(r"\s+")
+_GENERATED_AT_RE = re.compile(r'^\s*"?generated_at"?\s*:.*\n', re.M)
 _ENTRY_RE = re.compile(r"^\s*--(?P<name>[A-Za-z_]\w*)\s*\((?P<spec>[^)]*)\)\s*(?P<colon>:?)\s*$")
 _DEFAULT_RE = re.compile(r"\bdefault\b\s*(?:=|:)?\s*(.+)\s*$", re.IGNORECASE)
 
@@ -926,6 +926,10 @@ def registry_to_obj(commands: List[CommandInfo], *, source_id: str) -> Dict[str,
     }
 
 
+def _drop_generated_at(text: str) -> str:
+    return _GENERATED_AT_RE.sub("", text, count=1)
+
+
 def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
     path = path.resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -933,13 +937,20 @@ def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
     try:
         import yaml  # type: ignore
     except ImportError:
-        path.write_text(json.dumps(obj, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        text = json.dumps(obj, indent=2, ensure_ascii=False) + "\n"
+    else:
+        # only the import falls back to JSON; a serialization error must surface,
+        # not silently write JSON into a .yaml file
+        dumper = getattr(yaml, "CSafeDumper", yaml.SafeDumper)
+        text = yaml.dump(obj, Dumper=dumper, sort_keys=False, allow_unicode=True, width=120, indent=4)
+
+    # generated_at is the one field that differs on every build, so writing it
+    # unconditionally would put a diff in front of everyone who rebuilds and
+    # leave the CI rebuild committing a timestamp on every run. when nothing
+    # else moved, leave the committed file as it stands
+    if path.exists() and _drop_generated_at(path.read_text(encoding="utf-8")) == _drop_generated_at(text):
         return
 
-    # only the import falls back to JSON; a serialization error must surface, not
-    # silently write JSON into a .yaml file
-    dumper = getattr(yaml, "CSafeDumper", yaml.SafeDumper)
-    text = yaml.dump(obj, Dumper=dumper, sort_keys=False, allow_unicode=True, width=120, indent=4)
     path.write_text(text, encoding="utf-8")
 
 
