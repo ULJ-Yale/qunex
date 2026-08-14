@@ -215,7 +215,7 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     rbold = re.compile(r"bold([0-9]+)")
 
-    info, _ = gc.read_session_data(os.path.join(folder, sourcefile))
+    info, _ = gc.read_batch(os.path.join(folder, sourcefile))
 
     t1, t2, bold, raw, data, sid = False, False, [], False, False, False
 

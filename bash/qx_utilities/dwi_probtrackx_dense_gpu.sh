@@ -229,6 +229,9 @@ get_options() {
     # -- Parse arguments
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
     CASE=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`
+    # the documented spelling, and the one qunex passes; --session is what the
+    # shell front end passed and is kept
+    if [ -z "$CASE" ]; then CASE=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; fi
     Overwrite=`opts_GetOpt "--overwrite" $@`
     ScriptsFolder=`opts_GetOpt "--scriptsfolder" $@`
     MatrixOne=`opts_GetOpt "--omatrix1" $@`

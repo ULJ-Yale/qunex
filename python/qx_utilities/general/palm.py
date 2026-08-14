@@ -211,7 +211,7 @@ def run_palm(
             colons will result in an error - use normal colons with the command
             instead.
 
-            --T2DHEC (str, default '2:1:26'):
+            --T2DHEC <h>:<e>:<c>
                 Sets H, E and C parameters for 2D part of analysis.
 
                 Sometimes it is desired to specify TFCE parameters that differ from
@@ -224,7 +224,7 @@ def run_palm(
 
                 Defaults to H=2, E=1, C=26.
 
-            --T3DHEC (str):
+            --T3DHEC <h>:<e>:<c>
                 Sets H, E and C parameters for 3D part of analysis.
 
                 Defaults to H=2, E=0.5 (C value is not listed in PALM

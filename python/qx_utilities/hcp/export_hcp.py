@@ -28,10 +28,10 @@ import qx_utilities.general.exceptions as ge
 import qx_utilities.general.log as gl
 
 
-def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
+def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
 
     """
-    ``export_hcp [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]``
+    ``export_hcp [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]``
 
     Export HCP style data out of the QuNex Suite file structure.
 
@@ -51,12 +51,12 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
 
         --sessions (str, default ''):
             A list of sessions to map (comma/pipe-separated, patterns allowed).
+            When a batch file is given, it selects within it.
 
         --filter (str, default ''):
-            Optional filter applied when `sessions` references a batch file.
-
-        --sessionids (str, default ''):
-            Optional explicit session id selector (patterns allowed).
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used to select sessions
+            within the given batch file. Values may be glob patterns.
 
         --mapaction (str, default 'link'):
             How to map the data: copy, link, or move.
@@ -154,7 +154,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
                 --sessionsfolder=/data/studies/myStudy/sessions \\
                 --batchfile=/data/studies/myStudy/processing/batch.txt \\
                 --mapto=/data/outbox/hcp_formatted/myStudy \\
-                --sessionids="AP*,HQ*" \\
+                --sessions="AP*,HQ*" \\
                 --mapaction="move" \\
                 --overwrite=yes
 
@@ -188,7 +188,7 @@ def export_hcp(sessionsfolder=".", sessions=None, filter=None, sessionids=None, 
     sessionsfolder, mapto, mapexclude = gu.export_prep("export_hcp", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
-    sessions, _ = gc.get_sessions_list(sessions, filter=filter, sessionids=sessionids, sessionsfolder=sessionsfolder, verbose=False)
+    sessions, _ = gc.resolve_sessions(batchfile=batchfile, sessions=sessions, filter=filter, sessionsfolder=sessionsfolder, command="export_hcp", verbose=False)
     if not sessions:
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 

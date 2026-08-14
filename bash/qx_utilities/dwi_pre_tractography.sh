@@ -93,20 +93,57 @@ exit 0
 }
 
 # ------------------------------------------------------------------------------
-# -- Check for help
+# -- Parse options
 # ------------------------------------------------------------------------------
 
-if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]] || [ "$3" == "" ]; then
+# -- Parses the command line for a flagged option, as the other qx_utilities
+#    scripts do
+get_options() {
+    sopt="$1"
+    shift 1
+    for fn in "$@" ; do
+        if [ `echo "$fn" | grep -c -- "^${sopt}="` -gt 0 ]; then
+            echo "$fn" | sed "s/^${sopt}=//"
+            return 0
+        fi
+    done
+}
+
+if [[ $1 == "" ]] || [[ $1 == "--help" ]] || [[ $1 == "-help" ]] || [[ $1 == "--usage" ]] || [[ $1 == "-usage" ]]; then
     usage
 fi
 
 scriptsdir="${HCPPIPEDIR_dMRITractFull}"/pre_tractography
 configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 
-StudyFolder=$1
-Session=$2
-MSMflag=$3
-DiffusionFolder=$4
+# -- Flagged call, the way every other QuNex command is called. The positional
+#    form below is what the shell front end used and what the usage documents
+#    as direct use; both are kept.
+if [[ $1 == --* ]]; then
+    SessionsFolder=`get_options "--sessionsfolder" "$@"`
+    Session=`get_options "--sessions" "$@"`
+    if [[ -z ${Session} ]]; then
+        Session=`get_options "--session" "$@"`
+    fi
+    DiffusionFolder=`get_options "--diffusion_folder" "$@"`
+    MSMflag=0
+
+    if [[ -z ${SessionsFolder} ]] || [[ -z ${Session} ]]; then
+        usage
+    fi
+
+    # the folder the hcp data of this session sits in, which is what the
+    # positional call was handed by bin/qunex.sh
+    StudyFolder="${SessionsFolder}/${Session}/hcp"
+else
+    if [ "$3" == "" ]; then
+        usage
+    fi
+    StudyFolder=$1
+    Session=$2
+    MSMflag=$3
+    DiffusionFolder=$4
+fi
 
 WholeBrainTrajectoryLabels=${configdir}/WholeBrainFreeSurferTrajectoryLabelTableLut.txt
 LeftCerebralTrajectoryLabels=${configdir}/LeftCerebralFreeSurferTrajectoryLabelTableLut.txt

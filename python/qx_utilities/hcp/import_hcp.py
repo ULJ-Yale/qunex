@@ -1294,9 +1294,10 @@ def map_hcpls2nii(
             `sessions` and optionally `sessionsfolder` and `parsessions`
             parameters. In this case the command will be run for each of
             the specified sessions in the sessionsfolder (current directory
-            by default). Optional `filter` and `sessionids` parameters can
-            be used to filter sessions or limit them to just specified id
-            codes. (for more information see online documentation).
+            by default). `sessions` limits the run to the specified id
+            codes, and an optional `filter` parameter selects the sessions
+            whose batch file entry matches a key. (for more information see
+            online documentation).
             `sourcefolder` will be filled in automatically as each
             sessions's folder. Commands will run in parallel, where the
             degree of parallelism is determined by `parsessions` (1 by
