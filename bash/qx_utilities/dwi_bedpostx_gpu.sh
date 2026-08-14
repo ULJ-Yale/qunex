@@ -180,6 +180,9 @@ get_options() {
     overwrite=`opts_getopt "--overwrite" $@`
     species=`opts_getopt "--species" $@`
     session=`opts_getopt "--session" $@`
+    # the documented spelling, and the one qunex passes; --session is what the
+    # shell front end passed and is kept
+    if [ -z "$session" ]; then session=`opts_getopt "--sessions" $@`; fi
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
     nogpu=`opts_getopt "--nogpu" $@`
     diffusion_folder=`opts_getopt "--diffusion_folder" $@`

@@ -27,6 +27,7 @@ import qx_utilities.qa.config as config
 def run_qa(
     datatype=None,
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
     configfile=None,
     tag=None,
@@ -34,7 +35,7 @@ def run_qa(
     ):
 
     """
-    ``run_qa [datatype=None] [sessionsfolder=.] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
+    ``run_qa [datatype=None] [sessionsfolder=.] [batchfile=None] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
 
     Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
 
@@ -47,6 +48,10 @@ def run_qa(
 
         --sessionsfolder (str):
             The location of the <study>/sessions folder.
+
+        --batchfile (str, default None):
+            An optional path to a batch file or a list file to take the sessions
+            from. `sessions` then selects within it.
 
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
@@ -250,7 +255,7 @@ def run_qa(
     outputs = [pass_out, fail_out, report_out, yaml_out]
 
     print("\nCreating QA instance...")
-    qa_instance = qa.QA(sessions, sessionsfolder, configfile)
+    qa_instance = qa.QA(sessions, sessionsfolder, configfile, batchfile)
 
     print("\nQA instance created successfully! Parsed as:\n")
     pp = pprint.PrettyPrinter(indent=1)

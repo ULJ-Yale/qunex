@@ -1447,9 +1447,10 @@ def map_bids2nii(
             `sessions` and optionally `sessionsfolder` and `parsessions`
             parameters. In this case the command will be run for each of
             the specified sessions in the sessionsfolder (current directory
-            by default). Optional `filter` and `sessionids` parameters can
-            be used to filter sessions or limit them to just specified id
-            codes. (for more information see online documentation).
+            by default). `sessions` limits the run to the specified id
+            codes, and an optional `filter` parameter selects the sessions
+            whose batch file entry matches a key. (for more information see
+            online documentation).
             `sourcefolder` will be filled in automatically as each
             session's folder. Commands will run in parallel where the
             degree of parallelism is determined by `parsessions` (1 by
@@ -1997,7 +1998,7 @@ def map_nii2bids(
         # --- read session_hcp.txt file
         if os.path.exists(os.path.join(sourcefolder, "session_hcp.txt")):
             log.detail("session_hcp.txt found, reading session info")
-            session_info = gc.read_session_data(
+            session_info = gc.read_batch(
                 os.path.join(sourcefolder, "session_hcp.txt")
             )[0][0]
         else:

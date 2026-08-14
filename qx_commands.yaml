@@ -110,6 +110,23 @@ commands:
     options: []
     returns: []
     origin: core
+-   name: build_qx_container
+    aliases: []
+    path: qx_container_build.build_qx_container
+    language: python
+    call: build_qx_container()
+    description: Splice `general/batch_io.py` into the generated region of `bin/qunex_container`. The container can not import
+        QuNex — it runs on the login node, outside the container — so it carries a copy of the batch file parser, and this
+        command is what keeps that copy current. Commit the result, as with `qx_commands.yaml`.
+    type: utility
+    args: []
+    options: []
+    returns:
+    -   name: path
+        type: str
+        default: null
+        description: The path of the container that was written.
+    origin: core
 -   name: build_qx_registry
     aliases: []
     path: qx_registry_build.build_qx_registry
@@ -662,8 +679,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional parameter given as "key:value|key:value" string. Can be used for filtering the session data
-            within the provided batchfile.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used to select sessions within the provided batchfile. Values may be glob patterns.
     options: []
     returns: []
     origin: core
@@ -671,8 +688,8 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.create_batch
     language: python
-    call: create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None]
-        [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]
+    call: create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [batchfile=None]
+        [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]
     description: Create a joint batch file from source files in all session folders.
     type: utility
     args:
@@ -688,6 +705,11 @@ commands:
         type: str
         default: <study>/processing/batch.txt
         description: The path to the batch file to be generated. By default, it is created as <study>/processing/batch.txt.
+    -   name: batchfile
+        type: str
+        default: None
+        description: An optional path to an existing batch file or a list file to take the sessions from, instead of looking
+            through the sessions folder.
     -   name: sessions
         type: str
         default: None
@@ -696,8 +718,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional parameter given as "key:value|key:value" string. Only sessions with the specified key-value
-            pairs in their source files will be added to the batch file.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time.
+            Only the sessions the filter selects will be added to the batch file. Values may be glob patterns.
     -   name: overwrite
         type: str
         default: 'yes'
@@ -826,7 +848,7 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.create_conc
     language: python
-    call: create_conc [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [concfolder=None] [concname=""]
+    call: create_conc [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [concfolder=None] [concname=""]
         [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]
     description: Create .conc files for the specified sessions.
     type: utility
@@ -835,19 +857,19 @@ commands:
         type: str
         default: null
         description: The location of the sessions folder where the sessions to create the list reside.
+    -   name: batchfile
+        type: str
+        default: None
+        description: A path to a batch.txt file.
     -   name: sessions
         type: str
         default: None
         description: A comma or pipe separated string of session names to include (can be glob patterns).
-    -   name: sessionids
-        type: null
-        default: null
-        description: null
     -   name: filter
         type: str
         default: null
-        description: If a batch.txt file is provided a string of key-value pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-            that match all the key-value pairs will be added to the list.
+        description: If a batch.txt file is provided a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND)
+            — one operator at a time. Only the sessions the filter selects will be added to the list. Values may be glob patterns.
     -   name: concfolder
         type: str
         default: <studyfolder>/<session id>/inbox/concs/
@@ -960,8 +982,8 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: If a batch.txt file is provided a string of key-value pairs (`"<key>:<value>|<key>:<value>"`). Only sessions
-            that match all the key-value pairs will be added to the list.
+        description: If a batch.txt file is provided a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND)
+            — one operator at a time. Only the sessions the filter selects will be added to the list. Values may be glob patterns.
     -   name: listfile
         type: str
         default: None
@@ -1025,11 +1047,15 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.create_session_info
     language: python
-    call: create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt]
+    call: create_session_info [batchfile=None] sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt]
         [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]
     description: Create session info files for specified sessions and pipeline.
     type: utility
     args:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: Path to a batch file.
     -   name: sessions
         type: str
         default: '*'
@@ -1059,8 +1085,9 @@ commands:
     -   name: filter
         type: str
         default: None
-        description: An optional "key:value|key:value" string used as a filter if a batch file is used. Only sessions for
-            which all the key:value pairs are true will be processed. All the sessions will be processed if no filter is provided.
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used as a filter when a batch file is given. Only the sessions the filter selects are processed; all of them are
+            processed if no filter is provided. Values may be glob patterns.
     -   name: overwrite
         type: str
         default: 'no'
@@ -2128,7 +2155,7 @@ commands:
     aliases: []
     path: qx_utilities.hcp.export_hcp.export_hcp
     language: python
-    call: export_hcp [sessionsfolder="."] [sessions=None] [filter=None] [sessionids=None] [mapaction=<how to map>] [mapto=None|<location
+    call: export_hcp [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [mapaction=<how to map>] [mapto=None|<location
         to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]
     description: Export HCP style data out of the QuNex Suite file structure.
     type: utility
@@ -2138,18 +2165,20 @@ commands:
         default: .
         description: The base study sessions folder within the QuNex folder structure to or from which the data are to be
             mapped. If not specified explicitly, the current working folder will be taken as the location of the sessionsfolder.
+    -   name: batchfile
+        type: str
+        default: ''
+        description: A path to a batch.txt file.
     -   name: sessions
         type: str
         default: ''
-        description: A list of sessions to map (comma/pipe-separated, patterns allowed).
+        description: A list of sessions to map (comma/pipe-separated, patterns allowed). When a batch file is given, it selects
+            within it.
     -   name: filter
         type: str
         default: ''
-        description: Optional filter applied when `sessions` references a batch file.
-    -   name: sessionids
-        type: str
-        default: ''
-        description: Optional explicit session id selector (patterns allowed).
+        description: An optional string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) — one operator at a time,
+            used to select sessions within the given batch file. Values may be glob patterns.
     -   name: mapaction
         type: str
         default: link
@@ -3154,8 +3183,8 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.gather_behavior
     language: python
-    call: gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"]
-        [overwrite="no"] [check="yes"]
+    call: gather_behavior [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [sourcefiles="behavior.txt"]
+        [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]
     description: Gather specified individual behavioral data from each session's behavior folder and compile it into a specified
         group behavioral file.
     type: utility
@@ -3165,11 +3194,17 @@ commands:
         default: null
         description: The base study sessions folder (e.g. WM44/sessions) where the inbox and individual session folders are.
             If not specified, the current working folder will be taken as the location of the sessionsfolder.
+    -   name: batchfile
+        type: str
+        default: null
+        description: An optional path to a batch file or a list file to take the sessions from. `sessions` and `filter` then
+            select within it.
     -   name: sessions
         type: str
         default: null
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use
-            of grep patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
+            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
+            may be given instead.
     -   name: filter
         type: str
         default: null
@@ -3914,33 +3949,6 @@ commands:
         type: str
         default: null
         description: The scanner on which the data was acquired, currently only "siemens" and "philips" are supported.
-    options: []
-    returns: []
-    origin: core
--   name: get_sessions_for_slurm_array
-    aliases: []
-    path: qx_utilities.general.utilities.get_sessions_for_slurm_array
-    language: python
-    call: get_sessions_for_slurm_array sessions=<a list of sessions, or path to the batch file) sessionids=<a list of session
-        ids to filter out>
-    description: Return the subset of sessions that will be processed for a SLURM array job.
-    type: utility
-    args:
-    -   name: batchfile
-        type: str
-        default: null
-        description: Path to a batch.txt file.
-    -   name: sessions
-        type: str
-        default: null
-        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use of grep
-            patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids. If a batchfile is
-            provided, this parameter will be interpreted as sessionids to filter from the batch file.
-    -   name: sessionids
-        type: str
-        default: null
-        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use of grep
-            patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
     options: []
     returns: []
     origin: core
@@ -8320,9 +8328,11 @@ commands:
         default: 'False'
         description: If the images are preorganized in folders, set this to True so QuNex will not try to reorganize them.
     -   name: clean_dicom_folders
-        type: null
-        default: null
-        description: null
+        type: bool
+        default: 'False'
+        description: If set to True, after sorting dicom files into sequence folders, the dicom files will be inspected and
+            any dicom files that do not contain image data, or that do not constitute a full volume (e.g., in the case of
+            interrupted scans) will be set aside before conversion to NIfTI.
     -   name: test
         type: null
         default: null
@@ -8575,6 +8585,37 @@ commands:
         type: str
         default: .
         description: The path to the study/sessions folder.
+    returns: []
+    origin: core
+-   name: list_sessions
+    aliases:
+    - get_sessions_for_slurm_array
+    path: qx_utilities.general.utilities.list_sessions
+    language: python
+    call: list_sessions [batchfile=None] [sessions=None] [filter=None] [sessionsfolder=None]
+    description: Print the comma separated list of the sessions a command would run over.
+    type: utility
+    args:
+    -   name: batchfile
+        type: str
+        default: null
+        description: Path to a batch.txt file.
+    -   name: sessions
+        type: str
+        default: null
+        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob patterns
+            (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given
+            instead. If a batchfile is provided, this parameter selects within it.
+    -   name: filter
+        type: str
+        default: null
+        description: An optional parameter given as a string of `<key>:<value>` pairs joined by `|` (OR) or by `&` (AND) —
+            one operator at a time. Only the sessions the filter selects are returned. Values may be glob patterns.
+    -   name: sessionsfolder
+        type: str
+        default: null
+        description: The sessions folder to match the sessions against when no batchfile is provided.
+    options: []
     returns: []
     origin: core
 -   name: manage_study
@@ -9538,8 +9579,8 @@ commands:
     aliases: []
     path: qx_utilities.general.utilities.pull_sequence_names
     language: python
-    call: pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"]
-        [overwrite="no"] [check="yes"]
+    call: pull_sequence_names [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [sourcefiles="session.txt"]
+        [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]
     description: Gather a list of all the sequence names across the sessions and save it into a specified file.
     type: utility
     args:
@@ -9548,11 +9589,17 @@ commands:
         default: null
         description: The base study sessions folder (e.g. WM44/sessions) where the inbox and individual session folders are.
             If not specified, the current working folder will be taken as the location of the sessionsfolder.
+    -   name: batchfile
+        type: str
+        default: null
+        description: An optional path to a batch file or a list file to take the sessions from. `sessions` and `filter` then
+            select within it.
     -   name: sessions
         type: str
         default: null
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed (use
-            of grep patterns is possible), e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
+            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
+            may be given instead.
     -   name: filter
         type: str
         default: null
@@ -10138,7 +10185,7 @@ commands:
     aliases: []
     path: qx_utilities.qa.run_qa.run_qa
     language: python
-    call: run_qa [datatype=None] [sessionsfolder=.] [sessions=None] [configfile=None] [tag=None] [overwrite=no]
+    call: run_qa [datatype=None] [sessionsfolder=.] [batchfile=None] [sessions=None] [configfile=None] [tag=None] [overwrite=no]
     description: Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
     type: qa
     args:
@@ -10150,6 +10197,11 @@ commands:
         type: str
         default: null
         description: The location of the <study>/sessions folder.
+    -   name: batchfile
+        type: str
+        default: None
+        description: An optional path to a batch file or a list file to take the sessions from. `sessions` then selects within
+            it.
     -   name: sessions
         type: str
         default: None

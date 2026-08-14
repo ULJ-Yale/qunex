@@ -36,6 +36,7 @@ import os
 
 import pytest
 
+import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.log as gl
 import qx_utilities.general.process as gp
@@ -163,12 +164,26 @@ def default_settings():
 def run_step(study, settings=None, shell="touch %(checkfile)s", command=None, **args):
     """Drive the real `process.run` over the one session, and say what it left."""
     args = {
-        "sessions": str(study / "batch.txt"),
+        "batchfile": str(study / "batch.txt"),
         "sessionsfolder": str(study / "sessions"),
         "shell_command": shell,
         **args,
     }
-    gp.run(command or Command(), args, settings or gl.LogSettings())
+    qx_command = command or Command()
+    settings = settings or gl.LogSettings()
+
+    # what `gmri.runCommand` settles before it dispatches
+    sessions, header = gc.resolve_sessions(
+        batchfile=args["batchfile"],
+        sessionsfolder=args["sessionsfolder"],
+        command=qx_command.name,
+    )
+    options, sources, _ = gp.merge_options(qx_command.name, args, header)
+    folders = gc.deduce_folders({**header, **args}, qx_command.name)
+    run_context = gl.RunContext(qx_command.name, args, settings, folders)
+    gl.set_active(settings)
+
+    gp.run(qx_command, args, sessions, options, sources, run_context)
 
     logfolder = next((study / "logs").iterdir())
     runlog = next(f for f in logfolder.iterdir() if f.name.startswith("Log-"))

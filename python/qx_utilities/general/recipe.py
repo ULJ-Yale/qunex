@@ -161,6 +161,58 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             call have the highest priority, meaning that their values will
             override any values in recipe files.
 
+        Parameters a step is not to inherit:
+            A parameter stated for the whole run is passed to every command
+            that accepts it. When a step must not have one, say so, in either
+            of two ways. Write `unset_parameters`, which takes a parameter
+            name, a comma separated list of them, or an array::
+
+                - create_session_info:
+                    mapping          : /data/specs/hcp_mapping.txt
+                    unset_parameters : batchfile
+
+            or write the name itself with a leading `-` and no value::
+
+                - create_session_info:
+                    mapping    : /data/specs/hcp_mapping.txt
+                    -batchfile :
+
+            Both are accepted against a step and in a recipe's parameters
+            section, where they hold for every step of that recipe. Neither is
+            allowed in global_parameters: a parameter unset for every command
+            of the run is one that need not be written at all.
+
+            Note that an empty value does *not* unset a parameter. `''` and
+            `None` are values commands accept, so `img_suffix : ""` states the
+            empty string rather than removing the parameter.
+
+            `unset_parameters` is about what the recipe hands a step. What a
+            *batch file* hands a command is a separate question, answered by
+            `unset_batch_header_parameters` and
+            `unset_batch_session_parameters`, which may also be written against
+            a command, for a recipe or in global_parameters -- and, unlike this
+            one, are allowed at the global level, the batch file not being
+            something the recipe supplies.
+
+        A batch file the recipe itself creates:
+            A recipe usually states the study's `batchfile` globally and then
+            builds that file with `create_batch` partway through. The steps
+            before it cannot be given a file that does not exist yet, and
+            `create_batch` cannot be told to take its sessions from the file
+            it is about to write, so `run_recipe` withholds the run wide
+            `batchfile` from every step up to and including the one that
+            writes it, and reports that it did.
+
+            If the file already exists, it is still withheld -- so that
+            running a recipe a second time does what running it the first time
+            did -- and a warning says so. If one of those steps is meant to
+            read the file that is there, state `batchfile` against that step.
+
+            If nothing creates the file and it does not exist, the recipe does
+            not start: no step would ever have been able to read it. A recipe
+            whose steps all resolve their sessions from the sessions folder is
+            unaffected, since none of them takes a batch file.
+
         Example recipe file:
             ::
 
@@ -303,6 +355,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     # parse the recipe file
     parameters = {}
+    recipe_unset = []
     commands = []
 
     timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
@@ -330,13 +383,26 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
         # global parameters
         if "global_parameters" in recipe_data:
-            for parameter, value in recipe_data["global_parameters"].items():
-                parameters[parameter] = value
+            global_parameters = dict(recipe_data["global_parameters"])
+            if _states_an_unset(global_parameters):
+                raise ge.CommandError(
+                    "run_recipe",
+                    "Parameters cannot be unset globally",
+                    "global_parameters unsets a parameter, which can only be a mistake:",
+                    "a parameter stated for no command at all is one not written.",
+                    "Move the unset to the recipe, or to the step that is not to inherit it.",
+                )
+            parameters.update(global_parameters)
 
         # recipe parameters
         if "parameters" in recipe_dict:
-            for parameter, value in recipe_dict["parameters"].items():
-                parameters[parameter] = value
+            recipe_parameters = dict(recipe_dict["parameters"])
+            recipe_unset = _unset_names(recipe_parameters, f"recipe {recipe}")
+            parameters.update(recipe_parameters)
+
+            # what the recipe unsets, no step of it inherits
+            for name in recipe_unset:
+                parameters.pop(name, None)
     else:
         # define recipe name
         recipe = "steps"
@@ -373,9 +439,13 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     # so the command line still wins.
     #
     # ponytail: the study tier is read twice per invocation, which is the
-    # price of the recipe file being parsed after the settings are. Branch 69's
-    # merged-options model gives the recipe and batch tiers a real home
-    # (§8.3) and this goes with them.
+    # price of the recipe file being parsed after the settings are. The merged
+    # options are not the fix -- they landed for the batch tier and this stayed
+    # -- because what closes the seam is an ordering: a batch file is named on
+    # the command line and `gmri.runCommand` reads it before it resolves any
+    # logging, while a recipe names its study inside the recipe file, which
+    # only this function opens. Closing it means the recipe file becoming a
+    # tier the front door resolves, the way `--batchfile` now is.
     log_settings = gl.apply_study_settings(
         log_settings or gl.LogSettings(), folders["basefolder"], hints
     )
@@ -448,11 +518,6 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     commands_skipped = []
     if startwith and startwith.strip() != "":
-        def _get_command_name(command_spec):
-            if isinstance(command_spec, dict):
-                return list(command_spec.keys())[0]
-            return command_spec
-
         start_indices = [
             idx for idx, command_spec in enumerate(commands)
             if _get_command_name(command_spec) == startwith
@@ -496,6 +561,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
         _print_commands("\n---> Commands to run:", commands)
     else:
         _print_commands("\n---> Commands:", commands)
+
+    # what a run wide parameter names that this recipe writes itself
+    withheld = _withheld_by_production(
+        commands, parameters, recipe_unset, hints, folders, run
+    )
 
     # XNAT initial setup
     # If running on XNAT, try and load checkpoint if supplied
@@ -639,10 +709,22 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 run.write(report + "\n")
 
         elif qx_commands.get(command_name) is not None:
+            # what this step is not to inherit from the tiers above it
+            unset = set(recipe_unset) | set(
+                _unset_names(command_parameters, f"step {step} ({command_name})")
+            )
+
+            # where each of this step's parameters came from, so that what the
+            # command cannot take can be reported to whoever wrote it: the
+            # recipe states these against the command itself, the tiers below
+            # state them for every command of the run
+            sources = dict.fromkeys(command_parameters, "recipe")
+
             # override params with those from eargs (passed because of parallelization on a higher level)
             if eargs is not None:
-                # do not add parameter if it is flagged as removed
                 for k in eargs:
+                    if k in unset:
+                        continue
                     if k in ["parsessions", "parelements"]:
                         if k in command_parameters:
                             command_parameters[k] = str(
@@ -650,25 +732,71 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                             )
                     else:
                         command_parameters[k] = eargs[k]
+                    sources[k] = gcs.RECIPE_RUN
 
             # append global and recipe parameters
+            #
+            # A parameter naming something a later step of this recipe writes
+            # is withheld until it has been written -- see `withheld` above. A
+            # value written against the step itself is untouched: that one was
+            # meant, and a file missing under it is still an error.
             for parameter, value in parameters.items():
+                if parameter in unset:
+                    continue
+                if step <= withheld.get(parameter, 0):
+                    continue
                 if parameter not in command_parameters:
                     command_parameters[parameter] = value
+                    sources[parameter] = gcs.RECIPE_RUN
 
-            # remove parameters that are not allowed
+            # an unset is written away from the parameter it is about, so the
+            # log says what it did rather than leaving a reader to notice an
+            # absence in the call below
+            kept_out = sorted(unset & (set(parameters) | set(eargs or {})))
+            if kept_out:
+                note = "\n---> %s: unset for this step, not passed to it\n" % (
+                    ", ".join(kept_out)
+                )
+                print(note)
+                run.write(note)
+
+            # narrow to what the command accepts, and say what that leaves out:
+            # a parameter written against a command that cannot take it is a
+            # mistake in the recipe, and was dropped without a word
             qx_command = qx_commands.get(command_name)
 
             if qx_command.type == "utility" and qx_command.language == "python":
-                allowed_parameters = list([e.name for e in qx_command.args] + ["logfolder"])
-                if any([e in allowed_parameters for e in ["sourcefolder", "folder"]]):
-                    allowed_parameters += gcs.extra_parameters
+                kept, dropped = gcs.select_parameters(
+                    command_parameters, sources, qx_command
+                )
 
-                new_parameters = command_parameters.copy()
-                for param in command_parameters.keys():
-                    if param not in allowed_parameters:
-                        del new_parameters[param]
-                command_parameters = new_parameters
+                # the run level parameters steer `gmri` rather than the
+                # command, so they go on when the command is one `gmri` can run
+                # over sessions; a command that cannot has no use for them
+                passthrough = set(gcs.extra_parameters)
+                if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder"]):
+                    passthrough = {"logfolder"}
+
+                    # except that a command taking a batch file is handed its
+                    # header whether or not it runs over sessions, so what the
+                    # recipe said not to take from it has to travel with it.
+                    # All nine utilities that take one are narrowed here
+                    if qx_command.has_arg("batchfile"):
+                        passthrough |= {gcs.UNSET_BATCH_HEADER, gcs.UNSET_BATCH_SESSION}
+
+                command_parameters = {
+                    key: value
+                    for key, value in command_parameters.items()
+                    if key in kept or key in passthrough
+                }
+
+                for param in dropped:
+                    warning = (
+                        "\nWARNING: %s is not a parameter of %s and was not passed to "
+                        "it. Please check the recipe!\n" % (param, command_name)
+                    )
+                    print(warning)
+                    run.write(warning)
 
             # XNAT individual command prep, creates _in checkpoint
             if os.environ.get("XNAT", "") == "yes":
@@ -695,7 +823,16 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 )
 
             # setup command
-            command = ["qunex"]
+            #
+            # A step re-enters at `gmri`, the dispatcher, rather than at
+            # `qunex`, the shell front end: for a command `gmri` runs, `qunex`
+            # asks it for the list of commands it runs (one python start of
+            # its own), searches the matlab tree for the command's name,
+            # creates a log folder `gmri` then does not use, re-quotes the
+            # arguments and `eval`s the same call. The user facing spelling is
+            # still what the recipe reports, because `qunex <command>` is what
+            # a reader of the log would type.
+            command = ["gmri"]
             command.append(command_name)
             commandr = (
                 "\n--------------------------------------------\n---> Running command:\n\n     qunex "
@@ -757,8 +894,20 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             # the child's output is watched, not read for meaning: what the
             # step did comes back as its status record, and whether it worked
             # comes back as its exit code
+            #
+            # A command line says what a parameter is, never where it came
+            # from, so the tier is named here: everything the recipe puts on a
+            # step's command line reached the step through the recipe,
+            # whatever wrote it -- the recipe file, its global parameters or
+            # the call that started the recipe -- and the step's own banner
+            # reports it as `recipe`. The batch file the step is given it
+            # reads for itself, so that tier still names itself.
             with subprocess.Popen(
-                command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, bufsize=0
+                command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                bufsize=0,
+                env={**os.environ, gcs.RECIPE_PARAMETERS: ",".join(command_parameters)},
             ) as process:
                 for line in iter(process.stdout.readline, b""):
                     # `readline` keeps the newline it read, so the line is
@@ -879,6 +1028,253 @@ def _print_end_summary(summary, run, error=None):
         print("\n------------------------")
         print(f"\nERROR: {error}")
         print(f"---> run_recipe failed at {datetime.now()}")
+
+
+UNSET_PARAMETERS = "unset_parameters"
+
+# What a command writes that a run wide parameter names for the steps that
+# read it: `command -> (the parameter naming what it writes, the run wide
+# parameter that names the same file)`. A recipe usually states the study's
+# `batchfile` for the whole run and then builds it partway through, so the
+# same value means "read this" after that step and nothing at all before it.
+# One row today; the shape is what matters, since nothing else in the tree
+# says which commands produce what another command consumes.
+PRODUCERS = {"create_batch": ("targetfile", "batchfile")}
+
+
+def _get_command_name(command_spec):
+    """The command a step runs, whether or not it states parameters."""
+    if isinstance(command_spec, dict):
+        return list(command_spec.keys())[0]
+    return command_spec
+
+
+def _step_parameters(command_spec):
+    """A step's own parameters, read without taking anything out of them."""
+    stated = list(command_spec.values())[0] if isinstance(command_spec, dict) else None
+    return stated or {}
+
+
+def _step_keeps_out(command_spec, name):
+    """
+    Whether a step would be left without the run wide value of `name` -- it
+    states one of its own, or unsets it in either spelling. Read only, so it
+    can be asked before the step is reached.
+    """
+    stated = _step_parameters(command_spec)
+
+    if name in stated or f"-{name}" in stated:
+        return True
+
+    unset = stated.get(UNSET_PARAMETERS) or []
+    if isinstance(unset, str):
+        unset = unset.split(",")
+
+    return name in [str(one).strip() for one in unset]
+
+
+def _produced_path(command_spec, produces, hints, folders):
+    """
+    The path a producing step writes, resolved the way the command resolves
+    it: what the step states, else what the run states, else `create_batch`'s
+    own default of `<study>/processing/batch.txt`. The sessions folder that
+    default is derived from is the run's own resolved one, so a recipe that
+    states only a study folder is answered as well as one that spells it out.
+    """
+    stated = _step_parameters(command_spec)
+
+    target = stated.get(produces, hints.get(produces))
+
+    if target is None:
+        # `create_batch` defaults to `dirname(sessionsfolder)/processing`,
+        # which is the study; `deduce_folders` leaves `sessionsfolder` unset
+        # when the run states only a study folder, so take that when it does
+        sessionsfolder = stated.get("sessionsfolder") or folders.get("sessionsfolder")
+        study = (
+            os.path.dirname(_inject_labels(sessionsfolder))
+            if sessionsfolder
+            else folders.get("basefolder")
+        )
+        if study is None:
+            return None
+        target = os.path.join(study, "processing", "batch.txt")
+
+    return os.path.abspath(_inject_labels(target))
+
+
+def _withheld_by_production(commands, parameters, recipe_unset, hints, folders, run):
+    """
+    ``_withheld_by_production(commands, parameters, recipe_unset, hints, folders, run)``
+
+    Which run wide parameters this recipe writes itself, and up to which step
+    they are therefore not to be handed to anybody.
+
+    Two facts are knowable before the first step runs: whether the file exists
+    now, and whether a step of this recipe writes that same path. They answer
+    the question the steps cannot -- a step only ever sees a path, and a path
+    that does not exist yet looks exactly like one that never will:
+
+    - written by step N, absent now: withheld from steps 1..N, and said so.
+    - written by nobody, absent now: no step will ever be able to read it, so
+      the run does not start -- but only if some step could have received it.
+    - written by nobody, present now: nothing to do, everybody gets it.
+    - written by step N, present now: withheld from 1..N as if it were absent,
+      so that a re-run does what a first run does, and warned about, because
+      an earlier step may have been meant to read the file that is there.
+
+    Deciding from the state at the start rather than at each step is what
+    makes a recipe do the same thing twice: a `batch.txt` left by last week's
+    run is otherwise indistinguishable from the one this run just wrote.
+
+    Returns:
+        `parameter -> the last step that writes it`, for the loop to skip on.
+
+    Raises:
+        ge.CommandError: on a run wide value that names a file nothing will
+            write and some step of the recipe would be given.
+    """
+    withheld = {}
+
+    for produces, consumed_as in PRODUCERS.values():
+        if consumed_as not in parameters or consumed_as in recipe_unset:
+            continue
+
+        value = os.path.abspath(_inject_labels(parameters[consumed_as]))
+        exists = os.path.exists(value)
+
+        writers = [
+            (step, _get_command_name(com))
+            for step, com in enumerate(commands, start=1)
+            if _get_command_name(com) in PRODUCERS
+            and _produced_path(com, produces, hints, folders) == value
+        ]
+
+        if not writers:
+            if exists:
+                continue
+
+            # only a step that would have been given it could have failed on
+            # it: one that declares the parameter, and neither states its own
+            # value nor unsets it
+            wanted = sorted(
+                {
+                    _get_command_name(com)
+                    for com in commands
+                    if qx_commands.get(_get_command_name(com)) is not None
+                    and consumed_as
+                    in gcs.declared_parameters(qx_commands.get(_get_command_name(com)))
+                    and not _step_keeps_out(com, consumed_as)
+                }
+            )
+            if not wanted:
+                continue
+
+            raise ge.CommandError(
+                "run_recipe",
+                f"The recipe's {consumed_as} does not exist and no step creates it",
+                f"{consumed_as} is stated for the whole run as [{value}], which does",
+                "not exist, and no step of this recipe writes it. It would be given to:",
+                ", ".join(wanted),
+                "Create the file first, add the step that writes it, or unset",
+                f"{consumed_as} for the steps that must not have it.",
+            )
+
+        step, name = writers[-1]
+        withheld[consumed_as] = step
+
+        note = (
+            f"\n---> {consumed_as} [{value}] is written by step {step} ({name}),"
+            f"\n     so steps 1-{step} are not given it and select their sessions"
+            f"\n     from the sessions folder.\n"
+        )
+        if exists:
+            note = (
+                f"\nWARNING: {consumed_as} [{value}] already exists and is rewritten by"
+                f"\n     step {step} ({name}). Steps 1-{step} are not given it, so that this"
+                f"\n     run does what a first run does. If one of them is meant to read the"
+                f"\n     file that is there, state {consumed_as} against that step; to say"
+                f"\n     that none of them is, unset_parameters: {consumed_as}.\n"
+            )
+
+        print(note)
+        run.write(note)
+
+    return withheld
+
+
+def _states_an_unset(params):
+    """Whether `params` holds either spelling of an unset."""
+    return UNSET_PARAMETERS in params or any(
+        isinstance(key, str) and key.startswith("-") for key in params
+    )
+
+
+def _unset_names(params, where):
+    """
+    The names `params` says are not to be inherited, taken out of `params`.
+
+    Two spellings, because they are good at different things. A step or a
+    recipe writes ``unset_parameters`` to name several at once -- as a name, a
+    comma separated list of them, or an array -- or writes the name itself
+    with a leading ``-`` and no value, which reads on the parameter's own
+    line. No command parameter can begin with `-`, so the prefix is
+    unambiguous, and the one plausible way to mistype it (`- name:`, with a
+    space) is YAML list syntax in a mapping and does not parse at all.
+
+    Neither spelling can be an *absent* value: the empty string is what
+    `img_suffix` and its kind default to, and `None` is a value `export_hcp`
+    documents, so a recipe has to be able to state both.
+
+    Parameters:
+        --params    The parameter dictionary to read and strip.
+        --where     Where it was written, for the error messages.
+
+    Returns:
+        The list of names not to inherit.
+
+    Raises:
+        ge.CommandError: on `-name: value`, which unsets and states at once,
+            on an `unset_parameters` that is neither a string nor a list, and
+            on a name the same block also states.
+    """
+    stated = params.pop(UNSET_PARAMETERS, None)
+
+    if stated is None:
+        names = []
+    elif isinstance(stated, str):
+        names = stated.split(",")
+    elif isinstance(stated, (list, tuple)):
+        names = [str(name) for name in stated]
+    else:
+        raise ge.CommandError(
+            "run_recipe",
+            f"Invalid {UNSET_PARAMETERS} in {where}",
+            f"{UNSET_PARAMETERS} takes a parameter name, a comma separated list",
+            "of them, or an array.",
+        )
+
+    for key in [key for key in params if isinstance(key, str) and key.startswith("-")]:
+        if params.pop(key) is not None:
+            raise ge.CommandError(
+                "run_recipe",
+                f"Parameter {key} in {where} is both unset and given a value",
+                f"A parameter written as `{key}` is not inherited, so it takes no value.",
+                f"Write `{key}:` to unset it, or `{key[1:]}: <value>` to state it.",
+            )
+        names.append(key[1:])
+
+    names = [name.strip() for name in names if name.strip()]
+
+    for name in names:
+        if name in params:
+            raise ge.CommandError(
+                "run_recipe",
+                f"Parameter {name} in {where} is both unset and stated",
+                "A parameter that is not to be inherited cannot also be given",
+                "a value in the same place. Please remove one of the two.",
+            )
+
+    return names
 
 
 def _inject_labels(value):
