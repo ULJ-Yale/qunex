@@ -48,6 +48,14 @@ pragmatic, focused improvements over strict rewrites.**
 - `env/` — environment setup (`qunex_environment.sh` sets `TOOLS`, `QUNEXPATH`, `PYTHONPATH`, etc.).
 - `qx_library/` — submodule with data, etc, seccomp profiles, MATLAB tests.
 
+## Sister repos
+
+- ../qunex.wiki - Core QuNex Wiki (documentation and tutorials).
+- ../qunexsdk - QuNex SDK with additional dev related code (acceptance testing, container building, devops).
+- ../qunexsdk-wiki - QuNex SDK Wiki (SDK Wiki).
+
+Assure that relevant content in sister repos is always updated and brought up to speed when making code changes. This is especially important with larger/architectural changes.
+
 ## Working style
 
 - Make focused, minimal changes that solve the requested task. No broad refactors unless asked.
@@ -125,8 +133,10 @@ prints it. `general/log/` owns the runlog:
 - A command making **more than one** external call opens **one comlog for all of them**:
 
   ```python
-  with pc.combined_comlog(log, options, "run_freesurfer_full_segmentation", thread=sinfo["id"]):
-      ...                            # every pc.run_external_for_file(..., _log=log) inside
+  with pc.combined_comlog(
+      log, options, "run_freesurfer_full_segmentation", thread=sinfo["id"]
+  ):
+      ...  # every pc.run_external_for_file(..., _log=log) inside
   ```
 
   The block names the comlog after the command, attaches it to the log for the whole body, counts
