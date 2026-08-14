@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+# encoding: utf-8
+
+# SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+"""
+``workflow/``
+
+This package holds the code for running functional connectivity
+preprocessing and GLM computation workflow. **No module here holds more than
+one command**, and a module that holds one is named after it:
+
+--get_bold_data             Maps NIL preprocessed data to images folder.
+--create_bold_brain_masks   Extracts the first frame of each BOLD file.
+--compute_bold_stats        Computes per volume image statistics for scrubbing.
+--create_stats_report       Creates a report of movement and image statistics.
+--extract_nuisance_signal   Extracts the nuisance signal for regressions.
+--preprocess_bold           Processes a single BOLD file.
+--preprocess_conc           Processes concatenated BOLD files.
+--run_qc_summary            Compiles the study's QC information into a summary.
+
+The rule is one command per module, not that every module is a command:
+supporting code that serves a single command belongs here beside it, so that
+a feature is read in one place rather than spread across two folders. What is
+here on that footing today:
+
+--dryrun                    The side-effect guards the commands share, and the
+                            MATLAB command they are run with.
+--qc_summary                The measures ``run_qc_summary`` reads, one function
+                            per processing stage.
+--qc_summary_bold           Its BOLD half, split off when the first grew past
+                            the file size the tree prefers.
+--qc_summary_report         Its interactive report.
+
+Code read from outside this package goes one level up instead, beside
+``processing/mov_stats.py``, which ``compute_bold_stats``,
+``create_stats_report`` and the QC summary all read the movement tables
+through.
+
+All the functions are part of the processing suite. They should be called
+from the command line using `qunex` command. Help is available through:
+
+- `qunex <command> --help` for command specific help
+
+Import a command from here rather than from its module: the registry
+records it under its own module path, but everything else in the tree
+reaches it through the package.
+"""
+
+# Created by Grega Repovs on 2016-12-17.
+# Code split from dofcMRIp_core gCodeP/preprocess codebase.
+# Copyright (c) Grega Repovs. All rights reserved.
+
+from qx_utilities.processing.workflow.get_bold_data import get_bold_data
+from qx_utilities.processing.workflow.create_bold_brain_masks import create_bold_brain_masks
+from qx_utilities.processing.workflow.compute_bold_stats import compute_bold_stats
+from qx_utilities.processing.workflow.create_stats_report import create_stats_report
+from qx_utilities.processing.workflow.extract_nuisance_signal import extract_nuisance_signal
+from qx_utilities.processing.workflow.preprocess_bold import preprocess_bold
+from qx_utilities.processing.workflow.preprocess_conc import preprocess_conc
+from qx_utilities.processing.workflow.run_qc_summary import run_qc_summary
+
+__all__ = [
+    "get_bold_data",
+    "create_bold_brain_masks",
+    "compute_bold_stats",
+    "create_stats_report",
+    "extract_nuisance_signal",
+    "preprocess_bold",
+    "preprocess_conc",
+    "run_qc_summary",
+]

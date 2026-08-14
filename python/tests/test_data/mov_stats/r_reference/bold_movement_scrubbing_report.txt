@@ -1,0 +1,4 @@
+session	run	mov	dvars	dvarsme	idvars	idvarsme	udvars	udvarsme	%mov	%dvars	%dvarsme	%idvars	%idvarsme	%udvars	%udvarsme	
+REF01	bold1	0	5	0	0	0	5	0	0.0	3.4	0.0	0.0	0.0	3.4	0.0	
+REF01	bold5	0	3	4	0	0	3	4	0.0	0.9	1.2	0.0	0.0	0.9	1.2	
+REF01	bold9	7	31	20	7	7	31	20	4.8	21.2	13.7	4.8	4.8	21.2	13.7	

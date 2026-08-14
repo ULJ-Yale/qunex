@@ -17,7 +17,7 @@ consists of functions:
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-- ``qunex ?<command>`` for command specific help
+- ``qunex <command> --help`` for command specific help
 There are additional support functions that are not to be used
 directly.
 
@@ -87,7 +87,7 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action("Running", f"FSL feat [{session}] ...", options["run"], level="info")
 
@@ -131,10 +131,10 @@ def fsl_feat(sinfo, options, overwrite=False, thread=0):
         comm = "feat %(feat_file)s" % {"feat_file": feat_file}
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running FSL feat command via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # run
         if run:
@@ -242,7 +242,7 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
     # list of sessions
     sessions_array = sessions.split(",")
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     log.info(f"Melodic: \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.action("Running", "FSL melodic ...", options["run"], level="info")
 
@@ -347,10 +347,10 @@ def fsl_melodic(sinfo, sessions, options, overwrite=False, thread=0):
             comm += " " + options["melodic_extra_args"]
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running FSL melodic command via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # run
         if run:

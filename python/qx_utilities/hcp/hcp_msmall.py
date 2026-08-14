@@ -436,7 +436,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         # outfmriname
         outfmriname = options["hcp_msmall_outfmriname"]
 
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", f"MSMAll {outfmriname}", options["run"])
         boldsok = True
 
@@ -721,7 +721,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
         # outfmriname
         outfmriname = options["hcp_msmall_outfmriname"]
 
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", f"MSMAll {outfmriname}", options["run"])
 
         # --- check for bold images and prepare targets parameter

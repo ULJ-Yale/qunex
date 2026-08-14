@@ -16,7 +16,7 @@ consists of functions:
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
 
-- ``qunex ?<command>`` for command specific help
+- ``qunex <command> --help`` for command specific help
 There are additional support functions that are not to be used
 directly.
 
@@ -211,7 +211,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
     # get session id
     session = sinfo["id"]
 
-    log.raw("\n------------------------------------------------------------")
+    log.rule()
     timestamp = datetime.now().strftime("%A, %d. %B %Y %H:%M:%S")
     log.info(f"Session id: {sinfo['id']} \n[started on {timestamp}]")
     log.action("Running", f"rapidtide [{session}] ...", options["run"], level="info")
@@ -409,10 +409,10 @@ def _execute_rapidtide(
         )
 
         # report command
-        log.raw("\n\n------------------------------------------------------------\n")
+        log.rule(before=1, after=1)
         log.raw("Running FSL flirt command via QuNex:\n\n")
         log.raw(flirt_comm.replace("                ", ""))
-        log.raw("\n------------------------------------------------------------\n")
+        log.rule(after=1)
 
         # run
         if run:

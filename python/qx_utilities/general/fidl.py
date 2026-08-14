@@ -17,7 +17,6 @@ import re
 import os
 import os.path
 import glob
-import subprocess
 
 import qx_utilities.general.img as gi
 import qx_utilities.general.exceptions as ge
@@ -348,7 +347,7 @@ def split_fidl(concfile, fidlfile, outfolder=None, _log=None):
     return
 
 
-def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
+def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None, _log=None):
     """
     ``check_fidl [fidlfile=] [fidlfolder=.] [plotfile=] [allcodes=false]``
 
@@ -373,6 +372,24 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
             Whether to plot line for all fidl codes even if no event has a
             particular code.
 
+    Notes:
+        Use:
+            The figure shows one row per event code, each event drawn as a bar
+            spanning its duration, and a row of onset marks along the top. Each
+            row is named beside it, so a code can be read off the figure without
+            counting rows.
+
+            Plots are written to a `fidlplots` folder. With `--fidlfolder` that
+            folder is created inside it; with `--fidlfile` it is created beside
+            the fidl file, so a single file plotted on its own lands in the same
+            place it would have as one of a folder. `--plotfile` names the file
+            within that folder.
+
+            By default a code that no event uses gets no row, which keeps the
+            figure to the height the data needs. Pass `--allcodes` to give every
+            code the header declares a row of its own, whether it is used or
+            not, which is what makes two sessions comparable row for row.
+
     Examples:
         ::
 
@@ -380,24 +397,41 @@ def check_fidl(fidlfile=None, fidlfolder=".", plotfile=None, allcodes=None):
                 --fidlfolder=jfidls
     """
 
+    log = gl.log_or_console(_log)
+
     if fidlfile:
         if not os.path.exists(fidlfile):
             raise ge.CommandFailed("check_fidl", "Fidl file does not exist", "The specified fidl file does not exist [%s]" % (fidlfile), "Please check your data!")
+        files = [os.path.abspath(fidlfile)]
     else:
-        if not glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")):
+        files = sorted(glob.glob(os.path.join(os.path.abspath(fidlfolder), "*.fidl")))
+        if not files:
             raise ge.CommandFailed("check_fidl", "No fidl files found", "No fidl files found to process in the specified folder [%s]" % (fidlfolder), "Please check your data!")
 
-    command = ['Rscript', os.path.join(os.environ['QUNEXPATH'], 'r/qx_utilities', 'check_fidl.R')]
-    command.append('-fidlfolder=%s' % (fidlfolder))
+    # beside the fidl file, whether that file was named or found -- with a
+    # single file the folder option says nothing about where the file is
+    target_folder = os.path.join(os.path.dirname(files[0]), "fidlplots")
+    os.makedirs(target_folder, exist_ok=True)
 
-    if fidlfile is not None:
-        command.append("-fidlfile=" + fidlfile)
-    if plotfile is not None:
-        command.append("-plotfile=" + plotfile)
-    if allcodes is not None:
-        command.append("-allcodes")
+    # imported here, not at the top: matplotlib is not installed on a bare
+    # checkout, and nothing else in this file needs it
+    from qx_utilities.general import fidl_plots
 
-    if subprocess.call(command):
-        raise ge.CommandFailed("check_fidl", "Running check_fidl.R failed", "Call: %s" % (" ".join(command)))
+    log.step(f"plotting {len(files)} fidl file(s) to {target_folder}")
+
+    if plotfile and len(files) > 1:
+        log.warning("--plotfile names one file but several are being plotted; ignoring it")
+        plotfile = None
+
+    for path in files:
+        name = plotfile or os.path.basename(path).replace(".fidl", "-fidlplot.pdf")
+        target = os.path.join(target_folder, name)
+
+        try:
+            fidl_plots.plot_fidl(read_fidl(path), target, allcodes=bool(allcodes))
+        except ValueError as error:
+            raise ge.CommandFailed("check_fidl", "Malformed fidl file", str(error), "Please check your data!")
+
+        log.detail(f"{os.path.basename(path)} -> {os.path.basename(target)}")
 
     return

@@ -18,7 +18,7 @@ It consists of functions:
 All the functions are part of the processing suite. They should be called from
 the command line using `qunex` command. Help is available through:
 
-- `qunex ?<command>` for command specific help
+- `qunex <command> --help` for command specific help
 """
 
 # Created by Grega Repovs on 2016-12-17.
@@ -271,7 +271,7 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
     """
     log = ReportLog()
 
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]")
     log.info(f"Running script {options['script']}")
     log.raw("\n........................................................\n")
@@ -312,20 +312,25 @@ def run_shell_script(sinfo, options, overwrite=False, thread=0):
         pc.run_script_through_shell(script, description, log, thread=sinfo['id'], remove=options['log'] == 'remove', task=task, logfolder=options['comlogs'])
 
     except AssertionError as message:
-        log.raw(str(message) + "\n---------------------------------------------------------")
+        log.raw(str(message))
+        log.rule()
         return log.result(str(message), 1, sinfo['id'])
 
     except pc.ExternalFailed as errormessage:
-        log.raw(str(errormessage) + "\n---------------------------------------------------------")
+        log.raw(str(errormessage))
+        log.rule()
         return log.result("Failed: " + str(errormessage), 1, sinfo['id'])
 
     except Exception:
         message = 'ERROR: Error in parsing or executing script %s' % (options['script'])
-        log.raw("\n" + message + "\n---------------------------------------------------------")
+        log.raw("\n" + message)
+        log.rule()
         # the report is lost when the command aborts by exception -- showing it
         # is the only thing that survives the raise
         print(log.text)
         raise
 
-    log.raw(f"\n\nrun_shell_script {options['script']} completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------")
+    log.blank()
+    log.info(f"run_shell_script {options['script']} completed on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.rule()
     return log.result("Ran %s without errors" % (options['script']), 0, sinfo['id'])

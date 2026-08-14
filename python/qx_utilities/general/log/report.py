@@ -59,8 +59,11 @@ from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 
-# separator used to frame the per-session reports
-REPORT_RULE = "------------------------------------------------------------"
+# separators used to frame the per-session reports. One width, whatever they
+# are drawn with: `ReportLog.rule` varies the character and never the length,
+# so rules stack into a page instead of a ragged edge
+RULE_WIDTH = 60
+REPORT_RULE = "-" * RULE_WIDTH
 
 # timestamp format used in the per-session reports
 REPORT_TIME = "%A, %d. %B %Y %H:%M:%S"
@@ -214,6 +217,7 @@ class ReportLog:
         self._errors = 0
         self._comlog = None
         self._echo = echo
+        self._echoed = 0
         self._external_calls = 0
 
         self.sid = None
@@ -269,6 +273,7 @@ class ReportLog:
         if self._comlog is None and self._echo is not None:
             self._echo.write(rendered)
             self._echo.flush()
+            self._echoed += 1
 
     # --------------------------------------------------------- the comlog
 
@@ -401,6 +406,29 @@ class ReportLog:
         """Insert blank lines."""
         self.raw("\n" * count)
 
+    def rule(self, before: int = 0, after: int = 0, char: str = "-") -> None:
+        """
+        Draw a full width rule across the report.
+
+        The dashed rule separates one session report from the next; it is what
+        :meth:`framed` draws and what a reader scanning a runlog looks for. It
+        used to be hand-typed at every call site, which is how the tree came to
+        have two rules of different lengths appearing in the same runlog. Ask
+        for the rule rather than spelling it.
+
+        ``char`` picks what it is drawn with, so a report can separate at more
+        than one weight -- a dotted rule around a traceback reads as a lighter
+        division than the dashed one that ends a session. The **width does not
+        change with it**: rules of one length stack into a readable page, and
+        that is the property being protected here.
+
+        Parameters:
+            before: blank lines above the rule.
+            after: blank lines below it.
+            char: what to draw it with, e.g. ``"-"``, ``"."`` or ``"="``.
+        """
+        self.raw("\n" * (before + 1) + char * RULE_WIDTH + "\n" * after)
+
     def raw(self, text: str) -> None:
         """Append text verbatim, with no prefix, no indent and no added newline."""
         self._record(0, RAW, text)
@@ -512,13 +540,25 @@ class ReportLog:
         :class:`ReportLog` -- is filed under the run's command name, which is
         what the final report then lists it as. The command does not have to
         repeat its own name to say so.
+
+        **A log that echoed every line as it recorded it is not printed
+        again.** A study level command runs as one unit -- ``general.process``
+        prints nothing between its start and its end -- so a long one has to
+        echo if it is to show progress at all, and printing the whole report
+        afterwards would then show everything twice. The runlog is written
+        either way: it is the durable record and it holds the report once.
+        The test is deliberately "every record", not "any record": a log that
+        echoed only some of them -- a comlog was attached partway, and
+        :meth:`_record` sends a line to one or the other -- is printed in full,
+        because a duplicated line costs less than a lost one.
         """
         if self.sid is None:
             self.sid = run.command
 
         text = self.text
         run.write(text + "\n")
-        print(text)
+        if self._echoed < len(self._records):
+            print(text)
 
     def finish(self, summary, failed=None, name=None):
         """

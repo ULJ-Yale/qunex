@@ -6,7 +6,7 @@ Guidance for Claude Code when working in the QuNex repository.
 
 QuNex (Quantitative Neuroimaging Environment & ToolboX) is a multi-language framework
 for organizing, preprocessing, QA-ing, and analyzing neuroimaging data. The codebase is
-mixed-language (Python, Bash, MATLAB/Octave, R) and historically inconsistent. **Prefer
+mixed-language (Python, Bash, MATLAB/Octave) and historically inconsistent. **Prefer
 pragmatic, focused improvements over strict rewrites.**
 
 - Version: see `VERSION.md` (currently 1.5.0). `qx_library` is a git submodule (see `.gitmodules`).
@@ -45,7 +45,6 @@ pragmatic, focused improvements over strict rewrites.**
 - `python/tests/` — pytest suite (`test_data/` holds fixtures).
 - `bash/qx_utilities/` — Bash implementations (DWI, FC, QC, turnkey, XNAT, ...).
 - `matlab/` — `qx_mri`, `qx_utilities`, `qx_mice` (MATLAB/Octave functions).
-- `r/qx_utilities/` — R scripts (movement/stats/fidl).
 - `env/` — environment setup (`qunex_environment.sh` sets `TOOLS`, `QUNEXPATH`, `PYTHONPATH`, etc.).
 - `qx_library/` — submodule with data, etc, seccomp profiles, MATLAB tests.
 
@@ -230,8 +229,10 @@ Do not fix only issues created by you — fix everything you notice. Fix pre-exi
 ## Multi-language guardrails
 
 - Bash: keep scripts POSIX-friendly unless the file already depends on Bash-specific features.
-- MATLAB/R: preserve existing function signatures and I/O conventions.
+- MATLAB: preserve existing function signatures and I/O conventions.
 - Do not introduce new runtime dependencies without clear need.
+- There is no R in the tree. `r-base` stays in the container for ICA-FIX, and `run_recipe`
+  still dispatches user-supplied `.R` scripts, but no QuNex code is written in R.
 
 ## Final response checklist
 

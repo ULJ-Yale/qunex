@@ -123,7 +123,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     do_options_check(options, sinfo, "run_basic_structural_segmentation")
 
     f = get_file_names(sinfo, options)
-    log.raw("\n---------------------------------------------------------")
+    log.rule()
     log.info(
         f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
     )
@@ -361,7 +361,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
             f = get_file_names(sinfo, options)
 
             if verbose:
-                log.raw("\n---------------------------------------------------------")
+                log.rule()
                 log.info(
                     f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
                 )
@@ -511,7 +511,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         with combined_comlog(
             log, options, "run_freesurfer_full_segmentation", thread=sinfo["id"]
         ):
-            log.raw("\n---------------------------------------------------------")
+            log.rule()
             log.info(
                 f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )
@@ -790,7 +790,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         with combined_comlog(
             log, options, "run_freesurfer_subcortical_segmentation", thread=sinfo["id"]
         ):
-            log.raw("\n---------------------------------------------------------")
+            log.rule()
             log.info(
                 f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
             )

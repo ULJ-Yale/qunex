@@ -694,14 +694,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # -- Report command
             if run:
-                log.raw(
-                    "\n\n------------------------------------------------------------\n"
-                )
+                log.rule(before=1, after=1)
                 log.raw("Running HCP Pipelines command via QuNex:\n\n")
                 log.raw(comm.replace("                --", "\n    --"))
-                log.raw(
-                    "\n------------------------------------------------------------\n"
-                )
+                log.rule(after=1)
 
             # -- Test files
             tfile = None

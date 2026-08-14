@@ -59,7 +59,9 @@ def default_options(**overrides):
 
     The defaults come from ``general.process.arglist``, the same table the
     command line parser uses, so a dry run driven from a test sees the option
-    surface a real invocation would. ``comlogs``, ``logfolder`` and
+    surface a real invocation would -- recoded through each parameter's
+    declared type and then imputed, both of which ``general.process`` does
+    before it hands the options to a command. ``comlogs``, ``logfolder`` and
     ``command_ran`` are normally filled in by ``general.process`` at run time,
     so they are seeded here too.
 
@@ -69,7 +71,7 @@ def default_options(**overrides):
     Returns:
         The options dictionary.
     """
-    from qx_utilities.general import process
+    from qx_utilities.general import commands_support, process
 
     typed = [entry for entry in process.arglist if len(entry) == 3]
 
@@ -86,4 +88,10 @@ def default_options(**overrides):
     options.setdefault("logfolder", "")
     options.setdefault("specfolder", "")
     options.setdefault("command_ran", "test_command")
-    return options
+
+    # and then fills the parameters that take their value from another one --
+    # `nifti_tail` from `qx_nifti_tail` from `hcp_nifti_tail`, and the same for
+    # the CIFTI tail. Without this they stay None, which is a value the CLI
+    # would never hand a command, and the first thing that resolves a BOLD file
+    # name fails on it deep inside path building
+    return commands_support.impute_parameters(options, options["command_ran"])

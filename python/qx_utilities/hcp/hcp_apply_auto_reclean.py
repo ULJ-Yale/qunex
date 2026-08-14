@@ -299,7 +299,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
     }
 
     try:
-        log.raw("\n\n------------------------------------------------------------")
+        log.rule(before=1)
         log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
