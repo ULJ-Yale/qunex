@@ -573,8 +573,9 @@ def copy_study(
             file will be processed.
 
         --filter (str, default None):
-            An optional parameter given as "key:value|key:value" string. Can be
-            used for filtering the session data within the provided batchfile.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used to select sessions
+            within the provided batchfile. Values may be glob patterns.
 
     Notes:
         Can be used for backing up existing studies or when copying previous
@@ -676,8 +677,8 @@ def copy_study(
 
     # get sessions and subjects
     if batchfile is not None:
-        sessions, _ = gc.get_sessions_list(
-            batchfile, filter=filter, sessionids=sessions
+        sessions, _ = gc.resolve_sessions(
+            batchfile=batchfile, sessions=sessions, filter=filter, command="copy_study"
         )
         subjects = []
         for session in sessions:
@@ -808,13 +809,14 @@ def create_batch(
     sessionsfolder=".",
     sourcefiles=None,
     targetfile=None,
+    batchfile=None,
     sessions=None,
     filter=None,
     overwrite="no",
     paramfile=None,
 ):
     """
-    ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]``
+    ``create_batch [sessionsfolder=.] [sourcefiles=session_hcp.txt] [targetfile=processing/batch.txt] [batchfile=None] [sessions=None] [filter=None] [overwrite=no] [paramfile=<sessionsfolder>/specs/parameters.txt]``
 
     Create a joint batch file from source files in all session folders.
 
@@ -833,15 +835,25 @@ def create_batch(
             The path to the batch file to be generated. By default, it is
             created as <study>/processing/batch.txt.
 
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
+
+        --batchfile (str, default None):
+            An optional path to an existing batch file or a list file to take
+            the sessions from, instead of looking through the sessions folder.
+
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
             will be processed. They are to be specified as a pipe or comma
             separated list, grob patterns are valid session specifiers.
 
         --filter (str, default None):
-            An optional parameter given as "key:value|key:value" string. Only
-            sessions with the specified key-value pairs in their source files
-            will be added to the batch file.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time. Only the sessions the filter
+            selects will be added to the batch file. Values may be glob
+            patterns.
 
         --overwrite (str, default 'yes'):
             In case that the specified batch file already exists, whether to
@@ -859,10 +871,11 @@ def create_batch(
         The command combines all the sourcefiles in all session folders in
         sessionsfolder to generate a joint batch file and save it as targetfile.
         If only specific sessions are to be added or appended, "sessions"
-        parameter can be used. This can be a pipe, comma or space separated list
-        of session ids, another batch file or a list file. If a string is
-        provided, grob patterns can be used (e.g. sessions="AP*|OR*") and all
-        matching sessions will be processed.
+        parameter can be used. This is a pipe, comma or space separated list of
+        session ids, in which grob patterns can be used (e.g.
+        sessions="AP*|OR*"), and all matching sessions will be processed. To
+        take the sessions from an existing batch file or a list file, use the
+        "batchfile" parameter; "sessions" and "filter" then select within it.
 
         If no targetfile is specified, it will save the file as batch.txt in a
         processing folder parallel to the sessionsfolder. If the folder does not
@@ -920,12 +933,21 @@ def create_batch(
 
             In order of priority, from lower to highest, they can be specified:
 
+            -  as the parameter's own default value
             -  in the header section of the study batch file
             -  in the recipe file
             -  as a command line parameter
             -  in the session section of the study batch file
             -  in the image specification of the session section of the study
                batch file
+
+            These tiers are merged once per run and apply to every command,
+            whether it is written in python, matlab or bash. A tier fills a
+            parameter in, it never overrides one stated above it, and a
+            parameter a command does not accept is not passed to it. Every run
+            prints the parameters the command is about to be run with and the
+            tier each value came from, and writes the same table to its log,
+            so what a run used is a matter of record rather than of inference.
 
             Header section of the study batch file:
                 To run most of the processing steps, a batch file needs to be
@@ -1163,7 +1185,9 @@ def create_batch(
             print("# Source files: %s" % (sfiles), file=jfile)
 
         elif overwrite == "append":
-            slist, parameters = gc.get_sessions_list(targetfile)
+            slist, parameters = gc.resolve_sessions(
+                batchfile=targetfile, command="create_batch"
+            )
             slist = [e["id"] for e in slist]
             print(
                 "---> Appending to file %s [%s]"
@@ -1194,9 +1218,14 @@ def create_batch(
         # -- get list of sessions folders
         missing = 0
 
-        if sessions is not None:
-            sessions, gopts = gc.get_sessions_list(
-                sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+        if sessions is not None or batchfile is not None:
+            sessions, _ = gc.resolve_sessions(
+                batchfile=batchfile,
+                sessions=sessions,
+                filter=filter,
+                sessionsfolder=sessionsfolder,
+                command="create_batch",
+                verbose=False,
             )
             files = []
             for session in sessions:
@@ -1337,9 +1366,10 @@ def create_list(
             (can be glob patterns).
 
         --filter (str, default None):
-            If a batch.txt file is provided a string of key-value pairs
-            (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
-            key-value pairs will be added to the list.
+            If a batch.txt file is provided a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects will be added to the list. Values
+            may be glob patterns.
 
         --listfile (str, default None):
             The path to the generated list file. If no path is provided, the
@@ -1671,27 +1701,29 @@ def create_list(
 
     # --- check sessions
     sessions_list = []
-    if not batchfile:
-        sessions_list = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
-        sessions_list = [os.path.basename(os.path.dirname(e)) for e in sessions_list]
-        sessions_list = "|".join(sessions_list)
-
-        sessions_list, _ = gc.get_sessions_list(
-            sessions_list,
-            sessionids=sessions,
+    if batchfile:
+        sessions_list, _ = gc.resolve_sessions(
+            batchfile=batchfile,
+            sessions=sessions,
             filter=filter,
-            verbose=False,
             sessionsfolder=sessionsfolder,
+            command="create_list",
+            verbose=False,
         )
-    # filter
     else:
-        sessions_list, _ = gc.get_sessions_list(
-            batchfile,
-            sessionids=sessions,
+        # without a batch file the pool is the session folders that have images
+        pool = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
+        pool = "|".join([os.path.basename(os.path.dirname(e)) for e in pool])
+
+        sessions_list, _ = gc.resolve_sessions(
+            sessions=pool,
             filter=filter,
-            verbose=False,
             sessionsfolder=sessionsfolder,
+            command="create_list",
+            verbose=False,
         )
+        if sessions:
+            sessions_list = sessions_list.filter_by_key("id", sessions)
 
     if not sessions_list:
         raise ge.CommandFailed(
@@ -1827,8 +1859,8 @@ def create_list(
 
 def create_conc(
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
-    sessionids=None,
     filter=None,
     concfolder=None,
     concname="",
@@ -1841,7 +1873,7 @@ def create_conc(
     check="yes",
 ):
     """
-    ``create_conc [sessionsfolder="."] [sessions=None] [sessionids=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
+    ``create_conc [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [concfolder=None] [concname=""] [bolds=None] [boldname="bold"] [bold_tail=".nii.gz"] [img_suffix=""] [bold_variant=""] [overwrite="no"] [check="yes"]``
 
     Create .conc files for the specified sessions.
 
@@ -1866,9 +1898,10 @@ def create_conc(
             (can be glob patterns).
 
         --filter (str):
-            If a batch.txt file is provided a string of key-value pairs
-            (`"<key>:<value>|<key>:<value>"`). Only sessions that match all the
-            key-value pairs will be added to the list.
+            If a batch.txt file is provided a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects will be added to the list. Values
+            may be glob patterns.
 
         --img_suffix (str, default ''):
             Specifies an optional suffix for 'images' folder when files are to
@@ -2086,7 +2119,7 @@ def create_conc(
 
     # --- check sessions
 
-    if sessions is None:
+    if sessions is None and batchfile is None:
         print(
             "WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         )
@@ -2094,8 +2127,13 @@ def create_conc(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    sessions, _ = gc.resolve_sessions(
+        batchfile=batchfile,
+        sessions=sessions,
+        filter=filter,
+        sessionsfolder=sessionsfolder,
+        command="create_conc",
+        verbose=False,
     )
 
     if not sessions:
@@ -2248,7 +2286,9 @@ def batch_tag2namekey(
     if bolds is None:
         raise ge.CommandError("batchTag2Num", "No bolds specified!")
 
-    sessions, options = gc.get_sessions_list(filename, sessionids=sessionid)
+    sessions, options = gc.resolve_sessions(
+        batchfile=filename, sessions=sessionid, command="batch_tag2namekey"
+    )
 
     if not sessions:
         raise ge.CommandFailed(
@@ -2286,14 +2326,15 @@ def batch_tag2namekey(
     print("BOLDS:%s" % (",".join(boldlist)))
 
 
-def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None):
+def list_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=None):
     """
-    ``get_sessions_for_slurm_array sessions=<a list of sessions, or path to the batch file) sessionids=<a list of session ids to filter out>``
+    ``list_sessions [batchfile=None] [sessions=None] [filter=None] [sessionsfolder=None]``
 
-    Return the subset of sessions that will be processed for a SLURM array job.
+    Print the comma separated list of the sessions a command would run over.
 
     ..  qx_command:
         type: utility
+        aliases: get_sessions_for_slurm_array
 
     Parameters:
         --batchfile (str):
@@ -2301,29 +2342,38 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None)
 
         --sessions (str):
             A string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
-            If a batchfile is provided, this parameter will be interpreted as
-            sessionids to filter from the batch file.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
+            If a batchfile is provided, this parameter selects within it.
 
-        --sessionids (str):
-            A string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+        --filter (str):
+            An optional parameter given as a string of `<key>:<value>` pairs
+            joined by `|` (OR) or by `&` (AND) — one operator at a time. Only
+            the sessions the filter selects are returned. Values may be glob
+            patterns.
+
+        --sessionsfolder (str):
+            The sessions folder to match the sessions against when no batchfile
+            is provided.
 
     Notes:
-        This command will return the list of session ids that will be processed
-        for a SLURM array job, based on the provided batch file and the
-        sessions/sessionids parameters.
+        The three parameters are resolved exactly as they are for any other
+        command, so this is what any command given the same parameters will run
+        over. Inside a SLURM job array that is the subset belonging to this
+        array task, which is what the `get_sessions_for_slurm_array` spelling
+        of this command was for.
 
     """
 
     # get sessions
-    slist = []
-    if batchfile is not None:
-        slist, _ = gc.get_sessions_list(batchfile, sessionids=sessions)
-    else:
-        slist, _ = gc.get_sessions_list(sessions, sessionids=sessionids)
+    slist, _ = gc.resolve_sessions(
+        batchfile=batchfile,
+        sessions=sessions,
+        filter=filter,
+        sessionsfolder=sessionsfolder,
+        command="list_sessions",
+    )
 
     # print
     sarray = []
@@ -2335,6 +2385,7 @@ def get_sessions_for_slurm_array(batchfile=None, sessions=None, sessionids=None)
 
 def gather_behavior(
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
     filter=None,
     sourcefiles="behavior.txt",
@@ -2344,7 +2395,7 @@ def gather_behavior(
     report="yes",
 ):
     """
-    ``gather_behavior [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
+    ``gather_behavior [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [sourcefiles="behavior.txt"] [targetfile="<sessionsfolder>/inbox/behavior/behavior.txt"] [overwrite="no"] [check="yes"]``
 
     Gather specified individual behavioral data from each session's behavior
     folder and compile it into a specified group behavioral file.
@@ -2358,20 +2409,26 @@ def gather_behavior(
             and individual session folders are. If not specified, the current
             working folder will be taken as the location of the sessionsfolder.
 
+        --batchfile (str, None):
+            An optional path to a batch file or a list file to take the sessions
+            from. `sessions` and `filter` then select within it.
+
         --sessions (str, None):
             Either a string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
 
         --filter (str, None):
             Optional parameter used to filter sessions to include.
 
-            It is specifed as a string in format::
+            It is specified as a string of `<key>:<value>` pairs joined by
+            `|` (OR) or by `&` (AND) — one operator at a time::
 
                 "<key>:<value>|<key>:<value>"
 
-            Only the sessions for which all the specified keys match the specified
-            values will be included in the list.
+            Only the sessions the filter selects will be included in the list.
+            Values may be glob patterns.
 
         --sourcefiles (str, 'behavior.txt'):
             A file or comma or pipe `|` separated list of files or grep patterns
@@ -2381,6 +2438,11 @@ def gather_behavior(
         --targetfile (str, None):
             The path to the target file, a file that will contain the joined data
             from all the individual session files.
+
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
 
         --overwrite (str, 'no'):
             Whether to overwrite an existing group behavioral file or not.
@@ -2585,7 +2647,7 @@ def gather_behavior(
 
     # --- check sessions
 
-    if sessions is None:
+    if sessions is None and batchfile is None:
         print(
             "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         )
@@ -2593,8 +2655,13 @@ def gather_behavior(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    sessions, _ = gc.resolve_sessions(
+        batchfile=batchfile,
+        sessions=sessions,
+        filter=filter,
+        sessionsfolder=sessionsfolder,
+        command="gather_behavior",
+        verbose=False,
     )
 
     if not sessions:
@@ -2727,6 +2794,7 @@ def gather_behavior(
 
 def pull_sequence_names(
     sessionsfolder=".",
+    batchfile=None,
     sessions=None,
     filter=None,
     sourcefiles="session.txt",
@@ -2736,7 +2804,7 @@ def pull_sequence_names(
     report="yes",
 ):
     """
-    ``pull_sequence_names [sessionsfolder="."] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
+    ``pull_sequence_names [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [sourcefiles="session.txt"] [targetfile="<sessionsfolder>/inbox/MR/sequences.txt"] [overwrite="no"] [check="yes"]``
 
     Gather a list of all the sequence names across the sessions and save it
     into a specified file.
@@ -2750,20 +2818,26 @@ def pull_sequence_names(
             and individual session folders are. If not specified, the current
             working folder will be taken as the location of the sessionsfolder.
 
+        --batchfile (str, None):
+            An optional path to a batch file or a list file to take the sessions
+            from. `sessions` and `filter` then select within it.
+
         --sessions (str, None):
             Either a string with pipe `|` or comma separated list of sessions
-            (sessions ids) to be processed (use of grep patterns is possible),
-            e.g. `"AP128,OP139,ER*"`, or `*list` file with a list of session ids.
+            (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
+            may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
+            of session ids may be given instead.
 
         --filter (str, None):
             Optional parameter used to filter sessions to include.
 
-            It is specifed as a string in format::
+            It is specified as a string of `<key>:<value>` pairs joined by
+            `|` (OR) or by `&` (AND) — one operator at a time::
 
                 "<key>:<value>|<key>:<value>"
 
-            Only the sessions for which all the specified keys match the specified
-            values will be included in the list.
+            Only the sessions the filter selects will be included in the list.
+            Values may be glob patterns.
 
         --sourcefiles (str, 'session.txt'):
             A file or comma or pipe `|` separated list of files or grep patterns
@@ -2772,6 +2846,11 @@ def pull_sequence_names(
         --targetfile (str, None):
             The path to the target file, a file that will contain the list of all
             the session names from all the individual session information files.
+
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
 
         --overwrite (str, 'no'):
             Whether to overwrite an existing file or not.
@@ -2969,7 +3048,7 @@ def pull_sequence_names(
 
     # --- check sessions
 
-    if sessions is None:
+    if sessions is None and batchfile is None:
         print(
             "---> WARNING: No sessions specified. The list will be generated for all sessions in the sessions folder!"
         )
@@ -2977,8 +3056,13 @@ def pull_sequence_names(
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
         sessions = "|".join(sessions)
 
-    sessions, gopts = gc.get_sessions_list(
-        sessions, filter=filter, verbose=False, sessionsfolder=sessionsfolder
+    sessions, _ = gc.resolve_sessions(
+        batchfile=batchfile,
+        sessions=sessions,
+        filter=filter,
+        sessionsfolder=sessionsfolder,
+        command="pull_sequence_names",
+        verbose=False,
     )
 
     if not sessions:
@@ -3147,6 +3231,7 @@ def export_prep(command_name, sessionsfolder, mapto, mapaction, mapexclude):
 
 
 def create_session_info(
+    batchfile=None,
     sessions=None,
     pipelines="hcp",
     sessionsfolder=".",
@@ -3157,7 +3242,7 @@ def create_session_info(
     overwrite="no",
 ):
     """
-    ``create_session_info sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
+    ``create_session_info [batchfile=None] sessions=<sessions specification> [pipelines=hcp] [sessionsfolder=.] [sourcefile=session.txt] [targetfile=session_<pipeline>.txt] [mapping=specs/<pipeline>_mapping.txt] [filter=None] [overwrite=no]``
 
     Create session info files for specified sessions and pipeline.
 
@@ -3187,14 +3272,20 @@ def create_session_info(
         --targetfile (str, default session_<pipeline>.txt):
             The "target" session.txt file.
 
+            Note that `targetfile` is a parameter of four commands that write
+            four different files, so a batch file header stating it points all
+            of them at one path. State it per command, or keep it out of the
+            header with `--unset_batch_header_parameters=targetfile`.
+
         --mapping (str, default specs/<pipeline>_mapping.txt):
             The path to the text file describing the mapping.
 
         --filter (str, default None):
-            An optional "key:value|key:value" string used as a filter if a batch
-            file is used. Only sessions for which all the key:value pairs are
-            true will be processed. All the sessions will be processed if no
-            filter is provided.
+            An optional string of `<key>:<value>` pairs joined by `|` (OR) or
+            by `&` (AND) — one operator at a time, used as a filter when a batch
+            file is given. Only the sessions the filter selects are processed;
+            all of them are processed if no filter is provided. Values may be
+            glob patterns.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no). Note that
@@ -3404,7 +3495,13 @@ def create_session_info(
             )
 
         # -- get list of session folders
-        sessions, _ = gc.get_sessions_list(sessions, filter=filter, verbose=False)
+        sessions, _ = gc.resolve_sessions(
+            batchfile=batchfile,
+            sessions=sessions,
+            filter=filter,
+            command="create_session_info",
+            verbose=False,
+        )
 
         sfolders = []
         for session in sessions:

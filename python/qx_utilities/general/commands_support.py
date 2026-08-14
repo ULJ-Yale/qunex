@@ -11,9 +11,13 @@
 Helper code for perarations of commands and their parameters
 """
 
+import fnmatch
+import os
 import re
 
+from qx_utilities.general import exceptions as ge
 from qx_utilities.general import extensions
+from qx_utilities.general.log import INDENT
 
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
@@ -265,7 +269,7 @@ deprecated_parameters = {
     "subjectsfolder": "sessionsfolder",
     "subjid": {
         "sessionid": ["dicom2niix", "batch_tag2namekey"],
-        "sessionids": "export_hcp",
+        "sessions": ["export_hcp"],
         "default": "sessionid",
     },
     "sbjroi": "sessionroi",
@@ -339,6 +343,116 @@ towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 
 
 # ==============================================================================
+#                                                     SESSION PARAMETER ENCODING
+#
+# QuNex used to encode "which batch file, which sessions" as `sessions=<path to
+# the batch file>` plus `sessionids=<ids>`. The canonical encoding is
+# `batchfile=<path>` plus `sessions=<ids>`, and the legacy one is mapped onto it
+# here - once, for every entry point.
+#
+# The legacy spelling is a warning rather than an error because run_turnkey.sh
+# hard-codes it in ~30 internal calls. Setting the constant below to True turns
+# it into an error; that is the whole of the change, and it is due when
+# run_turnkey is dropped.
+SESSIONS_AS_BATCHFILE_IS_ERROR = False
+
+
+def is_batchfile_path(sessions):
+    """
+    ``is_batchfile_path(sessions)``
+
+    Checks whether a `sessions` value is a path to a batch file - the legacy
+    spelling of `batchfile` - rather than a specification of sessions.
+
+    A session specification is a comma, pipe or space separated list of session
+    ids or globs, or a single `*.list` file. A path to a batch file is what is
+    left: a single item, not a `*.list` file, that has either a directory
+    component or a file extension.
+    """
+
+    if not isinstance(sessions, str) or not sessions.strip():
+        return False
+
+    sessions = sessions.strip()
+
+    if len(sessions.split()) > 1 or "," in sessions or "|" in sessions:
+        return False
+
+    extension = os.path.splitext(sessions)[1].lower()
+    if extension == ".list":
+        return False
+
+    return os.sep in sessions or extension != ""
+
+
+def normalize_session_parameters(options, command):
+    """
+    ``normalize_session_parameters(options, command)``
+
+    Maps the legacy `sessions=<batch file>` / `sessionids=<ids>` encoding onto
+    the canonical `batchfile=<batch file>` / `sessions=<ids>` one, warning about
+    each of the two legacy spellings, and returns the updated options.
+
+    An empty value is treated as no value at all - the bash entry points pass
+    every parameter they know of, set or not.
+    """
+
+    sessions = options.get("sessions")
+    sessions = sessions.strip() if isinstance(sessions, str) else sessions
+
+    # -- a batch file passed through sessions
+    if is_batchfile_path(sessions):
+        batchfile = sessions
+        sessions = None
+
+        if options.get("batchfile"):
+            raise ge.CommandError(
+                command,
+                "Duplicate batch file",
+                "The batch file was passed both through the sessions and through the batchfile parameter!",
+                "Please pass it through batchfile only!",
+            )
+
+        if SESSIONS_AS_BATCHFILE_IS_ERROR:
+            raise ge.CommandError(
+                command,
+                "Deprecated parameter use",
+                "The sessions parameter no longer takes a path to a batch file [%s]!"
+                % (batchfile),
+                "Please use the batchfile parameter instead!",
+            )
+
+        print(
+            "\nWARNING: Passing the batch file through the sessions parameter is deprecated!"
+        )
+        print("         Please use --batchfile='%s' instead." % (batchfile))
+
+        options["batchfile"] = batchfile
+        del options["sessions"]
+
+    # -- sessionids is a deprecated alias of sessions
+    if "sessionids" in options:
+        sessionids = options.pop("sessionids")
+        sessionids = sessionids.strip() if isinstance(sessionids, str) else sessionids
+
+        if sessionids:
+            if sessions and sessions != sessionids:
+                raise ge.CommandError(
+                    command,
+                    "Duplicate session specification",
+                    "Sessions were specified both through the sessions and through the sessionids parameter!",
+                    "Please specify them through sessions only!",
+                )
+
+            print(
+                "\nWARNING: The sessionids parameter is deprecated, please use sessions instead!"
+            )
+            options["sessions"] = sessionids
+
+    return options
+
+
+# ==============================================================================
 #                                                  MAPPING DEPRECATED PARAMETERS
 #
 def check_deprecated_parameters(options, command):
@@ -381,32 +495,8 @@ def check_deprecated_parameters(options, command):
         else:
             new_options[k] = v
 
-    # custom remapping for sessions, sessionids and batchfile
-    sessions = None
-    if "sessions" in new_options:
-        sessions = new_options["sessions"]
-    if "batchfile" in new_options:
-        # if sessions and batchfile both provide a file
-        if sessions is not None and ".txt" in sessions:
-            print(
-                "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters or you are passing it both at the command level and at the global level of the recipe file!"
-            )
-            exit(1)
-        elif sessions is not None:
-            # did we provide a list of sessions in sessionsids as well
-            if "sessionids" in new_options:
-                print(
-                    "ERROR: It seems like you are passing a list of sessions both through the sessions parameter and through the sessionids parameter!"
-                )
-                exit(1)
-            # remap so session are sessionids and batchfile is sessions
-            else:
-                new_options["sessionids"] = new_options["sessions"]
-                new_options["sessions"] = new_options["batchfile"]
-                del new_options["batchfile"]
-        else:
-            new_options["sessions"] = new_options["batchfile"]
-            del new_options["batchfile"]
+    # -> map the legacy batch file / sessions encoding onto the canonical one
+    new_options = normalize_session_parameters(new_options, command)
 
     # custom remapping for log: it used to answer two questions -- whether to
     # keep a comlog and where to put it. The destinations moved to
@@ -483,6 +573,342 @@ def impute_parameters(options, command):
 
 
 # ==============================================================================
+#                                                   THE THREADS A COMMAND MAY USE
+#
+MAX_OMP_THREADS = 8
+
+
+def set_omp_threads(options):
+    """
+    ``set_omp_threads(options)``
+
+    Sets `OMP_NUM_THREADS` for the command about to be run: `--omp_threads` if
+    the run states one, otherwise the cores available to this process shared
+    between the parallel jobs it was asked for, at least one and at most eight.
+
+    An environment that already states it is left alone. `bin/qunex.sh` sets
+    the same variable the same way before it hands over, so a run started
+    there arrives with it set and this changes nothing; a run started at
+    `gmri` - a step of a recipe, a scheduler job, a call from a script - used
+    to get the machine's default and oversubscribe the node.
+
+    Parameters:
+        --options   The merged options, from `process.merge_options`.
+
+    Returns:
+        The value it set, or None when the environment already stated one.
+    """
+    if options.get("omp_threads"):
+        threads = int(options["omp_threads"])
+    elif os.environ.get("OMP_NUM_THREADS"):
+        return None
+    else:
+        # the cores this process may actually run on, which is what `nproc`
+        # reports and what a scheduler restricts a job to
+        cores = (
+            len(os.sched_getaffinity(0))
+            if hasattr(os, "sched_getaffinity")
+            else os.cpu_count() or 1
+        )
+        parallel = int(options.get("parsessions", 1)) * int(
+            options.get("parelements", 1)
+        )
+        threads = min(MAX_OMP_THREADS, max(1, cores // max(1, parallel)))
+
+    os.environ["OMP_NUM_THREADS"] = str(threads)
+    return threads
+
+
+# ==============================================================================
+#                                                          PARAMETER PROVENANCE
+#
+PER_SESSION = "batch file (session)"
+RECIPE_RUN = "recipe run"
+
+# How a recipe tells the step it starts which of the parameters on its command
+# line came from the recipe: the names, comma separated, in the step's
+# environment. A command line carries values and not the tier they came from,
+# and the step is a process of its own.
+RECIPE_PARAMETERS = "QX_RECIPE_PARAMETERS"
+
+# The tiers that state parameters for a run rather than for one command: a
+# batch file's header, and everything a recipe states for all of its steps --
+# its global and recipe level parameters and the command line `run_recipe`
+# itself was given. A value of theirs that a command cannot take was meant for
+# another command of the same run, so it is dropped without a word. One
+# written against the command itself is a mistake, and is named.
+RUN_WIDE_SOURCES = ("batch file", PER_SESSION, RECIPE_RUN)
+
+# ==============================================================================
+#                                            NOT TAKING WHAT THE BATCH FILE SAYS
+#
+# A batch file states parameters for every command of a study, and since the
+# header reaches every command class, a name it states can land somewhere its
+# author did not have in mind -- `targetfile` is declared by four commands that
+# write four different files. These say "not from there", one per batch tier,
+# and they are run level parameters, so they can be written on the command line
+# and at every level of a recipe.
+UNSET_BATCH_HEADER = "unset_batch_header_parameters"
+UNSET_BATCH_SESSION = "unset_batch_session_parameters"
+
+
+def unset_patterns(stated):
+    """
+    ``unset_patterns(stated)``
+
+    The patterns an unset states: a name, a comma separated list of them, or an
+    array -- the forms a recipe's `unset_parameters` already takes, so there is
+    one convention rather than two. An empty list states nothing, which is how
+    a step opts back in under a run wide `all`.
+    """
+    if stated is None:
+        return []
+    if isinstance(stated, str):
+        stated = stated.split(",")
+    return [str(pattern).strip() for pattern in stated if str(pattern).strip()]
+
+
+def is_unset(name, patterns):
+    """
+    ``is_unset(name, patterns)``
+
+    Whether any of `patterns` unsets `name`. A pattern is a parameter name, a
+    glob over parameter names (`hcp_*`), `*`, or `all` -- the last being the
+    spelling QuNex uses for "every one of them" elsewhere, and free here since
+    no command declares a parameter of that name.
+
+    `fnmatchcase` rather than `fnmatch`, as in `batch_io`: the answer must not
+    depend on the operating system. `_` is not a metacharacter, so `hcp_*`
+    matches what it looks like it matches.
+    """
+    return any(
+        pattern in ("all", "*") or name == pattern or fnmatch.fnmatchcase(name, pattern)
+        for pattern in patterns
+    )
+
+
+def without_unset(options, patterns):
+    """
+    ``without_unset(options, patterns)``
+
+    The options left once the patterns have taken out what they name, and the
+    names they took. The names are returned because a pattern is not a list: a
+    run has to be able to say what `hcp_*` removed on the day it ran, rather
+    than leaving a reader to work it out from the release it ran on.
+    """
+    if not options or not patterns:
+        return options, []
+
+    unset = sorted(key for key in options if is_unset(key, patterns))
+
+    return {key: value for key, value in options.items() if key not in unset}, unset
+
+
+def declared_parameters(qx_command):
+    """
+    ``declared_parameters(qx_command)``
+
+    The names a command declares: its signature arguments and its documented
+    options. `qx_command.has_arg` answers for the signature alone, which is the
+    whole story for a python command and none of it for a matlab or a bash one -
+    their parameters are documented ones and live in `options`.
+    """
+    return {arg.name for arg in qx_command.args} | {
+        option.name for option in qx_command.options
+    }
+
+
+def update_options(session, options, sources=None):
+    """
+    ``update_options(session, options, sources=None)``
+
+    Returns a copy of the options with the parameters a batch file states for
+    this session alone - the keys it prefixes with `_` or `--` - applied over
+    them, and a copy of the sources recording those keys as having come from
+    the batch file's entry for the session.
+
+    What `unset_batch_session_parameters` names is not applied. The run states
+    it and it travels in the options, so this is the only place that has to
+    know about it - and it is the only place this tier is applied, `gp.run`
+    being its one caller, so a processing command is the only kind that ever
+    sees this tier at all.
+    """
+    soptions = dict(options)
+    ssources = dict(sources or {})
+    patterns = unset_patterns(options.get(UNSET_BATCH_SESSION))
+
+    for key, value in session.items():
+        if key.startswith("_"):
+            key = key[1:]
+        elif key.startswith("--"):
+            key = key[2:]
+        else:
+            continue
+
+        if is_unset(key, patterns):
+            continue
+
+        soptions[key] = value
+        ssources[key] = PER_SESSION
+
+    return soptions, ssources
+
+
+def select_parameters(options, sources, qx_command):
+    """
+    ``select_parameters(options, sources, qx_command)``
+
+    Narrows the merged options to the parameters the registry says the command
+    accepts, and names the ones it does not.
+
+    Fill, never override: only values somebody stated are returned, so the
+    command keeps its own defaults for everything nobody named, and a caller
+    that layers the command line back over the result gets a command line that
+    always wins.
+
+    Parameters:
+        --options       The parameters to narrow - what the tiers stated, from
+                        `process.merge_options`, or a recipe step's own.
+        --sources       Where each of them came from.
+        --qx_command    The registry entry of the command to be run.
+
+    Returns:
+        The parameters the command accepts, and the names of those it does
+        not. Named are only the ones stated for this command: a run wide tier
+        states parameters for every command in the run, and the run level
+        parameters steer the run rather than the command.
+    """
+    declared = declared_parameters(qx_command)
+
+    accepted, dropped = {}, []
+    for key, value in options.items():
+        source = sources.get(key, "default")
+
+        if source == "default":
+            continue
+        elif key in declared:
+            accepted[key] = value
+        elif key not in extra_parameters and source not in RUN_WIDE_SOURCES:
+            dropped.append(key)
+
+    return accepted, dropped
+
+
+def report_parameters(qx_command, options, sources, session=None):
+    """
+    ``report_parameters(qx_command, options, sources, session=None)``
+
+    Renders the parameters a command is about to be run with, each one next to
+    where its value came from. Written before the command runs, unconditionally,
+    so that a run that does something unexpected says why in its own first
+    lines.
+
+    Reported are the parameters the command declares - its signature arguments
+    and its documented options. A command that declares none that this run has
+    a value for has nothing to narrow by, and reports what was specified
+    instead: the run's ~450 defaults say nothing about a command that does not
+    take them.
+
+    Parameters:
+        --qx_command    The registry entry of the command to be run.
+        --options       The merged options, from `process.merge_options`.
+        --sources       Where each of them came from, from the same call.
+        --session       The session, when reporting the per session tier. Only
+                        the parameters that tier states are then reported, the
+                        rest having been reported for the run as a whole.
+
+    Returns:
+        The rendered table.
+    """
+    if session:
+        reported = sorted(k for k in sources if sources[k] == PER_SESSION)
+    else:
+        declared = declared_parameters(qx_command)
+        reported = sorted(k for k in options if k in declared)
+
+        if not reported:
+            reported = sorted(k for k in options if sources.get(k) != "default")
+
+    rows = [(k, str(options[k]), sources.get(k, "default")) for k in reported]
+
+    title = "\n---> Parameters for %s%s\n\n" % (
+        qx_command.name,
+        " on session %s" % session["id"] if session else "",
+    )
+
+    def table(rows):
+        if not rows:
+            return title + INDENT + "(none)\n"
+
+        # the value goes last, and is the only column not padded: a path can
+        # be a hundred characters wide, and a source read off the far side of
+        # one is a source nobody reads
+        names = max(len(name) for name, _, _ in rows + [("parameter", "", "")])
+        origins = max(len(source) for _, _, source in rows + [("", "", "source")])
+        values = max(len(value) for _, value, _ in rows + [("", "value", "")])
+        rule = INDENT + "-" * (names + origins + values + 6) + "\n"
+
+        text = title + "%s%-*s   %-*s   %s\n%s" % (
+            INDENT,
+            names,
+            "parameter",
+            origins,
+            "source",
+            "value",
+            rule,
+        )
+        for name, value, source in rows:
+            text += "%s%-*s   %-*s   %s\n" % (INDENT, names, name, origins, source, value)
+
+        # closed at the bottom as well as the top: a long run's output scrolls,
+        # and a table that ends without a line ends wherever the reader stops
+        return text + rule
+
+    return table(rows)
+
+
+def report_unset(unset_from_header, options):
+    """
+    ``report_unset(unset_from_header, options)``
+
+    What the run was told not to take from the batch file, rendered under the
+    parameter table. An unset value never reaches the options, so the table
+    says what applied and this says what did not.
+
+    The header's removals are **named**, not counted: a pattern is not a list,
+    and `hcp_*` removes whatever this study's header happens to state on the
+    day the run happens. The per session tier can only be reported as the
+    patterns themselves -- what they remove differs from one session to the
+    next, and each session's own table shows the result.
+
+    Parameters:
+        --unset_from_header     The header keys an unset took out, from
+                                `without_unset`.
+        --options               The merged options, read for the per session
+                                patterns.
+
+    Returns:
+        The rendered lines, or an empty string when the run unset nothing.
+    """
+    text = ""
+
+    if unset_from_header:
+        text += "\n%snot taken from the batch file header: %s\n" % (
+            INDENT,
+            ", ".join(unset_from_header),
+        )
+
+    per_session = unset_patterns(options.get(UNSET_BATCH_SESSION))
+    if per_session:
+        text += "\n%snot taken from any session's own entry: %s\n" % (
+            INDENT,
+            ", ".join(per_session),
+        )
+
+    return text
+
+
+# ==============================================================================
 #                                                               EXTRA PARAMETERS
 #
 extra_parameters = [
@@ -499,6 +925,7 @@ extra_parameters = [
     "scheduler_workdir",
     "scheduler_sleep",
     "nprocess",
+    "omp_threads",
     "logging",
     "keep_comlogs",
     "runlog_content",
@@ -511,6 +938,8 @@ extra_parameters = [
     "ignore",
     "bash",
     "existing_study",
+    UNSET_BATCH_HEADER,
+    UNSET_BATCH_SESSION,
 ]
 
 
@@ -523,6 +952,7 @@ extra_parameters = [
 logskip_commands = [
     "batch_tag2namekey",
     "check_deprecated_commands",
+    "list_sessions",
     "get_sessions_for_slurm_array",
 ]
 

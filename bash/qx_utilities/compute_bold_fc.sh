@@ -515,7 +515,9 @@ echo ""
 
 # -- Check general required parameters
 
-if [ -z ${OutPath} ]; then
+# an individual run defaults the output to the input location of each session,
+# which is what --targetf documents and what the loop below fills in
+if [ -z "${OutPath}" ] && [ "${RunType}" != "individual" ]; then
     echo ""
     echo "ERROR: <path_for_output> not specified. Check usage."; echo ""
     exit 1
@@ -744,7 +746,7 @@ if [ ${RunType} == "individual" ]; then
         # -- Define inputs
         echo "--- Establishing paths for all input and output folders:"
         echo ""
-        if [ ${OutPath} == "" ]; then
+        if [ -z "${OutPath}" ]; then
             OutPath=${SessionsFolder}/${INPUTCASE}/${InputPath}
         fi
         # -- Parse input from the InputFiles variable

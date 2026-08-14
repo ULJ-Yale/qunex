@@ -388,6 +388,13 @@ fi
 if [ -z ${EddyPath} ]; then
     EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/Diffusion/eddy"
     echo $EddyPath
+else
+    # --eddypath is documented as the relative path of the eddy folder, and
+    # this is where it is relative to; the shell front end resolved it here
+    case ${EddyPath} in
+        /*) ;;
+        *) EddyPath="${SessionsFolder}/${CASE}/hcp/${CASE}/${EddyPath}" ;;
+    esac
 fi
 if [ -z ${GroupVar} ]; then
     GroupVar=""
