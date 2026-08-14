@@ -1304,8 +1304,8 @@ def map_hcpls2nii(
             default).
 
             If `scheduler` parameter is set, the command will be run using
-            the specified scheduler settings (see `qunex ?schedule` for
-            more information). If set in combination with `sessions`
+            the specified scheduler settings (see `qunex schedule --help`
+            for more information). If set in combination with `sessions`
             parameter, sessions will be processed over multiple nodes,
             `core` parameter specifying how many sessions to run per node.
             Optional `scheduler_environment`, `scheduler_workdir`,

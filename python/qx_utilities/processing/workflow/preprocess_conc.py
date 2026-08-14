@@ -249,7 +249,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 Median normalised RMSE (dvarsmet) threshold is exceeded.
             --idvars
                 Both fdt and dvarsmt are exceeded (i for intersection).
-            --uvars
+            --udvars
                 Either fdt or dvarsmt are exceeded (u for union).
             --idvarsme
                 Both fdt and dvarsmet are exceeded.

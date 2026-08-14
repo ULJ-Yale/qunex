@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-13T00:37:21.295138+00:00'
+generated_at: '2026-08-13T19:58:07.771583+00:00'
 source:
     id: core
 commands:
@@ -640,7 +640,7 @@ commands:
     -   name: mov_bad
         type: str
         default: udvarsme
-        description: 'Which criteria to use for identification of bad frames (mov, dvars, dvarsme, idvars, uvars, idvarsme,
+        description: 'Which criteria to use for identification of bad frames (mov, dvars, dvarsme, idvars, idvarsme, udvars,
             udvarsme). See movement scrubbing documentation for further information. Criteria for identification of bad frames
             can be one out of:'
     returns: []
@@ -10383,6 +10383,144 @@ commands:
         default: null
         description: 'Specify how files and folders should be named using HCP processing:'
     returns: []
+    origin: core
+-   name: run_qc_summary
+    aliases: []
+    path: qx_utilities.processing.workflow.run_qc_summary.run_qc_summary
+    language: python
+    call: run_qc_summary [... processing options]
+    description: Compile the study's quality control information into tables and a report.
+    type: processing.study
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). Each run writes into a folder of its own, named
+            after the time it started, so there is normally nothing to overwrite.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the session information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parelements
+        type: int
+        default: '1'
+        description: How many sessions to read in parallel. The command is run once for the whole study, so this -- and not
+            `parsessions` -- is the knob that speeds it up.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: bolds
+        type: str
+        default: all
+        description: Which bold images (as they are specified in the batch.txt file) to report on. It can be a single type
+            (e.g. 'task'), a pipe separated list (e.g. 'WM|Control|rest') or 'all' to report on all.
+    -   name: boldname
+        type: str
+        default: bold
+        description: The default name of the bold files in the images folder.
+    -   name: nifti_tail
+        type: str
+        default: ''
+        description: The tail of NIfTI volume images to use. It selects the `.bstats` and `.scrub` files the BOLD statistics
+            are read from.
+    -   name: cifti_tail
+        type: str
+        default: ''
+        description: The tail of CIFTI images to use. It selects the dense timeseries the temporal SNR and cortical coverage
+            are read from.
+    -   name: bold_variant
+        type: str
+        default: ''
+        description: Optional variant of bold preprocessing. If specified, the BOLD images in `images/functional<bold_variant>`
+            will be reported on.
+    -   name: img_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix for 'images' folder to enable support for multiple parallel workflows. Empty if not
+            used.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix for the session's folder in the HCP folder, if the data is processed in multiple ways.
+    -   name: mov_bad
+        type: str
+        default: udvarsme
+        description: 'Which criterion to report bad frames by. The value names a column of the `.scrub` file that `compute_bold_stats`
+            wrote, so the frames reported here are the frames preprocessing itself excluded:'
+    -   name: mov_fd
+        type: float
+        default: '0.5'
+        description: Frame displacement threshold (in mm) to report bad frames by. Given explicitly, it overrides the threshold
+            `compute_bold_stats` used and the frame counts are recomputed and marked as exploratory.
+    -   name: mov_dvars
+        type: float
+        default: '3.0'
+        description: The (mean normalized) dvars threshold to report bad frames by. As with --mov_fd, giving it explicitly
+            recomputes the counts.
+    -   name: mov_dvarsme
+        type: float
+        default: '1.5'
+        description: The (median normalized) dvarsm threshold to report bad frames by. As with --mov_fd, giving it explicitly
+            recomputes the counts.
+    -   name: mov_before
+        type: int
+        default: '0'
+        description: How many frames before each frame identified as bad to also count as bad, when the counts are recomputed.
+    -   name: mov_after
+        type: int
+        default: '0'
+        description: How many frames after each frame identified as bad to also count as bad, when the counts are recomputed.
+    -   name: qc_summary_modules
+        type: str
+        default: prefs fs postfs bold dwi
+        description: 'Which processing stages to compile information for. A space, comma or pipe separated list of:'
+    -   name: qc_summary_report
+        type: str
+        default: 'yes'
+        description: Whether to build the interactive HTML report (yes) or to write the tables alone (no).
+    -   name: qc_summary_tsnr
+        type: str
+        default: 'yes'
+        description: Whether to compute BOLD temporal SNR and cortical coverage (yes) or not (no). This reads every dense
+            timeseries and is the slowest part of the command.
+    -   name: qc_summary_warp_jac
+        type: str
+        default: 'yes'
+        description: Whether to compute the Jacobian determinant of the PreFreeSurfer warp (yes) or not (no). Requires FSL;
+            without it the columns are left blank.
+    -   name: qc_summary_mni_template
+        type: str
+        default: ''
+        description: The path to an MNI template to compute registration similarity against. Without it, similarity is computed
+            against the study's own group mean alone.
+    -   name: qc_summary_diag_k
+        type: float
+        default: '3.0'
+        description: The robust standard deviation threshold at which a session's value is called atypical for the study when
+            localising the likely failure step. Lower is more sensitive.
+    returns:
+    -   name: log
+        type: ReportLog
+        default: null
+        description: The command's log object, carrying its report and its status.
     origin: core
 -   name: run_recipe
     aliases: []

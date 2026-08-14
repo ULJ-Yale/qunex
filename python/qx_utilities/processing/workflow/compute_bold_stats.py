@@ -129,7 +129,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
 
         --mov_bad (str, default 'udvarsme'):
             Which criteria to use for identification of bad frames (mov, dvars,
-            dvarsme, idvars, uvars, idvarsme, udvarsme). See movement scrubbing
+            dvarsme, idvars, idvarsme, udvars, udvarsme). See movement scrubbing
             documentation for further information.
             Criteria for identification of bad frames can be one out of:
 
@@ -140,7 +140,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
               exceeded.
             - 'idvars'   ... Both fdt and dvarsmt are exceeded (i for
               intersection).
-            - 'uvars'    ... Either fdt or dvarsmt are exceeded (u for union).
+            - 'udvars'   ... Either fdt or dvarsmt are exceeded (u for union).
             - 'idvarsme' ... Both fdt and dvarsmet are exceeded.
             - 'udvarsme' ... Either fdt or udvarsmet are exceeded.
 
