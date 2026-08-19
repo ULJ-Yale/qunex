@@ -634,12 +634,23 @@ def main(args=None):
     opts = dict()
 
     try:
-        if comm == 'build_qx_registry':
+        # the two generated files are rebuilt by name. neither command takes an
+        # option, and a bare `qunex <command>` is read as a request for help
+        # below, so both are dispatched here -- unless help is what was asked
+        # for, which still falls through
+        wants_help = any(a.strip("-") in ["h", "H", "help"] for a in args[1:])
+
+        if comm == 'build_qx_registry' and not wants_help:
             print("Building command registry...")
             from qx_registry_build import build_qx_registry
             build_qx_registry()
             print("Command registry successfully built!")
-            sys.exit(0)      
+            sys.exit(0)
+
+        if comm == 'build_qx_container' and not wants_help:
+            from qx_container_build import build_qx_container
+            build_qx_container()
+            sys.exit(0)
 
         help_request = False
         if comm in ["a", "A", "allcommands", "available"]:
