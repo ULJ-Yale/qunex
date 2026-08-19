@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.1
+
+* Fixed a bug that prevented the `fs8` container versions to work properly.
+
 ## 1.5.0
 
 * Made a major under the hood code refactor that should make QuNex more stable and faster.
