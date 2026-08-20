@@ -261,8 +261,12 @@ qunex build_qx_container    # bin/qunex_container, from general/batch_io.py and 
   import block is ordinary code the command adds to and never prunes, so an import that stops
   being needed is removed by deleting it there.
 
-`.github/workflows/generated.yml` rebuilds both on every pull request and pushes the result back
-to the branch (a fork's token is read only, so there it reports and fails instead).
+`.github/workflows/generated.yml` rebuilds both on every pull request into `develop` and on every
+commit to `develop`. On a pull request it commits the rebuild to the pull request's own branch, so
+the drift is fixed before it can merge. It can not commit anywhere else — `develop` and `master`
+are ruleset protected and a bypass list can only name a user, a team or an installed app, never
+`GITHUB_TOKEN`, and a fork's token is read only — so there it prints the diff and fails instead.
+`master` is not built: it only receives tagged `develop` code, rebuilt there already.
 `tests/test_registry_drift.py` and `tests/test_container_drift.py` are the backstop.
 
 ## Multi-language guardrails
