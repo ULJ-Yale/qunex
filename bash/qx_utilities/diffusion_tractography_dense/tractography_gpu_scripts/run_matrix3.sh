@@ -175,7 +175,7 @@ out=" --dir=$ResultsFolder"
 if [[ ${nogpu} == "yes" ]]; then
     probtrack_bin=${FSLBINDIR}/probtrackx2
 else
-    probtrack_bin=${FSLBINDIR}/probtrackx2_gpu${DEFAULT_CUDA_VERSION}
+    probtrack_bin=${FSLBINDIR}/probtrackx2_gpu
 fi
 
 echo $probtrack_bin $generic_options $o $out  >> $ResultsFolder/commands_Mat3.sh
