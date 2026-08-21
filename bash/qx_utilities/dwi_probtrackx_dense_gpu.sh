@@ -350,8 +350,8 @@ main() {
     # -- Do work for Matrix 1 or 3 --
     # -------------------------------
 
-    # completion check
-    COMPLETIONCHECK=0
+    # completion check, matrices that did not complete
+    FAILEDMATRICES=""
 
     # output folder
     OutFolder="${SessionsFolder}/${CASE}/hcp/${CASE}/MNINonLinear/Results/Tractography";
@@ -381,22 +381,32 @@ main() {
         echo "Checking if ProbtrackX Matrix ${MNum} and dense connectome was completed on $CASE..."
         echo ""
 
-        # -- Check if the file even exists
+        # -- a run counts as complete only if the dconn exists and has the expected size
+        MatrixComplete="no"
         if [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
-
-            # -- Set file sizes to check for completion
-            actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz` > /dev/null 2>&1
-
-            # -- Then check if Matrix run is complete based on size
-            if [[ $(echo ${actualfilesize} | bc) -ge $(echo ${minimumfilesize} | bc) ]]; then > /dev/null 2>&1
-                echo ""
-                echo "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
-                echo "To re-run set overwrite flag to 'yes'"
-                echo ""
-                echo "--------------------------------------------------------------"
-                echo ""
+            actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz 2> /dev/null`
+            if [[ ${actualfilesize:-0} -ge ${minimumfilesize} ]]; then
+                MatrixComplete="yes"
             fi
+        fi
+
+        if [[ "$MatrixComplete" == "yes" ]]; then
+            echo ""
+            echo "DONE -- ProbtrackX Matrix ${MNum} solution and dense connectome was completed for ${CASE}"
+            echo "To re-run set overwrite flag to 'yes'"
+            echo ""
+            echo "--------------------------------------------------------------"
+            echo ""
         else
+            # -- a dconn below the expected size is a truncated prior run, do not keep it
+            if [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
+                echo ""
+                echo "WARNING: ${OutFolder}/Conn${MNum}.dconn.nii.gz is smaller than the expected ${minimumfilesize} bytes,"
+                echo "WARNING: treating the prior Matrix ${MNum} run as incomplete and removing it..."
+                echo ""
+                rm -f ${OutFolder}/Conn${MNum}.dconn.nii.gz &> /dev/null
+            fi
+
             # -- If run is incomplete perform run for Matrix
             echo ""
             echo "ProbtrackX Matrix ${MNum} solution and dense connectome incomplete for $CASE. Starting run with $NSamples samples..."
@@ -416,30 +426,41 @@ main() {
 
             # -- Eval the command
             eval "${DWIprobtrackxDenseGPUCommand}"
+            MatrixStatus=$?
+
+            # -- the run has to have exited cleanly and written a full dconn
+            if [[ ${MatrixStatus} -ne 0 ]]; then
+                echo ""
+                echo "ERROR: run_matrix${MNum}.sh exited with code ${MatrixStatus} for $CASE."
+                echo ""
+            elif [[ -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
+                actualfilesize=`wc -c < "$OutFolder"/Conn${MNum}.dconn.nii.gz 2> /dev/null`
+                if [[ ${actualfilesize:-0} -ge ${minimumfilesize} ]]; then
+                    MatrixComplete="yes"
+                fi
+            fi
         fi
 
-        # completion check
-        if [[ ! -f ${OutFolder}/Conn${MNum}.dconn.nii.gz ]]; then
-            # print error for this case
-            echo "ERROR: dwi_probtracx_dense_gpu for $CASE failed!"
+        # completion check for this matrix
+        if [[ "$MatrixComplete" == "yes" ]]; then
+            # print success for this matrix
+            echo "dwi_probtrackx_dense_gpu Matrix ${MNum} for $CASE completed successfully!"
         else
-            # print success for this case
-            echo "dwi_probtracx_dense_gpu for $CASE completed successfully!"
-
-            # set as success
-            COMPLETIONCHECK=1
+            # print error for this matrix and remember it, a later matrix must not mask it
+            echo "ERROR: dwi_probtrackx_dense_gpu Matrix ${MNum} for $CASE failed!"
+            FAILEDMATRICES="${FAILEDMATRICES} ${MNum}"
         fi
     done
 
-    # final completion check
-    if [[ "$COMPLETIONCHECK" == 1 ]]; then
+    # final completion check, every requested matrix has to have completed
+    if [[ -z "${FAILEDMATRICES}" ]]; then
         echo ""
         echo "------------------------- Successful completion of work --------------------------------"
         echo ""
         exit 0
     else
         echo ""
-        echo "ERROR: dwi_probtracx_dense_gpu run did not complete successfully"
+        echo "ERROR: dwi_probtrackx_dense_gpu did not complete successfully for $CASE, failed matrices:${FAILEDMATRICES}"
         echo ""
         exit 1
     fi
