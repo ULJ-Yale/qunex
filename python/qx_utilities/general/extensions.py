@@ -25,7 +25,7 @@ import sys
 import importlib
 from inspect import signature, Parameter
 
-from qx_extension_paths import extension_python_folders
+from qx_extension_paths import extension_folders, extension_python_folders
 
 
 module_names = []
@@ -34,8 +34,48 @@ modules      = {}
 arglist = []
 
 
+def register_extension_paths():
+    """
+    Names each extension's folders in this process's environment, and puts its
+    `bin` folder on `PATH`.
+
+    The environment script does the same when it is sourced, and that is enough
+    for an extension that was in place at the time. It is not enough in general:
+    inside a container the script is sourced once, when the container starts,
+    and every later source returns immediately, so an extension installed
+    afterwards had a `bin` folder nothing could call and `<EXT>PATH`,
+    `<EXT>LIB` and `<EXT>BIN` that nothing set.
+
+    Note the reach: this is the environment of the QuNex process and of
+    everything it starts -- a bash command, a MATLAB call, a subprocess an
+    extension's own python code spawns. It is not the environment of the shell
+    QuNex was called from, which no process can change from the inside.
+    """
+    for extension in extension_folders():
+
+        # the name the shell exports under: the folder name, upper-cased with
+        # the underscores taken out, so `qx_example` gives `QXEXAMPLE`
+        name = extension.name.replace('_', '').upper()
+
+        os.environ[f'{name}PATH'] = str(extension)
+
+        lib = extension / 'lib'
+        if lib.is_dir():
+            os.environ[f'{name}LIB'] = str(lib)
+
+        binaries = extension / 'bin'
+        if binaries.is_dir():
+            os.environ[f'{name}BIN'] = str(binaries)
+
+            path = os.environ.get('PATH', '')
+            if str(binaries) not in path.split(os.pathsep):
+                os.environ['PATH'] = os.pathsep.join([str(binaries), path]) if path else str(binaries)
+
+
 # -- process extensions
 def load_extensions():
+    register_extension_paths()
+
     for extensions_path in extension_python_folders():
 
         # -- append the extension python folder to the path. Done whether or

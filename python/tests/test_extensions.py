@@ -13,6 +13,7 @@ Where extensions are searched for, and what a command resolves its files
 against, are in `test_extension_roots.py`.
 """
 
+import os
 import sys
 
 import pytest
@@ -102,6 +103,67 @@ def test_qx_modules_still_imports_what_it_lists(restore_sys_path, monkeypatch, t
     ge.load_extensions()
 
     assert ge.compile_list("arglist") == [["example_declared", "yes", str]]
+
+
+# ==============================================================================
+#                                        what an extension puts in the environment
+
+
+@pytest.fixture
+def clean_extension_env(monkeypatch, tmp_path):
+    """An extensions root with one extension in it, and nothing inherited."""
+    extension = tmp_path / "extroot" / "qx_example"
+    (extension / "bin").mkdir(parents=True)
+    (extension / "lib").mkdir()
+
+    for name in ("QUNEXPATH", "TOOLS", "QXEXTENSIONSPY",
+                 qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED,
+                 "QXEXAMPLEPATH", "QXEXAMPLELIB", "QXEXAMPLEBIN"):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(tmp_path / "extroot"))
+    monkeypatch.setenv("PATH", "/usr/bin")
+
+    return extension
+
+
+def test_an_extensions_bin_folder_reaches_path(clean_extension_env, monkeypatch):
+    """
+    A script in `bin` is not a QuNex command -- it is callable by name from
+    anything that inherits the environment, which is what an extension's own
+    code does. The environment script puts it there when it is sourced, and in
+    a container that is once, before any extension is installed.
+    """
+    ge.register_extension_paths()
+
+    binaries = str(clean_extension_env / "bin")
+    assert os.environ["PATH"].split(os.pathsep)[0] == binaries
+    assert os.environ["QXEXAMPLEBIN"] == binaries
+
+
+def test_an_extension_is_named_in_the_environment(clean_extension_env):
+    ge.register_extension_paths()
+
+    assert os.environ["QXEXAMPLEPATH"] == str(clean_extension_env)
+    assert os.environ["QXEXAMPLELIB"] == str(clean_extension_env / "lib")
+
+
+def test_the_bin_folder_is_added_once(clean_extension_env):
+    ge.register_extension_paths()
+    ge.register_extension_paths()
+
+    binaries = str(clean_extension_env / "bin")
+    assert os.environ["PATH"].split(os.pathsep).count(binaries) == 1
+
+
+def test_an_extension_without_lib_or_bin_names_only_itself(clean_extension_env):
+    (clean_extension_env / "bin").rmdir()
+    (clean_extension_env / "lib").rmdir()
+
+    ge.register_extension_paths()
+
+    assert os.environ["QXEXAMPLEPATH"] == str(clean_extension_env)
+    assert "QXEXAMPLEBIN" not in os.environ
+    assert "QXEXAMPLELIB" not in os.environ
 
 
 # ==============================================================================

@@ -21,7 +21,7 @@ from __future__ import annotations
 import os
 import sys
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 
 # The variable naming the folders QuNex searches for extensions. It was spelled
@@ -102,6 +102,26 @@ def extension_search_roots() -> List[Path]:
     return uniq
 
 
+def extension_folders() -> List[Path]:
+    """
+    Every extension QuNex can see, as its own `qx_<name>` folder.
+
+    An extension found under more than one root is taken from the last of them,
+    which is how the registry resolves it too -- so the code that runs and the
+    folders set up for it are always the same copy.
+    """
+    found: Dict[str, Path] = {}
+
+    for root in extension_search_roots():
+        if not root.is_dir():
+            continue
+        for extension in sorted(root.iterdir()):
+            if extension.is_dir() and extension.name.startswith("qx_"):
+                found[extension.name] = extension
+
+    return [found[name] for name in sorted(found)]
+
+
 def extension_python_folders() -> List[str]:
     """
     The python folder of every extension QuNex can see.
@@ -116,15 +136,10 @@ def extension_python_folders() -> List[str]:
     """
     folders = [e.strip() for e in os.environ.get("QXEXTENSIONSPY", "").split(":") if e.strip()]
 
-    for root in extension_search_roots():
-        if not root.is_dir():
-            continue
-        for extension in sorted(root.iterdir()):
-            if not (extension.is_dir() and extension.name.startswith("qx_")):
-                continue
-            python_folder = extension / "python"
-            if python_folder.is_dir():
-                folders.append(str(python_folder))
+    for extension in extension_folders():
+        python_folder = extension / "python"
+        if python_folder.is_dir():
+            folders.append(str(python_folder))
 
     # de-duplicate, keeping the order the folders were found in
     seen = set()
