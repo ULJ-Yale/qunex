@@ -794,6 +794,39 @@ def select_parameters(options, sources, qx_command):
     return accepted, dropped
 
 
+def report_origin(qx_command):
+    """
+    ``report_origin(qx_command)``
+
+    Where the command being run comes from, when that is not the core suite.
+
+    A command an extension provides is otherwise indistinguishable in the
+    run's own record from a core one -- the call echo, the parameter table
+    and the runlog all name the command, and an extension command standing
+    in for a core command of the same name has the same name. A study that
+    behaves differently from another then has nothing in its logs to say why.
+
+    Parameters:
+        --qx_command    The registry entry of the command to be run.
+
+    Returns:
+        The line to head the banner with, or an empty string for a core
+        command.
+    """
+    origin = getattr(qx_command, "origin", None) or "core"
+    if origin == "core":
+        return ""
+
+    extension = origin.split(":", 1)[1] if ":" in origin else origin
+    note = "\n---> Command %s is provided by extension %s" % (qx_command.name, extension)
+
+    replaced = getattr(qx_command, "overrides", None)
+    if replaced:
+        note += ", replacing the %s command of the same name" % replaced
+
+    return note + "\n"
+
+
 def report_parameters(qx_command, options, sources, session=None):
     """
     ``report_parameters(qx_command, options, sources, session=None)``
@@ -831,7 +864,10 @@ def report_parameters(qx_command, options, sources, session=None):
 
     rows = [(k, str(options[k]), sources.get(k, "default")) for k in reported]
 
-    title = "\n---> Parameters for %s%s\n\n" % (
+    title = "%s\n---> Parameters for %s%s\n\n" % (
+        # only once per run: the per session tier reports under a run that has
+        # already said where the command comes from
+        "" if session else report_origin(qx_command),
         qx_command.name,
         " on session %s" % session["id"] if session else "",
     )

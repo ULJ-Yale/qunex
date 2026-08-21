@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.5.2
 
 * Fixed a bug in `dwi_probtrackx_dense_gpu` that caused it to crash under certain parameter values.
+* Fixed and improved the handling of QuNex extensions; `build_qx_registry --build_core=no` builds extensions without rewriting the core registry.
 
 ## 1.5.1
 

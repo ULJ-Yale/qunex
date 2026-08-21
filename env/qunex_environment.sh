@@ -486,8 +486,11 @@ do
             echo "    ... added $extensions_folder/$extension_name/bin to PATH"
         fi
 
-        # -- Add python folder to QXEXTENSIONSPY
-        if [ -e "$extensions_folder/$extension_name/python/qx_modules" ]
+        # -- Add python folder to QXEXTENSIONSPY. On the folder and not on the
+        #    qx_modules file inside it: a python command is imported by a path
+        #    dotted relative to this folder, so an extension without the file
+        #    had commands that were listed and dispatched and then failed
+        if [ -d "$extensions_folder/$extension_name/python" ]
         then
             QXEXTENSIONSPY="$extensions_folder/$extension_name/python":$QXEXTENSIONSPY
             echo "    ... added $extensions_folder/$extension_name/python to QXEXTENSIONSPY"

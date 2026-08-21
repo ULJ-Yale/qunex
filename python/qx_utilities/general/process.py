@@ -20,6 +20,7 @@ None of the code is run directly from the terminal interface.
 # imports
 import os
 import os.path
+import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
@@ -41,7 +42,7 @@ from qx_utilities.general.parsing import true_or_false as torf
 # -----------------------------------------------------------------------
 #                                   list of parameters and default values
 #  A list of possible parameters / arguments follows. Every parameter is
-#  specified as a list of four values:
+#  specified as a list of three values, optionally followed by a fourth:
 #
 #  1/ the name of the parameter
 #     ... This is the name that will be used to identify the parameter in
@@ -59,7 +60,13 @@ from qx_utilities.general.parsing import true_or_false as torf
 #         float (convert the value to float), torf (check if the string
 #         denotes a "true" value and return a bulean representation). Any
 #         other function that takes string as an input and does not
-#         require any other parameters is valid.
+#         require any other parameters is valid. An entry whose convert
+#         function is not callable is reported and left unconverted, so
+#         that one bad declaration in an extension does not fail every
+#         command.
+#  4/ the description (optional)
+#     ... A short description of the parameter. Not read by QuNex; it is
+#         accepted so that a declaration can carry its own documentation.
 #
 #  Parameters are divided into sections. Every section starts with a list
 #  of a single string element in the form "# ---- <section title>".
@@ -1163,8 +1170,11 @@ def merge_options(command, args, header=None):
             options[key] = value
             sources[key] = source
 
-    # the defaults
-    take("default", [(line[0], line[1]) for line in arglist if len(line) == 3])
+    # the defaults. Three elements are [name, default, converter]; a fourth,
+    # a description, is accepted and ignored -- it is the form the extension
+    # documentation teaches, and reading only three-element entries left a
+    # parameter declared that way with no default and no type at all
+    take("default", [(line[0], line[1]) for line in arglist if len(line) >= 3])
 
     # the batch file header
     if header:
@@ -1200,18 +1210,35 @@ def merge_options(command, args, header=None):
 
     # recode as last step before options are used
     for line in arglist:
-        if len(line) == 3:
-            try:
-                options[line[0]] = line[2](options[line[0]])
-            except Exception:
-                raise ge.CommandError(
-                    command,
-                    "Invalid parameter value!",
-                    "Parameter `%s` is specified but is set to an invalid value:"
-                    % (line[0]),
-                    "---> %s=%s" % (line[0], str(options[line[0]])),
-                    "Please check acceptable inputs for %s!" % (line[0]),
-                )
+        if len(line) < 3:
+            continue
+
+        # this loop runs over the whole arglist on every invocation of every
+        # command, so an entry whose third element is not a converter at all
+        # would fail the suite rather than the declaration. An extension can
+        # produce one: a parameter annotation reaches here as the converter,
+        # and `Optional[str]` or any annotation under
+        # `from __future__ import annotations` is not callable
+        if not callable(line[2]):
+            print(
+                "WARNING: parameter `%s` declares `%s` as its convert function, "
+                "which can not be called. The parameter keeps the value it was "
+                "given, unconverted." % (line[0], line[2]),
+                file=sys.stderr,
+            )
+            continue
+
+        try:
+            options[line[0]] = line[2](options[line[0]])
+        except Exception:
+            raise ge.CommandError(
+                command,
+                "Invalid parameter value!",
+                "Parameter `%s` is specified but is set to an invalid value:"
+                % (line[0]),
+                "---> %s=%s" % (line[0], str(options[line[0]])),
+                "Please check acceptable inputs for %s!" % (line[0]),
+            )
 
     # impute unspecified parameters. An imputed value stays "default": nobody
     # specified it, which is what the source says

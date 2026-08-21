@@ -10,7 +10,7 @@ from __future__ import annotations
 import json
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -48,6 +48,10 @@ class CommandInfo:
     # optional `logging:` from the qx_command block: none|comlog|runlog|both.
     # None means the command states nothing and the settings files decide.
     logging: Optional[str] = None
+    # what this command displaced when the registries were merged, when it
+    # displaced anything: the origin of the record it replaced. Set at merge,
+    # so that a run can say it is not running the command it appears to be
+    overrides: Optional[str] = None
     # the folder the registry carrying this command was loaded from: the
     # extension folder for an extension command, $QUNEXPATH for a core one.
     # Filled in at load and never written to the yaml, so an extension that is
@@ -159,6 +163,13 @@ def merge_registries(
     by_name: Dict[str, CommandInfo] = {c.name: c for c in base.commands}
     for reg in overlays:
         for c in reg.commands:
+            # a command standing in for one already known keeps a note of what
+            # it displaced. The record the merge keeps is otherwise the only
+            # trace: the call echo, the parameter table and the runlog all name
+            # the command, which is the same name either way
+            displaced = by_name.get(c.name)
+            if displaced is not None and displaced.origin != c.origin:
+                c = replace(c, overrides=displaced.origin)
             by_name[c.name] = c
 
     merged_cmds = list(by_name.values())
@@ -430,15 +441,28 @@ class CommandRegistry:
 
     def gmri_commands(self) -> List[str]:
         """
-        The commands `gmri` runs, which is every command it knows of but one.
+        The commands `gmri` runs, which is every command it knows of but one,
+        each under its name and under every alias it declares.
 
         `bin/qunex.sh` hands over everything this reports and handles the rest
         itself, so this function is the routing: the wrappers for the bash
         commands are still in that file and are simply no longer reached.
         `run_turnkey` is the exception, and keeps its old path until it is
         retired.
+
+        The aliases are here because this is a routing table rather than a
+        listing. Reporting names alone meant `bin/qunex.sh` did not recognise
+        an alias and answered "Requested command is not supported", while
+        `gmri` -- which resolves through the registry's token map -- ran it.
+        The tokens are unique across the merged registry by construction, so
+        nothing here can shadow a command's name.
         """
-        return [c.name for c in self.iter() if c.name not in ("run_turnkey",)]
+        return [
+            token
+            for c in self.iter()
+            if c.name not in ("run_turnkey",)
+            for token in (c.name,) + c.aliases
+        ]
 
     def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """
