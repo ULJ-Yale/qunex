@@ -188,6 +188,24 @@ echo ""
 
 # -- Execute commands_Mat3 file
 bash ${ResultsFolder}/commands_Mat3.sh ########## <<< commands_Mat3.sh
+ProbtrackxStatus=$?
+
+# -- Do not post-process a run that failed or that produced no matrix
+if [[ ${ProbtrackxStatus} -ne 0 ]]; then
+    echo ""
+    echo "ERROR: probtrackx failed for ${Session} Matrix 3 with exit code ${ProbtrackxStatus}."
+    echo "ERROR: skipping post-processing, see ${ResultsFolder}/probtrackx.log for details."
+    echo ""
+    exit ${ProbtrackxStatus}
+fi
+
+if [[ ! -f ${ResultsFolder}/fdt_matrix3.dot ]]; then
+    echo ""
+    echo "ERROR: probtrackx reported success for ${Session} Matrix 3, but did not produce"
+    echo "ERROR: ${ResultsFolder}/fdt_matrix3.dot, skipping post-processing."
+    echo ""
+    exit 1
+fi
 
 # ----------------------------------------------------------
 # --------------- POST Matrix Commands ---------------------
@@ -206,6 +224,15 @@ chmod 770 $ResultsFolder/postcommands_Mat3.sh
 
 # -- Execute PostProcMatrixCommand call
 bash ${ResultsFolder}/postcommands_Mat3.sh ########## <<< postcommands_Mat3.sh
+PostProcStatus=$?
+
+if [[ ${PostProcStatus} -ne 0 ]] || [[ ! -f ${ResultsFolder}/${OutFileName}.gz ]]; then
+    echo ""
+    echo "ERROR: Matrix 3 post-processing failed for ${Session},"
+    echo "ERROR: ${ResultsFolder}/${OutFileName}.gz was not produced."
+    echo ""
+    exit 1
+fi
 
 echo ""
 echo "-- Matrix 3 Probtrackx Completed successfully."

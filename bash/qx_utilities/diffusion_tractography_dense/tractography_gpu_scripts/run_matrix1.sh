@@ -186,6 +186,24 @@ echo ""
 
 # -- Execute commands_Mat1 file
 bash ${ResultsFolder}/commands_Mat1.sh ########## <<< commands_Mat1.sh
+ProbtrackxStatus=$?
+
+# -- Do not post-process a run that failed or that produced no matrix
+if [[ ${ProbtrackxStatus} -ne 0 ]]; then
+    echo ""
+    echo "ERROR: probtrackx failed for ${Session} Matrix 1 with exit code ${ProbtrackxStatus}."
+    echo "ERROR: skipping post-processing, see ${ResultsFolder}/probtrackx.log for details."
+    echo ""
+    exit ${ProbtrackxStatus}
+fi
+
+if [[ ! -f ${ResultsFolder}/fdt_matrix1.dot ]]; then
+    echo ""
+    echo "ERROR: probtrackx reported success for ${Session} Matrix 1, but did not produce"
+    echo "ERROR: ${ResultsFolder}/fdt_matrix1.dot, skipping post-processing."
+    echo ""
+    exit 1
+fi
 
 # ----------------------------------------------------------
 # --------------- POST Matrix Commands ---------------------
@@ -204,6 +222,15 @@ chmod 770 $ResultsFolder/postcommands_Mat1.sh
 
 # -- Execute PostProcMatrixCommand call
 bash ${ResultsFolder}/postcommands_Mat1.sh ########## <<< postcommands_Mat1.sh
+PostProcStatus=$?
+
+if [[ ${PostProcStatus} -ne 0 ]] || [[ ! -f ${ResultsFolder}/${OutFileName}.gz ]]; then
+    echo ""
+    echo "ERROR: Matrix 1 post-processing failed for ${Session},"
+    echo "ERROR: ${ResultsFolder}/${OutFileName}.gz was not produced."
+    echo ""
+    exit 1
+fi
 
 echo ""
 echo "-- Matrix 1 Probtrackx Completed successfully."
