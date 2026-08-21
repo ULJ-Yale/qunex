@@ -419,8 +419,36 @@ QXEXTENSIONSPY=""
 # -- covert $QUNEXEXTENSIONSFOLDERS from colon separated to space
 QUNEXEXTENSIONSFOLDERS=`echo $QUNEXEXTENSIONSFOLDERS | tr ':' ' '`
 
+# -- QUNEXEXTENSIONFOLDERS is the spelling the python half used to read on its
+#    own, which left a folder named in only one of them half registered. It is
+#    still accepted so that an installation setting it keeps working
+QUNEXEXTENSIONFOLDERS=`echo $QUNEXEXTENSIONFOLDERS | tr ':' ' '`
+if [ -n "$QUNEXEXTENSIONFOLDERS" ]
+then
+    echo "WARNING: QUNEXEXTENSIONFOLDERS is deprecated and will be removed in a future release. Please name the extension folders in QUNEXEXTENSIONSFOLDERS instead." >&2
+fi
+
+# -- the folders named in the environment, de-duplicated so that one named in
+#    both variables -- which is how an installation migrates from the old
+#    spelling -- is registered once and not twice. A folder somebody named and
+#    QuNex can not use is worth a line; the two fixed roots are absent on most
+#    installations and are passed over in silence
+QUNEXEXTENSIONSNAMED=""
+for extensions_folder in $QUNEXEXTENSIONSFOLDERS $QUNEXEXTENSIONFOLDERS
+do
+    case " $QUNEXEXTENSIONSNAMED " in *" $extensions_folder "*) continue ;; esac
+
+    if [ ! -d "$extensions_folder" ]
+    then
+        echo "WARNING: extensions folder '$extensions_folder' does not exist or is not a folder, skipping it." >&2
+        continue
+    fi
+
+    QUNEXEXTENSIONSNAMED="$QUNEXEXTENSIONSNAMED $extensions_folder"
+done
+
 # -- loop through plugin folders
-for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSFOLDERS
+for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSNAMED
 do
     # -- identify extensions and loop through them
     for extension in `ls -d $extensions_folder/qx_* 2> /dev/null`

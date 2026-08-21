@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -47,6 +48,13 @@ class CommandInfo:
     # optional `logging:` from the qx_command block: none|comlog|runlog|both.
     # None means the command states nothing and the settings files decide.
     logging: Optional[str] = None
+    # the folder the registry carrying this command was loaded from: the
+    # extension folder for an extension command, $QUNEXPATH for a core one.
+    # Filled in at load and never written to the yaml, so an extension that is
+    # moved or installed elsewhere still resolves. `run_bash` finds the script
+    # under it; python and matlab commands are found through `sys.path` and
+    # `MATLABPATH` instead.
+    root: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -80,8 +88,9 @@ def _now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def registry_from_obj(obj: Dict[str, Any]) -> Registry:
+def registry_from_obj(obj: Dict[str, Any], root: Optional[str | Path] = None) -> Registry:
     cmds: List[CommandInfo] = []
+    root = str(root) if root is not None else None
     source_id = (obj.get("source") or {}).get("id", "unknown")
     generated_at = obj.get("generated_at") or ""
     version = int(obj.get("version") or 1)
@@ -112,6 +121,7 @@ def registry_from_obj(obj: Dict[str, Any]) -> Registry:
                 returns=load_args(c.get("returns") or []),
                 origin=c.get("origin", source_id),
                 logging=c.get("logging"),
+                root=root,
             )
         )
 
@@ -134,7 +144,11 @@ def read_registry_file(path: Path) -> Dict[str, Any]:
 
 
 def load_registry_yaml(path: str | Path) -> Registry:
-    return registry_from_obj(read_registry_file(Path(path)))
+    # the registry file sits at the root of what it describes -- <ext>/qx_commands.yaml
+    # for an extension, $QUNEXPATH/qx_commands.yaml for core -- so its folder is the
+    # root every command in it is resolved against
+    path = Path(path)
+    return registry_from_obj(read_registry_file(path), root=path.parent)
 
 
 def merge_registries(
@@ -183,6 +197,29 @@ def load_python_callable(command: CommandInfo):
     return getattr(mod, fn_name)
 
 
+# The variable naming the folders QuNex searches for extensions. It was spelled
+# with the second S in the shell and without it here, so a root named in only one
+# of them was half integrated -- it got PATH, MATLABPATH and QXEXTENSIONSPY but no
+# registry, or a registry whose commands could not import. The shell's spelling is
+# canonical; the other is still read, with a notice, for installations that set it.
+EXTENSION_FOLDERS_ENV = "QUNEXEXTENSIONSFOLDERS"
+EXTENSION_FOLDERS_ENV_DEPRECATED = "QUNEXEXTENSIONFOLDERS"
+
+_warned: set = set()
+
+
+def _warn(message: str) -> None:
+    """
+    One warning line, once per process, on stderr.
+
+    Never on stdout: `bin/qunex.sh` reads `gmri -available` as its routing table,
+    so anything printed there is taken for a command name.
+    """
+    if message not in _warned:
+        _warned.add(message)
+        print(f"WARNING: {message}", file=sys.stderr)
+
+
 def _split_env_path_list(value: str) -> List[str]:
     value = (value or "").strip()
     if not value:
@@ -202,9 +239,24 @@ def extension_search_roots() -> List[Path]:
     if tools:
         roots.append(Path(tools) / "qx_extensions")
 
-    extra = os.environ.get("QUNEXEXTENSIONFOLDERS", "").strip()
-    for folder in _split_env_path_list(extra):
-        roots.append(Path(folder))
+    named = _split_env_path_list(os.environ.get(EXTENSION_FOLDERS_ENV, ""))
+    deprecated = _split_env_path_list(os.environ.get(EXTENSION_FOLDERS_ENV_DEPRECATED, ""))
+
+    if deprecated:
+        _warn(
+            f"{EXTENSION_FOLDERS_ENV_DEPRECATED} is deprecated and will be removed in a "
+            f"future release. Please name the extension folders in "
+            f"{EXTENSION_FOLDERS_ENV} instead."
+        )
+
+    # a folder somebody named and QuNex cannot use is worth a line: the two fixed
+    # roots below are absent on most installations and are passed over in silence
+    for folder in named + deprecated:
+        path = Path(folder).expanduser()
+        if not path.is_dir():
+            _warn(f"extensions folder '{folder}' does not exist or is not a folder, skipping it.")
+            continue
+        roots.append(path)
 
     # de-dup preserving order
     seen = set()
