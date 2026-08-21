@@ -20,6 +20,7 @@ import pytest
 import qx_registry
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.extensions as ge
+import qx_utilities.general.matlab as gm
 import qx_utilities.general.process as gp
 
 from .test_extension_roots import _registry_yaml
@@ -54,6 +55,39 @@ def test_the_python_folder_is_added_without_qx_modules(
     assert str(py) in sys.path
 
 
+def test_an_extension_is_found_without_the_environment(restore_sys_path, monkeypatch, tmp_path):
+    """
+    The environment script exports `QXEXTENSIONSPY`, and inside a container it
+    is sourced once -- every later source returns immediately -- so an
+    extension installed after the container started never reaches it. The
+    search roots answer the same question without the environment.
+    """
+    py = tmp_path / "extroot" / "qx_example" / "python"
+    py.mkdir(parents=True)
+    monkeypatch.delenv("QXEXTENSIONSPY", raising=False)
+    monkeypatch.delenv("QUNEXPATH", raising=False)
+    monkeypatch.delenv("TOOLS", raising=False)
+    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED, raising=False)
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(tmp_path / "extroot"))
+
+    assert ge.extension_python_folders() == [str(py)]
+
+    ge.load_extensions()
+    assert str(py) in sys.path
+
+
+def test_a_folder_named_both_ways_is_listed_once(restore_sys_path, monkeypatch, tmp_path):
+    py = tmp_path / "extroot" / "qx_example" / "python"
+    py.mkdir(parents=True)
+    monkeypatch.delenv("QUNEXPATH", raising=False)
+    monkeypatch.delenv("TOOLS", raising=False)
+    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED, raising=False)
+    monkeypatch.setenv("QXEXTENSIONSPY", str(py))
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(tmp_path / "extroot"))
+
+    assert ge.extension_python_folders() == [str(py)]
+
+
 def test_qx_modules_still_imports_what_it_lists(restore_sys_path, monkeypatch, tmp_path):
     py = tmp_path / "qx_example" / "python"
     py.mkdir(parents=True)
@@ -68,6 +102,53 @@ def test_qx_modules_still_imports_what_it_lists(restore_sys_path, monkeypatch, t
     ge.load_extensions()
 
     assert ge.compile_list("arglist") == [["example_declared", "yes", str]]
+
+
+# ==============================================================================
+#                                       where an extension's matlab code is found
+
+
+def _matlab_command(tmp_path, *, origin, matlabpaths=None):
+    ext = tmp_path / "qx_example"
+    matlab = ext / "matlab"
+    matlab.mkdir(parents=True)
+    if matlabpaths is not None:
+        (matlab / "extra").mkdir()
+        (matlab / "matlabpaths").write_text(matlabpaths, encoding="utf-8")
+
+    return qx_registry.CommandInfo(
+        name="example_matlab_greet",
+        aliases=(),
+        path="example_matlab_greet.m",
+        language="matlab",
+        call=None,
+        description=None,
+        type="matlab",
+        args=(),
+        options=(),
+        returns=(),
+        origin=origin,
+        root=str(ext),
+    )
+
+
+def test_an_extension_matlab_command_finds_its_own_folder(tmp_path):
+    command = _matlab_command(tmp_path, origin="extension:example")
+
+    assert gm.extension_matlab_folders(command) == [str(tmp_path / "qx_example" / "matlab")]
+
+
+def test_matlabpaths_adds_what_it_lists(tmp_path):
+    command = _matlab_command(tmp_path, origin="extension:example", matlabpaths="extra\n\n")
+
+    matlab = tmp_path / "qx_example" / "matlab"
+    assert gm.extension_matlab_folders(command) == [str(matlab), str(matlab / "extra")]
+
+
+def test_a_core_matlab_command_is_left_to_the_environment(tmp_path):
+    command = _matlab_command(tmp_path, origin="core")
+
+    assert gm.extension_matlab_folders(command) == []
 
 
 # ==============================================================================

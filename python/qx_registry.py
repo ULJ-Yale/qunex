@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 import os
-import sys
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +17,18 @@ try:
     from qx_utilities.general import exceptions as ge
 except ModuleNotFoundError:
     from general import exceptions as ge
+# where extensions live is answered in one place, by a module that imports
+# nothing from QuNex -- `general/extensions.py` needs the same answer while this
+# module is still being imported, so it cannot ask this one. Re-exported here
+# because this is where callers have always found it
+from qx_extension_paths import (  # noqa: F401
+    EXTENSION_FOLDERS_ENV,
+    EXTENSION_FOLDERS_ENV_DEPRECATED,
+    _split_env_path_list,
+    _warn,
+    _warned,
+    extension_search_roots,
+)
 
 
 DEFAULT_CORE_REGISTRY_BASENAME = "qx_commands.yaml"
@@ -206,83 +217,6 @@ def load_python_callable(command: CommandInfo):
     import importlib
     mod = importlib.import_module(mod_path)
     return getattr(mod, fn_name)
-
-
-# The variable naming the folders QuNex searches for extensions. It was spelled
-# with the second S in the shell and without it here, so a root named in only one
-# of them was half integrated -- it got PATH, MATLABPATH and QXEXTENSIONSPY but no
-# registry, or a registry whose commands could not import. The shell's spelling is
-# canonical; the other is still read, with a notice, for installations that set it.
-EXTENSION_FOLDERS_ENV = "QUNEXEXTENSIONSFOLDERS"
-EXTENSION_FOLDERS_ENV_DEPRECATED = "QUNEXEXTENSIONFOLDERS"
-
-_warned: set = set()
-
-
-def _warn(message: str) -> None:
-    """
-    One warning line, once per process, on stderr.
-
-    Never on stdout: `bin/qunex.sh` reads `gmri -available` as its routing table,
-    so anything printed there is taken for a command name.
-    """
-    if message not in _warned:
-        _warned.add(message)
-        print(f"WARNING: {message}", file=sys.stderr)
-
-
-def _split_env_path_list(value: str) -> List[str]:
-    value = (value or "").strip()
-    if not value:
-        return []
-    value = value.replace(";", ":")
-    return [p.strip() for p in value.split(":") if p.strip()]
-
-
-def extension_search_roots() -> List[Path]:
-    roots: List[Path] = []
-
-    qunexpath = os.environ.get("QUNEXPATH", "").strip()
-    if qunexpath:
-        roots.append(Path(qunexpath) / "qx_extensions")
-
-    tools = os.environ.get("TOOLS", "").strip()
-    if tools:
-        roots.append(Path(tools) / "qx_extensions")
-
-    named = _split_env_path_list(os.environ.get(EXTENSION_FOLDERS_ENV, ""))
-    deprecated = _split_env_path_list(os.environ.get(EXTENSION_FOLDERS_ENV_DEPRECATED, ""))
-
-    if deprecated:
-        _warn(
-            f"{EXTENSION_FOLDERS_ENV_DEPRECATED} is deprecated and will be removed in a "
-            f"future release. Please name the extension folders in "
-            f"{EXTENSION_FOLDERS_ENV} instead."
-        )
-
-    # a folder somebody named and QuNex cannot use is worth a line: the two fixed
-    # roots below are absent on most installations and are passed over in silence
-    for folder in named + deprecated:
-        path = Path(folder).expanduser()
-        if not path.is_dir():
-            _warn(f"extensions folder '{folder}' does not exist or is not a folder, skipping it.")
-            continue
-        roots.append(path)
-
-    # de-dup preserving order
-    seen = set()
-    uniq: List[Path] = []
-    for r in roots:
-        rr = r.expanduser()
-        try:
-            rr = rr.resolve()
-        except Exception:
-            pass
-        s = str(rr)
-        if s not in seen:
-            seen.add(s)
-            uniq.append(rr)
-    return uniq
 
 
 def discover_extension_registries(

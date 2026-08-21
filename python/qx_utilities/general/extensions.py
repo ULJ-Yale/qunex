@@ -25,6 +25,8 @@ import sys
 import importlib
 from inspect import signature, Parameter
 
+from qx_extension_paths import extension_python_folders
+
 
 module_names = []
 modules      = {}
@@ -34,38 +36,34 @@ arglist = []
 
 # -- process extensions
 def load_extensions():
-    if "QXEXTENSIONSPY" in os.environ:
-        #print('=> processing extensions')
-        extensions_paths = [e.strip() for e in os.environ['QXEXTENSIONSPY'].split(':') if e]
+    for extensions_path in extension_python_folders():
 
-        # -- loop through the extension python folders
-        for extensions_path in extensions_paths:
-
-            # -- append the extension python folder to the path. Done whether or
-            #    not the extension has a qx_modules file: a command's registry
-            #    path is dotted relative to this folder and nothing else ever
-            #    adds it, so gating this on the file left an extension whose
-            #    commands were listed and dispatched and then failed to import
+        # -- append the extension python folder to the path. Done whether or
+        #    not the extension has a qx_modules file: a command's registry
+        #    path is dotted relative to this folder and nothing else ever
+        #    adds it, so gating this on the file left an extension whose
+        #    commands were listed and dispatched and then failed to import
+        if extensions_path not in sys.path:
             sys.path.append(extensions_path)
 
-            # -- read the module names. The file is optional and says which
-            #    modules to import eagerly -- the ones declaring parameters,
-            #    flags or deprecations -- not which modules hold commands
-            modules_file = os.path.join(extensions_path, 'qx_modules')
-            if not os.path.exists(modules_file):
-                continue
+        # -- read the module names. The file is optional and says which
+        #    modules to import eagerly -- the ones declaring parameters,
+        #    flags or deprecations -- not which modules hold commands
+        modules_file = os.path.join(extensions_path, 'qx_modules')
+        if not os.path.exists(modules_file):
+            continue
 
-            with open(modules_file, 'r') as f:
-                for line in f:
-                    if (len(line.strip()) > 0) and (not line.strip().startswith('#')):
-                        module_name = line.strip()
-                        if os.path.isdir(os.path.join(extensions_path, module_name)):
-                            sys.path.append(os.path.join(extensions_path, module_name))
-                        try:
-                            modules[module_name] = importlib.import_module(module_name)
-                            module_names.append(module_name)
-                        except Exception:
-                            print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
+        with open(modules_file, 'r') as f:
+            for line in f:
+                if (len(line.strip()) > 0) and (not line.strip().startswith('#')):
+                    module_name = line.strip()
+                    if os.path.isdir(os.path.join(extensions_path, module_name)):
+                        sys.path.append(os.path.join(extensions_path, module_name))
+                    try:
+                        modules[module_name] = importlib.import_module(module_name)
+                        module_names.append(module_name)
+                    except Exception:
+                        print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
 
 
 def compile_list(list_name):
