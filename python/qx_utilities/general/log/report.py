@@ -84,6 +84,9 @@ RAW = "raw"
 # spells its historical "     ... " prefix
 INDENT = "     "
 
+# how a dry run marks the lines describing what it would have done
+TEST_TAG = "[TEST]"
+
 
 def _render(depth, severity, message):
     """Spell one record the way the runlog reads it."""
@@ -155,24 +158,30 @@ def print_qunex_header(timestamp=None, file=None):
     return header
 
 
-def action(word, run):
+def action(text, run):
     """
-    Spell an action word for the run mode: "Running" or "Test running".
+    Mark text as describing a dry run: ``"[TEST] Running"``.
 
     Under ``--test`` a command reports what it *would* do, and every line
-    saying so is spelled the same way. Use :meth:`ReportLog.action` to record
-    such a line; this function is for the places that need the word as a
-    **value** -- a command's summary string, or a word reused across lines.
+    saying so carries the same leading tag. The tag leads the phrase rather
+    than inflecting its first word, so it reads the same however long the
+    phrase is: the older spelling turned "Preprocessing settings (unwarpdir,
+    refimage, moveref, seimage) for" into "test Preprocessing settings ...
+    for". Pass the **whole leading phrase**, so the tag ends up at the front
+    of the line rather than in the middle of a sentence.
+
+    Use :meth:`ReportLog.action` to record such a line; this function is for
+    the places that need the tagged text as a **value** -- a command's summary
+    string, or a phrase reused across lines.
 
     Parameters:
-        word: the action, e.g. ``"Running"`` or ``"completed"``.
+        text: the phrase to tag, e.g. ``"Running"`` or ``"FreeSurfer
+            segmentation completed"``.
         run: ``options["run"]``.
     """
     if run == "test":
-        if word.istitle():
-            return "Test " + word.lower()
-        return "test " + word
-    return word
+        return "%s %s" % (TEST_TAG, text)
+    return text
 
 
 class ReportLog:
@@ -390,8 +399,8 @@ class ReportLog:
         Record what the command is doing, or -- under ``--test`` -- would do.
 
         ``log.action("Running", "FSL feat ...", options["run"])`` records
-        ``---> Running FSL feat ...``, or ``---> Test running FSL feat ...``
-        when ``run`` is ``"test"``. The action word is a logging operation
+        ``---> Running FSL feat ...``, or ``---> [TEST] Running FSL feat ...``
+        when ``run`` is ``"test"``. The dry run tag is a logging operation
         rather than a string spliced into the message.
 
         Parameters:
@@ -400,7 +409,7 @@ class ReportLog:
             run: ``options["run"]``.
             level: the level method to record at.
         """
-        getattr(self, level)("%s %s" % (action(word, run), message))
+        getattr(self, level)(action("%s %s" % (word, message), run))
 
     def blank(self, count: int = 1) -> None:
         """Insert blank lines."""
@@ -721,10 +730,9 @@ class SessionLog(ReportLog):
             lead: newlines separating the footer from the preceding text.
         """
         name = pipeline if pipeline is not None else self._pipeline
-        self.raw("%s%s %s on %s\n%s" % (
+        self.raw("%s%s on %s\n%s" % (
             lead,
-            name,
-            action("completed", self._options["run"]),
+            action("%s completed" % name, self._options["run"]),
             datetime.now().strftime(REPORT_TIME),
             REPORT_RULE,
         ))

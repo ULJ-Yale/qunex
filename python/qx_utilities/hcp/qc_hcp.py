@@ -864,7 +864,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             qc_report["failed"] += result["report"]["failed"]
 
     log.blank()
-    log.info(f"HCP run QC {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
+    log.info(f"{action('HCP run QC completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}")
     log.rule()
 
     def _format_item_list(items):

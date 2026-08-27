@@ -97,8 +97,11 @@ prints it. `general/log/` owns the runlog:
 - Build the runlog with a `SessionLog` (session/subject commands) or a `ReportLog` (per-BOLD /
   per-group executors and QC helpers), **not** by threading a local `r` string. Use the level
   methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.action(word, message, run)`
-  for a line that has to read as "Test running ..." under `--test`, and
-  `log.pipeline_command(cmd)`.
+  for a line that has to read as "[TEST] Running ..." under `--test`, and
+  `log.pipeline_command(cmd)`. The `[TEST]` tag leads the line rather than inflecting its first
+  word, so `log.action` takes any length of phrase; `general/log/report.py`'s module level
+  `action(text, run)` tags text used as a **value** (a summary string), and wants the whole
+  leading phrase so the tag does not land mid-sentence.
 - **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions` and
   `general/parsing`, and everything else imports it.** So the run/check helpers are called where
   they live, with the log as the **last, keyword-only** argument:
