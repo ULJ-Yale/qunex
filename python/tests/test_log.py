@@ -184,8 +184,8 @@ def test_test_mode_marks_both_ends():
     log = SessionLog(SINFO, dict(OPTIONS, run="test"), "HCP Test Pipeline")
     text = log.finish("would run", 0).text
 
-    assert "Test running HCP Test Pipeline [" in text
-    assert "HCP Test Pipeline test completed on " in text
+    assert "[TEST] Running HCP Test Pipeline [" in text
+    assert "[TEST] HCP Test Pipeline completed on " in text
 
 
 def test_unknown_error_captures_the_traceback():

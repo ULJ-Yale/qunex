@@ -37,6 +37,83 @@ from qx_utilities.hcp.hcp_utils import (
     resolve_session_relative_image,
 )
 
+# JSON sidecar fields naming the BOLD echo spacing, in the order they are tried
+ECHOSPACING_FIELDS = ["EffectiveEchoSpacing", "EchoSpacing"]
+
+
+def _infer_echospacing(boldinfo, boldimg, _log):
+    """
+    Work out the BOLD echo spacing when no parameter provides it.
+
+    Reached when ``hcp_bold_echospacing`` is unset and the session file's
+    inline ``EchoSpacing`` is either absent or excluded by
+    ``use_sequence_info``. The value is still recoverable in most studies, so
+    look for it rather than failing here: the session file records it inline
+    (``import_hcp`` writes it there from the sidecar) and the BOLD image
+    usually keeps its own JSON sidecar. Every place looked at is reported, so a
+    run that ends up without an echo spacing says where it searched.
+
+    Parameters:
+        boldinfo: the session file entry for this BOLD image.
+        boldimg: path to the BOLD image; its sidecar sits beside it.
+        _log: the log to report into.
+
+    Returns:
+        the echo spacing in seconds, or ``""`` when it can not be inferred.
+    """
+    _log.detail("hcp_bold_echospacing is not set, trying to infer it")
+
+    if boldinfo.get("EchoSpacing"):
+        echospacing = boldinfo["EchoSpacing"]
+        _log.detail(f"EchoSpacing from the session file: {echospacing} s", depth=1)
+        return echospacing
+
+    sidecar = boldimg.replace(".nii.gz", ".json")
+    if not os.path.exists(sidecar):
+        _log.detail("no EchoSpacing in the session file", depth=1)
+        _log.detail(f"no JSON sidecar at {sidecar}", depth=1)
+        return ""
+
+    try:
+        with open(sidecar, "r") as file:
+            sidecar_data = json.load(file)
+    except (OSError, ValueError) as errormessage:
+        _log.detail(f"could not read the JSON sidecar {sidecar}: {errormessage}", depth=1)
+        return ""
+
+    for field in ECHOSPACING_FIELDS:
+        if sidecar_data.get(field):
+            echospacing = sidecar_data[field]
+            _log.detail(f"EchoSpacing from {field} in {os.path.basename(sidecar)}: {echospacing} s", depth=1)
+            return echospacing
+
+    _log.detail(f"no {' or '.join(ECHOSPACING_FIELDS)} in {os.path.basename(sidecar)}", depth=1)
+    return ""
+
+
+def _check_echospacing(echospacing, _log):
+    """
+    Whether the echo spacing resolved to a number, reporting when it did not.
+
+    Every distortion correction method below needs a numeric echo spacing. One
+    that is missing altogether is already reported where it is resolved, so
+    only a value that is set and unusable is reported here -- the missing case
+    used to be reported twice, once as "EchoSpacing is not set" and again as
+    ``not defined correctly: "None"``.
+
+    Parameters:
+        echospacing: the echo spacing resolved for this BOLD image.
+        _log: the log to report into.
+
+    Returns:
+        whether the echo spacing can be used.
+    """
+    if pc.is_number(echospacing):
+        return True
+    if echospacing not in ["", None]:
+        _log.error(f'hcp_bold_echospacing not defined correctly: "{echospacing}"!', depth=1)
+    return False
+
 
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
@@ -1083,19 +1160,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     echospacing = options["hcp_bold_echospacing"]
                     log.detail(f"using study general EchoSpacing: {echospacing} s")
                 else:
-                    # try to set from the JSON sidecar
-                    json_sidecar = boldimgs[0].replace(".nii.gz", ".json")
-                    if os.path.exists(json_sidecar):
-                        log.detail("trying to set hcp_bold_echospacing from the JSON sidecar")
-                        with open(json_sidecar, "r") as file:
-                            sidecar_data = json.load(file)
-                            if "EffectiveEchoSpacing" in sidecar_data:
-                                echospacing = sidecar_data["EffectiveEchoSpacing"]
-                                log.detail(f"hcp_bold_echospacing set to {echospacing}")
-
-                    if not options["hcp_bold_echospacing"]:
-                        echospacing = ""
-                        log.error("EchoSpacing is not set! Please review parameter file.")
+                    echospacing = _infer_echospacing(boldinfo, boldimgs[0], log)
+                    if not echospacing:
+                        log.error("EchoSpacing is not set and could not be inferred! Please set hcp_bold_echospacing or add EchoSpacing to the session file.", depth=1)
                         boldok = False
 
             # --- check for spin-echo-fieldmap image
@@ -1148,7 +1215,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ]:
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    log.error("No fieldmap number specified for the BOLD image!")
+                    log.error("No fieldmap number specified for the BOLD image!", depth=1)
                     run = False
                 else:
                     fieldok = True
@@ -1185,9 +1252,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             _log=log,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(echospacing):
+                    if not _check_echospacing(echospacing, log):
                         fieldok = False
-                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
 
                     # try to set hcp_bold_echodiff from the JSON sidecar if not yet set
                     if (
@@ -1206,7 +1272,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             json_sidecar = os.path.join(fmfolder, fmap_json)
 
                             if os.path.exists(json_sidecar):
-                                log.detail("Trying to set hcp_echodiff from the JSON sidecar.")
+                                log.detail("trying to set hcp_bold_echodiff from the JSON sidecar")
                                 with open(json_sidecar, "r") as file:
                                     sidecar_data = json.load(file)
                                     if (
@@ -1224,10 +1290,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                         )
                                         log.detail(f"hcp_bold_echodiff set to {options['hcp_bold_echodiff']}")
                             else:
-                                log.step("hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE.")
+                                log.detail("hcp_bold_echodiff not provided and not found in the JSON sidecar, setting it to NONE")
                                 options["hcp_bold_echodiff"] = None
                         else:
-                            log.step("JSON sidecar not found, setting hcp_bold_echodiff to NONE.")
+                            log.detail("JSON sidecar not found, setting hcp_bold_echodiff to NONE")
                             options["hcp_bold_echodiff"] = None
 
                     if not pc.is_number(options["hcp_bold_echodiff"]):
@@ -1247,7 +1313,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    log.error("No fieldmap number specified for the BOLD image!")
+                    log.error("No fieldmap number specified for the BOLD image!", depth=1)
                     run = False
                 else:
                     fieldok = True
@@ -1271,7 +1337,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    log.error("No fieldmap number specified for the BOLD image!")
+                    log.error("No fieldmap number specified for the BOLD image!", depth=1)
                     run = False
                 else:
                     fieldok = True
@@ -1291,9 +1357,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             _log=log,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(echospacing):
+                    if not _check_echospacing(echospacing, log):
                         fieldok = False
-                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
@@ -1306,7 +1371,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 fmnum = boldinfo.get("fm", None)
                 if fmnum is None:
-                    log.error("No fieldmap number specified for the BOLD image!")
+                    log.error("No fieldmap number specified for the BOLD image!", depth=1)
                     run = False
                 else:
                     fieldok = True
@@ -1326,9 +1391,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                             _log=log,
                         )
                         boldok = boldok and fieldok
-                    if not pc.is_number(echospacing):
+                    if not _check_echospacing(echospacing, log):
                         fieldok = False
-                        log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                     boldok = boldok and fieldok
                     fmmag = hcp["fieldmap"][int(fmnum)]["magnitude"]
                     fmphase = hcp["fieldmap"][int(fmnum)]["phase"]
@@ -1341,7 +1405,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             ):
                 if options["hcp_bold_precomputedfmap"] is not None:
                     if not os.path.exists(options["hcp_bold_precomputedfmap"]):
-                        log.error(f"Could not find precomputed fieldmap image specified in hcp_bold_precomputedfmap parameter: {options['hcp_bold_precomputedfmap']}.")
+                        log.error(f"Could not find precomputed fieldmap image specified in hcp_bold_precomputedfmap parameter: {options['hcp_bold_precomputedfmap']}.", depth=1)
                         fieldok = False
                     else:
                         log.detail("precomputed fieldmap image present")
@@ -1354,7 +1418,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 else:
                     fmnum = boldinfo.get("fm", None)
                     if fmnum is None:
-                        log.error("No fieldmap number specified for the BOLD image!")
+                        log.error("No fieldmap number specified for the BOLD image!", depth=1)
                         run = False
                     else:
                         fieldok = True
@@ -1368,9 +1432,8 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                                 _log=log,
                             )
                             boldok = boldok and fieldok
-                        if not pc.is_number(echospacing):
+                        if not _check_echospacing(echospacing, log):
                             fieldok = False
-                            log.error(f'hcp_bold_echospacing not defined correctly: "{options["hcp_bold_echospacing"]}"!', depth=1)
                         boldok = boldok and fieldok
                         fmprecomputed = hcp["fieldmap"][int(fmnum)]["Precomputed"]
                         fmmag = None
@@ -1384,7 +1447,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         fmprecomputedmag = options["hcp_bold_precomputedfmapmag"]
                         log.detail(f"precomputed fieldmap magnitude image present: {fmprecomputedmag}")
                     else:
-                        log.error(f"Could not find precomputed fieldmap magnitude image specified in the hcp_bold_precomputedfmapmag parameter: {options['hcp_bold_precomputedfmapmag']}.")
+                        log.error(f"Could not find precomputed fieldmap magnitude image specified in the hcp_bold_precomputedfmapmag parameter: {options['hcp_bold_precomputedfmapmag']}.", depth=1)
                         boldok = False
                 else:
                     # --- try to auto-detect from fieldmap dict using fm number from bold info
@@ -1407,13 +1470,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                         if os.path.exists(auto_precomputedfmapmag):
                             fmprecomputedmag = auto_precomputedfmapmag
                     else:
-                        log.warning("hcp_bold_precomputedfmapmag is not set and could not be auto-detected. The HCP pipelines require this for PRECOMPUTED_FIELDMAP.")
+                        log.warning("hcp_bold_precomputedfmapmag is not set and could not be auto-detected. The HCP pipelines require this for PRECOMPUTED_FIELDMAP.", depth=1)
 
             # --- NO DC used
             elif options["hcp_bold_dcmethod"].lower() == "none":
                 log.detail("No distortion correction used ")
                 if options["hcp_processing_mode"] == "HCPStyleData":
-                    log.error("The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n            Consider using LegacyStyleData processing mode.")
+                    log.error("The requested HCP processing mode is 'HCPStyleData', however, no distortion correction method was specified!\n                 Consider using LegacyStyleData processing mode.", depth=1)
                     run = False
 
             # --- SEBASED
@@ -1423,7 +1486,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     "topup",
                     "topup_mismatched",
                 ]:
-                    log.error("SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP or TOPUP_MISMATCHED!")
+                    log.error("SEBASED hcp_bold_biascorrection requires hcp_bold_dcmethod TOPUP or TOPUP_MISMATCHED!", depth=1)
                     run = False
 
             # --- OnScanner
@@ -1478,7 +1541,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     options["hcp_bold_mask"] != "T1_fMRI_FOV"
                     and options["hcp_processing_mode"] == "HCPStyleData"
                 ):
-                    log.error("The requested HCP processing mode is 'HCPStyleData', however, %s was specified as bold mask to use!\n            Consider either using 'T1_fMRI_FOV' for the bold mask or LegacyStyleData processing mode.")
+                    log.error(f"The requested HCP processing mode is 'HCPStyleData', however, {options['hcp_bold_mask']} was specified as bold mask to use!\n                 Consider either using 'T1_fMRI_FOV' for the bold mask or LegacyStyleData processing mode.", depth=1)
                     run = False
                 else:
                     log.detail(f"using {options['hcp_bold_mask']} as BOLD mask")
@@ -1499,7 +1562,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     options["hcp_processing_mode"] == "HCPStyleData"
                     and options["hcp_bold_refreg"] == "nonlinear"
                 ):
-                    log.error("The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n            Consider using LegacyStyleData processing mode.")
+                    log.error("The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n                 Consider using LegacyStyleData processing mode.", depth=1)
                     run = False
 
             # --- Check for slice timing file
