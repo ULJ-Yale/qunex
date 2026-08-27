@@ -161,7 +161,7 @@ def test_promotion_to_an_error_is_one_constant(monkeypatch):
 
 
 def test_the_front_door_runs_it(capsys):
-    # run_turnkey's internal calls, verbatim
+    # the legacy pair, as user scripts and recipes still spell it
     options = gcs.check_deprecated_parameters(
         {"sessions": BATCH, "sessionids": "S01", "sessionsfolder": "/study/sessions"},
         "hcp_pre_freesurfer",

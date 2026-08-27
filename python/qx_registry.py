@@ -378,15 +378,13 @@ class CommandRegistry:
 
     def gmri_commands(self) -> List[str]:
         """
-        The commands `gmri` runs, which is every command it knows of but one.
+        The commands `gmri` runs, which is every command it knows of.
 
         `bin/qunex.sh` hands over everything this reports and handles the rest
         itself, so this function is the routing: the wrappers for the bash
         commands are still in that file and are simply no longer reached.
-        `run_turnkey` is the exception, and keeps its old path until it is
-        retired.
         """
-        return [c.name for c in self.iter() if c.name not in ("run_turnkey",)]
+        return [c.name for c in self.iter()]
 
     def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """
