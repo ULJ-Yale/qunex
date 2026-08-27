@@ -26,6 +26,15 @@ function [] = fc_compute_ab_corr(flist, sroi, troi, frames, root, options, verbo
 %           path that results in an roi image, or an nimage object. See options
 %           parameter for behavior when there are multiple target ROI defined.
 %
+%           Both ROI have to be defined over the same rows as the bold files
+%           they are used on: a dense ROI file (e.g. .dlabel.nii,
+%           .dscalar.nii) for dense (.dtseries.nii) bold files, and a
+%           parcellated label file (.plabel.nii) of the same parcellation for
+%           parcellated (.ptseries.nii) bold files, which it matches row for
+%           row. Use the 'rois' option to work with a subset of the regions
+%           the file defines, by name or by index, e.g.
+%           '<path>.plabel.nii|rois:Visual1-55_L-Thalamus'.
+%
 %       --frames (int | logical | vector, default ''):
 %           Either number of frames to omit or a mask of frames to use.
 %
@@ -144,8 +153,17 @@ if script, fprintf(' ... done.'), end
 
 %   --- Get variables ready first
 
-s_roi = nimage.img_prep_roi(sroi, list.session(1).roi);
-t_roi = nimage.img_prep_roi(troi, list.session(1).roi);
+% individual roi files are optional in a file list, and asking for one that
+% is not there fails before any session is read
+
+if isfield(list.session(1), 'roi')
+    sroifile = list.session(1).roi;
+else
+    sroifile = [];
+end
+
+s_roi = nimage.img_prep_roi(sroi, sroifile);
+t_roi = nimage.img_prep_roi(troi, sroifile);
 
 if isempty([s_roi.roi(:).roicodes2])
     sROIload = false;
@@ -164,6 +182,14 @@ if group
     gres = s_roi.zeroframes(nframes);
     gcnt = s_roi.zeroframes(1);
     gcnt.data = gcnt.image2D;
+
+    % The accumulators are shaped like the source ROI but hold correlations
+    % rather than region codes. Saving them under the ROI file's own type
+    % asks for one label table per frame, and a label file carries one, so
+    % a label ROI file (.dlabel.nii / .plabel.nii) failed on the group save.
+
+    gres.filetype = scalar_filetype(gres.filetype);
+    gcnt.filetype = scalar_filetype(gcnt.filetype);
 end
 
 %   --- Start the loop
@@ -177,7 +203,7 @@ for s = 1:list.nsessions
 
     % --- check if we need to load the session region file
 
-    if ~strcmp(list.session(s).roi, 'none')
+    if isfield(list.session(s), 'roi') && ~strcmp(list.session(s).roi, 'none')
         if tROIload | sROIload
             roif = nimage(list.session(s).roi);
         end
@@ -243,3 +269,18 @@ end
 
 if script, fprintf('\nDONE!\n\n'), end
 
+
+% --------------------------------------------------------------------------------------------
+%                                                                              scalar_filetype
+
+function [filetype] = scalar_filetype(filetype)
+
+    % The scalar CIFTI type matching a dense or parcellated one, for data
+    % that has a value per map rather than a timeseries or a label table.
+
+    switch lower(filetype)
+        case {'dtseries', 'dlabel', 'dscalar'}
+            filetype = 'dscalar';
+        case {'ptseries', 'plabel', 'pscalar'}
+            filetype = 'pscalar';
+    end

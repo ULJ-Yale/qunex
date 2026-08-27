@@ -647,7 +647,7 @@ classdef nimage
             if isempty(filenamepath)
                 fileext = '';
             else
-                fileext = regexp(filenamepath, '(\.4dfp\.img|\.4dfp\.ifh|.4dfp\.hdr|\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
+                fileext = regexp(filenamepath, '(\.4dfp\.img|\.4dfp\.ifh|.4dfp\.hdr|\.dconn\.nii|\.dtseries\.nii|\.dscalar\.nii|\.dlabel\.nii|\.dpconn\.nii|\.pconnseries\.nii|\.pconnscalar\.nii|\.pconn\.nii|\.ptseries\.nii|\.pscalar\.nii|\.plabel\.nii|\.pdconn\.nii|\.dfan\.nii|\.fiberTemp\.nii|\.nii\.gz|\.nii)$', 'tokens');
                 fileext = fileext{1}{1};
             end
         end
@@ -659,8 +659,8 @@ classdef nimage
         %   /path/to/basename.dtseries.nii -> dtseries
             if nargin < 2, filenamepath = obj.filenamepath; end
 
-            file_extensions = {'.4dfp.img', '.4dfp.ifh', '.4dfp.hdr', '.dconn.nii', '.dtseries.nii', '.dscalar.nii', '.dlabel.nii', '.dpconn.nii', '.pconnseries.nii', '.pconnscalar.nii', '.pconn.nii', '.ptseries.nii', '.pscalar.nii', '.pdconn.nii', '.dfan.nii', '.fiberTemp.nii', '.nii.gz', '.nii'};
-            file_types      = {'4dfp',      '4dfp',      '4dfp',      'dconn',      'dtseries',      'dscalar',      'dlabel',      'dpconn',      'pconnseries',      'pconnscalar',      'pconn',      'ptseries',      'pscalar',      'pdconn',      'dfan',      'fiberTemp',      'nifti',   'nifti'};
+            file_extensions = {'.4dfp.img', '.4dfp.ifh', '.4dfp.hdr', '.dconn.nii', '.dtseries.nii', '.dscalar.nii', '.dlabel.nii', '.dpconn.nii', '.pconnseries.nii', '.pconnscalar.nii', '.pconn.nii', '.ptseries.nii', '.pscalar.nii', '.plabel.nii', '.pdconn.nii', '.dfan.nii', '.fiberTemp.nii', '.nii.gz', '.nii'};
+            file_types      = {'4dfp',      '4dfp',      '4dfp',      'dconn',      'dtseries',      'dscalar',      'dlabel',      'dpconn',      'pconnseries',      'pconnscalar',      'pconn',      'ptseries',      'pscalar',      'plabel',      'pdconn',      'dfan',      'fiberTemp',      'nifti',   'nifti'};
             fileext = obj.img_fileext(filenamepath);
             filetype = file_types{strcmp(file_extensions, fileext)};
         end

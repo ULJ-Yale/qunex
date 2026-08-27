@@ -135,7 +135,10 @@ elseif strcmp(img.imageformat, 'CIFTI')
 
     % we probably have a 2d cifti file
     if img.hdrnifti.dim(1) == 6
-        cver = regexp(fmeta_str, 'CIFTI Version="(.)"', 'tokens');
+        % only the major version is meaningful here, and it is not always
+        % written as a single character: wb_command writes Version="2",
+        % nibabel writes Version="2.0", and both are CIFTI-2
+        cver = regexp(fmeta_str, 'CIFTI Version="(\d+)[^"]*"', 'tokens');
         if length(cver) == 0
             error('\nERROR: Could not find information on CIFTI version of the file [%s]!\n', img.filenamepath);
         end

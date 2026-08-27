@@ -42,13 +42,13 @@ else
     end
 end
 
-nrois = length(rcodes);
+nrois = length(roi_idx);
 
 pimg.data = zeros(nrois, obj.frames);
 pimg.dim = nrois;
 pimg.voxels = nrois;
 
-if strcmpi(obj.filetype, 'dscalar')
+if any(strcmpi(obj.filetype, {'dscalar', 'pscalar'}))
     pimg.filetype = 'pscalar';
 else
     pimg.filetype = 'ptseries';
@@ -61,6 +61,21 @@ pimg.cifti.end        = [];
 pimg.cifti.length     = [];
 pimg.cifti.maps       = {};
 pimg.cifti.parcels    = {};
+
+% ---> the source is already parcellated
+%
+% The rest of this function builds a parcellation out of a dense image, by
+% mapping each ROI's grayordinates back onto surface vertices and volume
+% voxels. There is nothing to work out when the source is parcellated
+% already: an ROI over its rows covers whole parcels of its own
+% parcellation, so the parcels of the result are those parcels, merged per
+% ROI. Reading `models` off a parcels dimension, which is what the dense
+% path does below, fails outright.
+
+if strcmp(obj.cifti.metadata.diminfo{1}.type, 'parcels')
+    pimg = merge_source_parcels(obj, pimg, roi, roi_idx, nrois);
+    return
+end
 
 global_data = zeros(size(roi.data,1),1);
 for p = 1:length(roi_idx)
@@ -130,3 +145,60 @@ pimg.cifti.metadata.diminfo{1} = struct('type', 'parcels',...
 
 pimg.cifti.metadata.diminfo{2}.length = obj.frames;
 pimg.cifti.maps = obj.cifti.maps;
+
+
+% --------------------------------------------------------------------------------------------
+%                                                                         merge_source_parcels
+
+function [pimg] = merge_source_parcels(obj, pimg, roi, roi_idx, nrois)
+
+    % One output parcel per ROI, built from the source parcels it covers.
+    % An ROI is usually a single parcel, but need not be: a parcellated
+    % label file that labels parcels by network gives one ROI per network,
+    % and its parcel is then the union of every parcel in that network.
+
+    source  = obj.cifti.metadata.diminfo{1};
+    parcels = struct([]);
+
+    for p = 1:nrois
+        region = roi.roi(roi_idx(p));
+
+        parcels(p).name    = region.roiname;
+        parcels(p).surfs   = struct([]);
+        parcels(p).voxlist = [];
+
+        surf_names = {};
+        for sp = region.indeces(:)'
+            covered = source.parcels(sp);
+            for s = 1:length(covered.surfs)
+                at = find(strcmp(surf_names, covered.surfs(s).struct), 1);
+                if isempty(at)
+                    surf_names{end+1} = covered.surfs(s).struct;
+                    at = length(surf_names);
+                    parcels(p).surfs(at).struct   = covered.surfs(s).struct;
+                    parcels(p).surfs(at).vertlist = covered.surfs(s).vertlist(:)';
+                else
+                    parcels(p).surfs(at).vertlist = [parcels(p).surfs(at).vertlist covered.surfs(s).vertlist(:)'];
+                end
+            end
+            parcels(p).voxlist = [parcels(p).voxlist covered.voxlist];
+        end
+
+        for s = 1:length(parcels(p).surfs)
+            parcels(p).surfs(s).vertlist = unique(parcels(p).surfs(s).vertlist);
+        end
+        if ~isempty(parcels(p).voxlist)
+            parcels(p).voxlist = unique(parcels(p).voxlist', 'rows')';
+        end
+    end
+
+    % everything but the parcels themselves - the volume space, the surface
+    % list - carries over from the source unchanged
+    diminfo         = source;
+    diminfo.parcels = parcels;
+    diminfo.length  = nrois;
+
+    pimg.cifti.parcels             = {parcels.name};
+    pimg.cifti.metadata.diminfo{1} = diminfo;
+    pimg.cifti.metadata.diminfo{2}.length = obj.frames;
+    pimg.cifti.maps                = obj.cifti.maps;
