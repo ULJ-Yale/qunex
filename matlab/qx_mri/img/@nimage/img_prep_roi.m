@@ -35,7 +35,12 @@ function [img] = img_prep_roi(roi, mask, options)
 %           - rois : a comma separated list
 %               Which ROI to use - a list of ROI indices or ROI names to 
 %               retain and use. The specification will reorder the roi in the
-%               structure in the order listed in rois parameter.
+%               structure in the order listed in rois parameter. For a label
+%               file the names are the label names read from the file, so
+%               this is how a specific region or network is selected. A name
+%               or index that is not present is reported as an error.
+%               `rois` is the only key that selects among ROI - a key that is
+%               not on this list is reported as an error rather than ignored.
 %           - roinames: a comma separated list
 %               ROI names - a list of names for the ROI that are created. 
 %               They should  be listed in the order the roi are set in the 
@@ -176,12 +181,29 @@ function [img] = img_prep_roi(roi, mask, options)
 %           maps or indeces are specified, then ROIs from all the maps will
 %           be used.
 %
+%           This holds for both a dense (.dlabel.nii) and a parcellated
+%           (.plabel.nii) label image; what differs is what the ROI are
+%           defined over. In a dense label image a row is a grayordinate, so
+%           the resulting ROI match dense data. In a parcellated label image a
+%           row is a parcel, so the resulting ROI match parcellated
+%           (.ptseries.nii / .pscalar.nii) data of the same parcellation, row
+%           for row. Each label becomes one ROI in both cases, so a parcel
+%           level label file gives one ROI per parcel, while one that labels
+%           parcels by network gives one ROI per network, spanning all the
+%           parcels assigned to it.
+%
 %       CIFTI parcelated image:
-%           If a CIFTI parcelated image is provided, then the information on 
-%           parcels in the image will be extracted and used to define ROIs.
-%           The ROIs will be adjusted to match a full, 'standard' dense CIFTI 
-%           image. If maps or rois options are specified then only the parcels
-%           matching them will be retained as ROIs.
+%           If a CIFTI parcelated data image (.ptseries.nii / .pscalar.nii) is
+%           provided, then the information on parcels in the image will be
+%           extracted and used to define ROIs: its values are data rather than
+%           region codes, so it is its parcellation that specifies the ROI,
+%           one per parcel, named after it. The ROIs will be adjusted to match
+%           a full, 'standard' dense CIFTI image, so that they can be used on
+%           dense data of a different resolution than the ROI file. If the
+%           rois option is specified then only the parcels matching it will be
+%           retained as ROIs. To define ROI over the rows of parcellated data
+%           instead of over grayordinates, provide a matching parcellated
+%           label (.plabel.nii) file.
 %
 %       CIFTI dense or volume image:
 %           If dense CIFTI image or a volume image is provided, the result 
@@ -291,6 +313,13 @@ function [img] = img_prep_roi(roi, mask, options)
 %
 %           roi = nimage.img_prep_roi('resources/CCN.names', 'AP3345.aseg+aparc.nii.gz')
 %
+%       To select a single region of a parcellated label file, for use with
+%       parcellated data of the same parcellation, either by name or by
+%       index::
+%
+%           roi = nimage.img_prep_roi('CAB-NP_parcels.plabel.nii|rois:Visual1-55_L-Thalamus')
+%           roi = nimage.img_prep_roi('CAB-NP_parcels.plabel.nii|rois:39')
+%
 
 % SPDX-FileCopyrightText: 2021 QuNex development team <https://qunex.yale.edu/>
 %
@@ -350,7 +379,9 @@ if ischar(roi) && ~isempty(strfind(roi, '|'))
     [roi, noptions] = strtok(roi, '|');
     roi = strtrim(roi);
     noptions = noptions(2:end);
+    valid_keys = fieldnames(options);
     options = general_parse_options(options, noptions);
+    check_keys(options, valid_keys, roi);
 end
 
 % ---> check options and expand the relevant ones to lists
@@ -370,11 +401,17 @@ if ~isempty(options.maps)
 end
 
 if ~isempty(options.rois)
-    t = str2num(options.rois);
-    if isempty(t)
-        options.rois = strtrim(strsplit(options.rois, ','));
+    % a single number ('rois:39') is parsed as a number rather than as a
+    % string before it gets here, and str2num throws on a number
+    if isnumeric(options.rois)
+        options.rois = options.rois(:)';
     else
-        options.rois = t;
+        t = str2num(options.rois);
+        if isempty(t)
+            options.rois = strtrim(strsplit(options.rois, ','));
+        else
+            options.rois = t;
+        end
     end
 end
 
@@ -459,7 +496,7 @@ elseif isfield(roi.roi, 'roiname') && ~isempty({roi.roi.roiname})
 end
 
 if isempty(img)
-    if strcmpi(roi.filetype , 'dlabel')
+    if any(strcmpi(roi.filetype, {'dlabel', 'plabel'}))
         img = process_label(roi, options);
 
     elseif any(strcmpi(roi.filetype, {'ptseries', 'pscalar'}))
@@ -478,10 +515,21 @@ end
 
 if ~isempty(options.rois)
     if isnumeric(options.rois)
-        [~, keep_roi] = ismember(options.rois, [1:length(img.roi)]);
+        [found, keep_roi] = ismember(options.rois, [1:length(img.roi)]);
+        wanted = arrayfun(@(x) num2str(x), options.rois, 'UniformOutput', false);
     else
-        [~, keep_roi] = ismember(options.rois, {img.roi.roiname});
+        [found, keep_roi] = ismember(options.rois, {img.roi.roiname});
+        wanted = options.rois;
     end
+
+    % ---> a requested ROI that is not there used to index img.roi with a 0
+    %      and fail with a bare MATLAB indexing error, which said nothing
+    %      about which ROI was missing or what was on offer instead
+
+    if ~all(found)
+        error('\nERROR: In img_prep_roi the following requested ROI could not be found: %s!\n       The ROI defined by the provided ROI file are: %s\n', strjoin(wanted(~found), ', '), list_roi_names(img));
+    end
+
     img.roi = img.roi(keep_roi);
 
     if img.frames > 1
@@ -733,41 +781,99 @@ function [roi] = process_label(roi, options)
 
 function [img] = process_parcel(roi, options)
 
-    roi = roi.selectframes(1);
-    nparcels = length(roi.cifti.parcels);
-    roi.data = [1:nparcels]';
+    % A parcellated data file (ptseries or pscalar) carries data rather than
+    % region codes, so it is its *parcellation* that defines the ROI: every
+    % parcel becomes one ROI, named after the parcel. The parcels are expanded
+    % to the grayordinates of a standard dense CIFTI image, so that the
+    % resulting ROI can be used on dense data of a different resolution than
+    % the ROI file. To define ROI over the rows of a parcellated image
+    % instead, provide a matching parcellated label (.plabel.nii) file.
 
-    error('ERROR: Processing parcel images is not yet implemented!');
+    if ~isfield(roi.cifti, 'metadata') || ~strcmp(roi.cifti.metadata.diminfo{1}.type, 'parcels')
+        error('\nERROR: In img_prep_roi the provided ROI file [%s] carries no parcel specification!\n', roi.filenamepath);
+    end
+
+    if ~isempty(options.volumes) || ~isempty(options.maps)
+        fprintf('\nWARNING: In img_prep_roi the volumes and maps options do not apply to a parcellated ROI file.\n         Its ROI are its parcels - use the rois option to select among them.');
+    end
+
+    parcels  = roi.cifti.metadata.diminfo{1}.parcels;
+    map_name = roi.img_basename();
+
+    % the grayordinate layout of a standard dense image, loaded once for all
+    % parcels rather than once per parcel
+    model = load('cifti_brainmodel');
 
     img = nimage('dscalar:1');
+    img.data = zeros(img.voxels, 1);
 
-    for p = 1:length(roi.cifti.parcels)
-        
-        % ---> set basic info
-        img.roi(p).roiname   = roi.cifti.metadata.diminfo{1}.parcels(p).name;
+    for p = 1:length(parcels)
+
+        indeces = parcel_grayordinates(parcels(p), model);
+
+        img.roi(p).roiname   = parcels(p).name;
         img.roi(p).roicode   = p;
         img.roi(p).roicodes1 = {p};
         img.roi(p).roicodes2 = {};
-        img.roi(p).map       = roi.img_basename();
-        img.roi(p).indeces   = [];
+        img.roi(p).map       = map_name;
+        img.roi(p).indeces   = indeces;
         img.roi(p).weights   = [];
+        img.roi(p).nvox      = length(indeces);
 
-        nmodels = length(img.cifti.metadata.diminfo{1}.models);
-
-        % ---> process surfs
-        for s = 1:length(roi.cifti.metadata.diminfo{1}.parcels(p).surfs)
-            sname    = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).struct;
-            sindeces = roi.cifti.metadata.diminfo{1}.parcels(p).surfs(s).vertlist;
-            for tm = 1:nmodels
-                if strcmpi(sname, img.cifti.metadata.diminfo{1}.models{tm}.struct)
-                    img.roi(p).indeces = [img.roi(p).indeces sindeces + img.cifti.metadata.diminfo{1}.models{tm}.start];                    
-                end
-            end
-        end
-        % ---> process vols
-
-        img.data(img.roi(p).indeces) = p;
+        img.data(indeces) = p;
     end
+
+    if all([img.roi.nvox] == 0)
+        error('\nERROR: In img_prep_roi none of the parcels of [%s] could be mapped onto a standard dense image!\n', roi.filenamepath);
+    end
+
+
+% --------------------------------------------------------------------------------------------
+%                                                                         parcel_grayordinates
+
+function [indeces] = parcel_grayordinates(parcel, model)
+
+    % Grayordinate indeces of one parcel in a standard dense CIFTI image.
+    %
+    % A parcel lists the surface vertices and the volume voxels it covers,
+    % both with the CIFTI 0-based indexing: vertices index the full surface
+    % mesh, of which only the non medial wall part is represented in a dense
+    % image, and voxels are the volume ijk. Both mappings come from the same
+    % `cifti_brainmodel` data `img_parcellated2dense` expands parcel data
+    % with, so an ROI built here lands on the grayordinates the data would.
+
+    indeces = [];
+
+    % ---> surface vertices
+
+    for s = 1:length(parcel.surfs)
+        sname = lower(parcel.surfs(s).struct);
+        if ~isfield(model.cifti, sname)
+            fprintf('\nWARNING: In img_prep_roi skipping parcel [%s] surface structure [%s], which is not part of a standard dense image.', parcel.name, parcel.surfs(s).struct);
+            continue
+        end
+        mask = logical(model.cifti.(sname).mask);
+        sid  = model.cifti.(sname).id;
+
+        % the dense image holds only the masked vertices, in mesh order
+        vertex2gray       = zeros(size(mask));
+        vertex2gray(mask) = model.cifti.start(sid):model.cifti.end(sid);
+
+        gray = vertex2gray(parcel.surfs(s).vertlist(:) + 1);
+        indeces = [indeces; gray(gray > 0)];
+    end
+
+    % ---> volume voxels
+
+    if ~isempty(parcel.voxlist)
+        vol2gray = model.mapping.vol2gray;
+        voxels   = sub2ind(size(vol2gray), parcel.voxlist(1,:) + 1, parcel.voxlist(2,:) + 1, parcel.voxlist(3,:) + 1);
+        gray     = vol2gray(voxels);
+        gray     = gray(:);
+        indeces  = [indeces; gray(gray > 0)];
+    end
+
+    indeces = unique(indeces(:));
 
 
 
@@ -945,6 +1051,39 @@ function [roi] = process_mask(roi, options)
         end
     else 
         error('\nERROR: In img_prep_roi could not deduce how to process ROIs. Please review inline help! [%s]', roi.filenamepath);
+    end
+
+
+% --------------------------------------------------------------------------------------------
+%                                                                                   check_keys
+
+function check_keys(options, valid_keys, roi)
+
+    % An unknown key in the pipe separated ROI specification used to be added
+    % to the options structure and never read again, so a misspelled or
+    % invented option (`|parcels:Visual1` instead of `|rois:Visual1`) left the
+    % ROI unfiltered without a word about it. Names are cheap to check.
+
+    unknown = setdiff(fieldnames(options), valid_keys);
+    if ~isempty(unknown)
+        error('\nERROR: In img_prep_roi unknown option(s) in the specification of [%s]: %s!\n       The options that can be given are: %s\n', roi, strjoin(unknown', ', '), strjoin(sort(valid_keys)', ', '));
+    end
+
+
+% --------------------------------------------------------------------------------------------
+%                                                                               list_roi_names
+
+function [listing] = list_roi_names(img)
+
+    % The ROI on offer, for an error message about one that was asked for and
+    % is not there. A parcellation can hold hundreds, which helps nobody read
+    % the error, so only the first few are named.
+
+    names = {img.roi.roiname};
+    if length(names) > 10
+        listing = sprintf('%s ... and %d more', strjoin(names(1:10), ', '), length(names) - 10);
+    else
+        listing = strjoin(names, ', ');
     end
 
 

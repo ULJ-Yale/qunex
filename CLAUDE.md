@@ -272,6 +272,25 @@ are ruleset protected and a bypass list can only name a user, a team or an insta
 `master` is not built: it only receives tagged `develop` code, rebuilt there already.
 `tests/test_registry_drift.py` and `tests/test_container_drift.py` are the backstop.
 
+## Changelog
+
+`CHANGELOG.md` records what changed for **users**, under the current `VERSION.md` heading. Write
+**one short line per piece of functionality**, however many files, commands, helper fixes and
+follow-on repairs went into it — name what is now possible or fixed, and leave the reasoning, the
+touched functions and the internal detail to the commit message and the docs:
+
+```markdown
+* Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
+```
+
+not one line per change made along the way:
+
+```markdown
+* Added `.plabel.nii` support to `fc_compute_seedmaps`.
+* An unknown option key in `roiinfo` is now reported instead of ignored.
+* Parcellated ROI files are expanded onto a standard dense image.
+```
+
 ## Multi-language guardrails
 
 - Bash: keep scripts POSIX-friendly unless the file already depends on Bash-specific features.

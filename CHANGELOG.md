@@ -9,6 +9,9 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.5.2
 
 * Fixed a bug in `dwi_probtrackx_dense_gpu` that caused it to crash under certain parameter values.
+* `hcp_bold_echospacing` is now inferred from the session file or the JSON sidecar when it is not set.
+* `--test` runs now mark their log lines with a `[TEST]` tag.
+* Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
 
 ## 1.5.1
 

@@ -29,8 +29,30 @@ function [fcmaps] = fc_compute_seedmaps(flist, roiinfo, frames, targetf, options
 %               'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
 %
 %       --roiinfo (str):
-%           A path to the names file specifying group based ROI for which to
-%           extract timeseries for. 
+%           A specification of the seed ROI for which to compute seedmaps.
+%           This is passed as the first parameter to the img_prep_roi method,
+%           so it can be a path to a .names or .roi file, or to an image file
+%           defining the ROI, optionally followed by pipe separated
+%           <key>:<value> options. See img_prep_roi for the full
+%           specification. If individual roi files are listed in the file
+%           list, they are passed as its second parameter.
+%
+%           The ROI have to be defined over the same rows as the bold files
+%           they are used on:
+%
+%           - for dense (.dtseries.nii) bold files use a dense ROI file, such
+%             as a .dlabel.nii parcellation, a .dscalar.nii mask, or a
+%             parcellated data file (.ptseries.nii / .pscalar.nii), whose
+%             parcels are expanded onto a standard dense image;
+%           - for parcellated (.ptseries.nii) bold files use a parcellated
+%             label file (.plabel.nii) of the same parcellation, which matches
+%             them row for row. The resulting seedmaps are saved as
+%             .pscalar.nii.
+%
+%           Use the 'rois' option to compute seedmaps for a subset of the
+%           regions defined by the file, by name or by index::
+%
+%               --roiinfo='CAB-NP_parcels.plabel.nii|rois:Visual1-55_L-Thalamus'
 %
 %       --frames (str | matrix | int, default ''):
 %           The definition of which frames to extract, specifically:
