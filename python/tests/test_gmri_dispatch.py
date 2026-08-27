@@ -163,12 +163,12 @@ def test_a_bash_command_is_run_once_per_session_with_the_header_filled_in(
     assert "hcp_brainsize" not in calls[0][0], "with what the command declares"
 
 
-def test_a_bash_comlog_is_named_the_way_run_turnkey_looks_for_it(gmri):
+def test_a_bash_comlog_is_named_after_the_command_and_what_varies(gmri):
     """
-    `run_turnkey` decides whether a step ran by globbing its log folder for
-    `*<step name>*<session>*log`, and its QC steps are named after the command
-    *and the modality* -- `run_qc_t1w`, `run_qc_bold`. So the name parts the
-    shell front end put in a comlog are a contract, not decoration.
+    `run_qc` is run once per modality into one log folder, so a comlog named
+    after the command and the session alone would have the four QC runs of a
+    session overwrite each other. The name parts the shell front end put in a
+    comlog are a contract, not decoration.
     """
     run_qc = gmri.qx_commands.get("run_qc")
 
@@ -612,16 +612,15 @@ def two_session_study(tmp_path):
     return study, batch
 
 
-def test_the_encoding_run_turnkey_writes_arrives_as_the_canonical_one(
+def test_the_legacy_encoding_arrives_as_the_canonical_one(
     gmri, two_session_study, monkeypatch
 ):
     """
-    The round trip of the three encodings. `run_turnkey` hard codes
-    `--sessions=<batch file> --sessionids=<ids>` in every internal call, and
-    that pair used to be converted five times along the chain, every conversion
-    guessing from whether the string `.txt` appeared. It is remapped once now,
-    at the front door, and what the resolver is asked is `--batchfile` and
-    `--sessions`.
+    The round trip of the three encodings. The legacy
+    `--sessions=<batch file> --sessionids=<ids>` pair used to be converted five
+    times along the chain, every conversion guessing from whether the string
+    `.txt` appeared. It is remapped once now, at the front door, and what the
+    resolver is asked is `--batchfile` and `--sessions`.
     """
     _, batch = two_session_study
     seen = {}

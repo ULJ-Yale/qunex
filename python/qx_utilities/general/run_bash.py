@@ -26,11 +26,10 @@ import qx_utilities.general.log as gl
 
 # What goes in a comlog's name besides the command and the session, so that two
 # runs of one command in one log folder are told apart. This is the shell front
-# end's `logtag` (`bin/qunex.sh:170-189`), and it is not cosmetic:
-# `run_turnkey`'s acceptance test decides whether a step ran by globbing for
-# `*<step name>*<session>*log` in the log folder it gave the step
-# (`run_turnkey.sh:2963-2965`), and its step names are `run_qc_t1w`,
-# `run_qc_bold`, `run_qc_dwi` -- the command plus the modality.
+# end's `logtag` (`bin/qunex.sh:170-189`), and it is not cosmetic: `run_qc` is
+# run once per modality into one log folder, so without the modality the four
+# QC runs of a session would all be filed under `run_qc_<session>` and overwrite
+# each other. The names are `run_qc_t1w`, `run_qc_bold`, `run_qc_dwi`.
 COMLOG_TAGS = ("calculation", "modality")
 
 

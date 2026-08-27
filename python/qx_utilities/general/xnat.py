@@ -382,10 +382,10 @@ def xnat_import_dicom(prep=True):
             stdout of the run bash commands plus other details to print to a log
 
     Notes:
-        When run with prep=True, replaces map_raw_data from the old run_recipe, copying scans to the inbox
+        When run with prep=True, takes the place of map_raw_data, copying scans to the inbox
         folder (qunex hierarchy). Also copies the initial batch parameters from the project level.
 
-        When run with prep=False, replaces the cleanup function from run_turnkey, removing unneeded dicoms and
+        When run with prep=False, performs the cleanup, removing unneeded dicoms and
         the inbox folder.
     """
 
