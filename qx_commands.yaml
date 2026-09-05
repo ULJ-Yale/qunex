@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-27T09:07:24.563538+00:00'
+generated_at: '2026-09-05T18:13:27.613053+00:00'
 source:
     id: core
 commands:
@@ -128,6 +128,28 @@ commands:
         default: null
         description: The path of the container that was written.
     origin: core
+-   name: build_qx_extensions
+    aliases: []
+    path: qx_registry_build.build_qx_extensions
+    language: python
+    call: build_qx_extensions(extensions=None)
+    description: Build the command registry of one or more extensions, and leave the QuNex installation's own registry as
+        it is.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all'
+            builds every extension found. 'check', or leaving it out, builds nothing and lists the extensions QuNex can see.
+    options: []
+    returns:
+    -   name: registry
+        type: tuple
+        default: null
+        description: 'A tuple with elements: (core_registry, built_extensions), as build_qx_registry returns them. (None,
+            []) on a listing run.'
+    origin: core
 -   name: build_qx_registry
     aliases: []
     path: qx_registry_build.build_qx_registry
@@ -154,6 +176,12 @@ commands:
         type: bool
         default: 'yes'
         description: Whether to build the registry of every extension found. Set to 'no' to build only core.
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all',
+            or leaving it out, builds every extension found. A name matching no extension is an error naming the extensions
+            that were found.
     -   name: extension_registry_filename
         type: str
         default: qx_commands.yaml

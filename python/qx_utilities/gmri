@@ -642,9 +642,16 @@ def main(args=None):
         # is what was asked for, which still falls through
         wants_help = any(a.strip("-") in ["h", "H", "help"] for a in args[1:])
 
-        if comm == 'build_qx_registry' and not wants_help:
-            print("Building command registry...")
-            from qx_registry_build import build_qx_registry
+        if comm in ('build_qx_registry', 'build_qx_extensions') and not wants_help:
+            from qx_registry_build import build_qx_extensions, build_qx_registry
+
+            # both build a registry before there is one to look a command up in,
+            # so both come through here. `build_qx_extensions` is the one an
+            # extension author is given -- it leaves the installation's own
+            # registry alone, which inside a container it could not write anyway
+            builder = build_qx_registry if comm == 'build_qx_registry' else build_qx_extensions
+            if comm == 'build_qx_registry':
+                print("Building command registry...")
 
             # the bypass above used to drop the call's options with it, so
             # `--build_core=no` was accepted and then quietly ignored. They are
@@ -659,7 +666,7 @@ def main(args=None):
             unknown = [
                 key
                 for key in opts
-                if key not in inspect.signature(build_qx_registry).parameters
+                if key not in inspect.signature(builder).parameters
             ]
             if unknown:
                 raise ge.CommandError(
@@ -668,8 +675,9 @@ def main(args=None):
                     "Provided unknown arguments: [%s]!" % (", ".join(unknown)),
                 )
 
-            build_qx_registry(**opts)
-            print("Command registry successfully built!")
+            builder(**opts)
+            if comm == 'build_qx_registry':
+                print("Command registry successfully built!")
             sys.exit(0)
 
         if comm == 'build_qx_container' and not wants_help:

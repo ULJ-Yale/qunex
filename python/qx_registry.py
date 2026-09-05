@@ -27,6 +27,7 @@ from qx_extension_paths import (  # noqa: F401
     _split_env_path_list,
     _warn,
     _warned,
+    extension_folders,
     extension_search_roots,
 )
 
