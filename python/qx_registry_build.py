@@ -1174,9 +1174,10 @@ def build_qx_extensions(*, extensions: Optional[str] = None):
     the only thing that will work: the installation's own registry lives on the
     container image, which is read only.
 
-    Which extensions to build has to be said. Run with no ``--extensions``, or
-    with ``--extensions=check``, it builds nothing and lists the extensions
-    QuNex can see.
+    Which extensions to build has to be said. ``--extensions=check`` builds
+    nothing and lists the extensions QuNex can see, which is the way to ask what
+    is installed; leaving ``--extensions`` out does the same and then reports
+    that nothing was named.
 
     ..  qx_command:
         type: utility
@@ -1185,8 +1186,7 @@ def build_qx_extensions(*, extensions: Optional[str] = None):
         --extensions (str, default ''):
             Which extensions to build, as a comma separated list of names given
             with or without the qx_ prefix. 'all' builds every extension found.
-            'check', or leaving it out, builds nothing and lists the extensions
-            QuNex can see.
+            'check' builds nothing and lists the extensions QuNex can see.
 
     Returns:
         --registry (tuple):

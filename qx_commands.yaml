@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-09-05T18:13:27.613053+00:00'
+generated_at: '2026-09-05T19:34:42.103556+00:00'
 source:
     id: core
 commands:
@@ -141,7 +141,7 @@ commands:
         type: Optional[str]
         default: ''
         description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all'
-            builds every extension found. 'check', or leaving it out, builds nothing and lists the extensions QuNex can see.
+            builds every extension found. 'check' builds nothing and lists the extensions QuNex can see.
     options: []
     returns:
     -   name: registry
