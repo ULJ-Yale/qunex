@@ -99,7 +99,6 @@ deprecated_commands = {
     "run_qc_dwi_bedpostx": ["runQC_DWIBedpostX"],
     "run_qc_custom": ["runQC_Custom"],
     "run_qc_rawnii": ["runQC_rawNII"],
-    "run_turnkey": ["runTurnkey"],
     "extract_roi": ["extractROI", "ROIExtract", "roi_extract"],
     "matlab_help": ["matlabHelp"],
     "gmri_function": ["gmriFunction"],
@@ -350,10 +349,10 @@ towarn_parameters.update(extensions.compile_dict("towarn_parameters"))
 # `batchfile=<path>` plus `sessions=<ids>`, and the legacy one is mapped onto it
 # here - once, for every entry point.
 #
-# The legacy spelling is a warning rather than an error because run_turnkey.sh
-# hard-codes it in ~30 internal calls. Setting the constant below to True turns
-# it into an error; that is the whole of the change, and it is due when
-# run_turnkey is dropped.
+# The legacy spelling is still a warning rather than an error, for the user
+# scripts and recipes that carry it. Setting the constant below to True turns it
+# into an error; that is the whole of the change, and nothing in the tree stands
+# in its way any more.
 SESSIONS_AS_BATCHFILE_IS_ERROR = False
 
 

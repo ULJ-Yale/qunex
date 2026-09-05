@@ -274,11 +274,11 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         return log.finish("Basic structural segmentation failed", name=sinfo["id"])
 
     log.info(
-        f"Basic structural segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"{action('Basic structural segmentation completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.finish(
-        "Basic structural segmentation %s" % (action("completed", options["run"])),
+        action("Basic structural segmentation completed", options["run"]),
         name=sinfo["id"],
     )
 
@@ -465,11 +465,11 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
         return log
 
     log.info(
-        f"Check {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"{action('Check completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.finish(
-        "Check for FreeSurfer data %s" % (action("completed", options["run"])),
+        action("Check for FreeSurfer data completed", options["run"]),
         name=sinfo["id"],
     )
 
@@ -748,11 +748,11 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         return log.finish("FreeSurfer segmentation failed", name=sinfo["id"])
 
     log.info(
-        f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"{action('FreeSurfer segmentation completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.finish(
-        "FreeSurfer segmentation %s" % (action("completed", options["run"])),
+        action("FreeSurfer segmentation completed", options["run"]),
         name=sinfo["id"],
     )
 
@@ -946,10 +946,10 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         return log.finish("FreeSurfer segmentation failed", name=sinfo["id"])
 
     log.info(
-        f"FreeSurfer segmentation {action('completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
+        f"{action('FreeSurfer segmentation completed', options['run'])} on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}\n---------------------------------------------------------"
     )
 
     return log.finish(
-        "FreeSurfer segmentation %s" % (action("completed", options["run"])),
+        action("FreeSurfer segmentation completed", options["run"]),
         name=sinfo["id"],
     )

@@ -375,14 +375,12 @@ class CommandRegistry:
 
     def gmri_commands(self) -> List[str]:
         """
-        The commands `gmri` runs, which is every command it knows of but one,
+        The commands `gmri` runs, which is every command it knows of,
         each under its name and under every alias it declares.
 
         `bin/qunex.sh` hands over everything this reports and handles the rest
         itself, so this function is the routing: the wrappers for the bash
         commands are still in that file and are simply no longer reached.
-        `run_turnkey` is the exception, and keeps its old path until it is
-        retired.
 
         The aliases are here because this is a routing table rather than a
         listing. Reporting names alone meant `bin/qunex.sh` did not recognise
@@ -391,12 +389,7 @@ class CommandRegistry:
         The tokens are unique across the merged registry by construction, so
         nothing here can shadow a command's name.
         """
-        return [
-            token
-            for c in self.iter()
-            if c.name not in ("run_turnkey",)
-            for token in (c.name,) + c.aliases
-        ]
+        return [token for c in self.iter() for token in (c.name,) + c.aliases]
 
     def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """

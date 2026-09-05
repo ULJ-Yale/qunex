@@ -426,7 +426,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         else:
             runs = [options["boldname"] + e + options["nifti_tail"] for e in procbolds]
 
-            # one line for both arms: `action` is what spells it "Test running ..."
+            # one line for both arms: `action` is what tags it "[TEST] Running ..."
             # under `--test`, so the run mode is the log's business and not a branch
             log.action(
                 "Running",

@@ -33,10 +33,12 @@ import qx_utilities.general.log as gl
 
 
 def is_number(s):
+    # TypeError as well as ValueError: an unset option arrives here as None,
+    # which float() rejects with the former
     try:
         float(s)
         return True
-    except ValueError:
+    except (TypeError, ValueError):
         return False
 
 

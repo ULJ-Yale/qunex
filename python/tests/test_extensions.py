@@ -321,21 +321,6 @@ def test_an_alias_is_offered_for_routing(tmp_path, monkeypatch):
     assert set(registry.gmri_commands()) == {"dwi_f99", "f99"}
 
 
-def test_run_turnkey_is_still_kept_out(tmp_path, monkeypatch):
-    core = tmp_path / "qunex"
-    core_yaml = _registry_yaml(
-        core, source_id="core", name="run_turnkey", path="run_turnkey.sh"
-    )
-    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV, raising=False)
-    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED, raising=False)
-    monkeypatch.delenv("TOOLS", raising=False)
-    monkeypatch.setenv("QUNEXPATH", str(core))
-
-    registry = qx_registry.load_command_registry(core_registry_path=core_yaml)
-
-    assert registry.gmri_commands() == []
-
-
 # ==============================================================================
 #                                        what the run says about its own command
 

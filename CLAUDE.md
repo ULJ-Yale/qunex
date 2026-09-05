@@ -104,8 +104,11 @@ prints it. `general/log/` owns the runlog:
 - Build the runlog with a `SessionLog` (session/subject commands) or a `ReportLog` (per-BOLD /
   per-group executors and QC helpers), **not** by threading a local `r` string. Use the level
   methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.action(word, message, run)`
-  for a line that has to read as "Test running ..." under `--test`, and
-  `log.pipeline_command(cmd)`.
+  for a line that has to read as "[TEST] Running ..." under `--test`, and
+  `log.pipeline_command(cmd)`. The `[TEST]` tag leads the line rather than inflecting its first
+  word, so `log.action` takes any length of phrase; `general/log/report.py`'s module level
+  `action(text, run)` tags text used as a **value** (a summary string), and wants the whole
+  leading phrase so the tag does not land mid-sentence.
 - **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions` and
   `general/parsing`, and everything else imports it.** So the run/check helpers are called where
   they live, with the log as the **last, keyword-only** argument:
@@ -275,6 +278,25 @@ are ruleset protected and a bypass list can only name a user, a team or an insta
 `GITHUB_TOKEN`, and a fork's token is read only — so there it prints the diff and fails instead.
 `master` is not built: it only receives tagged `develop` code, rebuilt there already.
 `tests/test_registry_drift.py` and `tests/test_container_drift.py` are the backstop.
+
+## Changelog
+
+`CHANGELOG.md` records what changed for **users**, under the current `VERSION.md` heading. Write
+**one short line per piece of functionality**, however many files, commands, helper fixes and
+follow-on repairs went into it — name what is now possible or fixed, and leave the reasoning, the
+touched functions and the internal detail to the commit message and the docs:
+
+```markdown
+* Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
+```
+
+not one line per change made along the way:
+
+```markdown
+* Added `.plabel.nii` support to `fc_compute_seedmaps`.
+* An unknown option key in `roiinfo` is now reported instead of ignored.
+* Parcellated ROI files are expanded onto a standard dense image.
+```
 
 ## Multi-language guardrails
 
