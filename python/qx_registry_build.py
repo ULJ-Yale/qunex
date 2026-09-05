@@ -934,9 +934,138 @@ def _drop_generated_at(text: str) -> str:
     return _GENERATED_AT_RE.sub("", text, count=1)
 
 
-def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
+# QuNex's own marker for running inside a container, which
+# `env/qunex_environment.sh` already tests in five places.
+CONTAINER_MARKER = Path("/opt/.container")
+
+# filesystems that do not outlive the container: the image itself, mounted at
+# `/`, and scratch. Anything else under a container is bound in from the host.
+_EPHEMERAL_FILESYSTEMS = ("overlay", "squashfs", "tmpfs")
+
+
+def in_container(marker: Path = CONTAINER_MARKER) -> bool:
+    """
+    Whether QuNex is running inside a container.
+
+    The marker file is QuNex's own answer and is what the environment script
+    uses. The Apptainer and Singularity variables are read as well, for an image
+    built without it.
+    """
+    if marker.exists():
+        return True
+
+    return any(
+        os.environ.get(name, "").strip()
+        for name in ("APPTAINER_CONTAINER", "SINGULARITY_CONTAINER")
+    )
+
+
+def _mount_table(mountinfo: Optional[str] = None) -> List[Tuple[str, str]]:
+    """
+    (mount point, filesystem type) for every mount, from `/proc/self/mountinfo`.
+
+    Empty where that cannot be read, which is anywhere but Linux. The format
+    puts optional fields before a ` - ` separator, so the filesystem type is the
+    first field after it and the mount point the fifth before it.
+    """
+    if mountinfo is None:
+        try:
+            mountinfo = Path("/proc/self/mountinfo").read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+    table: List[Tuple[str, str]] = []
+    for line in mountinfo.splitlines():
+        before, sep, after = line.partition(" - ")
+        if not sep:
+            continue
+        fields = before.split()
+        rest = after.split()
+        if len(fields) < 5 or not rest:
+            continue
+        table.append((fields[4], rest[0]))
+
+    return table
+
+
+def writes_persist(path: Path, mountinfo: Optional[str] = None) -> bool:
+    """
+    Whether a file written at `path` outlives the container it is written in.
+
+    The longest mount point covering the path is the filesystem the file lands
+    on. The container image is an `overlay` or `squashfs` at `/`, and scratch is
+    `tmpfs`; anything else under a container was bound in from the host and is
+    still there afterwards.
+
+    Reading the filesystem type is what `/tmp` costs: it is writable, it is its
+    own mount point, and it is exactly where somebody trying an extension inside
+    a container puts it -- so a check that asked only whether the path sits on a
+    mount of its own would call it persistent.
+    """
+    table = _mount_table(mountinfo)
+    if not table:
+        # nothing to consult: say the write is worth keeping rather than warn
+        # about something that has not been established
+        return True
+
+    target = str(path)
+    deepest = ""
+    fstype = ""
+    for point, kind in table:
+        if target == point or target.startswith(point.rstrip("/") + "/"):
+            if len(point) >= len(deepest):
+                deepest, fstype = point, kind
+
+    if not deepest:
+        return True
+
+    return fstype not in _EPHEMERAL_FILESYSTEMS
+
+
+def _cannot_write(path: Path, source_id: str, error: Optional[OSError] = None) -> ge.CommandFailed:
+    """
+    One answer for every way a registry write can be refused, so that the check
+    before the write and the write itself do not say different things.
+    """
+    hints = ["Could not write the registry to: %s" % path]
+    if error is not None and error.strerror:
+        hints.append("The filesystem reported: %s" % error.strerror)
+
+    if source_id == "core":
+        hints.append(
+            "The installation's own registry cannot be written, which is normal inside "
+            "a container: it lives on the container image, and that is read only."
+        )
+        hints.append(
+            "Registering an extension does not need it. Build the extension instead:"
+        )
+        hints.append("    qunex build_qx_extensions --extensions=<name>")
+    else:
+        hints.append(
+            "An extension's registry is written beside its code, so the extension has "
+            "to live somewhere writable. Inside a container that means binding it in "
+            "from the host rather than building it on the image."
+        )
+
+    return ge.CommandFailed(
+        'build_qx_registry', "Registry location is not writable", *hints
+    )
+
+
+def _writable(path: Path) -> bool:
+    """
+    Whether `path` can be written -- the file itself if it is there, the folder
+    it goes in if it is not.
+
+    For the message only, never for the verdict: `os.access` consults the real
+    rather than the effective uid, and reports root as having access to a
+    read-only mount. The write is what decides.
+    """
+    return os.access(path if path.exists() else path.parent, os.W_OK)
+
+
+def write_registry_file(path: Path, obj: Dict[str, Any], *, source_id: str = "core") -> None:
     path = path.resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         import yaml  # type: ignore
@@ -955,7 +1084,30 @@ def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
     if path.exists() and _drop_generated_at(path.read_text(encoding="utf-8")) == _drop_generated_at(text):
         return
 
-    path.write_text(text, encoding="utf-8")
+    # everything below runs only when there is genuinely something to write. An
+    # extension shipped inside a container image with its registry already built
+    # sits in a read-only location and rebuilds cleanly, because nothing is
+    # written -- and rebuilding to see what happens is the first thing anybody
+    # does. Checking before the comparison would turn that into a failure
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise _cannot_write(path, source_id, error) from error
+
+    if not _writable(path):
+        raise _cannot_write(path, source_id)
+
+    if in_container() and not writes_persist(path):
+        _warn(
+            "%s is on the container image rather than on a bound folder, so the "
+            "registry written there is gone when the container exits. Bind the "
+            "extension in from the host to keep it." % path
+        )
+
+    try:
+        path.write_text(text, encoding="utf-8")
+    except OSError as error:
+        raise _cannot_write(path, source_id, error) from error
 
 
 def _get_qunexpath() -> Path:
@@ -969,7 +1121,7 @@ def build_registry_yaml(commands: List[CommandInfo], *, out: Path, source_id: st
     commands = validate_command_types(commands)
     validate_unique_tokens(commands)
     obj = registry_to_obj(commands, source_id=source_id)
-    write_registry_file(out, obj)
+    write_registry_file(out, obj, source_id=source_id)
     return registry_from_obj(obj)
 
 
