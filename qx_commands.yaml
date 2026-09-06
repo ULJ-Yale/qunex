@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-09-05T19:34:42.103556+00:00'
+generated_at: '2026-09-06T09:33:41.567340+00:00'
 source:
     id: core
 commands:
@@ -140,8 +140,8 @@ commands:
     -   name: extensions
         type: Optional[str]
         default: ''
-        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all'
-            builds every extension found. 'check' builds nothing and lists the extensions QuNex can see.
+        description: Which extensions to build, as a comma separated list of names given with or without the ``qx_`` prefix.
+            'all' builds every extension found. 'check' builds nothing and lists the extensions QuNex can see.
     options: []
     returns:
     -   name: registry
@@ -179,8 +179,8 @@ commands:
     -   name: extensions
         type: Optional[str]
         default: ''
-        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all',
-            or leaving it out, builds every extension found. A name matching no extension is an error naming the extensions
+        description: Which extensions to build, as a comma separated list of names given with or without the ``qx_`` prefix.
+            'all', or leaving it out, builds every extension found. A name matching no extension is an error naming the extensions
             that were found.
     -   name: extension_registry_filename
         type: str
