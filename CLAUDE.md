@@ -83,9 +83,16 @@ Quality:
   `pythonpath = python` is set in `pytest.ini` at the repository root. Do not add flat
   imports (`from general import core as gc`); there are none left in the tree.
 - Before deleting a seemingly-unused function, confirm it is not a dynamic/external entrypoint:
-  registered commands (a `.. qx_command:` docstring, called via the registry) and the
-  `@qx_process` extension decorator in `general/extensions.py` (used by out-of-tree extensions
-  loaded via `$QXEXTENSIONSPY`) look unused in-tree but must not be removed.
+  registered commands (a `.. qx_command:` docstring, called via the registry) look unused in-tree
+  but must not be removed. The same goes for `general/extensions.py`, which is the whole of the
+  extension interface: `load_extensions`, `compile_list` and `compile_dict` are called from
+  `general/__init__.py`, `process.py` and `commands_support.py`, and the nine lists and
+  dictionaries they gather are what an out-of-tree extension declares. The `@qx_process`
+  decorator there **declares parameters and does not register a command** — its arguments
+  (`command_type`, `short_name`, `long_name`, `description`) are inert and are kept only so that
+  an extension written against the older decorator still imports. The pre-registry declaration
+  surface beside it — the `commands` dict, the `qx` decorator and `calist`/`salist`/`lalist`/
+  `malist` — was removed once nothing read it.
 
 ## Command logging (runlog vs comlog)
 

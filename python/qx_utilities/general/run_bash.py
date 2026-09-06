@@ -70,7 +70,13 @@ def run(qx_command, args, run=None, session=None):
 
     # -- resolve script path
 
-    script = os.path.join(os.environ.get('QUNEXPATH', ''), 'bash', qx_command.path)
+    # the registry the command came from says where its `bash` folder is -- the
+    # extension's own folder for an extension command, $QUNEXPATH for a core
+    # one. Resolving against $QUNEXPATH alone sent every extension command to
+    # the core install, where its script is not. The fallback is for a record
+    # built by hand rather than loaded, which only a test does
+    root = getattr(qx_command, 'root', None) or os.environ.get('QUNEXPATH', '')
+    script = os.path.join(root, 'bash', qx_command.path)
 
     if not os.path.exists(script):
         print("\n\nERROR: %s failed! Script not found: %s\n" % (qx_command.name, script))
