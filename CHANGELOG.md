@@ -9,6 +9,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.5.2
 
 * Fixed a bug in `dwi_probtrackx_dense_gpu` that caused it to crash under certain parameter values.
+* Fixed and improved the handling of QuNex extensions; `build_qx_registry --build_core=no` builds extensions without rewriting the core registry.
+* Added `build_qx_extensions`, which registers named extensions without touching the installation's own command registry, and reports when a registry cannot be written where it has to go.
 * `hcp_bold_echospacing` is now inferred from the session file or the JSON sidecar when it is not set.
 * `--test` runs now mark their log lines with a `[TEST]` tag.
 * Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.

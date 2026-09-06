@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
@@ -17,6 +17,19 @@ try:
     from qx_utilities.general import exceptions as ge
 except ModuleNotFoundError:
     from general import exceptions as ge
+# where extensions live is answered in one place, by a module that imports
+# nothing from QuNex -- `general/extensions.py` needs the same answer while this
+# module is still being imported, so it cannot ask this one. Re-exported here
+# because this is where callers have always found it
+from qx_extension_paths import (  # noqa: F401
+    EXTENSION_FOLDERS_ENV,
+    EXTENSION_FOLDERS_ENV_DEPRECATED,
+    _split_env_path_list,
+    _warn,
+    _warned,
+    extension_folders,
+    extension_search_roots,
+)
 
 
 DEFAULT_CORE_REGISTRY_BASENAME = "qx_commands.yaml"
@@ -47,6 +60,17 @@ class CommandInfo:
     # optional `logging:` from the qx_command block: none|comlog|runlog|both.
     # None means the command states nothing and the settings files decide.
     logging: Optional[str] = None
+    # what this command displaced when the registries were merged, when it
+    # displaced anything: the origin of the record it replaced. Set at merge,
+    # so that a run can say it is not running the command it appears to be
+    overrides: Optional[str] = None
+    # the folder the registry carrying this command was loaded from: the
+    # extension folder for an extension command, $QUNEXPATH for a core one.
+    # Filled in at load and never written to the yaml, so an extension that is
+    # moved or installed elsewhere still resolves. `run_bash` finds the script
+    # under it; python and matlab commands are found through `sys.path` and
+    # `MATLABPATH` instead.
+    root: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -80,8 +104,9 @@ def _now_utc_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def registry_from_obj(obj: Dict[str, Any]) -> Registry:
+def registry_from_obj(obj: Dict[str, Any], root: Optional[str | Path] = None) -> Registry:
     cmds: List[CommandInfo] = []
+    root = str(root) if root is not None else None
     source_id = (obj.get("source") or {}).get("id", "unknown")
     generated_at = obj.get("generated_at") or ""
     version = int(obj.get("version") or 1)
@@ -112,6 +137,7 @@ def registry_from_obj(obj: Dict[str, Any]) -> Registry:
                 returns=load_args(c.get("returns") or []),
                 origin=c.get("origin", source_id),
                 logging=c.get("logging"),
+                root=root,
             )
         )
 
@@ -134,7 +160,11 @@ def read_registry_file(path: Path) -> Dict[str, Any]:
 
 
 def load_registry_yaml(path: str | Path) -> Registry:
-    return registry_from_obj(read_registry_file(Path(path)))
+    # the registry file sits at the root of what it describes -- <ext>/qx_commands.yaml
+    # for an extension, $QUNEXPATH/qx_commands.yaml for core -- so its folder is the
+    # root every command in it is resolved against
+    path = Path(path)
+    return registry_from_obj(read_registry_file(path), root=path.parent)
 
 
 def merge_registries(
@@ -145,6 +175,13 @@ def merge_registries(
     by_name: Dict[str, CommandInfo] = {c.name: c for c in base.commands}
     for reg in overlays:
         for c in reg.commands:
+            # a command standing in for one already known keeps a note of what
+            # it displaced. The record the merge keeps is otherwise the only
+            # trace: the call echo, the parameter table and the runlog all name
+            # the command, which is the same name either way
+            displaced = by_name.get(c.name)
+            if displaced is not None and displaced.origin != c.origin:
+                c = replace(c, overrides=displaced.origin)
             by_name[c.name] = c
 
     merged_cmds = list(by_name.values())
@@ -181,45 +218,6 @@ def load_python_callable(command: CommandInfo):
     import importlib
     mod = importlib.import_module(mod_path)
     return getattr(mod, fn_name)
-
-
-def _split_env_path_list(value: str) -> List[str]:
-    value = (value or "").strip()
-    if not value:
-        return []
-    value = value.replace(";", ":")
-    return [p.strip() for p in value.split(":") if p.strip()]
-
-
-def extension_search_roots() -> List[Path]:
-    roots: List[Path] = []
-
-    qunexpath = os.environ.get("QUNEXPATH", "").strip()
-    if qunexpath:
-        roots.append(Path(qunexpath) / "qx_extensions")
-
-    tools = os.environ.get("TOOLS", "").strip()
-    if tools:
-        roots.append(Path(tools) / "qx_extensions")
-
-    extra = os.environ.get("QUNEXEXTENSIONFOLDERS", "").strip()
-    for folder in _split_env_path_list(extra):
-        roots.append(Path(folder))
-
-    # de-dup preserving order
-    seen = set()
-    uniq: List[Path] = []
-    for r in roots:
-        rr = r.expanduser()
-        try:
-            rr = rr.resolve()
-        except Exception:
-            pass
-        s = str(rr)
-        if s not in seen:
-            seen.add(s)
-            uniq.append(rr)
-    return uniq
 
 
 def discover_extension_registries(
@@ -378,13 +376,21 @@ class CommandRegistry:
 
     def gmri_commands(self) -> List[str]:
         """
-        The commands `gmri` runs, which is every command it knows of.
+        The commands `gmri` runs, which is every command it knows of,
+        each under its name and under every alias it declares.
 
         `bin/qunex.sh` hands over everything this reports and handles the rest
         itself, so this function is the routing: the wrappers for the bash
         commands are still in that file and are simply no longer reached.
+
+        The aliases are here because this is a routing table rather than a
+        listing. Reporting names alone meant `bin/qunex.sh` did not recognise
+        an alias and answered "Requested command is not supported", while
+        `gmri` -- which resolves through the registry's token map -- ran it.
+        The tokens are unique across the merged registry by construction, so
+        nothing here can shadow a command's name.
         """
-        return [c.name for c in self.iter()]
+        return [token for c in self.iter() for token in (c.name,) + c.aliases]
 
     def to_qunex_list(self) -> List[Tuple[str, str, Optional[str], str]]:
         """

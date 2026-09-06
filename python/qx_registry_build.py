@@ -21,9 +21,11 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 try:
     from qx_utilities.general import exceptions as ge
     from qx_utilities.general.log import LOGGING_MODES
+    from qx_utilities.general.parsing import flag
 except ModuleNotFoundError:
     from general import exceptions as ge
     from general.log import LOGGING_MODES
+    from general.parsing import flag
 from qx_registry import (
     ArgInfo,
     CommandInfo,
@@ -32,7 +34,9 @@ from qx_registry import (
     DEFAULT_EXTENSION_REGISTRY_FILENAME,
     _now_utc_iso,
     registry_from_obj,
-    extension_search_roots,
+    load_registry_yaml,
+    extension_folders,
+    EXTENSION_FOLDERS_ENV,
 )
 
 DEBUG = True
@@ -930,9 +934,138 @@ def _drop_generated_at(text: str) -> str:
     return _GENERATED_AT_RE.sub("", text, count=1)
 
 
-def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
+# QuNex's own marker for running inside a container, which
+# `env/qunex_environment.sh` already tests in five places.
+CONTAINER_MARKER = Path("/opt/.container")
+
+# filesystems that do not outlive the container: the image itself, mounted at
+# `/`, and scratch. Anything else under a container is bound in from the host.
+_EPHEMERAL_FILESYSTEMS = ("overlay", "squashfs", "tmpfs")
+
+
+def in_container(marker: Path = CONTAINER_MARKER) -> bool:
+    """
+    Whether QuNex is running inside a container.
+
+    The marker file is QuNex's own answer and is what the environment script
+    uses. The Apptainer and Singularity variables are read as well, for an image
+    built without it.
+    """
+    if marker.exists():
+        return True
+
+    return any(
+        os.environ.get(name, "").strip()
+        for name in ("APPTAINER_CONTAINER", "SINGULARITY_CONTAINER")
+    )
+
+
+def _mount_table(mountinfo: Optional[str] = None) -> List[Tuple[str, str]]:
+    """
+    (mount point, filesystem type) for every mount, from `/proc/self/mountinfo`.
+
+    Empty where that cannot be read, which is anywhere but Linux. The format
+    puts optional fields before a ` - ` separator, so the filesystem type is the
+    first field after it and the mount point the fifth before it.
+    """
+    if mountinfo is None:
+        try:
+            mountinfo = Path("/proc/self/mountinfo").read_text(encoding="utf-8")
+        except OSError:
+            return []
+
+    table: List[Tuple[str, str]] = []
+    for line in mountinfo.splitlines():
+        before, sep, after = line.partition(" - ")
+        if not sep:
+            continue
+        fields = before.split()
+        rest = after.split()
+        if len(fields) < 5 or not rest:
+            continue
+        table.append((fields[4], rest[0]))
+
+    return table
+
+
+def writes_persist(path: Path, mountinfo: Optional[str] = None) -> bool:
+    """
+    Whether a file written at `path` outlives the container it is written in.
+
+    The longest mount point covering the path is the filesystem the file lands
+    on. The container image is an `overlay` or `squashfs` at `/`, and scratch is
+    `tmpfs`; anything else under a container was bound in from the host and is
+    still there afterwards.
+
+    Reading the filesystem type is what `/tmp` costs: it is writable, it is its
+    own mount point, and it is exactly where somebody trying an extension inside
+    a container puts it -- so a check that asked only whether the path sits on a
+    mount of its own would call it persistent.
+    """
+    table = _mount_table(mountinfo)
+    if not table:
+        # nothing to consult: say the write is worth keeping rather than warn
+        # about something that has not been established
+        return True
+
+    target = str(path)
+    deepest = ""
+    fstype = ""
+    for point, kind in table:
+        if target == point or target.startswith(point.rstrip("/") + "/"):
+            if len(point) >= len(deepest):
+                deepest, fstype = point, kind
+
+    if not deepest:
+        return True
+
+    return fstype not in _EPHEMERAL_FILESYSTEMS
+
+
+def _cannot_write(path: Path, source_id: str, error: Optional[OSError] = None) -> ge.CommandFailed:
+    """
+    One answer for every way a registry write can be refused, so that the check
+    before the write and the write itself do not say different things.
+    """
+    hints = ["Could not write the registry to: %s" % path]
+    if error is not None and error.strerror:
+        hints.append("The filesystem reported: %s" % error.strerror)
+
+    if source_id == "core":
+        hints.append(
+            "The installation's own registry cannot be written, which is normal inside "
+            "a container: it lives on the container image, and that is read only."
+        )
+        hints.append(
+            "Registering an extension does not need it. Build the extension instead:"
+        )
+        hints.append("    qunex build_qx_extensions --extensions=<name>")
+    else:
+        hints.append(
+            "An extension's registry is written beside its code, so the extension has "
+            "to live somewhere writable. Inside a container that means binding it in "
+            "from the host rather than building it on the image."
+        )
+
+    return ge.CommandFailed(
+        'build_qx_registry', "Registry location is not writable", *hints
+    )
+
+
+def _writable(path: Path) -> bool:
+    """
+    Whether `path` can be written -- the file itself if it is there, the folder
+    it goes in if it is not.
+
+    For the message only, never for the verdict: `os.access` consults the real
+    rather than the effective uid, and reports root as having access to a
+    read-only mount. The write is what decides.
+    """
+    return os.access(path if path.exists() else path.parent, os.W_OK)
+
+
+def write_registry_file(path: Path, obj: Dict[str, Any], *, source_id: str = "core") -> None:
     path = path.resolve()
-    path.parent.mkdir(parents=True, exist_ok=True)
 
     try:
         import yaml  # type: ignore
@@ -951,7 +1084,30 @@ def write_registry_file(path: Path, obj: Dict[str, Any]) -> None:
     if path.exists() and _drop_generated_at(path.read_text(encoding="utf-8")) == _drop_generated_at(text):
         return
 
-    path.write_text(text, encoding="utf-8")
+    # everything below runs only when there is genuinely something to write. An
+    # extension shipped inside a container image with its registry already built
+    # sits in a read-only location and rebuilds cleanly, because nothing is
+    # written -- and rebuilding to see what happens is the first thing anybody
+    # does. Checking before the comparison would turn that into a failure
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as error:
+        raise _cannot_write(path, source_id, error) from error
+
+    if not _writable(path):
+        raise _cannot_write(path, source_id)
+
+    if in_container() and not writes_persist(path):
+        _warn(
+            "%s is on the container image rather than on a bound folder, so the "
+            "registry written there is gone when the container exits. Bind the "
+            "extension in from the host to keep it." % path
+        )
+
+    try:
+        path.write_text(text, encoding="utf-8")
+    except OSError as error:
+        raise _cannot_write(path, source_id, error) from error
 
 
 def _get_qunexpath() -> Path:
@@ -965,15 +1121,143 @@ def build_registry_yaml(commands: List[CommandInfo], *, out: Path, source_id: st
     commands = validate_command_types(commands)
     validate_unique_tokens(commands)
     obj = registry_to_obj(commands, source_id=source_id)
-    write_registry_file(out, obj)
+    write_registry_file(out, obj, source_id=source_id)
     return registry_from_obj(obj)
+
+
+def _report_extensions() -> List[Path]:
+    """
+    The extensions QuNex can see, with what somebody needs in order to pick one.
+
+    Printed rather than returned to the caller, because this is what a person
+    gets when they ask `build_qx_extensions` what is there. It goes to stdout:
+    the stdout-is-a-routing-table rule applies to `gmri -available`, not to a
+    command's own output.
+    """
+    folders = extension_folders()
+
+    if not folders:
+        print("\n--> No extensions found.")
+        print("    QuNex looks under $QUNEXPATH/qx_extensions, under $TOOLS/qx_extensions,")
+        print(f"    and under every folder named in ${EXTENSION_FOLDERS_ENV}. That variable")
+        print("    names the folder that *holds* the qx_<name> folders, not the extension.")
+        return folders
+
+    print(f"\n--> Extensions QuNex can see ({len(folders)}):")
+    name_width = max(len(f.name) for f in folders)
+    path_width = max(len(str(f)) for f in folders)
+    for folder in folders:
+        registry = folder / DEFAULT_EXTENSION_REGISTRY_FILENAME
+        state = "registry built" if registry.exists() else "no registry yet"
+        print(f"    {folder.name:<{name_width}}  {str(folder):<{path_width}}  [{state}]")
+
+    print("\n--> Name the ones to build:")
+    print("        qunex build_qx_extensions --extensions=<name>[,<name>...]")
+    print("    or build every one of them:")
+    print("        qunex build_qx_extensions --extensions=all")
+
+    return folders
+
+
+def build_qx_extensions(*, extensions: Optional[str] = None):
+    """
+    ``build_qx_extensions(extensions=None)``
+
+    Build the command registry of one or more extensions, and leave the QuNex
+    installation's own registry as it is.
+
+    An extension's registry is what makes its commands visible to QuNex, so it
+    has to be built once before the extension can be used, and again whenever a
+    command is added, renamed or re-documented.
+
+    This is what an extension author wants, and inside a container it is usually
+    the only thing that will work: the installation's own registry lives on the
+    container image, which is read only.
+
+    Which extensions to build has to be said. ``--extensions=check`` builds
+    nothing and lists the extensions QuNex can see, which is the way to ask what
+    is installed; leaving ``--extensions`` out does the same and then reports
+    that nothing was named.
+
+    ..  qx_command:
+        type: utility
+
+    Parameters:
+        --extensions (str, default ''):
+            Which extensions to build, as a comma separated list of names given
+            with or without the qx_ prefix. 'all' builds every extension found.
+            'check' builds nothing and lists the extensions QuNex can see.
+
+    Returns:
+        --registry (tuple):
+            A tuple with elements: (core_registry, built_extensions), as
+            build_qx_registry returns them. (None, []) on a listing run.
+    """
+    named = (extensions or "").strip()
+
+    if not named or named.lower() == "check":
+        _report_extensions()
+
+        # asked for deliberately, `check` is a question that was answered; an
+        # omitted parameter is a usage error, so that a script that meant to
+        # build is told rather than carrying on as though it had
+        if named:
+            return None, []
+
+        raise ge.CommandFailed(
+            'build_qx_extensions',
+            "No extensions named",
+            "Name one or more with --extensions=<name>, or --extensions=all for all of them.",
+        )
+
+    return build_qx_registry(build_core=False, extensions=named)
+
+
+def _select_extensions(extensions: Optional[str], folders: List[Path]) -> List[Path]:
+    """
+    The extension folders a build covers, out of the ones QuNex can see.
+
+    `extensions` is a comma separated list of names, each given with or without
+    the `qx_` prefix; `all` -- alone or among others -- and an empty value both
+    mean every extension found.
+
+    A name matching nothing is an error rather than a quiet no-op. A typo would
+    otherwise be indistinguishable from a successful build, and only turn up
+    later as `Requested command is not supported`, a long way from its cause.
+    """
+    wanted = [e.strip() for e in (extensions or "").replace(";", ",").split(",") if e.strip()]
+
+    if not wanted or any(w.lower() == "all" for w in wanted):
+        return folders
+
+    by_name = {f.name[len("qx_") :]: f for f in folders}
+
+    selected: Dict[str, Path] = {}
+    unknown: List[str] = []
+    for name in wanted:
+        key = name[len("qx_") :] if name.startswith("qx_") else name
+        if key in by_name:
+            selected[key] = by_name[key]
+        else:
+            unknown.append(name)
+
+    if unknown:
+        raise ge.CommandFailed(
+            'build_qx_registry',
+            "Unknown extension(s): %s" % ", ".join(unknown),
+            "Extensions found: %s" % (", ".join(sorted(by_name)) or "none"),
+        )
+
+    return [selected[key] for key in sorted(selected)]
 
 
 def build_qx_registry(
     *,
     core_python_root: Optional[str | Path] = None,
     core_registry_yaml: Optional[str | Path] = None,
+    build_core: bool = True,
     build_extensions: bool = True,
+    extensions: Optional[str] = None,
     extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
     extension_python_subdir: str = "python",
     extension_matlab_subdir: str = "matlab",
@@ -985,8 +1269,49 @@ def build_qx_registry(
     Build core registry at $QUNEXPATH/qx_commands.yaml (python + matlab + bash for core),
     and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab + bash if present).
 
+    An extension is found under $QUNEXPATH/qx_extensions, under $TOOLS/qx_extensions,
+    or under a folder named in $QUNEXEXTENSIONSFOLDERS. Its registry is written beside
+    its code and is what makes its commands visible to QuNex, so an extension has to be
+    built once before it can be used.
+
     ..  qx_command:
         type: utility
+
+    Parameters:
+        --core_python_root (str, default ''):
+            The folder to index the core python commands from. Defaults to
+            $QUNEXPATH/python.
+
+        --core_registry_yaml (str, default ''):
+            The file to write the core registry to. Defaults to
+            $QUNEXPATH/qx_commands.yaml.
+
+        --build_core (str, default 'yes'):
+            Whether to build the core registry. Set to 'no' to leave the core
+            registry alone and build only the extensions, which is what an
+            extension author wants and what a read-only installation requires.
+
+        --build_extensions (str, default 'yes'):
+            Whether to build the registry of every extension found. Set to 'no'
+            to build only core.
+
+        --extensions (str, default ''):
+            Which extensions to build, as a comma separated list of names given
+            with or without the qx_ prefix. 'all', or leaving it out, builds
+            every extension found. A name matching no extension is an error
+            naming the extensions that were found.
+
+        --extension_registry_filename (str, default 'qx_commands.yaml'):
+            The name of the registry file written inside each extension.
+
+        --extension_python_subdir (str, default 'python'):
+            The folder inside an extension holding its python commands.
+
+        --extension_matlab_subdir (str, default 'matlab'):
+            The folder inside an extension holding its MATLAB commands.
+
+        --extension_bash_subdir (str, default 'bash'):
+            The folder inside an extension holding its bash commands.
 
     Returns:
         --registry (tuple):
@@ -994,6 +1319,11 @@ def build_qx_registry(
             built_extensions = [(extension_id, registry_yaml_path), ...]
     """
     qunex_root = _get_qunexpath()
+
+    # both arrive as strings when they come from the command line, where
+    # `--build_core=no` has to mean no rather than a non-empty string
+    build_core = flag(build_core)
+    build_extensions = flag(build_extensions)
 
     if core_python_root is None:
         core_python_root = qunex_root / "python"
@@ -1003,69 +1333,89 @@ def build_qx_registry(
         core_registry_yaml = qunex_root / DEFAULT_CORE_REGISTRY_BASENAME
     core_registry_yaml = Path(core_registry_yaml).resolve()
 
-    if not core_python_root.exists():
-        raise ge.CommandFailed('build_qx_registry', f"Core python root not found: {core_python_root}")
+    if build_core:
+        if not core_python_root.exists():
+            raise ge.CommandFailed('build_qx_registry', f"Core python root not found: {core_python_root}")
 
-    # Core: python
-    print(f"--> Building core python command registry from {core_python_root}")
-    core_cmds = index_python_commands(core_python_root, source_id="core")
+        # Core: python
+        print(f"--> Building core python command registry from {core_python_root}")
+        core_cmds = index_python_commands(core_python_root, source_id="core")
 
-    # Core Matlab
-    # if DEBUG: print(f"--> Checking for core matlab commands in {qunex_root / 'matlab'}")
-    matlab_root = qunex_root / "matlab"
-    if matlab_root.exists():
-        core_cmds.extend( index_matlab_commands(matlab_root, source_id="core"))
+        # Core Matlab
+        # if DEBUG: print(f"--> Checking for core matlab commands in {qunex_root / 'matlab'}")
+        matlab_root = qunex_root / "matlab"
+        if matlab_root.exists():
+            core_cmds.extend( index_matlab_commands(matlab_root, source_id="core"))
 
-    # Core Bash
-    bash_root = qunex_root / "bash"
-    if bash_root.exists():
-        core_cmds.extend(index_bash_commands(bash_root, source_id="core"))
+        # Core Bash
+        bash_root = qunex_root / "bash"
+        if bash_root.exists():
+            core_cmds.extend(index_bash_commands(bash_root, source_id="core"))
 
-    core_reg = build_registry_yaml(core_cmds, out=core_registry_yaml, source_id="core")
+        core_reg = build_registry_yaml(core_cmds, out=core_registry_yaml, source_id="core")
+
+    else:
+        # left as it stands, and read back so that the return says what QuNex
+        # will actually run. Building an extension used to rewrite the core
+        # registry as a side effect, which an extension author does not want
+        # and a read-only installation does not allow
+        if not core_registry_yaml.exists():
+            raise ge.CommandFailed(
+                'build_qx_registry',
+                f"Core registry not found: {core_registry_yaml}",
+                "It has to be built once before an extension can be built on its own.",
+            )
+        print(f"--> Leaving the core command registry as it is: {core_registry_yaml}")
+        core_reg = load_registry_yaml(core_registry_yaml)
 
     built_exts: Dict[str, Path] = {}
 
     if not build_extensions:
         return core_reg, []
 
-    roots = extension_search_roots()
-    for root in roots:
-        if not root.exists() or not root.is_dir():
+    # `extension_folders()` is the same answer the runtime resolves against, so
+    # an extension present under several roots is built in the one copy QuNex
+    # will actually load. Walking the roots here instead wrote a registry into
+    # every copy, including the ones nothing would ever read
+    for ext_root in _select_extensions(extensions, extension_folders()):
+        ext_name = ext_root.name[len("qx_") :].strip()
+        if not ext_name:
             continue
+        ext_id = f"extension:{ext_name}"
 
-        for ext_root in sorted([p for p in root.iterdir() if p.is_dir() and p.name.startswith("qx_")]):
-            ext_name = ext_root.name[len("qx_") :].strip()
-            if not ext_name:
-                continue
-            ext_id = f"extension:{ext_name}"
+        cmds: List[CommandInfo] = []
 
-            cmds: List[CommandInfo] = []
+        py_root = ext_root / extension_python_subdir
+        if py_root.exists() and py_root.is_dir():
+            cmds.extend(index_python_commands(py_root, source_id=ext_id))
 
-            py_root = ext_root / extension_python_subdir
-            if py_root.exists() and py_root.is_dir():
-                cmds.extend(index_python_commands(py_root, source_id=ext_id))
+        m_root = ext_root / extension_matlab_subdir
+        if m_root.exists() and m_root.is_dir():
+            cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
 
-            m_root = ext_root / extension_matlab_subdir
-            if m_root.exists() and m_root.is_dir():
-                cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
+        b_root = ext_root / extension_bash_subdir
+        if b_root.exists() and b_root.is_dir():
+            cmds.extend(index_bash_commands(b_root, source_id=ext_id))
 
-            b_root = ext_root / extension_bash_subdir
-            if b_root.exists() and b_root.is_dir():
-                cmds.extend(index_bash_commands(b_root, source_id=ext_id))
+        if not cmds:
+            continue  # nothing to build yet
 
-            if not cmds:
-                continue  # nothing to build yet
-
-            out_yaml = (ext_root / extension_registry_filename).resolve()
-            build_registry_yaml(cmds, out=out_yaml, source_id=ext_id)
-            built_exts[ext_id] = out_yaml  # later roots override earlier
+        out_yaml = (ext_root / extension_registry_filename).resolve()
+        build_registry_yaml(cmds, out=out_yaml, source_id=ext_id)
+        built_exts[ext_id] = out_yaml
 
     built = sorted(built_exts.items(), key=lambda x: x[0])
 
     print("\n----------------------------------------------------------------\nRegistry built!")
 
+    if not built:
+        print("\n--> No extension registries were built: no extension was found with commands in it.")
     if built:
-        print(f"\n--> In addition to core, built {len(built)} extension registries:")
+        label = "extension registry" if len(built) == 1 else "extension registries"
+        if build_core:
+            print(f"\n--> In addition to core, built {len(built)} {label}:")
+        else:
+            print(f"\n--> Built {len(built)} {label}:")
         for ext_id, path in built:
             print(f"    - {ext_id}: {path}")
     if _WARNINGS:

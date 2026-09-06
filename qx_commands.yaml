@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-08-27T09:07:24.563538+00:00'
+generated_at: '2026-09-05T19:34:42.103556+00:00'
 source:
     id: core
 commands:
@@ -128,6 +128,28 @@ commands:
         default: null
         description: The path of the container that was written.
     origin: core
+-   name: build_qx_extensions
+    aliases: []
+    path: qx_registry_build.build_qx_extensions
+    language: python
+    call: build_qx_extensions(extensions=None)
+    description: Build the command registry of one or more extensions, and leave the QuNex installation's own registry as
+        it is.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all'
+            builds every extension found. 'check' builds nothing and lists the extensions QuNex can see.
+    options: []
+    returns:
+    -   name: registry
+        type: tuple
+        default: null
+        description: 'A tuple with elements: (core_registry, built_extensions), as build_qx_registry returns them. (None,
+            []) on a listing run.'
+    origin: core
 -   name: build_qx_registry
     aliases: []
     path: qx_registry_build.build_qx_registry
@@ -139,32 +161,43 @@ commands:
     args:
     -   name: core_python_root
         type: Optional[str | Path]
-        default: null
-        description: null
+        default: ''
+        description: The folder to index the core python commands from. Defaults to $QUNEXPATH/python.
     -   name: core_registry_yaml
         type: Optional[str | Path]
-        default: null
-        description: null
+        default: ''
+        description: The file to write the core registry to. Defaults to $QUNEXPATH/qx_commands.yaml.
+    -   name: build_core
+        type: bool
+        default: 'yes'
+        description: Whether to build the core registry. Set to 'no' to leave the core registry alone and build only the extensions,
+            which is what an extension author wants and what a read-only installation requires.
     -   name: build_extensions
         type: bool
-        default: null
-        description: null
+        default: 'yes'
+        description: Whether to build the registry of every extension found. Set to 'no' to build only core.
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to build, as a comma separated list of names given with or without the qx_ prefix. 'all',
+            or leaving it out, builds every extension found. A name matching no extension is an error naming the extensions
+            that were found.
     -   name: extension_registry_filename
         type: str
-        default: null
-        description: null
+        default: qx_commands.yaml
+        description: The name of the registry file written inside each extension.
     -   name: extension_python_subdir
         type: str
-        default: null
-        description: null
+        default: python
+        description: The folder inside an extension holding its python commands.
     -   name: extension_matlab_subdir
         type: str
-        default: null
-        description: null
+        default: matlab
+        description: The folder inside an extension holding its MATLAB commands.
     -   name: extension_bash_subdir
         type: str
-        default: null
-        description: null
+        default: bash
+        description: The folder inside an extension holding its bash commands.
     options: []
     returns:
     -   name: registry
