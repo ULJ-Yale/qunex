@@ -1185,7 +1185,7 @@ def build_qx_extensions(*, extensions: Optional[str] = None):
     Parameters:
         --extensions (str, default ''):
             Which extensions to build, as a comma separated list of names given
-            with or without the qx_ prefix. 'all' builds every extension found.
+            with or without the ``qx_`` prefix. 'all' builds every extension found.
             'check' builds nothing and lists the extensions QuNex can see.
 
     Returns:
@@ -1297,7 +1297,7 @@ def build_qx_registry(
 
         --extensions (str, default ''):
             Which extensions to build, as a comma separated list of names given
-            with or without the qx_ prefix. 'all', or leaving it out, builds
+            with or without the ``qx_`` prefix. 'all', or leaving it out, builds
             every extension found. A name matching no extension is an error
             naming the extensions that were found.
 

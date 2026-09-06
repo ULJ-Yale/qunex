@@ -22,6 +22,7 @@ nothing binary has to be carried for them.
 import os
 import shutil
 import subprocess
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -68,6 +69,19 @@ REQUIREMENTS = [
 MISSING = [reason for met, reason in REQUIREMENTS if not met]
 
 pytestmark = pytest.mark.skipif(bool(MISSING), reason="; ".join(MISSING))
+
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+@pytest.fixture(autouse=True)
+def registry_of_this_tree(monkeypatch):
+    """
+    Running a command reads the command registry, which is loaded from
+    ``$QUNEXPATH/qx_commands.yaml``. This tree carries its own committed
+    registry, so the tests name it and run without the suite's environment.
+    """
+    monkeypatch.setenv("QUNEXPATH", str(REPO_ROOT))
 
 
 @pytest.fixture(scope="module")

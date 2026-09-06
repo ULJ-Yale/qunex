@@ -25,7 +25,7 @@ def xnat_run_cmd(cmd):
     """
     xnat_run_cmd
 
-    A helper function called by xnat_ functions to run bash commands on XNAT
+    A helper function called by ``xnat_`` functions to run bash commands on XNAT
 
     Parameters:
         --cmd (str list):
