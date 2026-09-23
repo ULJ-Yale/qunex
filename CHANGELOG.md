@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `hcp_bold_echospacing` is now inferred from the session file or the JSON sidecar when it is not set.
 * `--test` runs now mark their log lines with a `[TEST]` tag.
 * Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
+* Fixed an issue with CUDA and diffusion processing.
 
 ## 1.5.1
 
