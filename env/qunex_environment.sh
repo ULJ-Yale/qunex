@@ -419,8 +419,36 @@ QXEXTENSIONSPY=""
 # -- covert $QUNEXEXTENSIONSFOLDERS from colon separated to space
 QUNEXEXTENSIONSFOLDERS=`echo $QUNEXEXTENSIONSFOLDERS | tr ':' ' '`
 
+# -- QUNEXEXTENSIONFOLDERS is the spelling the python half used to read on its
+#    own, which left a folder named in only one of them half registered. It is
+#    still accepted so that an installation setting it keeps working
+QUNEXEXTENSIONFOLDERS=`echo $QUNEXEXTENSIONFOLDERS | tr ':' ' '`
+if [ -n "$QUNEXEXTENSIONFOLDERS" ]
+then
+    echo "WARNING: QUNEXEXTENSIONFOLDERS is deprecated and will be removed in a future release. Please name the extension folders in QUNEXEXTENSIONSFOLDERS instead." >&2
+fi
+
+# -- the folders named in the environment, de-duplicated so that one named in
+#    both variables -- which is how an installation migrates from the old
+#    spelling -- is registered once and not twice. A folder somebody named and
+#    QuNex can not use is worth a line; the two fixed roots are absent on most
+#    installations and are passed over in silence
+QUNEXEXTENSIONSNAMED=""
+for extensions_folder in $QUNEXEXTENSIONSFOLDERS $QUNEXEXTENSIONFOLDERS
+do
+    case " $QUNEXEXTENSIONSNAMED " in *" $extensions_folder "*) continue ;; esac
+
+    if [ ! -d "$extensions_folder" ]
+    then
+        echo "WARNING: extensions folder '$extensions_folder' does not exist or is not a folder, skipping it." >&2
+        continue
+    fi
+
+    QUNEXEXTENSIONSNAMED="$QUNEXEXTENSIONSNAMED $extensions_folder"
+done
+
 # -- loop through plugin folders
-for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSFOLDERS
+for extensions_folder in "$QUNEXPATH/qx_extensions" "$TOOLS/qx_extensions" $QUNEXEXTENSIONSNAMED
 do
     # -- identify extensions and loop through them
     for extension in `ls -d $extensions_folder/qx_* 2> /dev/null`
@@ -458,8 +486,11 @@ do
             echo "    ... added $extensions_folder/$extension_name/bin to PATH"
         fi
 
-        # -- Add python folder to QXEXTENSIONSPY
-        if [ -e "$extensions_folder/$extension_name/python/qx_modules" ]
+        # -- Add python folder to QXEXTENSIONSPY. On the folder and not on the
+        #    qx_modules file inside it: a python command is imported by a path
+        #    dotted relative to this folder, so an extension without the file
+        #    had commands that were listed and dispatched and then failed
+        if [ -d "$extensions_folder/$extension_name/python" ]
         then
             QXEXTENSIONSPY="$extensions_folder/$extension_name/python":$QXEXTENSIONSPY
             echo "    ... added $extensions_folder/$extension_name/python to QXEXTENSIONSPY"
@@ -526,8 +557,7 @@ export HCPPIPEDIR_dMRITract=${QUNEXPATH}/bash/qx_utilities/diffusion_tractograph
 export HCPPIPEDIR_dMRITractFull=${QUNEXPATH}/bash/qx_utilities/diffusion_tractography_dense; PATH=${HCPPIPEDIR_dMRITractFull}:${PATH}; export PATH
 export HCPPIPEDIR_dMRILegacy=${QUNEXPATH}/bash/qx_utilities; PATH=${HCPPIPEDIR_dMRILegacy}:${PATH}; export PATH
 export AutoPtxFolder=${HCPPIPEDIR_dMRITractFull}/autoptx_hcp_extended; PATH=${AutoPtxFolder}:${PATH}; export PATH
-export DEFAULT_CUDA_VERSION="11.0";
-export DEFAULT_CUDA_VERSION_CUDIMOT="11.3";
+export CUDIMOT_CUDA_VERSION="11.3";
 
 # ------------------------------------------------------------------------------
 # -- Setup ICA FIX paths and variables
@@ -593,7 +623,7 @@ MATLABPATH=$QUNEXPATH/matlab/qx_utilities/general:$MATLABPATH
 MATLABPATH=$QUNEXPATH/matlab/qx_mice:$MATLABPATH
 
 # -- cudimot
-export CUDIMOT=$QUNEXLIBRARY/etc/cudimot/cuda_${DEFAULT_CUDA_VERSION_CUDIMOT}
+export CUDIMOT=$QUNEXLIBRARY/etc/cudimot/cuda_${CUDIMOT_CUDA_VERSION}
 
 # -- mamba management
 # deactivate current

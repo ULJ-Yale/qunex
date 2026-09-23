@@ -720,7 +720,7 @@ main() {
     if [[ ${nogpu} == "yes" ]]; then
         eddy_bin=${FSLBINDIR}/eddy_cpu
     else
-        eddy_bin=${FSLBINDIR}/eddy_cuda${DEFAULT_CUDA_VERSION}
+        eddy_bin=${FSLBINDIR}/eddy_cuda
     fi
 
     echo "Using the following eddy binary: ${eddy_bin}"

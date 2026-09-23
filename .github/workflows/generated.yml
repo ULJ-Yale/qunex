@@ -6,17 +6,30 @@
 # alongside it: qx_commands.yaml, written by `qunex build_qx_registry` from the
 # qx_command docstrings, and bin/qunex_container, which `qunex build_qx_container`
 # splices general/batch_io.py into and stamps with the version from VERSION.md.
-# Forgetting to rebuild one is the common way they go stale, so this rebuilds both
-# on every pull request and pushes the result back to the branch.
+# Forgetting to rebuild one is the common way they go stale, so this rebuilds
+# both on every pull request into develop and on every commit to develop.
 #
-# tests.yml is the backstop: test_registry_drift.py and test_container_drift.py
-# fail on a stale file wherever this workflow can not push, a fork included.
+# On a pull request the rebuild is committed to the pull request's own branch,
+# which no ruleset protects. It can not be committed anywhere else: develop and
+# master are ruleset protected and a ruleset bypass list can only name a user,
+# a team or an installed app, never the ephemeral GITHUB_TOKEN, and a fork's
+# token is read only. Those cases print the diff and fail instead. That is all
+# the develop run ever does, since a commit only reaches develop through a
+# pull request the run above already fixed — it fires when one got there
+# another way, an admin bypassing the pull request rule included.
+#
+# master is not built: it only ever receives tagged develop code, which was
+# rebuilt on develop already. tests.yml is the backstop: test_registry_drift.py
+# and test_container_drift.py fail on a stale file wherever this workflow can
+# not push.
 
 name: generated files
 
 on:
+  push:
+    branches: [develop]
   pull_request:
-    branches: [master, develop]
+    branches: [develop]
   workflow_dispatch:
 
 # needed to push the rebuilt files back to the branch
@@ -33,8 +46,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       # the branch the rebuild is committed to: the pull request's own branch,
-      # or whichever branch workflow_dispatch was fired on. the merge ref a
-      # pull_request checkout defaults to is detached and can not be pushed
+      # or the branch pushed to / that workflow_dispatch was fired on. the merge
+      # ref a pull_request checkout defaults to is detached and can not be pushed
       HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name || github.repository }}
       HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
     steps:
@@ -80,17 +93,33 @@ jobs:
             git --no-pager diff --stat
           fi
 
-      # a pull request from a fork gets a read only token, so there the rebuild
-      # can only report what it found
-      - name: report drift on a fork
-        if: steps.drift.outputs.changed == 'true' && env.HEAD_REPO != github.repository
+      # two branches can not receive the rebuild: one in a fork, whose token is
+      # read only, and develop or master, which are ruleset protected with no
+      # bypass GITHUB_TOKEN can be named on. anything else is a pull request's
+      # own branch, where the drift is fixed before it can reach develop
+      - name: can the rebuild be pushed
+        id: target
+        run: |
+          if [ "$HEAD_REPO" != "${{ github.repository }}" ]; then
+            echo "pushable=false" >> "$GITHUB_OUTPUT"
+            echo "$HEAD_REPO is a fork, its token is read only"
+          elif [ "$HEAD_REF" = "develop" ] || [ "$HEAD_REF" = "master" ]; then
+            echo "pushable=false" >> "$GITHUB_OUTPUT"
+            echo "$HEAD_REF is ruleset protected"
+          else
+            echo "pushable=true" >> "$GITHUB_OUTPUT"
+            echo "the rebuild can be committed to $HEAD_REF"
+          fi
+
+      - name: report drift that can not be fixed here
+        if: steps.drift.outputs.changed == 'true' && steps.target.outputs.pushable == 'false'
         run: |
           echo "::error::a generated file is out of date. Run 'qunex build_qx_registry' and 'qunex build_qx_container', then commit the result."
           git --no-pager diff
           exit 1
 
       - name: commit the rebuild
-        if: steps.drift.outputs.changed == 'true' && env.HEAD_REPO == github.repository
+        if: steps.drift.outputs.changed == 'true' && steps.target.outputs.pushable == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

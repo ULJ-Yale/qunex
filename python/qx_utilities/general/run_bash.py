@@ -26,11 +26,10 @@ import qx_utilities.general.log as gl
 
 # What goes in a comlog's name besides the command and the session, so that two
 # runs of one command in one log folder are told apart. This is the shell front
-# end's `logtag` (`bin/qunex.sh:170-189`), and it is not cosmetic:
-# `run_turnkey`'s acceptance test decides whether a step ran by globbing for
-# `*<step name>*<session>*log` in the log folder it gave the step
-# (`run_turnkey.sh:2963-2965`), and its step names are `run_qc_t1w`,
-# `run_qc_bold`, `run_qc_dwi` -- the command plus the modality.
+# end's `logtag` (`bin/qunex.sh:170-189`), and it is not cosmetic: `run_qc` is
+# run once per modality into one log folder, so without the modality the four
+# QC runs of a session would all be filed under `run_qc_<session>` and overwrite
+# each other. The names are `run_qc_t1w`, `run_qc_bold`, `run_qc_dwi`.
 COMLOG_TAGS = ("calculation", "modality")
 
 
@@ -71,7 +70,13 @@ def run(qx_command, args, run=None, session=None):
 
     # -- resolve script path
 
-    script = os.path.join(os.environ.get('QUNEXPATH', ''), 'bash', qx_command.path)
+    # the registry the command came from says where its `bash` folder is -- the
+    # extension's own folder for an extension command, $QUNEXPATH for a core
+    # one. Resolving against $QUNEXPATH alone sent every extension command to
+    # the core install, where its script is not. The fallback is for a record
+    # built by hand rather than loaded, which only a test does
+    root = getattr(qx_command, 'root', None) or os.environ.get('QUNEXPATH', '')
+    script = os.path.join(root, 'bash', qx_command.path)
 
     if not os.path.exists(script):
         print("\n\nERROR: %s failed! Script not found: %s\n" % (qx_command.name, script))

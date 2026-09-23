@@ -83,9 +83,16 @@ Quality:
   `pythonpath = python` is set in `pytest.ini` at the repository root. Do not add flat
   imports (`from general import core as gc`); there are none left in the tree.
 - Before deleting a seemingly-unused function, confirm it is not a dynamic/external entrypoint:
-  registered commands (a `.. qx_command:` docstring, called via the registry) and the
-  `@qx_process` extension decorator in `general/extensions.py` (used by out-of-tree extensions
-  loaded via `$QXEXTENSIONSPY`) look unused in-tree but must not be removed.
+  registered commands (a `.. qx_command:` docstring, called via the registry) look unused in-tree
+  but must not be removed. The same goes for `general/extensions.py`, which is the whole of the
+  extension interface: `load_extensions`, `compile_list` and `compile_dict` are called from
+  `general/__init__.py`, `process.py` and `commands_support.py`, and the nine lists and
+  dictionaries they gather are what an out-of-tree extension declares. The `@qx_process`
+  decorator there **declares parameters and does not register a command** — its arguments
+  (`command_type`, `short_name`, `long_name`, `description`) are inert and are kept only so that
+  an extension written against the older decorator still imports. The pre-registry declaration
+  surface beside it — the `commands` dict, the `qx` decorator and `calist`/`salist`/`lalist`/
+  `malist` — was removed once nothing read it.
 
 ## Command logging (runlog vs comlog)
 
@@ -97,8 +104,11 @@ prints it. `general/log/` owns the runlog:
 - Build the runlog with a `SessionLog` (session/subject commands) or a `ReportLog` (per-BOLD /
   per-group executors and QC helpers), **not** by threading a local `r` string. Use the level
   methods (`log.step`/`log.detail`/`log.warning`/`log.error`), `log.action(word, message, run)`
-  for a line that has to read as "Test running ..." under `--test`, and
-  `log.pipeline_command(cmd)`.
+  for a line that has to read as "[TEST] Running ..." under `--test`, and
+  `log.pipeline_command(cmd)`. The `[TEST]` tag leads the line rather than inflecting its first
+  word, so `log.action` takes any length of phrase; `general/log/report.py`'s module level
+  `action(text, run)` tags text used as a **value** (a summary string), and wants the whole
+  leading phrase so the tag does not land mid-sentence.
 - **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions` and
   `general/parsing`, and everything else imports it.** So the run/check helpers are called where
   they live, with the log as the **last, keyword-only** argument:
@@ -261,9 +271,32 @@ qunex build_qx_container    # bin/qunex_container, from general/batch_io.py and 
   import block is ordinary code the command adds to and never prunes, so an import that stops
   being needed is removed by deleting it there.
 
-`.github/workflows/generated.yml` rebuilds both on every pull request and pushes the result back
-to the branch (a fork's token is read only, so there it reports and fails instead).
+`.github/workflows/generated.yml` rebuilds both on every pull request into `develop` and on every
+commit to `develop`. On a pull request it commits the rebuild to the pull request's own branch, so
+the drift is fixed before it can merge. It can not commit anywhere else — `develop` and `master`
+are ruleset protected and a bypass list can only name a user, a team or an installed app, never
+`GITHUB_TOKEN`, and a fork's token is read only — so there it prints the diff and fails instead.
+`master` is not built: it only receives tagged `develop` code, rebuilt there already.
 `tests/test_registry_drift.py` and `tests/test_container_drift.py` are the backstop.
+
+## Changelog
+
+`CHANGELOG.md` records what changed for **users**, under the current `VERSION.md` heading. Write
+**one short line per piece of functionality**, however many files, commands, helper fixes and
+follow-on repairs went into it — name what is now possible or fixed, and leave the reasoning, the
+touched functions and the internal detail to the commit message and the docs:
+
+```markdown
+* Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
+```
+
+not one line per change made along the way:
+
+```markdown
+* Added `.plabel.nii` support to `fc_compute_seedmaps`.
+* An unknown option key in `roiinfo` is now reported instead of ignored.
+* Parcellated ROI files are expanded onto a standard dense image.
+```
 
 ## Multi-language guardrails
 

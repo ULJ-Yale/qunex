@@ -29,8 +29,27 @@ function [fcmats] = fc_compute_roifc(flist, roiinfo, frames, targetf, options)
 %               'listname:wmlist|session id:OP483|file:bold1.nii.gz|roi:aseg.nii.gz'
 %
 %       --roiinfo (str):
-%           A path to the names file specifying group based ROI for which to
-%           extract timeseries for.
+%           A specification of the ROI for which to compute functional connectivity. This is passed as
+%           the first parameter to the img_prep_roi method, so it can be a
+%           path to a .names or .roi file, or to an image file defining the
+%           ROI, optionally followed by pipe separated <key>:<value> options.
+%           See img_prep_roi for the full specification. If individual roi
+%           files are listed in the file list, they are passed as its second
+%           parameter.
+%
+%           The ROI have to be defined over the same rows as the bold files
+%           they are used on: a dense ROI file (e.g. .dlabel.nii, .dscalar.nii)
+%           for dense (.dtseries.nii) bold files, and a parcellated label file
+%           (.plabel.nii) of the same parcellation for parcellated
+%           (.ptseries.nii) bold files, which it matches row for row. A
+%           parcellated data file (.ptseries.nii / .pscalar.nii) can also be
+%           given, in which case its parcels are expanded onto a standard
+%           dense image and define one ROI each.
+%
+%           Use the 'rois' option to work with a subset of the regions defined
+%           by the file, by name or by index::
+%
+%               '<path>.plabel.nii|rois:Visual1-55_L-Thalamus'
 %
 %       --frames (str | cell array | int, default ''):
 %           The definition of which frames to extract, specifically

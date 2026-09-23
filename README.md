@@ -32,7 +32,7 @@ You can submit questions and report issues on the official **[QuNex forum](https
 
 ## Version
 
-* QuNex: 1.5.1
+* QuNex: 1.5.2
 * qx_library: 1.5.0
 
 ## References

@@ -163,12 +163,12 @@ def test_a_bash_command_is_run_once_per_session_with_the_header_filled_in(
     assert "hcp_brainsize" not in calls[0][0], "with what the command declares"
 
 
-def test_a_bash_comlog_is_named_the_way_run_turnkey_looks_for_it(gmri):
+def test_a_bash_comlog_is_named_after_the_command_and_what_varies(gmri):
     """
-    `run_turnkey` decides whether a step ran by globbing its log folder for
-    `*<step name>*<session>*log`, and its QC steps are named after the command
-    *and the modality* -- `run_qc_t1w`, `run_qc_bold`. So the name parts the
-    shell front end put in a comlog are a contract, not decoration.
+    `run_qc` is run once per modality into one log folder, so a comlog named
+    after the command and the session alone would have the four QC runs of a
+    session overwrite each other. The name parts the shell front end put in a
+    comlog are a contract, not decoration.
     """
     run_qc = gmri.qx_commands.get("run_qc")
 
@@ -612,16 +612,15 @@ def two_session_study(tmp_path):
     return study, batch
 
 
-def test_the_encoding_run_turnkey_writes_arrives_as_the_canonical_one(
+def test_the_legacy_encoding_arrives_as_the_canonical_one(
     gmri, two_session_study, monkeypatch
 ):
     """
-    The round trip of the three encodings. `run_turnkey` hard codes
-    `--sessions=<batch file> --sessionids=<ids>` in every internal call, and
-    that pair used to be converted five times along the chain, every conversion
-    guessing from whether the string `.txt` appeared. It is remapped once now,
-    at the front door, and what the resolver is asked is `--batchfile` and
-    `--sessions`.
+    The round trip of the three encodings. The legacy
+    `--sessions=<batch file> --sessionids=<ids>` pair used to be converted five
+    times along the chain, every conversion guessing from whether the string
+    `.txt` appeared. It is remapped once now, at the front door, and what the
+    resolver is asked is `--batchfile` and `--sessions`.
     """
     _, batch = two_session_study
     seen = {}
@@ -743,3 +742,79 @@ def test_what_a_batch_file_says_for_one_session_is_reported_for_that_session(gmr
     assert "Parameters for hcp_pre_freesurfer on session S01" in banner
     assert "hcp_brainsize" in banner and "150" in banner
     assert "hcp_t2" not in banner, "the run's own tier was reported for the run"
+
+
+# ==============================================================================
+#                                                the registry building bypass
+
+
+def _build_args(monkeypatch, tmp_path, calls):
+    """
+    `gmri.main` reaches the builders by importing them, so recording the calls
+    is a matter of replacing them on the module.
+
+    The stubs carry the real functions' signatures. The bypass checks the
+    call's options against `inspect.signature(builder)`, so a stub taking bare
+    `**kwargs` would make every option look unknown and test the check rather
+    than the dispatch.
+    """
+    import inspect as _inspect
+
+    import qx_registry_build as qb
+
+    def stub(real, tag):
+        def recorded(**kw):
+            calls.append((tag, kw))
+
+        recorded.__signature__ = _inspect.signature(real)
+        return recorded
+
+    monkeypatch.setattr(qb, "build_qx_registry", stub(qb.build_qx_registry, "registry"))
+    monkeypatch.setattr(
+        qb, "build_qx_extensions", stub(qb.build_qx_extensions, "extensions")
+    )
+
+
+def test_build_qx_extensions_reaches_its_own_command(gmri, monkeypatch, tmp_path):
+    """
+    Both builders run before there is a registry to look a command up in, so
+    both are dispatched by name in `main` rather than through `runCommand`. A
+    name missing from that bypass is never reached at all.
+    """
+    calls = []
+    _build_args(monkeypatch, tmp_path, calls)
+
+    with pytest.raises(SystemExit) as raised:
+        gmri.main(["build_qx_extensions", "--extensions=one"])
+
+    assert raised.value.code == 0
+    assert calls == [("extensions", {"extensions": "one"})]
+
+
+def test_build_qx_registry_still_reaches_its_own(gmri, monkeypatch, tmp_path):
+    calls = []
+    _build_args(monkeypatch, tmp_path, calls)
+
+    with pytest.raises(SystemExit) as raised:
+        gmri.main(["build_qx_registry", "--build_core=no"])
+
+    assert raised.value.code == 0
+    assert calls == [("registry", {"build_core": "no"})]
+
+
+def test_an_option_is_checked_against_the_command_that_was_named(
+    gmri, monkeypatch, tmp_path
+):
+    """
+    `--build_core` belongs to `build_qx_registry` and not to the wrapper. The
+    bypass used to check every call against `build_qx_registry`'s signature,
+    which would have accepted it here and then failed on the call.
+    """
+    calls = []
+    _build_args(monkeypatch, tmp_path, calls)
+
+    with pytest.raises(SystemExit) as raised:
+        gmri.main(["build_qx_extensions", "--build_core=no"])
+
+    assert raised.value.code != 0
+    assert calls == []

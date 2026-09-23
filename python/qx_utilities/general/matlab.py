@@ -49,6 +49,46 @@ def help(command):
 #                                                              RUNNING FUNCTIONS
 #
 
+def extension_matlab_folders(qx_command):
+    """
+    The MATLAB folders an extension command needs on `MATLABPATH`: the
+    extension's own `matlab` folder, and whatever its `matlabpaths` file lists
+    beside it.
+
+    The environment script puts these there when it is sourced, and that is
+    enough for an extension that was in place at the time. It is not enough in
+    general: inside a container the environment is sourced once and every later
+    source returns immediately, so an extension installed after the container
+    started would have its command dispatched and then fail to resolve. The
+    registry record says where the command lives, which is the same answer
+    without the environment.
+
+    Empty for a core command, whose folders the environment already carries.
+    """
+    if getattr(qx_command, 'origin', 'core') == 'core':
+        return []
+
+    root = getattr(qx_command, 'root', None)
+    if not root:
+        return []
+
+    matlab_root = os.path.join(root, 'matlab')
+    if not os.path.isdir(matlab_root):
+        return []
+
+    folders = [matlab_root]
+
+    listed = os.path.join(matlab_root, 'matlabpaths')
+    if os.path.exists(listed):
+        with open(listed, 'r') as f:
+            for line in f:
+                folder = os.path.join(matlab_root, line.strip())
+                if line.strip() and os.path.isdir(folder):
+                    folders.append(folder)
+
+    return folders
+
+
 def run(qx_command, args, run=None):
     """
     Runs a matlab command, keeping its output in a comlog of its own.
@@ -93,6 +133,13 @@ def run(qx_command, args, run=None):
             if not argtype:
                 print(f"    ... WARNING: argument '{arg.name}' of {qx_command.name} has no documented type; passing value as-is")
             arglist.append("[]" if value == '' else "%s" % (value))
+
+    # -- make sure the extension's own matlab code can be found
+
+    for folder in extension_matlab_folders(qx_command):
+        current = os.environ.get('MATLABPATH', '')
+        if folder not in current.split(':'):
+            os.environ['MATLABPATH'] = ':'.join([folder, current]) if current else folder
 
     # -- compose command string
 

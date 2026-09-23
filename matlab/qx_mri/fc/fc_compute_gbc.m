@@ -126,6 +126,15 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           img_prep_roi method. If empty GBC will be computed over all
 %           grayordinates or voxels.
 %
+%           The ROI have to be defined over the same rows as the bold files
+%           they are used on: a dense ROI file (e.g. .dlabel.nii,
+%           .dscalar.nii) for dense (.dtseries.nii) bold files, and a
+%           parcellated label file (.plabel.nii) of the same parcellation for
+%           parcellated (.ptseries.nii) bold files, which it matches row for
+%           row. Use the 'rois' option to work with a subset of the regions
+%           the file defines, by name or by index, e.g.
+%           '<path>.plabel.nii|rois:Visual1-55_L-Thalamus'.
+%
 %       --troiinfo (str):
 %           A specification of the target voxels for which the GBC is to be
 %           computed. This will be passed as the first parameter to the
@@ -133,6 +142,15 @@ function [gbcmaps] = fc_compute_gbc(flist, command, sroiinfo, troiinfo, frames, 
 %           file list, they will be passed as the second parameter to the
 %           img_prep_roi method. If empty GBC will be computed over all
 %           grayordinates or voxels.
+%
+%           The ROI have to be defined over the same rows as the bold files
+%           they are used on: a dense ROI file (e.g. .dlabel.nii,
+%           .dscalar.nii) for dense (.dtseries.nii) bold files, and a
+%           parcellated label file (.plabel.nii) of the same parcellation for
+%           parcellated (.ptseries.nii) bold files, which it matches row for
+%           row. Use the 'rois' option to work with a subset of the regions
+%           the file defines, by name or by index, e.g.
+%           '<path>.plabel.nii|rois:Visual1-55_L-Thalamus'.
 %
 %       --frames (str | matrix | int, default ''):
 %           The definition of which frames to extract, specifically:

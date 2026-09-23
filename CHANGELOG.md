@@ -6,6 +6,15 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.2
+
+* Fixed a bug in `dwi_probtrackx_dense_gpu` that caused it to crash under certain parameter values.
+* Added `build_qx_extensions`, which registers named extensions without touching the installation's own command registry, and reports when a registry cannot be written where it has to go.
+* `hcp_bold_echospacing` is now inferred from the session file or the JSON sidecar when it is not set.
+* `--test` runs now mark their log lines with a `[TEST]` tag.
+* Added `.plabel.nii` / `.ptseries.nii` support to the functional connectivity commands.
+* Fixed an issue with CUDA and diffusion processing.
+
 ## 1.5.1
 
 * Fixed a bug that prevented the `fs8` container versions to work properly.

@@ -24,7 +24,7 @@ TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 # ones that are also registry commands are kept in this file but are no longer
 # reached. show_version and environment are answered above, before any of this.
 # auto_ptx is not a registry command and has no script of its own.
-qunex_commands="auto_ptx run_turnkey"
+qunex_commands="auto_ptx"
 
 # version
 QuNexVer=`cat ${TOOLS}/${QUNEXREPO}/VERSION.md`
@@ -101,17 +101,6 @@ show_all_qunex_commands() {
 bash_call_execute() {
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
-    # -- Set the time stamp for given job
-    if [[ ${CommandToRun} == "run_turnkey" ]]; then
-        unset qxutil_command_to_run
-        if ( [[ ! -z `echo ${TURNKEY_STEPS} | grep -E 'create_study|createStudy'` ]] || [[ ${TURNKEY_TYPE} == 'xnat' ]] ) && [[ ! -f ${StudyFolder}/.qunexstudy ]]; then
-            if [[ ! -d ${WORKDIR} ]]; then
-                mkdir -p ${WORKDIR} &> /dev/null
-            fi
-            gmri create_study --studyfolder=${StudyFolder}
-        fi
-    fi
-
     # -- Check if Matlab command
     unset QuNexMatlabCall
     matlab_functions_check=`find $TOOLS/$QUNEXREPO/matlab/ -name "*.m" | grep -v "archive/"`
@@ -275,22 +264,6 @@ bash_call_execute() {
             echo ""
         fi
     fi
-}
-
-# ---------------------------------------------------------------------------------------------------------------
-# -- run_turnkey - Turnkey execution of QuNex workflow via the XNAT docker engine
-# ---------------------------------------------------------------------------------------------------------------
-
-run_turnkey() {
-    # -- Specify command variable
-    unset QuNexCallToRun
-    unset qxutil_command_to_run
-    QuNexCallToRun="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh --bolds=\"${BOLDS// /,}\" ${runTurnkeyArguments} --sessions=\"${CASE}\" --turnkeysteps=\"${TURNKEY_STEPS// /,}\""
-    bash_call_execute
-}
-
-show_usage_run_turnkey() {
-    ${TOOLS}/${QUNEXREPO}/bash/qx_utilities/run_turnkey.sh
 }
 
 # -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1164,12 +1137,6 @@ is_qunex_command ${1}
 # -- Additional checks
 # ------------------------------------------------------------------------------
 
-# -- Check if command is run_turnkey and set arguments
-if [[ ${CommandToRun} == "run_turnkey" ]]; then
-    runTurnkeyArguments="$@"
-    runTurnkeyArguments=`printf '%s\n' "${runTurnkeyArguments//run_turnkey/}"`
-fi
-
 # -- Next check if any additional flags are set
 if [[ ${setflag} =~ .*-.* ]]; then
     echo ""
@@ -1301,13 +1268,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
          StudyFolderPath=${StudyFolder}
     fi
 
-    # -- Set additional RunTurnkey flags
-    TURNKEY_TYPE=`get_parameters "${setflag}turnkeytype" $@`
-    TURNKEY_STEPS=`get_parameters "${setflag}turnkeysteps" $@`
-    WORKDIR=`get_parameters "${setflag}workingdir" $@`
     BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
-    XNAT_SESSION_LABELS=`get_parameters "${setflag}xnatsessionlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SESSION_LABELS=`echo "${XNAT_SESSION_LABELS}" | sed 's/,/ /g;s/|/ /g'`
-    XNAT_PROJECT_ID=`get_parameters "${setflag}xnatprojectid" $@`
 
     # -- Get sessions from batchfile?
     if [[ -n ${BATCH_FILE} ]]; then
@@ -1673,64 +1634,6 @@ popd > /dev/null
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
 # =-=-=-=-=-=-=-=-=-=-=-= Execute specific commands =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=
 # =-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-==-=-=-=-=-=-=-
-
-# ------------------------------------------------------------------------------
-# -- run_turnkey
-# ------------------------------------------------------------------------------
-
-if [[ ${CommandToRun} == "run_turnkey" ]]; then
-    # -- Check for cases
-    if [[ -z ${CASES} ]]; then
-        if [[ ! -z ${XNAT_SESSION_LABELS} ]]; then
-            CASES="$XNAT_SESSION_LABELS"
-        fi
-    fi
-
-    if [[ -z ${CASES} ]]; then echo "ERROR: List of sessions missing"; exit 1; fi
-
-    # -- Check for WORKDIR and StudyFolder for an XNAT run
-    if [[ -z ${WORKDIR} ]]; then
-        if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
-            WORKDIR="/output"; echo "NOTE: Working directory where study is located is missing. Setting defaults: ${WORKDIR}"; echo ''
-        fi
-    fi
-
-    if [[ -z ${WORKDIR} ]]; then echo "ERROR: Working folder for $CommandToRun missing."; exit 1; fi
-
-    if [[ -z ${StudyFolder} ]]; then
-        if [[ ! -z ${XNAT_PROJECT_ID} ]]; then
-            StudyFolder="${WORKDIR}/${XNAT_PROJECT_ID}"
-        fi
-    fi
-
-    if [[ -z ${StudyFolder} ]]; then echo "ERROR: Study folder missing."; exit 1; fi
-
-    # -- Check if cluster options are set
-    Cluster="$RunMethod"
-    if [[ ${Cluster} == "2" ]]; then
-            if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
-    fi
-
-    # -- Clean up argument flags
-    runTurnkeyArgumentsInput="${runTurnkeyArguments}"
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--sessions=.[^-]*||g'`
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--turnkeysteps=.[^-]*||g'`
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--sessionids=.[^-]*||g'`
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolds=.[^-]*||g'`
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--bolddata=.[^-]*||g'`
-    runTurnkeyArguments=`echo "${runTurnkeyArguments}" | sed 's|--boldruns=.[^-]*||g'`
-
-    echo ""
-    echo "Running $CommandToRun with the following parameters:"
-    echo "--------------------------------------------------------------"
-    echo ""
-    echo " Turnkey steps: ${TURNKEY_STEPS} "
-    echo " Turnkey arguments:"
-    echo "${runTurnkeyArguments} " | sed -e $'s/ /\\\n/g'
-
-    # -- Loop through all the cases
-    for CASE in ${CASES}; do ${CommandToRun}; done
-fi
 
 # ------------------------------------------------------------------------------
 # -- run_qc
