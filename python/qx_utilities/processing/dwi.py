@@ -13,7 +13,7 @@ consists of functions:
 
 --dwi_f99       Runs FSL F99 command.
 --dwi_xtract    Runs FSL XTRACT command.
---dwi_noddi     Runs CUDIMOT NODDI microstructure modelling.
+--dwi_noddi_gpu Runs CUDIMOT NODDI microstructure modelling.
 
 All the functions are part of the processing suite. They should be called
 from the command line using `qunex` command. Help is available through:
@@ -631,9 +631,6 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         --diffusion_folder (str, default '<hcp_folder>/T1w/Diffusion'):
             The path to the diffusion folder.
 
-        --cuda_version (str, default '11.3'):
-            Which CUDA version to use. Supports 10.2, 11.3 and 12.
-
     Output files:
         By default, the results of this step will be present in the HCP Diffusion folder::
 
@@ -665,7 +662,6 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                 --sessionsfolder="/data/qx_study/sessions" \\
                 --batchfile="/data/qx_study/processing/batch.txt" \\
                 --noddi_model="Bingham" \\
-                --cuda_version="12" \\
                 --overwrite=no \\
                 --parsessions=2
     """
@@ -688,22 +684,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         pc.do_options_check(options, sinfo, "dwi_noddi_gpu")
 
         # script location
-        cudimot_dir = ""
-        if "cuda_version" in options:
-            if "QUNEXLIBRARY" not in os.environ:
-                log.error("Variable QUNEXLIBRARY not found in environment, check your QuNex setup.")
-                report = (sinfo["id"], "Not ready for CUDIMOT NODDI", 1)
-                run = False
-            else:
-                cudimot_dir = os.path.join(
-                    os.environ["QUNEXLIBRARY"],
-                    "etc",
-                    "cudimot",
-                    f"cuda_{options['cuda_version']}",
-                )
-                os.environ["CUDIMOT"] = cudimot_dir
-        else:
-            cudimot_dir = os.environ["CUDIMOT"]
+        cudimot_dir = os.environ["CUDIMOT"]
 
         # model
         if "noddi_model" not in options:

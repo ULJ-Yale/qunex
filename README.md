@@ -32,8 +32,8 @@ You can submit questions and report issues on the official **[QuNex forum](https
 
 ## Version
 
-* QuNex: 1.5.2
-* qx_library: 1.5.0
+* QuNex: 1.5.3
+* qx_library: 1.5.3
 
 ## References
 
