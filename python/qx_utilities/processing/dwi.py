@@ -594,9 +594,8 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     Description:
         This command runs CUDIMOT's NODDI microstructure modelling. It uses
         precompiled CUDA (GPU) binaries and therefore requires a CUDA capable GPU to
-        run. Currently supported CUDA version are 10.2, 11.3 and 12. The command can
-        use two different models: Watson and Bingham. The Watson model is used by
-        default.
+        run. The command can use two different models: Watson and Bingham. The
+        Watson model is used by default.
 
     Warning:
         To use this command, successful completion of hcp_diffusion or
