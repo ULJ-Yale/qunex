@@ -1876,10 +1876,6 @@ commands:
         type: str
         default: <hcp_folder>/T1w/Diffusion
         description: The path to the diffusion folder.
-    -   name: cuda_version
-        type: str
-        default: '11.3'
-        description: Which CUDA version to use. Supports 10.2, 11.3 and 12.
     returns: []
     origin: core
 -   name: dwi_parcellate

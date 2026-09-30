@@ -6,6 +6,10 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.3
+
+* `dwi_noddi_gpu` now uses CUDA 12 as the default.
+
 ## 1.5.2
 
 * Fixed a bug in `dwi_probtrackx_dense_gpu` that caused it to crash under certain parameter values.
