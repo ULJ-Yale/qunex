@@ -9,6 +9,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 ## 1.5.3
 
 * `dwi_noddi_gpu` now uses CUDA 12 as the default.
+* Fixed `dwi_noddi_gpu` failing with FSL 6.0.7.23, a failed step now also stops the run with a clear error.
 
 ## 1.5.2
 

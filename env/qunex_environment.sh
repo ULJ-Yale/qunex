@@ -376,14 +376,21 @@ alias qunex_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
 alias qx_env_reset='source ${QUNEXPATH}/env/qunex_env_status.sh --envclear'
 
 # -- easy swapping between matlab and octave
+# the precompiled matlab mex (.mexa64, .mexmaci64) are committed next to their
+# sources, and octave's .mex is compiled beside them, so both can stay in place
 qx_env_matlab() {
-    # copy over precompiled matlab mex
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_read_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mex ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexa64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
-    cp ${QUNEXPATH}/qx_library/etc/matlab_mex/img_save_nifti_mx.mexmaci64 ${QUNEXPATH}/matlab/qx_mri/img/@nimage/
+    # restore the matlab mex if an earlier qx_env_octave removed them
+    local mexdir="matlab/qx_mri/img/@nimage"
+    local mexfiles="${mexdir}/img_read_nifti_mx.mexa64 ${mexdir}/img_read_nifti_mx.mexmaci64 ${mexdir}/img_save_nifti_mx.mexa64 ${mexdir}/img_save_nifti_mx.mexmaci64"
+    local mexfile
+    for mexfile in ${mexfiles}; do
+        if [ ! -f "${QUNEXPATH}/${mexfile}" ]; then
+            if ! git -C "${QUNEXPATH}" checkout -- ${mexfiles} 2> /dev/null; then
+                echo "WARNING: ${QUNEXPATH}/${mexfile} is missing and could not be restored with git, restore it from a QuNex release."
+            fi
+            break
+        fi
+    done
 
     # source env
     export USEOCTAVE="FALSE"
@@ -391,9 +398,9 @@ qx_env_matlab() {
 }
 
 qx_env_octave() {
-    # compile octave's mex
+    # compile octave's mex, leaving matlab's in place
     pushd ${QUNEXPATH}/matlab/qx_mri/img/@nimage > /dev/null
-    rm *.mex*
+    rm -f img_read_nifti_mx.mex img_save_nifti_mx.mex
     cp img_read_nifti_mx_octave.cpp img_read_nifti_mx.cpp
     cp img_save_nifti_mx_octave.cpp img_save_nifti_mx.cpp
     mkoctfile --mex -lz img_read_nifti_mx.cpp qx_nifti.c znzlib.c
