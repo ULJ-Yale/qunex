@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.6.0
+
+* Integrated the HCP Pipelines `ROI_to_DICOM.sh` command into QuNex as `hcp_roi_to_dicom`.
+* Multiple T1w and T2w images are now passed to `hcp_pre_freesurfer` in numeric order (`MPR1`, `MPR2`, …) instead of directory listing order.
+
 ## 1.5.3
 
 * `dwi_noddi_gpu` now uses CUDA 12 as the default.

@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-09-06T09:33:41.567340+00:00'
+generated_at: '2026-10-02T12:06:04.915837+00:00'
 source:
     id: core
 commands:
@@ -6954,6 +6954,124 @@ commands:
         type: str
         default: base
         description: Name of the longitudinal template.
+    returns: []
+    origin: core
+-   name: hcp_roi_to_dicom
+    aliases: []
+    path: qx_utilities.hcp.hcp_roi_to_dicom.hcp_roi_to_dicom
+    language: python
+    call: hcp_roi_to_dicom [... processing options]
+    description: Runs the ROI to DICOM step of HCP Pipeline (ROI_to_DICOM.sh). Takes the original T1w DICOM series and an
+        ROI, given as a CIFTI dscalar file, a volume file or a surface vertex, and creates a new T1w DICOM series with the
+        ROI "burned in" to the voxel values, e.g. for use with a neuronavigation system.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). If the output DICOM folder already exists the session
+            is skipped unless overwrite is set to yes.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: log
+        type: str
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs.
+    -   name: hcp_roidicom_input
+        type: str
+        default: detailed below
+        description: 'The folder containing the original T1w DICOM series, it has to be the first T1w input used in hcp_pre_freesurfer.
+            If not set, QuNex reads the series number of that image from its JSON sidecar and uses the series in the session''s
+            ``dicom`` folder. A series that import_dicom archived (e.g. ``dicom/190.tar.gz``) is extracted into a temporary
+            folder, which is removed once the command is done. When there are several T1w images, the first one is the one
+            that matches ``T1w/T1w1_gdc.nii.gz`` best. To set the folder for each session, use ``_hcp_roidicom_input: <path>``
+            in the batch file.'
+    -   name: hcp_roidicom_series
+        type: str
+        default: ''
+        description: If the input folder contains multiple series, the DICOM series number of the appropriate T1w.
+    -   name: hcp_roidicom_output
+        type: str
+        default: detailed below
+        description: The folder to write the modified DICOM series to. Defaults to ``<session id>/hcp/<session id>/T1w/T1w_with_ROI_DICOM``.
+            Its parent folder has to exist.
+    -   name: hcp_roidicom_grayordinates
+        type: str
+        default: '91282'
+        description: The grayordinates CIFTI space the ROI or vertex is based on, 91282 or 170494.
+    -   name: hcp_roidicom_regname
+        type: str
+        default: MSMSulc
+        description: The surface registration to use, e.g. MSMSulc or MSMAll.
+    -   name: hcp_roidicom_cifti_roi
+        type: str
+        default: ''
+        description: A CIFTI (dscalar) file containing the binary ROI.
+    -   name: hcp_roidicom_volume_roi
+        type: str
+        default: ''
+        description: A volume file containing the binary ROI, requires ``hcp_roidicom_volume_space``.
+    -   name: hcp_roidicom_volume_space
+        type: str
+        default: ''
+        description: The volume space of ``hcp_roidicom_volume_roi``, MNINonLinear or T1w.
+    -   name: hcp_roidicom_vertex
+        type: str
+        default: ''
+        description: A single vertex index (0-based) to draw an ROI from, requires ``hcp_roidicom_vertex_structure`` and uses
+            the surface mesh implied by ``hcp_roidicom_grayordinates``.
+    -   name: hcp_roidicom_vertex_structure
+        type: str
+        default: ''
+        description: The surface the vertex is in, CORTEX_LEFT or CORTEX_RIGHT.
+    -   name: hcp_roidicom_vertex_radius
+        type: str
+        default: '0'
+        description: A distance in mm around ``hcp_roidicom_vertex`` to include in the ROI, 0 means just the vertex.
+    -   name: hcp_roidicom_burn_value
+        type: str
+        default: detailed below
+        description: The value to overwrite in-ROI voxels with. Defaults to 20% above the voxelwise maximum.
+    -   name: hcp_roidicom_outline
+        type: str
+        default: ''
+        description: Use an outline with the given thickness in mm instead of occluding the ROI location.
+    -   name: hcp_roidicom_outline_type
+        type: str
+        default: INSIDE
+        description: The outline behavior, INSIDE (do not draw any voxels outside of the ROI, only make some of the ROI interior
+            transparent) or OUTSIDE (draw voxels outside the ROI and make the entire ROI transparent).
     returns: []
     origin: core
 -   name: hcp_run_qc
