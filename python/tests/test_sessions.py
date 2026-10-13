@@ -1165,6 +1165,160 @@ def test_merge_sessions_list_failure_is_a_failed_run(tmp_path):
     assert "Successfully joined 1/2 sessions: joined1" in comlog
 
 
+def write_session_file(path, lines):
+    """Write a session file verbatim, padding and all."""
+    with open(path, 'w') as f:
+        f.write("\n".join(lines) + "\n")
+
+
+def test_merge_session_padded_sequence_lines(tmp_path):
+    """
+    Sequence numbers padded before the colon are sequences, not noise.
+
+    ``dicom2niix`` writes ``"%-4s:"`` and ``create_session_info`` writes
+    ``"{:<4}:"``, so any number under four digits arrives as ``71  :``. The
+    merge used to drop those lines while still renaming their nii files.
+    """
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    for sid in ('A_p1', 'A_p2'):
+        spath = os.path.join(sessions_dir, sid)
+        os.makedirs(os.path.join(spath, 'nii'))
+        open(os.path.join(spath, 'nii', '71.nii.gz'), 'w').close()
+        write_session_file(os.path.join(spath, 'session.txt'), [
+            f"id: {sid}", "subject: A", "",
+            "71  : T1w_MPR                   : TR(2.4)",
+            "2011: BOLD rest                 : TR(0.8)",
+        ])
+        write_session_file(os.path.join(spath, 'session_hcp.txt'), [
+            f"session: {sid}", "subject: A", "",
+            "71  :T1w             :T1w_MPR: se(1)",
+            "2011:bold1:rest      :BOLD rest: se(1)",
+        ])
+
+    merge_session(studyfolder, 'A_p1,A_p2', 'A', 'no', 'leave')
+
+    target = os.path.join(sessions_dir, 'A')
+    txt = read_session_file(os.path.join(target, 'session.txt'))
+    hcp = read_session_file(os.path.join(target, 'session_hcp.txt'))
+    assert parse_sequences(txt) == [10071, 12011, 20071, 22011]
+    assert parse_sequences(hcp) == [10071, 12011, 20071, 22011]
+    # tags on the padded lines are remapped like any other
+    assert "se(2)" in hcp and ":bold2:" in hcp
+    # the session file lists what the nii folder holds
+    assert os.path.exists(os.path.join(target, 'nii', '10071.nii.gz'))
+    assert os.path.exists(os.path.join(target, 'nii', '20071.nii.gz'))
+
+
+def test_merge_session_no_hcp_file_without_hcp_sources(tmp_path):
+    """No source has session_hcp.txt, so the merged session gets none."""
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    create_test_session(os.path.join(sessions_dir, 's1'), 's1', has_hcp=False)
+    create_test_session(os.path.join(sessions_dir, 's2'), 's2', has_hcp=False)
+
+    # 'copy', as in CHD: transferring raw data is what adds the session_N
+    # provenance, and that alone used to bring session_hcp.txt into being
+    merge_session(studyfolder, 's1,s2', 'joined', 'no', 'copy')
+
+    target = os.path.join(sessions_dir, 'joined')
+    assert not os.path.exists(os.path.join(target, 'session_hcp.txt'))
+    txt = read_session_file(os.path.join(target, 'session.txt'))
+    assert parse_sequences(txt) == [11011, 12011, 21011, 22011]
+    # provenance still goes into the file that is written
+    assert "session_1:" in txt and "session_2:" in txt
+
+
+def test_merge_session_hcp_file_from_one_source(tmp_path):
+    """One source of two has session_hcp.txt; the merged one lists its lines."""
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    create_test_session(os.path.join(sessions_dir, 's1'), 's1', has_hcp=True)
+    create_test_session(os.path.join(sessions_dir, 's2'), 's2', has_hcp=False)
+
+    merge_session(studyfolder, 's1,s2', 'joined', 'no', 'leave')
+
+    target = os.path.join(sessions_dir, 'joined')
+    hcp = read_session_file(os.path.join(target, 'session_hcp.txt'))
+    assert parse_sequences(hcp) == [11011, 12011]
+
+
+def test_merge_session_merge_into_txt_only_target(tmp_path):
+    """
+    Merging into a target that has only session.txt keeps its sequences and
+    metadata in session.txt, and creates no session_hcp.txt.
+    """
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    target = os.path.join(sessions_dir, 'A')
+    os.makedirs(target)
+    write_session_file(os.path.join(target, 'session.txt'), [
+        "id: A", "subject: A", "", "institution: Yale", "",
+        "1011: T1w_MPR : TR(2.4)",
+        "2011: BOLD rest : TR(0.8)",
+    ])
+    create_test_session(os.path.join(sessions_dir, 's2'), 's2', has_hcp=False)
+
+    merge_session(studyfolder, 's2', 'A', 'merge', 'leave')
+
+    assert not os.path.exists(os.path.join(target, 'session_hcp.txt'))
+    txt = read_session_file(os.path.join(target, 'session.txt'))
+    assert parse_sequences(txt) == [11011, 12011, 21011, 22011]
+    assert "T1w_MPR" in txt
+    assert "institution: Yale" in txt
+
+
+def test_merge_session_merge_into_target_with_both_files(tmp_path):
+    """Each target file keeps its own lines when merging into it."""
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    target = os.path.join(sessions_dir, 'A')
+    os.makedirs(target)
+    write_session_file(os.path.join(target, 'session.txt'), [
+        "id: A", "subject: A", "",
+        "1011: TXT_ONLY_NAME : TR(2.4)",
+    ])
+    write_session_file(os.path.join(target, 'session_hcp.txt'), [
+        "session: A", "subject: A", "",
+        "1011:T1w             :HCP_ONLY_NAME: se(1)",
+    ])
+    create_test_session(os.path.join(sessions_dir, 's2'), 's2')
+
+    merge_session(studyfolder, 's2', 'A', 'merge', 'leave')
+
+    txt = read_session_file(os.path.join(target, 'session.txt'))
+    hcp = read_session_file(os.path.join(target, 'session_hcp.txt'))
+    assert "TXT_ONLY_NAME" in txt and "HCP_ONLY_NAME" not in txt
+    assert "HCP_ONLY_NAME" in hcp and "TXT_ONLY_NAME" not in hcp
+    assert parse_sequences(txt) == [11011, 21011, 22011]
+    assert parse_sequences(hcp) == [11011, 21011, 22011]
+
+
+def test_merge_session_merge_into_joined_target_keeps_provenance(tmp_path):
+    """
+    A target that is itself a merge keeps its session_N entries, and the new
+    source is numbered after them rather than as session_1 again.
+    """
+    studyfolder = str(tmp_path)
+    sessions_dir = os.path.join(studyfolder, 'sessions')
+    # sixteen sequences, so the joined target has the gap detection looks for
+    sequences = [f"{i}011:tag{i}:Scan{i}: TR(1.0)" for i in range(1, 17)]
+    for sid in ('s1', 's2', 's3'):
+        create_test_session(os.path.join(sessions_dir, sid), sid, sequences)
+
+    merge_session(studyfolder, 's1,s2', 'A', 'no', 'copy')
+    merge_session(studyfolder, 's3', 'A', 'merge', 'copy')
+
+    txt = read_session_file(os.path.join(sessions_dir, 'A', 'session.txt'))
+    provenance = [
+        line.split()[0] + line.split()[1]
+        for line in txt.splitlines()
+        if line.startswith('session_')
+    ]
+    assert provenance == ['session_1:s1', 'session_2:s2', 'session_3:s3']
+    assert parse_sequences(txt)[-1] == 316011
+
+
 if __name__ == '__main__':
     # Run pytest with verbose output
     pytest.main([__file__, '-v'])
