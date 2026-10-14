@@ -10,6 +10,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 * Integrated the HCP Pipelines `ROI_to_DICOM.sh` command into QuNex as `hcp_roi_to_dicom`.
 * Multiple T1w and T2w images are now passed to `hcp_pre_freesurfer` in numeric order (`MPR1`, `MPR2`, …) instead of directory listing order.
+* Fixed `merge_session` and `merge_sessions_list` dropping sequences from the session file in some cases; corrected and extended documentation.
 
 ## 1.5.3
 

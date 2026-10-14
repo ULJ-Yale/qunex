@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-02T12:06:04.915837+00:00'
+generated_at: '2026-10-13T20:16:04.698664+00:00'
 source:
     id: core
 commands:
@@ -9174,7 +9174,7 @@ commands:
     aliases: []
     path: qx_utilities.general.sessions.merge_session
     language: python
-    call: merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]
+    call: merge_session --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]
         [--original_sessions=<action>]
     description: Join multiple sessions into a single session.
     type: utility
@@ -9182,41 +9182,32 @@ commands:
     -   name: studyfolder
         type: str
         default: null
-        description: Path to the study folder. This is used as the base for resolving relative paths and for locating sessions
-            when only session IDs are provided (assumes sessions are in <studyfolder>/sessions/).
+        description: Path to the study folder. Session IDs given in `--source` and `--target` are looked for in `<studyfolder>/sessions/`,
+            relative paths are resolved against the study folder, and so is a relative `move:<path>` in `--original_sessions`.
     -   name: source
         type: str
         default: null
-        description: 'A comma-separated list of session IDs or paths to join. Each can be: - A session ID (e.g., ''session1'')
-            - assumes <studyfolder>/sessions/<id> - A relative path (e.g., ''other/session1'') - relative to studyfolder -
-            An absolute path (e.g., ''/data/study/sessions/session1'') The sessions will be merged in the order specified,
-            with sequence numbers and indices adjusted accordingly.'
+        description: A comma-separated list of the sessions to join, each given as a session ID, a relative path or an absolute
+            path.
     -   name: target
         type: str
         default: null
-        description: 'The target session ID or path. Can be specified as: - A session ID (e.g., ''merged_session'') - creates
-            in <studyfolder>/sessions/ - A relative path (e.g., ''sessions/merged'') - relative to studyfolder - An absolute
-            path (e.g., ''/data/study/sessions/merged'')'
+        description: The target session, given as a session ID, a relative path or an absolute path, resolved as for `--source`.
+            The folder is created if it does not exist. Its name is used as the session ID in the target session files, and
+            the subject ID is derived from it (see Notes).
     -   name: overwrite
         type: str
         default: 'no'
-        description: How to handle existing target folder. Options are 'no' (raise an error if target exists with content),
-            'clean' (remove existing content and replace with merged data), or 'merge' (add new data to existing session,
-            continuing sequence numbering from where target left off).
+        description: 'What to do when the target folder already exists and is not empty: ''no'', ''clean'' or ''merge''.'
     -   name: raw_data
         type: str
         default: copy
-        description: 'How to handle raw data (dicom/ and bids/ folders). Options are: - ''copy'': Copy raw data from source
-            to target (default) - ''move'': Move raw data from source to target - ''leave'': Do not transfer raw data, only
-            merge session metadata'
+        description: 'What to do with the raw data folders (`dicom/`, `bids/`, `inbox/` and `hcpls/`) of each source session:
+            ''copy'', ''move'' or ''leave''.'
     -   name: original_sessions
         type: str
         default: leave
-        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
-            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
-            sessions to specified path (e.g., ''move:/data/backup_sessions''). If a session already exists at the destination,
-            behavior depends on the --overwrite parameter: ''no'' skips the move with a warning, while ''clean'' or ''merge''
-            replaces the existing session.'
+        description: 'What to do with the source sessions once the merge has succeeded: ''leave'', ''remove'' or ''move:<path>''.'
     options: []
     returns: []
     origin: core
@@ -9226,42 +9217,43 @@ commands:
     language: python
     call: merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>]
         [--raw_data=<mode>] [--original_sessions=<action>]
-    description: Join multiple sessions according to a list file.
+    description: Join multiple sets of sessions, as listed in a file.
     type: utility
     args:
     -   name: studyfolder
         type: str
         default: null
-        description: Path to the study folder. This is passed to each merge_session call.
+        description: Path to the study folder. The source and target sessions are given by the folders below, so the study
+            folder is used only to resolve a relative `move:<path>` in `--original_sessions` and to report the target paths.
     -   name: session_list
         type: str
         default: null
-        description: 'Path to a text file containing join specifications. Each line should have the format:'
+        description: 'Path to a text file listing the merges, one per line, in the format::'
     -   name: source_folder
         type: str
         default: null
-        description: Path to the folder containing source sessions. Each source_id from the session_list will be resolved
-            as <source_folder>/<source_id>.
+        description: Path to the folder containing the source sessions. Each `<source_id>` is resolved as `<source_folder>/<source_id>`.
+            The folder must exist.
     -   name: target_folder
         type: str
         default: null
-        description: Path to the folder where target sessions will be created. Each target_id from the session_list will be
-            resolved as <target_folder>/<target_id>.
+        description: Path to the folder in which the target sessions are created. Each `<target_id>` is resolved as `<target_folder>/<target_id>`.
+            The folder is created if it does not exist.
     -   name: overwrite
         type: str
         default: 'no'
-        description: How to handle existing target folders. Passed to each merge_session call. Options are 'no', 'clean',
-            or 'merge'.
+        description: 'What to do when a target session already exists and is not empty: ''no'' (fail for that target), ''clean''
+            (replace it) or ''merge'' (add the sources to it). See `merge_session` for details.'
     -   name: raw_data
         type: str
         default: copy
-        description: How to handle raw data. Passed to each merge_session call. Options are 'copy', 'move', or 'leave'.
+        description: 'What to do with the raw data folders (`dicom/`, `bids/`, `inbox/`, `hcpls/`) of the source sessions:
+            ''copy'', ''move'' or ''leave''. NIfTI files are always copied. See `merge_session` for details.'
     -   name: original_sessions
         type: str
         default: leave
-        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
-            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
-            sessions to specified path (e.g., ''move:/data/backup_sessions'')'
+        description: 'What to do with the source sessions of a target once it has been joined successfully: ''leave'', ''remove''
+            or ''move:<path>''.'
     options: []
     returns: []
     origin: core
