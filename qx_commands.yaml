@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-13T20:16:04.698664+00:00'
+generated_at: '2026-10-17T23:07:46.603614+00:00'
 source:
     id: core
 commands:
@@ -8614,6 +8614,28 @@ commands:
         description: What to do with the archive after mapping.
     options: []
     returns: []
+    origin: core
+-   name: install_qx_extension_dependencies
+    aliases: []
+    path: qx_extension_dependencies.install_qx_extension_dependencies
+    language: python
+    call: install_qx_extension_dependencies(extensions=None)
+    description: Install the python packages one or more extensions depend on, into each extension's own folder, for the python
+        QuNex runs with.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to install the dependencies of, as a comma separated list of names given with or without
+            the ``qx_`` prefix. 'all' covers every extension found.
+    options: []
+    returns:
+    -   name: installed
+        type: dict
+        default: null
+        description: For each extension covered, the packages installed into its folder, as 'name==version' strings. Empty
+            when it declares no dependencies or QuNex has them all.
     origin: core
 -   name: join_fidl
     aliases: []
