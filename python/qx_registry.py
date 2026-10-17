@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+import site
+import sys
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +30,7 @@ from qx_extension_paths import (  # noqa: F401
     _warn,
     _warned,
     extension_folders,
+    extension_package_folder,
     extension_search_roots,
 )
 
@@ -216,8 +219,48 @@ def load_python_callable(command: CommandInfo):
     if not mod_path:
         raise ge.CommandFailed('load_python_callable', f"Invalid python command.path: {command.path}")
     import importlib
-    mod = importlib.import_module(mod_path)
+
+    extension = Path(command.root) if command.origin.startswith("extension:") and command.root else None
+    if extension is not None:
+        _add_extension_packages(extension)
+
+    try:
+        mod = importlib.import_module(mod_path)
+    except ModuleNotFoundError as e:
+        missing = (e.name or "").split(".")[0]
+        if extension is None or not missing or _is_own_module(extension, missing):
+            raise
+        name = extension.name[len("qx_"):]
+        raise ge.CommandFailed(
+            'load_python_callable',
+            f"Extension '{name}' needs the python package providing '{missing}', which is not installed",
+            f"Install the extension's dependencies with: "
+            f"qunex install_qx_extension_dependencies --extensions={name}",
+            f"They go into {extension_package_folder(extension)}, for this interpreter ({sys.executable}).",
+        ) from e
     return getattr(mod, fn_name)
+
+
+def _add_extension_packages(extension: Path) -> None:
+    """
+    Put an extension's own dependencies on `sys.path`, after QuNex's.
+
+    Done when one of its commands is about to be imported and not when the
+    extensions are loaded, so a core command never sees an extension's
+    packages -- a library QuNex uses may import an optional package when it
+    finds one -- and one extension's command sees only its own. `addsitedir`
+    appends, so QuNex's site-packages are searched first and an extension can
+    add a package but never replace one, and it reads any `.pth` file there.
+    """
+    folder = extension_package_folder(extension)
+    if folder.is_dir() and str(folder) not in sys.path:
+        site.addsitedir(str(folder))
+
+
+def _is_own_module(extension: Path, module: str) -> bool:
+    """Whether `module` is the extension's own code, not a dependency of it."""
+    python = extension / "python"
+    return (python / module).is_dir() or (python / f"{module}.py").is_file()
 
 
 def discover_extension_registries(

@@ -39,37 +39,43 @@ def restore_sys_path():
     sys.path[:] = before
 
 
-def test_the_python_folder_is_added_without_qx_modules(
-    restore_sys_path, monkeypatch, tmp_path
-):
+@pytest.fixture
+def extension_root(monkeypatch, tmp_path):
+    """An empty extensions root, the only one QuNex searches."""
+    root = tmp_path / "extroot"
+    root.mkdir()
+    for name in ("QUNEXPATH", "TOOLS", "QXEXTENSIONSPY",
+                 qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(root))
+    monkeypatch.setattr(ge, "module_names", [])
+    monkeypatch.setattr(ge, "modules", {})
+    return root
+
+
+def test_the_python_folder_is_added_without_qx_modules(restore_sys_path, extension_root):
     """
     A python command's registry path is dotted relative to this folder and
     nothing else ever adds it, so gating it on `qx_modules` left an extension
     whose commands were listed and dispatched and then failed to import.
     """
-    py = tmp_path / "qx_example" / "python"
+    py = extension_root / "qx_example" / "python"
     py.mkdir(parents=True)
-    monkeypatch.setenv("QXEXTENSIONSPY", str(py))
 
     ge.load_extensions()
 
     assert str(py) in sys.path
 
 
-def test_an_extension_is_found_without_the_environment(restore_sys_path, monkeypatch, tmp_path):
+def test_an_extension_is_found_without_the_environment(restore_sys_path, extension_root):
     """
-    The environment script exports `QXEXTENSIONSPY`, and inside a container it
-    is sourced once -- every later source returns immediately -- so an
-    extension installed after the container started never reaches it. The
-    search roots answer the same question without the environment.
+    Inside a container the environment script is sourced once -- every later
+    source returns immediately -- so an extension installed after the container
+    started is in none of the variables it exports. The search roots answer the
+    same question without the environment.
     """
-    py = tmp_path / "extroot" / "qx_example" / "python"
+    py = extension_root / "qx_example" / "python"
     py.mkdir(parents=True)
-    monkeypatch.delenv("QXEXTENSIONSPY", raising=False)
-    monkeypatch.delenv("QUNEXPATH", raising=False)
-    monkeypatch.delenv("TOOLS", raising=False)
-    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED, raising=False)
-    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(tmp_path / "extroot"))
 
     assert ge.extension_python_folders() == [str(py)]
 
@@ -77,32 +83,226 @@ def test_an_extension_is_found_without_the_environment(restore_sys_path, monkeyp
     assert str(py) in sys.path
 
 
-def test_a_folder_named_both_ways_is_listed_once(restore_sys_path, monkeypatch, tmp_path):
-    py = tmp_path / "extroot" / "qx_example" / "python"
-    py.mkdir(parents=True)
-    monkeypatch.delenv("QUNEXPATH", raising=False)
-    monkeypatch.delenv("TOOLS", raising=False)
-    monkeypatch.delenv(qx_registry.EXTENSION_FOLDERS_ENV_DEPRECATED, raising=False)
-    monkeypatch.setenv("QXEXTENSIONSPY", str(py))
-    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(tmp_path / "extroot"))
+def test_qxextensionspy_is_not_read(restore_sys_path, extension_root, monkeypatch, tmp_path):
+    """
+    It lists what the environment script found when it was sourced, which may
+    be a copy the registry no longer reads, or a folder in no root at all.
+    """
+    stray = tmp_path / "elsewhere" / "qx_stray" / "python"
+    stray.mkdir(parents=True)
+    monkeypatch.setenv("QXEXTENSIONSPY", str(stray))
 
-    assert ge.extension_python_folders() == [str(py)]
+    assert ge.extension_python_folders() == []
 
 
-def test_qx_modules_still_imports_what_it_lists(restore_sys_path, monkeypatch, tmp_path):
-    py = tmp_path / "qx_example" / "python"
+def test_only_the_winning_copy_reaches_sys_path(
+    restore_sys_path, extension_root, monkeypatch, tmp_path
+):
+    """
+    With the same extension in two roots the registry reads the copy in the
+    later root, so that is the copy whose code is imported -- even when the
+    environment script, sourced before the later root was named, exported the
+    other copy in `QXEXTENSIONSPY`.
+    """
+    first = tmp_path / "first" / "qx_example" / "python"
+    second = extension_root / "qx_example" / "python"
+    for py in (first, second):
+        py.mkdir(parents=True)
+        (py / "qx_modules").write_text("qx_example_declarations\n", encoding="utf-8")
+    (first / "qx_example_declarations.py").write_text(
+        "arglist = [['from_first', 'yes', str]]\n", encoding="utf-8"
+    )
+    (second / "qx_example_declarations.py").write_text(
+        "arglist = [['from_second', 'yes', str]]\n", encoding="utf-8"
+    )
+    monkeypatch.setenv("QXEXTENSIONSPY", str(first))
+    monkeypatch.setenv(
+        qx_registry.EXTENSION_FOLDERS_ENV, f"{tmp_path / 'first'}:{extension_root}"
+    )
+    monkeypatch.delitem(sys.modules, "qx_example_declarations", raising=False)
+
+    ge.load_extensions()
+
+    assert str(second) in sys.path
+    assert str(first) not in sys.path
+    # imported once, so its declarations are gathered once
+    assert ge.compile_list("arglist") == [["from_second", "yes", str]]
+    sys.modules.pop("qx_example_declarations", None)
+
+
+def test_qx_modules_still_imports_what_it_lists(restore_sys_path, extension_root, monkeypatch):
+    py = extension_root / "qx_example" / "python"
     py.mkdir(parents=True)
     (py / "qx_example_declarations.py").write_text(
         "arglist = [['example_declared', 'yes', str]]\n", encoding="utf-8"
     )
     (py / "qx_modules").write_text("# a comment\n\nqx_example_declarations\n", encoding="utf-8")
-    monkeypatch.setenv("QXEXTENSIONSPY", str(py))
-    monkeypatch.setattr(ge, "module_names", [])
-    monkeypatch.setattr(ge, "modules", {})
+    monkeypatch.delitem(sys.modules, "qx_example_declarations", raising=False)
 
     ge.load_extensions()
 
     assert ge.compile_list("arglist") == [["example_declared", "yes", str]]
+    sys.modules.pop("qx_example_declarations", None)
+
+
+# ==============================================================================
+#                                  an extension's own packages, added at dispatch
+
+
+@pytest.fixture
+def isolated_imports(restore_sys_path):
+    """Forget the throwaway modules a test imports, so the next one imports afresh."""
+    yield
+    for name in [m for m in sys.modules if m.startswith("qx_example_")]:
+        del sys.modules[name]
+
+
+def _package_folder(extension):
+    return extension / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+
+
+def _extension_command(extension, *, imports, origin="extension:example"):
+    """An extension whose one command returns `VALUE` of the module it imports."""
+    py = extension / "python"
+    py.mkdir(parents=True, exist_ok=True)
+    (py / "qx_example_cmd.py").write_text(
+        f"from {imports} import VALUE\n\ndef run():\n    return VALUE\n", encoding="utf-8"
+    )
+    if str(py) not in sys.path:
+        sys.path.append(str(py))
+    return qx_registry.CommandInfo(
+        name="example_run", aliases=(), path="qx_example_cmd.run", language="python",
+        call=None, description=None, type="utility", args=(), options=(), returns=(),
+        origin=origin, root=str(extension),
+    )
+
+
+def _module(folder, name, value):
+    folder.mkdir(parents=True, exist_ok=True)
+    (folder / f"{name}.py").write_text(f"VALUE = {value!r}\n", encoding="utf-8")
+
+
+def test_loading_adds_no_package_folder(isolated_imports, extension_root):
+    """Every run loads the extensions; a core command must not see their packages."""
+    extension = extension_root / "qx_example"
+    (extension / "python").mkdir(parents=True)
+    _module(_package_folder(extension), "qx_example_dep", "extension")
+
+    ge.load_extensions()
+
+    assert str(_package_folder(extension)) not in sys.path
+
+
+def test_a_dispatched_command_finds_its_packages_after_qunexs(isolated_imports, tmp_path):
+    extension = tmp_path / "qx_example"
+    _module(_package_folder(extension), "qx_example_dep", "extension")
+    command = _extension_command(extension, imports="qx_example_dep")
+
+    assert qx_registry.load_python_callable(command)() == "extension"
+
+    position = sys.path.index(str(_package_folder(extension)))
+    site_packages = [i for i, p in enumerate(sys.path) if p.endswith("site-packages")]
+    assert site_packages and all(i < position for i in site_packages)
+
+
+def test_qunexs_copy_of_a_package_wins(isolated_imports, tmp_path):
+    """An extension adds what QuNex lacks; it never replaces what QuNex has."""
+    qunex = tmp_path / "qunex_site"
+    _module(qunex, "qx_example_shared", "qunex")
+    sys.path.insert(0, str(qunex))
+    extension = tmp_path / "qx_example"
+    _module(_package_folder(extension), "qx_example_shared", "extension")
+    command = _extension_command(extension, imports="qx_example_shared")
+
+    assert qx_registry.load_python_callable(command)() == "qunex"
+
+
+def test_a_folder_for_another_python_is_not_used(isolated_imports, tmp_path):
+    extension = tmp_path / "qx_example"
+    other = extension / "lib" / "python2.7"
+    _module(other, "qx_example_dep", "extension")
+    command = _extension_command(extension, imports="qx_example_dep")
+
+    with pytest.raises(Exception):
+        qx_registry.load_python_callable(command)
+
+    assert str(other) not in sys.path
+
+
+def test_only_the_dispatched_extensions_packages_are_added(isolated_imports, tmp_path):
+    extension = tmp_path / "qx_example"
+    _module(_package_folder(extension), "qx_example_dep", "extension")
+    other = tmp_path / "qx_other"
+    _module(_package_folder(other), "qx_example_other_dep", "other")
+    command = _extension_command(extension, imports="qx_example_dep")
+
+    qx_registry.load_python_callable(command)
+
+    assert str(_package_folder(other)) not in sys.path
+
+
+def test_a_core_command_adds_no_package_folder(isolated_imports, tmp_path):
+    core = tmp_path / "qunex"
+    _module(core / "python", "qx_example_core_dep", "core")
+    _module(_package_folder(core), "qx_example_unused", "unused")
+    command = _extension_command(core, imports="qx_example_core_dep", origin="core")
+
+    assert qx_registry.load_python_callable(command)() == "core"
+    assert str(_package_folder(core)) not in sys.path
+
+
+# ==============================================================================
+#                                          a missing dependency says what to do
+
+
+def test_a_missing_dependency_names_the_package_and_the_install(isolated_imports, tmp_path):
+    command = _extension_command(tmp_path / "qx_example", imports="qx_example_missing")
+
+    with pytest.raises(qx_registry.ge.CommandFailed) as failed:
+        qx_registry.load_python_callable(command)
+
+    report = " ".join(failed.value.report)
+    assert "'qx_example_missing'" in report
+    assert "qunex install_qx_extension_dependencies --extensions=example" in report
+    assert isinstance(failed.value.__cause__, ModuleNotFoundError)
+
+
+def test_a_missing_module_of_the_extensions_own_is_left_alone(isolated_imports, tmp_path):
+    """A broken path inside the extension is not a dependency to install."""
+    extension = tmp_path / "qx_example"
+    package = extension / "python" / "qx_example_pkg"
+    package.mkdir(parents=True)
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    command = _extension_command(extension, imports="qx_example_pkg.absent")
+
+    with pytest.raises(ModuleNotFoundError):
+        qx_registry.load_python_callable(command)
+
+
+def test_a_core_commands_missing_module_is_left_alone(isolated_imports, tmp_path):
+    command = _extension_command(tmp_path / "qunex", imports="qx_example_missing", origin="core")
+
+    with pytest.raises(ModuleNotFoundError):
+        qx_registry.load_python_callable(command)
+
+
+def test_a_qx_modules_import_failure_is_reported_on_stderr(
+    isolated_imports, extension_root, capsys
+):
+    """`bin/qunex.sh` reads `gmri -available` from stdout as its routing table."""
+    py = extension_root / "qx_example" / "python"
+    py.mkdir(parents=True)
+    (py / "qx_example_declarations.py").write_text(
+        "import qx_example_missing\n", encoding="utf-8"
+    )
+    (py / "qx_modules").write_text("qx_example_declarations\n", encoding="utf-8")
+
+    ge.load_extensions()
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "qx_example_declarations" in err
+    assert "'qx_example_missing' is not one of them" in err
 
 
 # ==============================================================================
