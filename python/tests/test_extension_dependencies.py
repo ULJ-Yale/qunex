@@ -79,7 +79,7 @@ def _extension(root, dependencies=None):
 
 
 def _folder(extension):
-    return extension / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    return qx_extension_paths.extension_package_folder(extension)
 
 
 def test_only_what_qunex_lacks_is_installed(index):
@@ -285,3 +285,20 @@ def test_clashes_across_extensions_are_reported(index, no_declarations, monkeypa
     assert any(f.startswith("'shared' is in qx_one, qx_two") for f in across)
     assert any("'same_parameter' in arglist" in f for f in across)
     assert any(f.startswith("qxdep-b differs") for f in across)
+
+
+def test_folders_of_other_installations_are_listed_not_flagged(index, no_declarations, capsys):
+    extension = _registered(index)
+    (extension / "lib" / "python3.12-0000dead").mkdir(parents=True)
+
+    assert qd.check_qx_extensions()["qx_example"] == []
+    assert "python3.12-0000dead" in capsys.readouterr().out
+
+
+def test_the_check_can_be_limited_to_named_extensions(index, no_declarations):
+    _registered(index, "qx_one")
+    _registered(index, "qx_two")
+
+    findings = qd.check_qx_extensions(extensions="one")
+
+    assert "qx_one" in findings and "qx_two" not in findings

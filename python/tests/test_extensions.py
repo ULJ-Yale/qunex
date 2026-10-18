@@ -19,6 +19,7 @@ import types
 
 import pytest
 
+import qx_extension_paths
 import qx_registry
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.extensions as ge
@@ -161,7 +162,7 @@ def isolated_imports(restore_sys_path):
 
 
 def _package_folder(extension):
-    return extension / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    return qx_extension_paths.extension_package_folder(extension)
 
 
 def _extension_command(extension, *, imports, origin="extension:example"):
@@ -183,6 +184,17 @@ def _extension_command(extension, *, imports, origin="extension:example"):
 def _module(folder, name, value):
     folder.mkdir(parents=True, exist_ok=True)
     (folder / f"{name}.py").write_text(f"VALUE = {value!r}\n", encoding="utf-8")
+
+
+def test_each_python_installation_has_a_folder_of_its_own(tmp_path, monkeypatch):
+    """The host's QuNex and a container's, both on the same python, side by side."""
+    here = qx_extension_paths.extension_package_folder(tmp_path)
+    monkeypatch.setattr(sys, "prefix", str(tmp_path / "another_installation"))
+    there = qx_extension_paths.extension_package_folder(tmp_path)
+
+    assert here != there
+    assert here.parent == there.parent == tmp_path / "lib"
+    assert here.name.startswith(f"python{sys.version_info.major}.{sys.version_info.minor}-")
 
 
 def test_loading_adds_no_package_folder(isolated_imports, extension_root):
@@ -282,7 +294,6 @@ def _stamped(extension, stamp):
 
 
 def test_a_folder_installed_for_these_packages_says_nothing(isolated_imports, tmp_path, capsys):
-    import qx_extension_paths
     command = _stamped(tmp_path / "qx_example", qx_extension_paths.environment_fingerprint())
 
     qx_registry.load_python_callable(command)

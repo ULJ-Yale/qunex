@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-18T00:04:03.390879+00:00'
+generated_at: '2026-10-18T01:39:34.617752+00:00'
 source:
     id: core
 commands:
@@ -352,11 +352,16 @@ commands:
     aliases: []
     path: qx_extension_dependencies.check_qx_extensions
     language: python
-    call: check_qx_extensions()
+    call: check_qx_extensions(extensions=None)
     description: Check the extensions QuNex can see, and report what is wrong or at odds with something else, with what to
         do about each.
     type: utility
-    args: []
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to check, as a comma separated list of names given with or without the ``qx_`` prefix.
+            'all' checks every extension found, and so does leaving it out.
     options: []
     returns:
     -   name: findings

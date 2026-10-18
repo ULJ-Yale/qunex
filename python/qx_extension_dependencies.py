@@ -53,7 +53,10 @@ def install_qx_extension_dependencies(*, extensions: Optional[str] = None) -> Di
     ``pyproject.toml`` at its root, as any python project does. They are
     resolved against QuNex's own environment, keeping every package QuNex has
     at the version it has where that works, and the packages QuNex lacks are
-    installed into ``<extension>/lib/python<major>.<minor>``.
+    installed into ``<extension>/lib/python<major>.<minor>-<id>``: one folder
+    for each QuNex installation that uses the extension, the ``<id>`` standing
+    for where its python is installed, so that the host's and a container's
+    packages do not overwrite each other.
 
     Where the extension needs a different version of a package QuNex has -- a
     container's environment is built without knowing the extensions that will
@@ -64,10 +67,9 @@ def install_qx_extension_dependencies(*, extensions: Optional[str] = None) -> Di
     run with QuNex's versions. A replacement that would break a package QuNex
     has, by that package's own requirements, fails the install.
 
-    The packages are installed for the interpreter running this command, and
-    the folder is named after its version. Run it with the QuNex installation
-    that will run the extension -- inside the container, if the extension is
-    used there. It needs access to the package index pip is configured to use,
+    The packages are installed for the interpreter running this command. Run
+    it with each QuNex installation that will run the extension -- inside the
+    container too, if the extension is used there. It needs access to the package index pip is configured to use,
     and leaves the previous folder in place if anything fails. Running it again
     replaces the folder.
 
@@ -121,7 +123,7 @@ def _install_for(extension: Path) -> List[str]:
         return []
 
     _install(extension, missing, folder, check=bool(replaced))
-    print(f"    Installed into {folder}:")
+    print(f"    Installed into {folder}, for {sys.executable}:")
     for package in missing:
         print(f"      {package}")
     if replaced:
@@ -261,9 +263,9 @@ _DECLARED_DICTS = ("deprecated_commands", "deprecated_parameters", "deprecated_v
 _DECLARED_LISTS = ("arglist", "flaglist")
 
 
-def check_qx_extensions() -> Dict[str, List[str]]:
+def check_qx_extensions(*, extensions: Optional[str] = None) -> Dict[str, List[str]]:
     """
-    ``check_qx_extensions()``
+    ``check_qx_extensions(extensions=None)``
 
     Check the extensions QuNex can see, and report what is wrong or at odds
     with something else, with what to do about each.
@@ -289,13 +291,19 @@ def check_qx_extensions() -> Dict[str, List[str]]:
     ..  qx_command:
         type: utility
 
+    Parameters:
+        --extensions (str, default ''):
+            Which extensions to check, as a comma separated list of names given
+            with or without the ``qx_`` prefix. 'all' checks every extension
+            found, and so does leaving it out.
+
     Returns:
         --findings (dict):
             The problems found, as lists of messages under 'qunex', under each
             extension's folder name, and under 'across'. Empty lists when there
             is nothing to report.
     """
-    folders = extension_folders()
+    folders = _select_extensions(extensions, extension_folders(), 'check_qx_extensions')
     findings = {}
 
     print("\n--> QuNex's python packages")
@@ -330,6 +338,11 @@ def _check_extension(extension: Path) -> List[str]:
         problem = _unmet(requirement, in_folder)
         if problem:
             findings.append(f"{problem}; {install}")
+
+    others = sorted(d.name for d in (extension / "lib").glob("python*")
+                    if d.is_dir() and d != folder and not d.name.endswith(".new"))
+    if others:
+        print(f"    also holds packages for other python installations: {', '.join(others)}")
 
     stamp = folder / ENVIRONMENT_STAMP
     if stamp.is_file() and stamp.read_text().strip() != environment_fingerprint():

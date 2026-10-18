@@ -145,14 +145,20 @@ def extension_python_folders() -> List[str]:
 
 def extension_package_folder(extension: Path) -> Path:
     """
-    Where an extension's own python dependencies are installed.
+    Where an extension's own python dependencies are installed, for the
+    interpreter running this process.
 
-    Named after the running interpreter's version, because a compiled package
-    built for another one does not load: an extension installed for the host's
-    python and bound into a container with a different one then has no folder
-    for it, which says what is wrong, rather than one that crashes.
+    Named after the interpreter's version, because a compiled package built
+    for another one does not load, and after where the interpreter is
+    installed, because the same extension is often used by more than one
+    installation of QuNex -- on the host and in a container, both on python
+    3.12 -- each with packages of its own: `lib/python3.12-1a2b3c4d`. Each
+    gets its own folder, and an extension bound into a container finds the
+    container's folder, or none, and says so, rather than the host's.
     """
-    return Path(extension) / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+    version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    where = hashlib.sha256(os.path.realpath(sys.prefix).encode()).hexdigest()[:8]
+    return Path(extension) / "lib" / f"python{version}-{where}"
 
 
 # written into a package folder by the install, to be compared at dispatch
