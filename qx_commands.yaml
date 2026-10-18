@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-17T23:07:46.603614+00:00'
+generated_at: '2026-10-18T00:04:03.390879+00:00'
 source:
     id: core
 commands:
@@ -347,6 +347,23 @@ commands:
         default: ''
         description: Path template to an aparc+aseg segmentation in T1 space.
     returns: []
+    origin: core
+-   name: check_qx_extensions
+    aliases: []
+    path: qx_extension_dependencies.check_qx_extensions
+    language: python
+    call: check_qx_extensions()
+    description: Check the extensions QuNex can see, and report what is wrong or at odds with something else, with what to
+        do about each.
+    type: utility
+    args: []
+    options: []
+    returns:
+    -   name: findings
+        type: dict
+        default: null
+        description: The problems found, as lists of messages under 'qunex', under each extension's folder name, and under
+            'across'. Empty lists when there is nothing to report.
     origin: core
 -   name: check_study
     aliases: []

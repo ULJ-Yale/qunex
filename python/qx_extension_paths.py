@@ -18,6 +18,7 @@ one variable spelled two ways is the defect this file exists to prevent.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -152,3 +153,27 @@ def extension_package_folder(extension: Path) -> Path:
     for it, which says what is wrong, rather than one that crashes.
     """
     return Path(extension) / "lib" / f"python{sys.version_info.major}.{sys.version_info.minor}"
+
+
+# written into a package folder by the install, to be compared at dispatch
+ENVIRONMENT_STAMP = ".qunex_environment"
+
+
+def environment_fingerprint() -> str:
+    """
+    A hash of the python packages this process can see, with their versions.
+
+    Taken from the names of the `.dist-info` and `.egg-info` folders on
+    `sys.path`, which carry the version, so that it only lists folders: it is
+    computed every time an extension command is dispatched. A package folder
+    resolved against one set of packages and used with another -- installed on
+    the host and bound into a container, or kept across an upgrade of QuNex --
+    is recognised by its stamp no longer matching.
+    """
+    names = []
+    for entry in sys.path:
+        try:
+            names += [n for n in os.listdir(entry or ".") if n.endswith((".dist-info", ".egg-info"))]
+        except OSError:
+            pass
+    return hashlib.sha256("\n".join(sorted(names)).encode()).hexdigest()

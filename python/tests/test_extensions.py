@@ -15,6 +15,7 @@ against, are in `test_extension_roots.py`.
 
 import os
 import sys
+import types
 
 import pytest
 
@@ -140,7 +141,9 @@ def test_qx_modules_still_imports_what_it_lists(restore_sys_path, extension_root
     monkeypatch.delitem(sys.modules, "qx_example_declarations", raising=False)
 
     ge.load_extensions()
+    ge.load_extensions()
 
+    # listed once, however often the extensions are loaded
     assert ge.compile_list("arglist") == [["example_declared", "yes", str]]
     sys.modules.pop("qx_example_declarations", None)
 
@@ -193,7 +196,7 @@ def test_loading_adds_no_package_folder(isolated_imports, extension_root):
     assert str(_package_folder(extension)) not in sys.path
 
 
-def test_a_dispatched_command_finds_its_packages_after_qunexs(isolated_imports, tmp_path):
+def test_a_dispatched_command_finds_its_packages_before_qunexs(isolated_imports, tmp_path):
     extension = tmp_path / "qx_example"
     _module(_package_folder(extension), "qx_example_dep", "extension")
     command = _extension_command(extension, imports="qx_example_dep")
@@ -202,19 +205,37 @@ def test_a_dispatched_command_finds_its_packages_after_qunexs(isolated_imports, 
 
     position = sys.path.index(str(_package_folder(extension)))
     site_packages = [i for i, p in enumerate(sys.path) if p.endswith("site-packages")]
-    assert site_packages and all(i < position for i in site_packages)
+    assert site_packages and all(position < i for i in site_packages)
 
 
-def test_qunexs_copy_of_a_package_wins(isolated_imports, tmp_path):
-    """An extension adds what QuNex lacks; it never replaces what QuNex has."""
-    qunex = tmp_path / "qunex_site"
+def test_the_extensions_version_of_a_package_wins(isolated_imports, tmp_path):
+    """
+    The folder holds a package QuNex has only when the extension needs another
+    version of it, and then that version has to be the one imported -- in this
+    command's process, which is all the command runs in.
+    """
+    qunex = tmp_path / "site-packages"
     _module(qunex, "qx_example_shared", "qunex")
-    sys.path.insert(0, str(qunex))
+    first_site = next(i for i, p in enumerate(sys.path) if p.endswith("site-packages"))
+    sys.path.insert(first_site + 1, str(qunex))
     extension = tmp_path / "qx_example"
     _module(_package_folder(extension), "qx_example_shared", "extension")
     command = _extension_command(extension, imports="qx_example_shared")
 
-    assert qx_registry.load_python_callable(command)() == "qunex"
+    assert qx_registry.load_python_callable(command)() == "extension"
+
+
+def test_a_package_already_imported_can_not_be_replaced(isolated_imports, tmp_path, monkeypatch):
+    extension = tmp_path / "qx_example"
+    _module(_package_folder(extension), "qx_example_loaded", "extension")
+    monkeypatch.setitem(sys.modules, "qx_example_loaded", types.ModuleType("qx_example_loaded"))
+    command = _extension_command(extension, imports="qx_example_loaded")
+
+    with pytest.raises(qx_registry.ge.CommandFailed) as failed:
+        qx_registry.load_python_callable(command)
+
+    assert "qx_example_loaded" in failed.value.error
+    assert str(_package_folder(extension)) not in sys.path
 
 
 def test_a_folder_for_another_python_is_not_used(isolated_imports, tmp_path):
@@ -249,6 +270,43 @@ def test_a_core_command_adds_no_package_folder(isolated_imports, tmp_path):
 
     assert qx_registry.load_python_callable(command)() == "core"
     assert str(_package_folder(core)) not in sys.path
+
+
+def _stamped(extension, stamp):
+    folder = _package_folder(extension)
+    _module(folder, "qx_example_dep", "extension")
+    if stamp is not None:
+        (folder / ".qunex_environment").write_text(stamp + "\n", encoding="utf-8")
+    qx_registry._warned.clear()
+    return _extension_command(extension, imports="qx_example_dep")
+
+
+def test_a_folder_installed_for_these_packages_says_nothing(isolated_imports, tmp_path, capsys):
+    import qx_extension_paths
+    command = _stamped(tmp_path / "qx_example", qx_extension_paths.environment_fingerprint())
+
+    qx_registry.load_python_callable(command)
+
+    assert capsys.readouterr().err == ""
+
+
+def test_a_folder_installed_for_other_packages_warns(isolated_imports, tmp_path, capsys):
+    """Installed on the host and bound into a container, or kept across an upgrade."""
+    command = _stamped(tmp_path / "qx_example", "not-this-environment")
+
+    assert qx_registry.load_python_callable(command)() == "extension"
+
+    out, err = capsys.readouterr()
+    assert out == ""
+    assert "qunex install_qx_extension_dependencies --extensions=example" in err
+
+
+def test_a_folder_without_a_stamp_says_nothing(isolated_imports, tmp_path, capsys):
+    command = _stamped(tmp_path / "qx_example", None)
+
+    qx_registry.load_python_callable(command)
+
+    assert capsys.readouterr().err == ""
 
 
 # ==============================================================================

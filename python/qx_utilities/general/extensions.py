@@ -101,7 +101,10 @@ def load_extensions():
                         sys.path.append(os.path.join(extensions_path, module_name))
                     try:
                         modules[module_name] = importlib.import_module(module_name)
-                        module_names.append(module_name)
+                        # once, however often the extensions are loaded, or
+                        # its declarations are gathered once per load
+                        if module_name not in module_names:
+                            module_names.append(module_name)
                     except Exception as e:
                         _warn_import_failed(extensions_path, module_name, e)
 
