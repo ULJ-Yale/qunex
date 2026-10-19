@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-09-06T09:33:41.567340+00:00'
+generated_at: '2026-10-18T01:39:34.617752+00:00'
 source:
     id: core
 commands:
@@ -347,6 +347,28 @@ commands:
         default: ''
         description: Path template to an aparc+aseg segmentation in T1 space.
     returns: []
+    origin: core
+-   name: check_qx_extensions
+    aliases: []
+    path: qx_extension_dependencies.check_qx_extensions
+    language: python
+    call: check_qx_extensions(extensions=None)
+    description: Check the extensions QuNex can see, and report what is wrong or at odds with something else, with what to
+        do about each.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to check, as a comma separated list of names given with or without the ``qx_`` prefix.
+            'all' checks every extension found, and so does leaving it out.
+    options: []
+    returns:
+    -   name: findings
+        type: dict
+        default: null
+        description: The problems found, as lists of messages under 'qunex', under each extension's folder name, and under
+            'across'. Empty lists when there is nothing to report.
     origin: core
 -   name: check_study
     aliases: []
@@ -6956,6 +6978,124 @@ commands:
         description: Name of the longitudinal template.
     returns: []
     origin: core
+-   name: hcp_roi_to_dicom
+    aliases: []
+    path: qx_utilities.hcp.hcp_roi_to_dicom.hcp_roi_to_dicom
+    language: python
+    call: hcp_roi_to_dicom [... processing options]
+    description: Runs the ROI to DICOM step of HCP Pipeline (ROI_to_DICOM.sh). Takes the original T1w DICOM series and an
+        ROI, given as a CIFTI dscalar file, a volume file or a surface vertex, and creates a new T1w DICOM series with the
+        ROI "burned in" to the voxel values, e.g. for use with a neuronavigation system.
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). If the output DICOM folder already exists the session
+            is skipped unless overwrite is set to yes.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: sessionsfolder
+        type: str
+        default: .
+        description: The path to the study/sessions folder, where the imaging data is supposed to go.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: log
+        type: str
+        default: keep
+        description: Whether to keep ('keep') or remove ('remove') the temporary logs.
+    -   name: hcp_roidicom_input
+        type: str
+        default: detailed below
+        description: 'The folder containing the original T1w DICOM series, it has to be the first T1w input used in hcp_pre_freesurfer.
+            If not set, QuNex reads the series number of that image from its JSON sidecar and uses the series in the session''s
+            ``dicom`` folder. A series that import_dicom archived (e.g. ``dicom/190.tar.gz``) is extracted into a temporary
+            folder, which is removed once the command is done. When there are several T1w images, the first one is the one
+            that matches ``T1w/T1w1_gdc.nii.gz`` best. To set the folder for each session, use ``_hcp_roidicom_input: <path>``
+            in the batch file.'
+    -   name: hcp_roidicom_series
+        type: str
+        default: ''
+        description: If the input folder contains multiple series, the DICOM series number of the appropriate T1w.
+    -   name: hcp_roidicom_output
+        type: str
+        default: detailed below
+        description: The folder to write the modified DICOM series to. Defaults to ``<session id>/hcp/<session id>/T1w/T1w_with_ROI_DICOM``.
+            Its parent folder has to exist.
+    -   name: hcp_roidicom_grayordinates
+        type: str
+        default: '91282'
+        description: The grayordinates CIFTI space the ROI or vertex is based on, 91282 or 170494.
+    -   name: hcp_roidicom_regname
+        type: str
+        default: MSMSulc
+        description: The surface registration to use, e.g. MSMSulc or MSMAll.
+    -   name: hcp_roidicom_cifti_roi
+        type: str
+        default: ''
+        description: A CIFTI (dscalar) file containing the binary ROI.
+    -   name: hcp_roidicom_volume_roi
+        type: str
+        default: ''
+        description: A volume file containing the binary ROI, requires ``hcp_roidicom_volume_space``.
+    -   name: hcp_roidicom_volume_space
+        type: str
+        default: ''
+        description: The volume space of ``hcp_roidicom_volume_roi``, MNINonLinear or T1w.
+    -   name: hcp_roidicom_vertex
+        type: str
+        default: ''
+        description: A single vertex index (0-based) to draw an ROI from, requires ``hcp_roidicom_vertex_structure`` and uses
+            the surface mesh implied by ``hcp_roidicom_grayordinates``.
+    -   name: hcp_roidicom_vertex_structure
+        type: str
+        default: ''
+        description: The surface the vertex is in, CORTEX_LEFT or CORTEX_RIGHT.
+    -   name: hcp_roidicom_vertex_radius
+        type: str
+        default: '0'
+        description: A distance in mm around ``hcp_roidicom_vertex`` to include in the ROI, 0 means just the vertex.
+    -   name: hcp_roidicom_burn_value
+        type: str
+        default: detailed below
+        description: The value to overwrite in-ROI voxels with. Defaults to 20% above the voxelwise maximum.
+    -   name: hcp_roidicom_outline
+        type: str
+        default: ''
+        description: Use an outline with the given thickness in mm instead of occluding the ROI location.
+    -   name: hcp_roidicom_outline_type
+        type: str
+        default: INSIDE
+        description: The outline behavior, INSIDE (do not draw any voxels outside of the ROI, only make some of the ROI interior
+            transparent) or OUTSIDE (draw voxels outside the ROI and make the entire ROI transparent).
+    returns: []
+    origin: core
 -   name: hcp_run_qc
     aliases: []
     path: qx_utilities.hcp.qc_hcp.hcp_run_qc
@@ -8497,6 +8637,28 @@ commands:
     options: []
     returns: []
     origin: core
+-   name: install_qx_extension_dependencies
+    aliases: []
+    path: qx_extension_dependencies.install_qx_extension_dependencies
+    language: python
+    call: install_qx_extension_dependencies(extensions=None)
+    description: Install the python packages one or more extensions depend on, into each extension's own folder, for the python
+        QuNex runs with.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to install the dependencies of, as a comma separated list of names given with or without
+            the ``qx_`` prefix. 'all' covers every extension found.
+    options: []
+    returns:
+    -   name: installed
+        type: dict
+        default: null
+        description: For each extension covered, the packages installed into its folder, as 'name==version' strings. Empty
+            when it declares no dependencies or QuNex has them all.
+    origin: core
 -   name: join_fidl
     aliases: []
     path: qx_utilities.general.fidl.join_fidl
@@ -9056,7 +9218,7 @@ commands:
     aliases: []
     path: qx_utilities.general.sessions.merge_session
     language: python
-    call: merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]
+    call: merge_session --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>]
         [--original_sessions=<action>]
     description: Join multiple sessions into a single session.
     type: utility
@@ -9064,41 +9226,32 @@ commands:
     -   name: studyfolder
         type: str
         default: null
-        description: Path to the study folder. This is used as the base for resolving relative paths and for locating sessions
-            when only session IDs are provided (assumes sessions are in <studyfolder>/sessions/).
+        description: Path to the study folder. Session IDs given in `--source` and `--target` are looked for in `<studyfolder>/sessions/`,
+            relative paths are resolved against the study folder, and so is a relative `move:<path>` in `--original_sessions`.
     -   name: source
         type: str
         default: null
-        description: 'A comma-separated list of session IDs or paths to join. Each can be: - A session ID (e.g., ''session1'')
-            - assumes <studyfolder>/sessions/<id> - A relative path (e.g., ''other/session1'') - relative to studyfolder -
-            An absolute path (e.g., ''/data/study/sessions/session1'') The sessions will be merged in the order specified,
-            with sequence numbers and indices adjusted accordingly.'
+        description: A comma-separated list of the sessions to join, each given as a session ID, a relative path or an absolute
+            path.
     -   name: target
         type: str
         default: null
-        description: 'The target session ID or path. Can be specified as: - A session ID (e.g., ''merged_session'') - creates
-            in <studyfolder>/sessions/ - A relative path (e.g., ''sessions/merged'') - relative to studyfolder - An absolute
-            path (e.g., ''/data/study/sessions/merged'')'
+        description: The target session, given as a session ID, a relative path or an absolute path, resolved as for `--source`.
+            The folder is created if it does not exist. Its name is used as the session ID in the target session files, and
+            the subject ID is derived from it (see Notes).
     -   name: overwrite
         type: str
         default: 'no'
-        description: How to handle existing target folder. Options are 'no' (raise an error if target exists with content),
-            'clean' (remove existing content and replace with merged data), or 'merge' (add new data to existing session,
-            continuing sequence numbering from where target left off).
+        description: 'What to do when the target folder already exists and is not empty: ''no'', ''clean'' or ''merge''.'
     -   name: raw_data
         type: str
         default: copy
-        description: 'How to handle raw data (dicom/ and bids/ folders). Options are: - ''copy'': Copy raw data from source
-            to target (default) - ''move'': Move raw data from source to target - ''leave'': Do not transfer raw data, only
-            merge session metadata'
+        description: 'What to do with the raw data folders (`dicom/`, `bids/`, `inbox/` and `hcpls/`) of each source session:
+            ''copy'', ''move'' or ''leave''.'
     -   name: original_sessions
         type: str
         default: leave
-        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
-            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
-            sessions to specified path (e.g., ''move:/data/backup_sessions''). If a session already exists at the destination,
-            behavior depends on the --overwrite parameter: ''no'' skips the move with a warning, while ''clean'' or ''merge''
-            replaces the existing session.'
+        description: 'What to do with the source sessions once the merge has succeeded: ''leave'', ''remove'' or ''move:<path>''.'
     options: []
     returns: []
     origin: core
@@ -9108,42 +9261,43 @@ commands:
     language: python
     call: merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>]
         [--raw_data=<mode>] [--original_sessions=<action>]
-    description: Join multiple sessions according to a list file.
+    description: Join multiple sets of sessions, as listed in a file.
     type: utility
     args:
     -   name: studyfolder
         type: str
         default: null
-        description: Path to the study folder. This is passed to each merge_session call.
+        description: Path to the study folder. The source and target sessions are given by the folders below, so the study
+            folder is used only to resolve a relative `move:<path>` in `--original_sessions` and to report the target paths.
     -   name: session_list
         type: str
         default: null
-        description: 'Path to a text file containing join specifications. Each line should have the format:'
+        description: 'Path to a text file listing the merges, one per line, in the format::'
     -   name: source_folder
         type: str
         default: null
-        description: Path to the folder containing source sessions. Each source_id from the session_list will be resolved
-            as <source_folder>/<source_id>.
+        description: Path to the folder containing the source sessions. Each `<source_id>` is resolved as `<source_folder>/<source_id>`.
+            The folder must exist.
     -   name: target_folder
         type: str
         default: null
-        description: Path to the folder where target sessions will be created. Each target_id from the session_list will be
-            resolved as <target_folder>/<target_id>.
+        description: Path to the folder in which the target sessions are created. Each `<target_id>` is resolved as `<target_folder>/<target_id>`.
+            The folder is created if it does not exist.
     -   name: overwrite
         type: str
         default: 'no'
-        description: How to handle existing target folders. Passed to each merge_session call. Options are 'no', 'clean',
-            or 'merge'.
+        description: 'What to do when a target session already exists and is not empty: ''no'' (fail for that target), ''clean''
+            (replace it) or ''merge'' (add the sources to it). See `merge_session` for details.'
     -   name: raw_data
         type: str
         default: copy
-        description: How to handle raw data. Passed to each merge_session call. Options are 'copy', 'move', or 'leave'.
+        description: 'What to do with the raw data folders (`dicom/`, `bids/`, `inbox/`, `hcpls/`) of the source sessions:
+            ''copy'', ''move'' or ''leave''. NIfTI files are always copied. See `merge_session` for details.'
     -   name: original_sessions
         type: str
         default: leave
-        description: 'How to handle original source sessions after merging. Options are: - ''leave'': Leave original sessions
-            unchanged (default) - ''remove'': Remove original sessions after successful merge - ''move:<path>'': Move original
-            sessions to specified path (e.g., ''move:/data/backup_sessions'')'
+        description: 'What to do with the source sessions of a target once it has been joined successfully: ''leave'', ''remove''
+            or ''move:<path>''.'
     options: []
     returns: []
     origin: core

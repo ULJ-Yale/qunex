@@ -14,6 +14,11 @@ from typing import List, Tuple, Dict, Set
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.log as gl
 
+# A sequence line starts with its number and a colon. QuNex's writers pad the
+# number before the colon (dicom2niix "%-4s:", create_session_info "{:<4}:"), so
+# a sequence under four digits arrives as "71  :".
+_SEQ_LINE = re.compile(r"^(\d+)\s*:")
+
 
 def merge_session(
     studyfolder: str,
@@ -25,181 +30,266 @@ def merge_session(
     _log=None,
 ) -> bool:
     r"""
-    ``merge_session  --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
+    ``merge_session --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
 
     Join multiple sessions into a single session.
 
     Description:
-        Merges data from multiple source sessions into a target session, handling
-        sequence renumbering, BOLD/BOLDREF indexing, and grouping tags. This is
-        useful when data for a subject is split across multiple scanning sessions
-        and needs to be combined for processing and analysis.
+        Merges data from multiple source sessions into a target session. This
+        is useful when the data for one subject was acquired, or imported, as
+        several sessions, for instance when a scanning session was interrupted
+        and continued, or when one visit was split over two exports, and the
+        data needs to be processed and analysed as one session.
+
+        For each source session, in the order given, the command:
+
+        - copies the NIfTI files from `nii/` into the target `nii/` folder,
+          renaming them to new, non-overlapping sequence numbers,
+        - adds the sequence lines from `session.txt` and `session_hcp.txt` to
+          the target files of the same name, renumbered to match the renamed
+          NIfTI files, with bold/boldref indices and se()/fm() grouping tags
+          renumbered so that they do not clash with other sessions,
+        - copies or moves the raw data folders (`dicom/`, `bids/`, `inbox/`,
+          `hcpls/`) into a subfolder of the matching target folder, unless
+          `--raw_data=leave`,
+        - collects the additional metadata (e.g. `institution`, `device`).
+
+        The target `session.txt` and `session_hcp.txt` are then written with
+        the target session and subject IDs and with paths pointing into the
+        target session folder. Finally, the source sessions are left, removed
+        or moved, as set by `--original_sessions`.
+
+        Only raw data and session information files are merged. Derivatives
+        (`images/`, `hcp/`) are not, and the processing steps that produce them
+        need to be run on the merged session.
 
     ..  qx_command:
         type: utility
 
     Parameters:
+        --studyfolder (str):
+            Path to the study folder. Session IDs given in `--source` and
+            `--target` are looked for in `<studyfolder>/sessions/`, relative
+            paths are resolved against the study folder, and so is a relative
+            `move:<path>` in `--original_sessions`.
+
         --source (str):
-            A comma-separated list of session IDs or paths to join. Each can be:
-            - A session ID (e.g., 'session1') - assumes <studyfolder>/sessions/<id>
-            - A relative path (e.g., 'other/session1') - relative to studyfolder
-            - An absolute path (e.g., '/data/study/sessions/session1')
-            The sessions will be merged in the order specified, with sequence
-            numbers and indices adjusted accordingly.
+            A comma-separated list of the sessions to join, each given as a
+            session ID, a relative path or an absolute path.
+
+            Each is resolved as follows:
+
+            - a session ID (e.g. 'session1'), resolved as
+              `<studyfolder>/sessions/<id>`,
+            - a relative path (e.g. 'other/session1'), resolved against the
+              study folder,
+            - an absolute path (e.g. '/data/study/sessions/session1').
+
+            The sessions are merged in the order specified, and their sequence
+            numbers and indices are assigned in that order. A source session
+            that has neither `session.txt` nor `session_hcp.txt` is skipped, and
+            none of its data is merged.
 
         --target (str):
-            The target session ID or path. Can be specified as:
-            - A session ID (e.g., 'merged_session') - creates in <studyfolder>/sessions/
-            - A relative path (e.g., 'sessions/merged') - relative to studyfolder
-            - An absolute path (e.g., '/data/study/sessions/merged')
-
-        --studyfolder (str):
-            Path to the study folder. This is used as the base for resolving
-            relative paths and for locating sessions when only session IDs are
-            provided (assumes sessions are in <studyfolder>/sessions/).
+            The target session, given as a session ID, a relative path or an
+            absolute path, resolved as for `--source`. The folder is created if
+            it does not exist. Its name is used as the session ID in the target
+            session files, and the subject ID is derived from it (see Notes).
 
         --overwrite (str, default 'no'):
-            How to handle existing target folder. Options are 'no' (raise an
-            error if target exists with content), 'clean' (remove existing
-            content and replace with merged data), or 'merge' (add new data to
-            existing session, continuing sequence numbering from where target
-            left off).
+            What to do when the target folder already exists and is not empty:
+            'no', 'clean' or 'merge'.
+
+            - 'no': stop with an error,
+            - 'clean': remove the existing target folder, including any
+              derivatives, and create the merged session in its place,
+            - 'merge': add the source sessions to the existing target session,
+              which is then treated as one of the merged sessions (see
+              "Merging into an existing session" in Notes). The command stops
+              with an error if the target contains derivatives (`images/` or
+              `hcp/`).
+
+            The value also decides what happens when `--original_sessions`
+            moves a session onto an existing one (see below).
 
         --raw_data (str, default 'copy'):
-            How to handle raw data (dicom/ and bids/ folders). Options are:
-            - 'copy': Copy raw data from source to target (default)
-            - 'move': Move raw data from source to target
-            - 'leave': Do not transfer raw data, only merge session metadata
+            What to do with the raw data folders (`dicom/`, `bids/`, `inbox/`
+            and `hcpls/`) of each source session: 'copy', 'move' or 'leave'.
+
+            - 'copy': copy them into the target session,
+            - 'move': move them into the target session,
+            - 'leave': leave them in the source sessions only.
+
+            The NIfTI files in `nii/` are always copied, whatever the value,
+            since the merged session cannot be used without them. Note that
+            with 'leave' the raw data exists only in the source sessions, so
+            combining it with `--original_sessions=remove` deletes it.
 
         --original_sessions (str, default 'leave'):
-            How to handle original source sessions after merging. Options are:
-            - 'leave': Leave original sessions unchanged (default)
-            - 'remove': Remove original sessions after successful merge
-            - 'move:<path>': Move original sessions to specified path (e.g.,
-            'move:/data/backup_sessions'). If a session already exists at the
-            destination, behavior depends on the --overwrite parameter: 'no'
-            skips the move with a warning, while 'clean' or 'merge' replaces
-            the existing session.
+            What to do with the source sessions once the merge has succeeded:
+            'leave', 'remove' or 'move:<path>'.
+
+            - 'leave': leave them unchanged,
+            - 'remove': delete them,
+            - 'move:<path>': move them into the folder `<path>`, e.g.
+              'move:/data/backup_sessions' or 'move:archive/merged_sessions'. A
+              relative path is resolved against the study folder, and the folder
+              is created if it does not exist. If a session of the same name
+              already exists there, it is replaced when `--overwrite` is
+              'clean' or 'merge'. When `--overwrite=no`, that session is not
+              moved and a warning is reported.
+
+            Nothing is removed or moved if the merge fails.
 
     Output files:
-        The function creates or modifies a target session folder with the
-        following structure::
+        The command creates, or adds to, the target session folder::
 
             <target session id>/
-                dicom/              # DICOM files organized by sequence folders
-                    <seq_num>/      # Sequence folders with renumbered identifiers
-                nii/                # NIfTI files with renumbered names
-                    <seq_num>.nii.gz
-                    <seq_num>.json
-                bids/               # BIDS data (if present in sources)
-                    <source_session_id>/  # Nested by source session
-                session.txt         # Combined session metadata
-                session_hcp.txt     # Combined HCP session metadata
+                nii/                     # NIfTI files, renamed to the new
+                    <new seq num>.nii.gz # sequence numbers
+                    <new seq num>.json
+                dicom/                   # raw DICOM data, one subfolder per
+                    <source subfolder>/  # source session, content unchanged
+                bids/                    # if present in the sources
+                    <source subfolder>/
+                inbox/                   # if present in the sources
+                    <source subfolder>/
+                hcpls/                   # if present in the sources
+                    <source subfolder>/
+                session.txt              # combined session information
+                session_hcp.txt          # combined HCP session information,
+                                         # only if a source (or the target)
+                                         # had one
+
+        The raw data subfolders are created only when `--raw_data` is 'copy' or
+        'move'. Their content is not renamed, so the sequence numbers inside
+        them are the original ones. Each subfolder is named after its source
+        session: if the source session ID has the form `<target id>_<suffix>`,
+        the subfolder is `<suffix>`; otherwise it is the full source session
+        ID. For example, merging `OP1242_1` and `OP1242_2` into `OP1242` gives
+        `dicom/1/` and `dicom/2/`.
 
     Notes:
-        Sequence Renumbering:
-            When joining sessions, sequence numbers are renumbered to avoid
-            conflicts:
+        Sequence renumbering:
+            Each source session gets a block of sequence numbers of its own:
 
-            1. Find maximum sequence number across all source sessions
-            2. Determine base increment (1000, 10000, 100000, etc. - next
-               power of 10)
-            3. Add base * session_index to each sequence from each source
-               session
+            1. Find the largest sequence number across all source sessions.
+            2. Take the smallest power of 10 that is larger than it, and at
+               least 1000, as the base increment.
+            3. Add base × N to every sequence number of the N-th source session
+               (N = 1, 2, 3, ...).
 
-            Example: If sources have sequences numbered 1010-2010 and
-            1010-3010, and the maximum is 3010, the base increment will be
-            10000. The first source's sequences become 11010-12010, the second
+            Example: if the sources have sequences numbered 1010-2010 and
+            1010-3010, the largest is 3010 and the base increment is 10000. The
+            first source's sequences become 11010-12010 and the second
             source's become 21010-23010.
 
-            This renumbering is applied to:
+            The renumbering is applied to the NIfTI file names (`.nii.gz`,
+            `.json` and any other file in `nii/` whose name starts with the
+            sequence number) and to the sequence lines in `session.txt` and
+            `session_hcp.txt`, so the two always agree. Sequence lines are
+            recognised with or without padding before the colon, as written by
+            `import_dicom` and `create_session_info` (e.g. `71  : T1w`).
 
-            - DICOM subfolder names in the dicom/ folder
-            - NIfTI file names in the nii/ folder (both .nii.gz and .json
-              files)
-            - Sequence numbers in session.txt and session_hcp.txt files
+        BOLD/BOLDREF indexing:
+            In `session_hcp.txt` each bold and boldref sequence carries an index
+            (bold1, bold2, boldref1, ...). The indices of each source session
+            continue from the highest index used so far, so if the first source
+            has bold1-bold2, the second source's bold1-bold2 become bold3-bold4.
+            Gaps within a session's own numbering are preserved.
 
-        BOLD/BOLDREF Indexing:
-            In session_hcp.txt, each bold and boldref sequence is numbered
-            (e.g., bold1, bold2, boldref1, boldref2). When joining sessions,
-            numbers continue from where target left off. Example: target has
-            bold1-bold2, first source adds bold3-bold4, second source adds
-            bold5-bold6.
+        Grouping tags:
+            The se(N) and fm(N) tags group the spin-echo and gradient-echo field
+            maps with the images they belong to. Groups stay together within each
+            source session and are renumbered across sessions, so that no two
+            sessions share a group. For example, if both sources have se(1) and
+            se(2), the first source keeps se(1) and se(2), and the second source's
+            become se(3) and se(4).
 
-        Grouping Tags:
-            The se(N) and fm(N) tags group related sequences (same scanning
-            session or fieldmap group). When joining, groups are maintained
-            within each source session and numbers are renumbered to avoid
-            overlap between sessions. Example: If both sources have se(1) and
-            se(2), the first source keeps se(1) and se(2), the second source
-            becomes se(3) and se(4).
+        Session information files:
+            `session.txt` and `session_hcp.txt` are merged separately, each
+            from the files of the same name in the source sessions.
+            `session_hcp.txt` is created only when at least one source session
+            (or, with `--overwrite=merge`, the target) has one. If the sources
+            have only `session.txt`, run `create_session_info` on the merged
+            session to create `session_hcp.txt`.
 
-        BIDS Handling:
-            If source sessions contain a bids/ folder instead of (or in
-            addition to) dicom/, the BIDS data is preserved by nesting it under
-            the source session ID in the target's bids/ folder.
+            Metadata lines other than the IDs and paths (e.g. `institution`,
+            `device`) are collected from all source sessions. When sources
+            disagree on a value, both values are kept and a warning is reported.
 
-        Derivatives Handling:
-            The function handles existing derivatives (images/ and hcp/ folders)
-            as follows:
+            When raw data is copied or moved, a `session_<N>: <subfolder>` line
+            is added for each merged session, recording which raw data
+            subfolder holds its data.
 
-            - If source sessions contain derivatives: Warns user that
-              derivatives will NOT be merged and remain in source folders
-            - If overwrite='merge' and target contains derivatives: Raises
-              error to prevent unsafe merge
-            - If overwrite='clean': Warns user before removing all content
-              including derivatives
+        Merging into an existing session:
+            With `--overwrite=merge`, an existing target session is treated as
+            one of the merged sessions:
 
-        Pre-joined Session Detection:
-            The function detects if a target session already contains joined
-            sessions by checking for sequence numbers that are 10x+ higher than
-            typical (5+ digits) and multiple sequences sharing the same prefix
-            (e.g., 11010, 11020 share prefix 11, while 21010, 21020 share
-            prefix 21). When detected, only source sequence numbers are
-            adjusted; existing target sequences remain unchanged.
+            - If the target is a single session, it is first renumbered as
+              session 1 (its NIfTI files and sequence lines get the base
+              increment, and its raw data folders are moved into a subfolder
+              named like a source's). The sources then follow as sessions 2, 3,
+              and so on.
+            - If the target is itself the result of an earlier merge, its
+              numbering is kept and the sources are added after its last session
+              block. Such a target is recognised by a large gap in its sequence
+              numbers: the largest gap between consecutive sequence numbers is
+              at least 50000 and at least 50 times the median gap.
 
-        Session and Subject IDs:
-            The target session ID is used to derive the subject ID. If session
-            ID contains underscore (e.g., 'A_B'), subject ID is the part before
-            the first underscore ('A'). Otherwise, subject and session IDs are
-            the same. Paths in session.txt and session_hcp.txt are updated to
-            be valid within the new target session folder.
+            The target's own sequence lines and metadata are kept in the file
+            they came from.
 
-        Use:
-            This function only merges raw imaging data (DICOM, NIfTI, BIDS) and
-            session metadata files. Processed derivatives must be regenerated
-            by running the appropriate processing pipelines on the merged
-            session.
+        Session and subject IDs:
+            The target session ID is the name of the target folder. If it
+            contains an underscore (e.g. 'A_B'), the subject ID is the part
+            before the first underscore ('A'). Otherwise the subject ID is the
+            same as the session ID.
+
+        Derivatives:
+            Derivatives (`images/` and `hcp/` folders) are never merged. If a
+            source session contains them, a warning is reported and they remain
+            in the source folder. Note that removing or moving the source
+            sessions with `--original_sessions` takes their derivatives with
+            them.
 
     Examples:
-        ::
+        Join two sessions into a new session `A` in the study's sessions
+        folder, copying the raw data and leaving the source sessions as they
+        are::
 
-            merge_session(
-                source='session1,session2,session3',
-                target='merged_session',
-                studyfolder='/data/my_study',
-                overwrite='clean'
-            )
+            qunex merge_session \
+                --studyfolder=/data/my_study \
+                --source="A_001,A_002" \
+                --target=A
 
-        ::
+        Join three sessions, replacing an earlier version of the target, and
+        remove the source sessions once the merge has succeeded::
 
-            merge_session(
-                source='A_001,A_002',
-                target='sessions/A_combined',
-                studyfolder='/data/my_study',
-                overwrite='merge',
-                original_sessions='remove'
-            )
+            qunex merge_session \
+                --studyfolder=/data/my_study \
+                --source="A_001,A_002,A_003" \
+                --target=A \
+                --overwrite=clean \
+                --original_sessions=remove
 
-        ::
+        Add a further session to an existing merged session, moving its raw
+        data, and move the source session to an archive folder in the study::
 
-            merge_session(
-                source='/data/study/sessions/s1,other_sessions/s2',
-                target='/data/study/sessions/merged',
-                studyfolder='/data/study',
-                overwrite='clean',
-                original_sessions='move:archive/merged_sessions'
-            )
+            qunex merge_session \
+                --studyfolder=/data/my_study \
+                --source=A_004 \
+                --target=A \
+                --overwrite=merge \
+                --raw_data=move \
+                --original_sessions="move:archive/merged_sessions"
+
+        Use paths instead of session IDs::
+
+            qunex merge_session \
+                --studyfolder=/data/my_study \
+                --source="/data/import/s1,other_sessions/s2" \
+                --target=/data/my_study/sessions/merged
     """
 
     log = gl.log_or_console(_log)
@@ -349,8 +439,14 @@ def merge_session(
         os.makedirs(os.path.join(target_path, "dicom"), exist_ok=True)
         os.makedirs(os.path.join(target_path, "nii"), exist_ok=True)
 
-    # Analyze existing target sequences if merging
+    # Analyze existing target sequences if merging. Each target file is kept
+    # for its own merged counterpart; numbering is driven by the hcp sequences
+    # when present, by session.txt otherwise.
     target_sequences = []
+    target_hcp_sequences = []
+    target_txt_sequences = []
+    target_hcp_metadata = None
+    target_txt_metadata = None
     target_max_seq = 0
     target_max_bold = 0
     target_max_se = 0
@@ -358,13 +454,18 @@ def merge_session(
     target_is_joined = False
 
     if overwrite == "merge" and target_has_content:
-        # Parse existing target session file
-        target_session_file = os.path.join(target_path, "session_hcp.txt")
-        if not os.path.exists(target_session_file):
-            target_session_file = os.path.join(target_path, "session.txt")
+        target_hcp_file = os.path.join(target_path, "session_hcp.txt")
+        if os.path.exists(target_hcp_file):
+            target_hcp_sequences = _parse_session_file(target_hcp_file)
+            target_hcp_metadata = _parse_session_metadata(target_hcp_file)
 
-        if os.path.exists(target_session_file):
-            target_sequences = _parse_session_file(target_session_file)
+        target_txt_file = os.path.join(target_path, "session.txt")
+        if os.path.exists(target_txt_file):
+            target_txt_sequences = _parse_session_file(target_txt_file)
+            target_txt_metadata = _parse_session_metadata(target_txt_file)
+
+        target_sequences = target_hcp_sequences or target_txt_sequences
+        if target_sequences:
             target_max_seq = _find_max_sequence_number(target_sequences)
             target_max_bold = _find_max_bold_index(target_sequences)
             target_max_se = _find_max_group_tag(target_sequences, "se")
@@ -470,22 +571,32 @@ def merge_session(
                         new_file = os.path.join(target_nii, new_name)
                         os.rename(source_file, new_file)
 
-        # Update target_sequences to reflect new numbering
-        for seq in target_sequences:
+        # Update target sequences of both files to reflect new numbering
+        for seq in target_hcp_sequences + target_txt_sequences:
             old_num = seq["number"]
             new_num = old_num + target_offset
             seq["number"] = new_num
             # Update the line with new sequence number
-            seq["line"] = re.sub(r"^(\d+):", f"{new_num}:", seq["line"])
+            seq["line"] = _SEQ_LINE.sub(f"{new_num}:", seq["line"])
 
         # Update max values
         target_max_seq = _find_max_sequence_number(target_sequences)
 
-    # Track session metadata for session_N entries
+    # Track session metadata for session_N entries. A target that is itself a
+    # merge already carries session_N entries; new ones are numbered after them.
     session_metadata = []
+    prior_sessions = max(
+        sum(
+            1
+            for key, _ in (md["additional"] if md else [])
+            if re.fullmatch(r"session_\d+", key)
+        )
+        for md in (target_hcp_metadata, target_txt_metadata)
+    )
 
-    # Add target session metadata if merging
-    if overwrite == "merge" and target_has_content:
+    # Add target session metadata if merging into a single session; a joined
+    # target already lists its sessions
+    if overwrite == "merge" and target_has_content and not target_is_joined:
         # Determine target's nest folder name
         if "_" in target_session_id:
             parts = target_session_id.split("_", 1)
@@ -503,6 +614,10 @@ def merge_session(
     combined_txt_lines = []
     combined_hcp_metadata = {"additional": []}
     combined_txt_metadata = {"additional": []}
+    if target_hcp_metadata:
+        _merge_metadata(combined_hcp_metadata, target_hcp_metadata, _log=log)
+    if target_txt_metadata:
+        _merge_metadata(combined_txt_metadata, target_txt_metadata, _log=log)
 
     for idx, session_data in enumerate(source_session_data):
         session_path = session_data["path"]
@@ -581,13 +696,7 @@ def merge_session(
                 nest_folder = session_id
 
             # Calculate session number for metadata
-            session_num = idx + (
-                2
-                if (
-                    overwrite == "merge" and target_has_content and not target_is_joined
-                )
-                else 1
-            )
+            session_num = prior_sessions + len(session_metadata) + 1
             session_metadata.append((f"session_{session_num}", nest_folder))
 
             # Handle raw data folders
@@ -662,16 +771,20 @@ def merge_session(
                 combined_txt_metadata, session_data["txt_metadata"], _log=log
             )
 
-    # Write combined session files
+    # Write combined session files. session_hcp.txt only when a source, or
+    # the target being merged into, had one.
+    write_hcp = target_hcp_metadata is not None or any(
+        "hcp_file" in session_data for session_data in source_session_data
+    )
     _write_session_files(
         target_path,
         target_session_id,
         subject_id,
-        combined_hcp_lines,
-        combined_txt_lines,
+        [seq["line"] for seq in target_hcp_sequences] + combined_hcp_lines,
+        [seq["line"] for seq in target_txt_sequences] + combined_txt_lines,
         combined_hcp_metadata,
         combined_txt_metadata,
-        target_sequences if overwrite == "merge" else [],
+        write_hcp,
         session_metadata,
         _log=log,
     )
@@ -761,97 +874,130 @@ def merge_sessions_list(
     r"""
     ``merge_sessions_list --studyfolder=<path> --session_list=<file> --source_folder=<path> --target_folder=<path> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
 
-    Join multiple sessions according to a list file.
+    Join multiple sets of sessions, as listed in a file.
 
     Description:
-        Processes a list file containing multiple session join specifications,
-        calling merge_session for each line. This is useful for batch processing
-        multiple session merges with a single command.
+        Reads a list file in which each line names a target session and the
+        source sessions to join into it, and runs `merge_session` for each
+        line. This is the way to merge sessions for a whole study in one step,
+        for instance after importing data in which several subjects were
+        scanned in more than one session.
+
+        All source sessions are read from one folder (`--source_folder`) and all
+        target sessions are created in one folder (`--target_folder`). The two
+        can be the same folder, or different ones, e.g. importing into
+        `sessions/` and merging into `subjects/`.
+
+        The lines are processed in order. If joining one target fails, the
+        error is reported and the remaining lines are still processed. A summary
+        at the end lists the targets that were joined and those that failed,
+        and the command fails if any of them did. Every merge follows the rules
+        described in `merge_session`, including sequence renumbering and which
+        session information files are created.
 
     ..  qx_command:
         type: utility
 
     Parameters:
         --studyfolder (str):
-            Path to the study folder. This is passed to each merge_session call.
+            Path to the study folder. The source and target sessions are given
+            by the folders below, so the study folder is used only to resolve
+            a relative `move:<path>` in `--original_sessions` and to report the
+            target paths.
 
         --session_list (str):
-            Path to a text file containing join specifications. Each line should
-            have the format:
+            Path to a text file listing the merges, one per line, in the
+            format::
 
-            <target_id>: <source_id>, <source_id>, <source_id>
+                <target_id>: <source_id>, <source_id>, ...
 
-            Where target_id is the name of the merged session to create, and
-            source_id are the sessions to merge (comma-separated). Lines starting
-            with # are treated as comments and ignored. Empty lines are skipped.
+            `<target_id>` is the name of the merged session to create and the
+            `<source_id>` values are the sessions to join into it, in the order
+            in which they are to be merged. Lines starting with `#` are
+            comments, and empty lines are ignored. A line without a colon, or
+            with an empty target or no sources, is skipped with a warning. If
+            no valid line remains, a warning is reported and nothing is done.
 
         --source_folder (str):
-            Path to the folder containing source sessions. Each source_id from
-            the session_list will be resolved as <source_folder>/<source_id>.
+            Path to the folder containing the source sessions. Each
+            `<source_id>` is resolved as `<source_folder>/<source_id>`. The
+            folder must exist.
 
         --target_folder (str):
-            Path to the folder where target sessions will be created. Each
-            target_id from the session_list will be resolved as
-            <target_folder>/<target_id>.
+            Path to the folder in which the target sessions are created. Each
+            `<target_id>` is resolved as `<target_folder>/<target_id>`. The
+            folder is created if it does not exist.
 
         --overwrite (str, default 'no'):
-            How to handle existing target folders. Passed to each merge_session
-            call. Options are 'no', 'clean', or 'merge'.
+            What to do when a target session already exists and is not empty:
+            'no' (fail for that target), 'clean' (replace it) or 'merge' (add
+            the sources to it). See `merge_session` for details.
 
         --raw_data (str, default 'copy'):
-            How to handle raw data. Passed to each merge_session call. Options
-            are 'copy', 'move', or 'leave'.
+            What to do with the raw data folders (`dicom/`, `bids/`, `inbox/`,
+            `hcpls/`) of the source sessions: 'copy', 'move' or 'leave'. NIfTI
+            files are always copied. See `merge_session` for details.
 
         --original_sessions (str, default 'leave'):
-            How to handle original source sessions after merging. Options are:
-            - 'leave': Leave original sessions unchanged (default)
-            - 'remove': Remove original sessions after successful merge
-            - 'move:<path>': Move original sessions to specified path (e.g.,
-            'move:/data/backup_sessions')
+            What to do with the source sessions of a target once it has been
+            joined successfully: 'leave', 'remove' or 'move:<path>'.
+
+            - 'leave': leave them unchanged,
+            - 'remove': delete them,
+            - 'move:<path>': move them into the folder `<path>`, e.g.
+              'move:/data/backup_sessions' or 'move:archive/merged_sessions'. A
+              relative path is resolved against the study folder.
+
+            The sources of a target that failed are left unchanged. See
+            `merge_session` for how existing sessions at the move destination
+            are handled.
+
+    Output files:
+        One merged session folder per line of the list file, in
+        `<target_folder>/<target_id>`, with the content described in
+        `merge_session`.
 
     Examples:
-        Session list file example (session_joins.txt)::
+        A list file, e.g. `/data/my_study/processing/merge_sessions.txt`::
 
-            # Merge sessions for subject A
-            A_merged: A_001, A_002, A_003
+            # subject A was scanned in three sessions
+            A: A_1, A_2, A_3
 
-            # Merge sessions for subject B
-            B_merged: B_001, B_002
+            # subject B in two
+            B: B_1, B_2
 
-        Basic usage with default settings::
+        Merge the sessions in the study's sessions folder into a separate
+        `subjects` folder, copying the raw data and leaving the source sessions
+        as they are::
 
-            merge_sessions_list(
-                studyfolder='/data/my_study',
-                session_list='/data/my_study/processing/session_joins.txt',
-                source_folder='/data/my_study/sessions',
-                target_folder='/data/my_study/merged',
-                overwrite='clean',
-                raw_data='copy'
-            )
+            qunex merge_sessions_list \
+                --studyfolder=/data/my_study \
+                --session_list=/data/my_study/processing/merge_sessions.txt \
+                --source_folder=/data/my_study/sessions \
+                --target_folder=/data/my_study/subjects
 
-        Remove original sessions after successful merge::
+        Merge within the sessions folder, replacing earlier merges, and remove
+        the source sessions once each merge has succeeded::
 
-            merge_sessions_list(
-                studyfolder='/data/my_study',
-                session_list='/data/my_study/processing/session_joins.txt',
-                source_folder='/data/my_study/sessions',
-                target_folder='/data/my_study/merged',
-                overwrite='clean',
-                raw_data='copy',
-                original_sessions='remove'
-            )
+            qunex merge_sessions_list \
+                --studyfolder=/data/my_study \
+                --session_list=/data/my_study/processing/merge_sessions.txt \
+                --source_folder=/data/my_study/sessions \
+                --target_folder=/data/my_study/sessions \
+                --overwrite=clean \
+                --original_sessions=remove
 
-        Move original sessions to archive folder::
+        Move the raw data into the merged sessions and the source sessions to
+        an archive folder in the study::
 
-            merge_sessions_list(
-                studyfolder='/data/my_study',
-                session_list='/data/my_study/processing/session_joins.txt',
-                source_folder='/data/my_study/sessions',
-                target_folder='/data/my_study/merged',
-                overwrite='clean',
-                raw_data='move',
-                original_sessions='move:archive/pre_merge_sessions'
-            )
+            qunex merge_sessions_list \
+                --studyfolder=/data/my_study \
+                --session_list=/data/my_study/processing/merge_sessions.txt \
+                --source_folder=/data/my_study/sessions \
+                --target_folder=/data/my_study/subjects \
+                --overwrite=clean \
+                --raw_data=move \
+                --original_sessions="move:archive/pre_merge_sessions"
     """
 
     log = gl.log_or_console(_log)
@@ -1047,7 +1193,7 @@ def _parse_session_file(filepath: str) -> List[Dict]:
                 continue
 
             # Check if line is a sequence definition (starts with number followed by colon)
-            match = re.match(r"^(\d+):", line)
+            match = _SEQ_LINE.match(line)
             if match:
                 seq_num = int(match.group(1))
                 sequences.append({"number": seq_num, "line": line})
@@ -1419,13 +1565,13 @@ def _process_session_file_content(
             continue
 
         # Process sequence lines
-        match = re.match(r"^(\d+):", line)
+        match = _SEQ_LINE.match(line)
         if match:
             old_seq_num = int(match.group(1))
             new_seq_num = old_seq_num + offset
 
             # Replace sequence number at start
-            new_line = re.sub(r"^(\d+):", f"{new_seq_num}:", line)
+            new_line = _SEQ_LINE.sub(f"{new_seq_num}:", line)
 
             # Replace bold/boldref indices - process in REVERSE order to avoid cascading replacements
             # (e.g., if 1→5 and 5→9, processing 1 first would create :bold5: which would then be replaced to :bold9:)
@@ -1463,13 +1609,14 @@ def _write_session_files(
     txt_sequence_lines: List[str],
     hcp_metadata: Dict,
     txt_metadata: Dict,
-    existing_target_sequences: List[Dict],
+    write_hcp: bool,
     session_metadata: List[Tuple[str, str]],
     _log=None,
 ) -> None:
     """Write combined session.txt and session_hcp.txt files with proper formatting.
 
     Args:
+        write_hcp: Write session_hcp.txt; true when a source or the target had one
         session_metadata: List of tuples (session_N, source_id) to add as metadata
     """
 
@@ -1535,23 +1682,11 @@ def _write_session_files(
         format_metadata_line("hcp", hcp_path, txt_key_width),
     ]
 
-    # Write session_hcp.txt if we have HCP sequences or metadata
-    if (
-        hcp_sequence_lines
-        or existing_target_sequences
-        or hcp_metadata.get("additional")
-    ):
+    if write_hcp:
         # Section 3: Additional metadata for HCP file (preserve order)
         section3_hcp = []
         for key, value in hcp_metadata.get("additional", []):
             section3_hcp.append(format_metadata_line(key, value, hcp_key_width))
-
-        # Combine existing and new sequences
-        all_hcp_sequences = []
-        if existing_target_sequences:
-            for seq in existing_target_sequences:
-                all_hcp_sequences.append(seq["line"])
-        all_hcp_sequences.extend(hcp_sequence_lines)
 
         session_hcp_path = os.path.join(target_path, "session_hcp.txt")
         with open(session_hcp_path, "w") as f:
@@ -1562,9 +1697,9 @@ def _write_session_files(
             if section3_hcp:
                 f.write("\n")
                 f.write("\n".join(section3_hcp) + "\n")
-            if all_hcp_sequences:
+            if hcp_sequence_lines:
                 f.write("\n")
-                f.write("\n".join(all_hcp_sequences) + "\n")
+                f.write("\n".join(hcp_sequence_lines) + "\n")
 
         log.step(f"Created {session_hcp_path}")
 

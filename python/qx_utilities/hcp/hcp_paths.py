@@ -48,6 +48,17 @@ pe_dir_map = {
 se_dir_map = {"AP": "y", "PA": "y", "LR": "x", "RL": "x"}
 
 
+def _glob_sorted(pattern):
+    """
+    Glob in natural order, so numbered images follow their number (MPR2 before
+    MPR10) instead of the directory listing order.
+    """
+    return sorted(
+        glob.glob(pattern),
+        key=lambda path: [int(e) if e.isdigit() else e for e in re.split(r"(\d+)", path)],
+    )
+
+
 def get_hcp_paths(sinfo, options):
     """
     Build the dictionary of HCP folder and file paths for a session.
@@ -129,7 +140,7 @@ def get_hcp_paths(sinfo, options):
         filename = t1w.get("filename", None)
         if filename and options["hcp_filename"] == "userdefined":
             d["T1w"] = "@".join(
-                glob.glob(
+                _glob_sorted(
                     os.path.join(
                         d["T1w_source"], sinfo["id"] + "*" + filename + "*.nii.gz"
                     )
@@ -137,7 +148,7 @@ def get_hcp_paths(sinfo, options):
             )
         else:
             d["T1w"] = "@".join(
-                glob.glob(
+                _glob_sorted(
                     os.path.join(d["T1w_source"], sinfo["id"] + "*T1w_MPR*.nii.gz")
                 )
             )
@@ -183,7 +194,7 @@ def get_hcp_paths(sinfo, options):
             filename = t2w.get("filename", None)
             if filename and options["hcp_filename"] == "userdefined":
                 d["T2w"] = "@".join(
-                    glob.glob(
+                    _glob_sorted(
                         os.path.join(
                             d["source"],
                             "T2w",
@@ -193,7 +204,7 @@ def get_hcp_paths(sinfo, options):
                 )
             else:
                 d["T2w"] = "@".join(
-                    glob.glob(
+                    _glob_sorted(
                         os.path.join(d["T2w_source"], sinfo["id"] + "_T2w_SPC*.nii.gz")
                     )
                 )

@@ -18,6 +18,8 @@ session header and closes with the pipeline footer. Commands that reach further
 on this fixture assert a little more.
 """
 
+import os
+
 import pytest
 
 import qx_utilities.general.core as gc
@@ -43,6 +45,7 @@ from qx_utilities.hcp.hcp_post_freesurfer import hcp_post_freesurfer
 from qx_utilities.hcp.hcp_pre_freesurfer import hcp_pre_freesurfer
 from qx_utilities.hcp.hcp_prep_long import hcp_prep_long
 from qx_utilities.hcp.hcp_reapply_fix import hcp_reapply_fix
+from qx_utilities.hcp.hcp_roi_to_dicom import hcp_roi_to_dicom
 from qx_utilities.hcp.hcp_task_fmri_analysis import hcp_task_fmri_analysis
 from qx_utilities.hcp.hcp_temporal_ica import hcp_temporal_ica
 from qx_utilities.hcp.hcp_transmit_bias_individual import hcp_transmit_bias_individual
@@ -141,6 +144,38 @@ def test_cortical_thickness_dry_run(session):
     assert status[1] == "HCP CorrThick finished"
     assert "Running HCP Pipelines command via QuNex:" in report
     assert '\n    --subject="sess-01"' in report
+
+
+def test_roi_to_dicom_dry_run(session):
+    sinfo, options = session(
+        hcp_roidicom_input="/data/dicom/20", hcp_roidicom_cifti_roi="roi.dscalar.nii"
+    )
+    output = os.path.join(sinfo["hcp"], "sess-01", "T1w", "T1w_with_ROI_DICOM")
+    log = hcp_roi_to_dicom(sinfo, options)
+    report, status = log.text, log.status
+    _check_contract(report, status)
+    assert status[1] == "HCP ROI to DICOM can be run"
+    assert status[2] == 0
+    assert "ROI_to_DICOM.sh" in report
+    assert '\n    --dicom-input="/data/dicom/20"' in report
+    assert '\n    --cifti-roi-in="roi.dscalar.nii"' in report
+    assert '\n    --surf-reg-name="MSMSulc"' in report
+    assert '--dicom-output="%s"' % output in report
+    assert "--vertex-in" not in report
+    assert not os.path.exists(output)
+
+
+def test_roi_to_dicom_rejects_bad_roi_options(session):
+    sinfo, options = session(
+        hcp_roidicom_cifti_roi="roi.dscalar.nii", hcp_roidicom_vertex="0"
+    )
+    log = hcp_roi_to_dicom(sinfo, options)
+    report, status = log.text, log.status
+    _check_contract(report, status)
+    assert status[2] == 1
+    assert "got hcp_roidicom_cifti_roi, hcp_roidicom_vertex" in report
+    assert "requires the hcp_roidicom_vertex_structure parameter" in report
+    assert "ROI_to_DICOM.sh" not in report
 
 
 # ------------------------------------------------------------------- diffusion

@@ -6,6 +6,13 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.4
+
+* Integrated the HCP Pipelines `ROI_to_DICOM.sh` command into QuNex as `hcp_roi_to_dicom`.
+* Multiple T1w and T2w images are now passed to `hcp_pre_freesurfer` in numeric order (`MPR1`, `MPR2`, …) instead of directory listing order.
+* Fixed `merge_session` and `merge_sessions_list` dropping sequences from the session file in some cases; corrected and extended documentation.
+* Extensions can declare Python dependencies in `pyproject.toml`; `install_qx_extension_dependencies` installs them for the extension's own commands, and `check_qx_extensions` reports problems and clashes.
+
 ## 1.5.3
 
 * `dwi_noddi_gpu` now uses CUDA 12 as the default.
