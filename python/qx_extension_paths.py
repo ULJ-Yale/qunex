@@ -18,6 +18,7 @@ one variable spelled two ways is the defect this file exists to prevent.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import sys
 from pathlib import Path
@@ -126,21 +127,59 @@ def extension_python_folders() -> List[str]:
     """
     The python folder of every extension QuNex can see.
 
-    Read from two places, and both are needed. `QXEXTENSIONSPY` is what the
-    environment script exports, and it names an extension that was in place when
-    the environment was set up. The search roots are read here as well because
-    that environment cannot always be refreshed: inside a container it is sourced
-    once and every later source returns immediately, so an extension installed
-    after the container started would otherwise never reach the path, and its
-    commands would be listed and dispatched and then fail to import.
+    Taken from `extension_folders()` alone, so the folder on `sys.path` belongs
+    to the copy the registry was read from. The environment script's
+    `QXEXTENSIONSPY` is not read: it lists the copies found when the
+    environment was sourced, and with a root named since then it put the
+    overridden copy ahead of the winning one, so a command was listed from one
+    copy and imported from another. The search roots are read on every run and
+    cover what it did, including an extension installed after a container
+    started.
     """
-    folders = [e.strip() for e in os.environ.get("QXEXTENSIONSPY", "").split(":") if e.strip()]
+    return [
+        str(extension / "python")
+        for extension in extension_folders()
+        if (extension / "python").is_dir()
+    ]
 
-    for extension in extension_folders():
-        python_folder = extension / "python"
-        if python_folder.is_dir():
-            folders.append(str(python_folder))
 
-    # de-duplicate, keeping the order the folders were found in
-    seen = set()
-    return [f for f in folders if not (f in seen or seen.add(f))]
+def extension_package_folder(extension: Path) -> Path:
+    """
+    Where an extension's own python dependencies are installed, for the
+    interpreter running this process.
+
+    Named after the interpreter's version, because a compiled package built
+    for another one does not load, and after where the interpreter is
+    installed, because the same extension is often used by more than one
+    installation of QuNex -- on the host and in a container, both on python
+    3.12 -- each with packages of its own: `lib/python3.12-1a2b3c4d`. Each
+    gets its own folder, and an extension bound into a container finds the
+    container's folder, or none, and says so, rather than the host's.
+    """
+    version = f"{sys.version_info.major}.{sys.version_info.minor}"
+    where = hashlib.sha256(os.path.realpath(sys.prefix).encode()).hexdigest()[:8]
+    return Path(extension) / "lib" / f"python{version}-{where}"
+
+
+# written into a package folder by the install, to be compared at dispatch
+ENVIRONMENT_STAMP = ".qunex_environment"
+
+
+def environment_fingerprint() -> str:
+    """
+    A hash of the python packages this process can see, with their versions.
+
+    Taken from the names of the `.dist-info` and `.egg-info` folders on
+    `sys.path`, which carry the version, so that it only lists folders: it is
+    computed every time an extension command is dispatched. A package folder
+    resolved against one set of packages and used with another -- installed on
+    the host and bound into a container, or kept across an upgrade of QuNex --
+    is recognised by its stamp no longer matching.
+    """
+    names = []
+    for entry in sys.path:
+        try:
+            names += [n for n in os.listdir(entry or ".") if n.endswith((".dist-info", ".egg-info"))]
+        except OSError:
+            pass
+    return hashlib.sha256("\n".join(sorted(names)).encode()).hexdigest()

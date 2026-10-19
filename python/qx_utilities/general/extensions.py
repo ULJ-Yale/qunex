@@ -101,9 +101,31 @@ def load_extensions():
                         sys.path.append(os.path.join(extensions_path, module_name))
                     try:
                         modules[module_name] = importlib.import_module(module_name)
-                        module_names.append(module_name)
-                    except Exception:
-                        print(f"WARNING: There was an error when trying to import extension module: {extensions_path}/{module_name}!")
+                        # once, however often the extensions are loaded, or
+                        # its declarations are gathered once per load
+                        if module_name not in module_names:
+                            module_names.append(module_name)
+                    except Exception as e:
+                        _warn_import_failed(extensions_path, module_name, e)
+
+
+def _warn_import_failed(extensions_path, module_name, error):
+    """
+    Say why a module listed in `qx_modules` did not import -- on stderr, as
+    `bin/qunex.sh` reads `gmri -available` from stdout as its routing table.
+
+    These modules are imported on every run, before any extension's own
+    dependencies are put on the path (that happens when one of its commands is
+    dispatched), so a package missing here is one they must not use.
+    """
+    message = f"WARNING: Could not import extension module {extensions_path}/{module_name}: {error}"
+    missing = (getattr(error, 'name', None) or '').split('.')[0]
+    if isinstance(error, ModuleNotFoundError) and missing and missing != module_name.split('.')[0]:
+        message += (
+            f". Modules listed in qx_modules may use only the packages QuNex itself has; "
+            f"'{missing}' is not one of them. Import it where the command that needs it runs."
+        )
+    print(message, file=sys.stderr)
 
 
 def compile_list(list_name):
