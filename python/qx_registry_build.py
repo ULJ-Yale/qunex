@@ -1213,7 +1213,9 @@ def build_qx_extensions(*, extensions: Optional[str] = None):
     return build_qx_registry(build_core=False, extensions=named)
 
 
-def _select_extensions(extensions: Optional[str], folders: List[Path]) -> List[Path]:
+def _select_extensions(
+    extensions: Optional[str], folders: List[Path], command: str = 'build_qx_registry'
+) -> List[Path]:
     """
     The extension folders a build covers, out of the ones QuNex can see.
 
@@ -1243,7 +1245,7 @@ def _select_extensions(extensions: Optional[str], folders: List[Path]) -> List[P
 
     if unknown:
         raise ge.CommandFailed(
-            'build_qx_registry',
+            command,
             "Unknown extension(s): %s" % ", ".join(unknown),
             "Extensions found: %s" % (", ".join(sorted(by_name)) or "none"),
         )

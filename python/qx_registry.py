@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+import site
+import sys
 from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
@@ -28,6 +30,9 @@ from qx_extension_paths import (  # noqa: F401
     _warn,
     _warned,
     extension_folders,
+    ENVIRONMENT_STAMP,
+    environment_fingerprint,
+    extension_package_folder,
     extension_search_roots,
 )
 
@@ -216,8 +221,97 @@ def load_python_callable(command: CommandInfo):
     if not mod_path:
         raise ge.CommandFailed('load_python_callable', f"Invalid python command.path: {command.path}")
     import importlib
-    mod = importlib.import_module(mod_path)
+
+    extension = Path(command.root) if command.origin.startswith("extension:") and command.root else None
+    if extension is not None:
+        _add_extension_packages(extension)
+
+    try:
+        mod = importlib.import_module(mod_path)
+    except ModuleNotFoundError as e:
+        missing = (e.name or "").split(".")[0]
+        if extension is None or not missing or _is_own_module(extension, missing):
+            raise
+        name = extension.name[len("qx_"):]
+        raise ge.CommandFailed(
+            'load_python_callable',
+            f"Extension '{name}' needs the python package providing '{missing}', which is not installed",
+            f"Install the extension's dependencies with: "
+            f"qunex install_qx_extension_dependencies --extensions={name}",
+            f"They go into {extension_package_folder(extension)}, for this interpreter ({sys.executable}).",
+        ) from e
     return getattr(mod, fn_name)
+
+
+def _add_extension_packages(extension: Path) -> None:
+    """
+    Put an extension's own dependencies on `sys.path`, in front of QuNex's.
+
+    Done when one of its commands is about to be imported and not when the
+    extensions are loaded, so a core command never sees an extension's
+    packages and one extension's command sees only its own. In front of
+    site-packages (behind the standard library) because the folder holds
+    either packages QuNex lacks, where the order changes nothing, or the
+    versions the extension needs in place of QuNex's, which have to win. Every
+    command runs in a process of its own, so that reaches no other command.
+    `addsitedir` is used for its handling of `.pth` files, and what it appends
+    is moved forward.
+    """
+    folder = extension_package_folder(extension)
+    if not folder.is_dir() or str(folder) in sys.path:
+        return
+
+    loaded = sorted(name for name in _top_level_names(folder) if name in sys.modules)
+    if loaded:
+        raise ge.CommandFailed(
+            'load_python_callable',
+            f"Extension '{extension.name[len('qx_'):]}' brings its own version of "
+            f"{', '.join(loaded)}, already imported in this process",
+            f"A package that is imported before the command is dispatched can not be replaced. "
+            f"Remove it from {folder} or report this as a QuNex issue.",
+        )
+
+    _check_environment_stamp(extension, folder)
+
+    before = list(sys.path)
+    site.addsitedir(str(folder))
+    added = [p for p in sys.path if p not in before]
+    first_site = next((i for i, p in enumerate(before) if p.endswith(("site-packages", "dist-packages"))), len(before))
+    sys.path[:] = before[:first_site] + added + before[first_site:]
+
+
+def _check_environment_stamp(extension: Path, folder: Path) -> None:
+    """
+    Warn when the folder was installed against other packages than these.
+
+    Only a warning: the packages may well still work, and when they do not the
+    error they cause comes with this line ahead of it. A folder without a stamp
+    was not filled by the install command, and is taken as it is.
+    """
+    stamp = folder / ENVIRONMENT_STAMP
+    if stamp.is_file() and stamp.read_text().strip() != environment_fingerprint():
+        name = extension.name[len("qx_"):]
+        _warn(
+            f"the python packages of extension '{name}' were installed for a different set of "
+            f"QuNex's packages than this one. If its commands fail, reinstall them with: "
+            f"qunex install_qx_extension_dependencies --extensions={name}"
+        )
+
+
+def _top_level_names(folder: Path) -> List[str]:
+    """The importable top-level names a package folder provides."""
+    names = []
+    for entry in folder.iterdir():
+        if entry.name.endswith((".dist-info", ".data")) or entry.name in ("bin", "__pycache__", ENVIRONMENT_STAMP):
+            continue
+        names.append(entry.name.split(".")[0])
+    return names
+
+
+def _is_own_module(extension: Path, module: str) -> bool:
+    """Whether `module` is the extension's own code, not a dependency of it."""
+    python = extension / "python"
+    return (python / module).is_dir() or (python / f"{module}.py").is_file()
 
 
 def discover_extension_registries(

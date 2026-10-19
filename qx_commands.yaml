@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-13T20:16:04.698664+00:00'
+generated_at: '2026-10-18T01:39:34.617752+00:00'
 source:
     id: core
 commands:
@@ -347,6 +347,28 @@ commands:
         default: ''
         description: Path template to an aparc+aseg segmentation in T1 space.
     returns: []
+    origin: core
+-   name: check_qx_extensions
+    aliases: []
+    path: qx_extension_dependencies.check_qx_extensions
+    language: python
+    call: check_qx_extensions(extensions=None)
+    description: Check the extensions QuNex can see, and report what is wrong or at odds with something else, with what to
+        do about each.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to check, as a comma separated list of names given with or without the ``qx_`` prefix.
+            'all' checks every extension found, and so does leaving it out.
+    options: []
+    returns:
+    -   name: findings
+        type: dict
+        default: null
+        description: The problems found, as lists of messages under 'qunex', under each extension's folder name, and under
+            'across'. Empty lists when there is nothing to report.
     origin: core
 -   name: check_study
     aliases: []
@@ -8614,6 +8636,28 @@ commands:
         description: What to do with the archive after mapping.
     options: []
     returns: []
+    origin: core
+-   name: install_qx_extension_dependencies
+    aliases: []
+    path: qx_extension_dependencies.install_qx_extension_dependencies
+    language: python
+    call: install_qx_extension_dependencies(extensions=None)
+    description: Install the python packages one or more extensions depend on, into each extension's own folder, for the python
+        QuNex runs with.
+    type: utility
+    args:
+    -   name: extensions
+        type: Optional[str]
+        default: ''
+        description: Which extensions to install the dependencies of, as a comma separated list of names given with or without
+            the ``qx_`` prefix. 'all' covers every extension found.
+    options: []
+    returns:
+    -   name: installed
+        type: dict
+        default: null
+        description: For each extension covered, the packages installed into its folder, as 'name==version' strings. Empty
+            when it declares no dependencies or QuNex has them all.
     origin: core
 -   name: join_fidl
     aliases: []
