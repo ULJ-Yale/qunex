@@ -283,7 +283,10 @@ env -u TOOLS -u QUNEXPATH -u QUNEXREPO pytest --ignore=python/tests/test_fc_func
 ```
 
 (`test_fc_functions` needs the `qx_library` submodule the workflow does not check out; tests
-needing external binaries skip themselves. The lint job pins a ruff version — match it.) When
+needing external binaries skip themselves. The lint job pins a ruff version — match it. The
+workflow also installs only the packages its `install dependencies` step names, which this
+command does not check: a test that imports another one, directly or through the module it
+tests, needs it added there.) When
 this catches something, **fix what reads the variable rather than adding a fixture that sets
 it**: a fixture turns CI green and leaves the failure waiting for anyone who imports QuNex
 without the environment. `general/log/report.py`'s `get_qunex_version` is the pattern — it
