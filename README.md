@@ -33,7 +33,7 @@ You can submit questions and report issues on the official **[QuNex forum](https
 ## Version
 
 * QuNex: 1.6.0
-* qx_library: 1.5.3
+* qx_library: 1.6.0
 
 ## References
 
