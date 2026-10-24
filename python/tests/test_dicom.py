@@ -528,7 +528,7 @@ def test_import_dicom_inspection_thresholds_reach_the_engine(tmp_path, capsys):
         gd.import_dicom(
             sessionsfolder=str(tmp_path),
             sessions="S1",
-            masterinbox="none",
+            inbox="none",
             min_files="6",
             tr_abs_ms="250",
             tr_rel_pct="7.5",
@@ -540,6 +540,36 @@ def test_import_dicom_inspection_thresholds_reach_the_engine(tmp_path, capsys):
     assert seen["tr_rel_pct"] == 7.5
     # deprecated parameter is warned about, not silently ignored
     assert "existing_structure parameter is deprecated" in capsys.readouterr().out
+
+
+def test_import_dicom_takes_inbox_like_the_other_imports(tmp_path, capsys):
+    """
+    `--masterinbox` is now `--inbox`, the name every other import command
+    uses. The old name still works: on the command line, in a batch file and
+    in a recipe it is remapped, and a python caller is warned and served.
+    """
+    from qx_utilities.dicom import import_dicom as gd
+    import qx_utilities.general.commands_support as gcs
+
+    assert gcs.check_deprecated_parameters(
+        {"masterinbox": "/data/inbox"}, "import_dicom"
+    ) == {"inbox": "/data/inbox"}
+
+    (tmp_path / "S1" / "inbox").mkdir(parents=True)
+    seen = []
+
+    def fake_scan(sources, dicom_dir, session_id, **kwargs):
+        seen.append(session_id)
+        return SimpleNamespace(verdict="PASS")
+
+    with patch.object(gd, "_scan_and_sort_session", fake_scan), \
+         patch.object(gd.gdr, "write_report", lambda pkg, path: ""), \
+         patch.object(gd.gdr, "render_console_summary", lambda pkg: ""), \
+         patch.object(gd, "dicom2niix", lambda **kwargs: None):
+        gd.import_dicom(sessionsfolder=str(tmp_path), sessions="S1", masterinbox="none")
+
+    assert seen == ["S1"], "masterinbox='none' still selects the session mode"
+    assert "masterinbox parameter is now called inbox" in capsys.readouterr().out
 
 
 def test_import_dicom_signature():

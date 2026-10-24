@@ -45,7 +45,7 @@ are processed; the default is all of them."""
 
 def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
     """
-    ``create_bold_brain_masks [... processing options]``
+    ``create_bold_brain_masks [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Extract the brain and create a brain mask for each BOLD image.
 
@@ -56,9 +56,15 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -71,10 +77,10 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --bolds (str, default 'rest'):
+        --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
-            copy over. It can be a single type (e.g. 'task'), a pipe separated
-            list (e.g. 'WM|Control|rest') or 'all' to copy all.
+            process. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
@@ -111,8 +117,8 @@ def create_bold_brain_masks(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_bold_brain_masks \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --nifti_tail=_hp2000_clean \\
                 --bolds=all \\
@@ -204,7 +210,7 @@ def execute_create_bold_brain_masks(sinfo, options, overwrite, boldinfo):
 
     try:
         # --- filenames
-        f = pc.get_file_names(sinfo, options)
+        f = pc.get_file_names(sinfo, options, _log=log)
         f.update(pc.get_bold_file_names(sinfo, boldinfo["name"], options))
 
         # template file

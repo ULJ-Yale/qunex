@@ -32,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_nhp_freesurfer [... processing options]``
+    ``hcp_nhp_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the NHP (non-human primate) variant of the FS step of the HCP
     Pipeline (FreeSurferPipelineNHP.sh).
@@ -50,9 +50,15 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -88,7 +94,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
             working folders and the 'MNINonLinear' folder.
 
         --hcp_filename (str, default 'automated'):
-            How to name the BOLD files once mapped intothe hcp input folder
+            How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
@@ -170,7 +176,7 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the above mentioned T1w
-        folder as well as MNINonLinear folder in the sessions's root hcp
+        folder as well as MNINonLinear folder in the session's root hcp
         folder.
 
     Notes:
@@ -221,10 +227,10 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
         Example run from the base study folder with test flag::
 
             qunex hcp_nhp_freesurfer \\
+                --studyfolder="." \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
                 --parsessions="10" \\
-                --species="MacaqueRhesus" \\
+                --hcp_species="MacaqueRhesus" \\
                 --hcp_scale_factor="1.25" \\
                 --overwrite="no" \\
                 --test
@@ -232,10 +238,10 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
         Example run with absolute paths with scheduler::
 
             qunex hcp_nhp_freesurfer \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.hcp.txt" \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --parsessions="4" \\
-                --species="Marmoset" \\
+                --hcp_species="Marmoset" \\
                 --hcp_scale_factor="0.2" \\
                 --overwrite="yes" \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
@@ -324,7 +330,8 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if editfiles or os.path.exists(controlfile):
                     copyfiles = []
                     for efile in editfiles:
-                        fname = os.path.basename(efile).split("_", 1)[1]
+                        # drop the '<session id>_' prefix, the id itself can hold an '_'
+                        fname = os.path.basename(efile).replace(sinfo["id"] + "_", "", 1)
                         edited.append(fname.replace(".mgz", ""))
                         destfile = os.path.join(hcp["FS_folder"], "mri", fname)
                         copyfiles.append((efile, destfile))
@@ -333,10 +340,11 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         copyfiles.append((controlfile, destfile))
                         edited.append("control")
                     for efile, destfile in copyfiles:
-                        if os.path.exists(destfile):
-                            log.detail(f"replacing: {fname} ")
-                        else:
-                            log.detail(f"adding: {fname} ")
+                        if options["run"] != "run":
+                            log.detail(f"test, not copied: {os.path.basename(efile)}")
+                            continue
+                        action = "replacing" if os.path.exists(destfile) else "adding"
+                        log.detail(f"{action}: {os.path.basename(destfile)} ")
                         shutil.copy2(efile, destfile)
                 else:
                     log.detail(f"no edits files found in {editsfolder}!")
@@ -397,7 +405,9 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
         # -> Additional, reconall parameters
         if options["hcp_fs_extra_reconall"]:
             for f in options["hcp_fs_extra_reconall"].split("|"):
-                elements.append(("extra-reconall-arg", f))
+                # recon-all stops on an empty argument
+                if f:
+                    elements.append(("extra-reconall-arg", f))
 
         # -> additional QuNex passed parameters
         if options["hcp_expert_file"]:
@@ -530,15 +540,12 @@ def hcp_nhp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         _log=log,
                     )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP NHP FS", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP NHP FS can be run")
-                    report = "HCP NHP FS can be run"
-                    failed = 0
+                log.step("HCP NHP FS can be run")
+                report = "HCP NHP FS can be run"
+                failed = 0
         else:
             log.step("Subject cannot be processed.")
             report = "FS cannot be run"

@@ -18,9 +18,12 @@ questions the log machinery asks before it writes anything::
         enabled: true            # master switch
         runlog: true             # write the per-run summary log
         comlog: true             # write the per-call raw output logs
-        outside_study: home      # home | cwd | <path>, for runs with no study
+        outside_study: home      # home | cwd | <path>, for every run outside
+                                 # a study, whatever the layout; a relative
+                                 # path is taken from the current folder
         layout: default          # default | legacy (<study>/processing/logs)
-                                 #          | nested (a folder per recipe step)
+                                 #   | nested (a numbered folder per recipe
+                                 #   step, external steps included)
         keep_comlogs: false      # never delete a comlog, whatever a caller asks
         comlog_folders: [study]  # study | session | hcp | <path>, one or more
         runlog_content: manifest # manifest | full -- whether the runlog also
@@ -42,6 +45,15 @@ this order, each layer overriding the one before it:
    legacy ``commands_support.logskip_commands`` list,
 6. ``--logging=<none|comlog|runlog|full>``, ``--keep_comlogs`` and
    ``--runlog_content=<manifest|full>`` on the command line.
+
+``layout`` and ``outside_study`` are the two settings that say where a run's
+logs go, and ``general.folders`` applies them: ``run_folders`` decides a run's
+log folder once, where the run starts, and the container launcher, which can
+not import this package, decides it on the host with a copy of the same code.
+So the settings files are the ones ``general.folders`` names, and the values
+the two settings take are the ones it knows. ``legacy`` is a layout of a
+study's logs: a run outside a study logs where ``outside_study`` says,
+whatever the layout.
 
 ``comlog_folders`` is the destination half of what ``--log`` used to answer;
 ``--log`` kept the retention half. A command's own ``--comlog_folders``
@@ -65,20 +77,18 @@ from dataclasses import dataclass, replace
 import yaml
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.parsing as gp
 
 # the user settings file is accepted in exactly these locations; finding it in
 # more than one is an error rather than a silent pick, since the loser would
-# look like it was being honoured
-USER_SETTINGS_PATHS = [
-    "~/.qunex_settings.yaml",
-    "~/qunex_settings.yaml",
-    "~/qunex/qunex_settings.yaml",
-    "~/.qunex/qunex_settings.yaml",
-]
+# look like it was being honoured. `general.folders` names them, because the
+# container launcher reads the same files to place a run's logs; this module
+# keeps a list of its own, which tests point at a file of their own
+USER_SETTINGS_PATHS = list(gf.USER_SETTINGS_PATHS)
 
 # the study settings file, relative to the study folder
-STUDY_SETTINGS_FILE = "qunex_settings.yaml"
+STUDY_SETTINGS_FILE = gf.STUDY_SETTINGS_FILE
 
 # what a logging mode means, as (enabled, runlog, comlog). `both` is the
 # spelling the registry `logging:` field uses for `full`; both are accepted
@@ -91,11 +101,11 @@ LOGGING_MODES = {
     "both": (True, True, True),
 }
 
-# where a run outside a study may put its logs
-OUTSIDE_STUDY = ["home", "cwd"]
+# where a run outside a study may put its logs, besides a path of its own
+OUTSIDE_STUDY = list(gf.OUTSIDE_STUDY)
 
 # recognised log folder layouts
-LAYOUTS = ["default", "legacy", "nested"]
+LAYOUTS = list(gf.LAYOUTS)
 
 # what a runlog may hold beyond the call echoes, the status lines and the
 # closing manifest
@@ -111,12 +121,17 @@ class LogSettings:
         enabled: master switch; when False nothing is written at all.
         runlog: write the per-run summary log.
         comlog: write the per-call raw output logs.
-        outside_study: where to log when the run has no study folder --
-            ``home`` (``~/qunex_logs``), ``cwd``, or an explicit path.
-        layout: ``default`` (``<study>/logs/<stamp>_<command>``),
-            ``legacy`` (``<study>/processing/logs``), or ``nested``, which is
-            ``default`` plus a subfolder per ``run_recipe`` step so each step
-            keeps its own runlog and comlogs.
+        outside_study: where a run outside any study logs, whatever the
+            layout -- ``home`` (``~/qunex_logs``), ``cwd`` (the current
+            folder), or a path, a relative one taken from the current folder.
+            The run gets a ``<stamp>_<name>`` folder of its own in it.
+        layout: how a study's logs are laid out -- ``default``
+            (``<study>/logs/<stamp>_<name>``, a folder per run), ``legacy``
+            (``<study>/processing/logs``, which every run of the study
+            shares), or ``nested``, which is ``default`` plus a numbered
+            folder per ``run_recipe`` step, external steps included, so each
+            step keeps its own runlog and comlogs; the recipe's ``status``
+            records stay at the root of its folder.
         keep_comlogs: the run-level override -- when True no comlog is ever
             deleted, whatever a call site's ``remove=`` or ``--log=remove``
             asks for.
@@ -175,7 +190,15 @@ def user_settings_file():
 
 
 def read_settings_file(path):
-    """Read one settings file into a dict; a missing file reads as empty."""
+    """
+    Read one settings file into a dict; a missing file reads as empty.
+
+    Its ``logging:`` section, the one QuNex reads, is checked here, where the
+    file can still be named: it must be a mapping of settings, or empty. One
+    that is anything else is an error whatever the other file states, as it
+    is for the container launcher, which reads the files with
+    ``general.folders``.
+    """
     if not path or not os.path.isfile(path):
         return {}
 
@@ -195,6 +218,16 @@ def read_settings_file(path):
             "Invalid settings file",
             "%s does not hold a mapping of settings sections." % path,
         )
+
+    section = content.get("logging")
+    if section and not isinstance(section, dict):
+        raise ge.CommandError(
+            "qunex settings",
+            "Invalid logging setting",
+            "logging must be a mapping of settings, got: %r" % (section,),
+            "Please write the logging section of %s as indented `key: value` "
+            "lines under `logging:`." % path,
+        )
     return content
 
 
@@ -204,7 +237,11 @@ def load_settings(studyfolder=None):
 
     Study settings override user settings section by section: a study that
     sets ``logging: {comlog: false}`` leaves the user's other logging keys in
-    place rather than replacing the whole section.
+    place rather than replacing the whole section, and a section the study
+    file leaves empty -- ``logging:`` with nothing under it -- states nothing,
+    so the user's section stands. The container launcher reads the two files
+    the same way, with ``general.folders.placement_settings``, and so decides
+    a run's log folder as QuNex does.
 
     Parameters:
         studyfolder: the study folder, when the run has one.
@@ -221,6 +258,8 @@ def load_settings(studyfolder=None):
     if studyfolder:
         study = read_settings_file(os.path.join(studyfolder, STUDY_SETTINGS_FILE))
         for section, values in study.items():
+            if not values:
+                continue
             if isinstance(values, dict) and isinstance(settings.get(section), dict):
                 settings[section] = {**settings[section], **values}
             else:
@@ -375,51 +414,6 @@ def apply_runlog_content(settings, value):
     return replace(settings, runlog_content=content)
 
 
-def apply_study_settings(settings, studyfolder, args):
-    """
-    Layer a study's ``logging:`` section over already resolved settings.
-
-    For the caller that learns which study it is in only *after* its settings
-    were resolved: ``run_recipe``, whose recipe file can name a study the
-    command line never mentioned. Only the keys that study actually states are
-    taken -- the rest of the resolution stands -- and ``--logging`` is applied
-    again on top, so the command line still wins over the file.
-
-    Parameters:
-        settings: the settings resolved without knowing the study.
-        studyfolder: the study folder, or None.
-        args: the parsed arguments; ``logging`` is read from them.
-
-    Returns:
-        the resulting :class:`LogSettings`.
-    """
-    section = (load_settings(studyfolder).get("logging") or {}) if studyfolder else {}
-    if not section:
-        return settings
-
-    stated = settings_to_log_settings(section)
-    overrides = {
-        field: getattr(stated, field)
-        for field in (
-            "enabled",
-            "runlog",
-            "comlog",
-            "outside_study",
-            "layout",
-            "keep_comlogs",
-            "comlog_folders",
-            "runlog_content",
-        )
-        if field in section
-    }
-
-    settings = apply_mode(
-        replace(settings, **overrides), args.get("logging"), "--logging"
-    )
-    settings = apply_keep_comlogs(settings, args.get("keep_comlogs"))
-    return apply_runlog_content(settings, args.get("runlog_content"))
-
-
 # The settings this process resolved. A module-level value models exactly what
 # this is: one QuNex invocation per process, resolved once before any dispatch
 # and never changed afterwards. It exists for the deep helpers in
@@ -433,9 +427,11 @@ def set_active(settings):
     Record the settings this process resolved.
 
     Called once per invocation, immediately after the settings are known:
-    ``gmri`` after :func:`resolve_logging`, ``process.run`` after it has built
-    its context from them, and ``run_recipe`` after
-    :func:`apply_study_settings`.
+    ``gmri`` once it has placed the run and resolved them for its study,
+    ``process.run`` after it has built its context from them, and
+    ``run_recipe`` with the settings its run is placed by -- the ones it was
+    handed, or else those :func:`resolve_logging` gives for the study it is
+    placed in.
 
     Parameters:
         settings: the resolved :class:`LogSettings`.

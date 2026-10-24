@@ -39,20 +39,38 @@ usage() {
  echo ""
  echo "Local system variables if using QuNex hierarchy:"
  echo ""
- echo "--studyfolder          Path to study on local file system"
- echo "--sessionsfolder       Path to study data folder where the sessions folders "
- echo "                       reside"
+ echo "--studyfolder          Path to the study folder. The sessions are in its "
+ echo "                       sessions folder, unless --sessionsfolder names another "
+ echo "                       one."
+ echo "--sessionsfolder       Path to the folder with the sessions. Default: "
+ echo "                       <studyfolder>/sessions. Set it only when the sessions "
+ echo "                       are not in the sessions folder of the study. One of "
+ echo "                       --studyfolder and --sessionsfolder has to be given for "
+ echo "                       an upload without --dicompath and for a download "
+ echo "                       without --downloadpath."
  echo "--sessions             List of sessions to run that are study-specific and "
  echo "                       correspond to XNAT database session IDs"
  echo "--downloadpath         Specify path to download. Default: "
- echo "                       <study_folder>/sessions/inbox/ or "
- echo "                       <study_folder>/sessions/inbox/BIDS"
+ echo "                       <sessionsfolder>/inbox or, with --bidsformat='yes', "
+ echo "                       <sessionsfolder>/inbox/BIDS"
  echo "--bidsformat           Specify if XNAT data is in BIDS format (yes/no). Default "
  echo "                       is [no]."
  echo ""
  echo "                       If --bidsformat='yes' and XNAT download run is requested "
- echo "                       then by default. BIDS data is placed in "
- echo "                       <sessions_folder/inbox/BIDS"
+ echo "                       then BIDS data is by default placed in "
+ echo "                       <sessionsfolder>/inbox/BIDS"
+ echo "--logfolder            The folder the run logs in. A download saves the XNAT "
+ echo "                       project information it fetches there, in "
+ echo "                       XNATInfo_<timestamp>. Default: the run's log folder, "
+ echo "                       decided as for every QuNex run: "
+ echo "                       <studyfolder>/logs/<timestamp>_xnat_upload_download "
+ echo "                       (<studyfolder>/processing/logs with "
+ echo "                       --logfolder=legacy or the legacy layout), or, without "
+ echo "                       a study folder, "
+ echo "                       ~/qunex_logs/<timestamp>_xnat_upload_download or "
+ echo "                       where the outside_study logging setting says. A "
+ echo "                       relative path is taken from the study folder, else "
+ echo "                       from the current folder."
  echo ""
  echo "Local system variables if using generic DICOM location for a single XNAT upload:"
  echo ""
@@ -97,7 +115,7 @@ usage() {
  echo "==="
  echo ""
  echo "Note: To invoke this function you need a credential file in your home folder or "
- echo "provide one using --xnatcredentials parameter or --xnatuser and --xnatpass "
+ echo "provide one using --xnatcredentialfile parameter or --xnatuser and --xnatpass "
  echo "parameters."
  echo ""
  echo "EXAMPLE USE"
@@ -107,7 +125,7 @@ usage() {
  echo ""
  echo " xnat_upload_download.sh \ "
  echo " --runtype='upload' \ "
- echo " --sessionsfolder='<path_to_sessions_folder>' \ "
+ echo " --studyfolder='<path_to_study_folder>' \ "
  echo " --sessions='<session_label>' \ "
  echo " --xnatcredentialfile='.somefilename' \ "
  echo " --xnatsessionlabel='<session_label>' \ "
@@ -119,14 +137,13 @@ usage() {
  echo " xnat_upload_download.sh \ "
  echo " --runtype='download' \ "
  echo " --studyfolder='<path_to_study_folder>' \ "
- echo " --sessionsfolder='<path_to_sessions_folder>' \ "
  echo " --sessions='<xnat_subject_labels>' \ "
  echo " --downloadpath='<optional_download_path>' \ "
  echo " --xnatcredentialfile='.somefilename' \ "
  echo " --xnatsessionlabel='<session_label>' \ "
  echo " --xnatprojectid='<xnat_project>' \ "
  echo " --xnathost='<host_url>' \ "
- echo " --bidsformat='yes' \ "
+ echo " --bidsformat='yes' "
  echo ""
 }
 
@@ -152,13 +169,66 @@ for fn in "$@" ; do
         return 0
     fi
 done
+return 1
 }
 
-if [ $(opts_CheckForHelpRequest $@) ]; then
-    showVersion
-    show_usage
+if opts_CheckForHelpRequest "$@"; then
+    usage
     exit 0
 fi
+
+scriptName=$(basename "${0}")
+RunTimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
+
+# the folder this run logs in, decided by the rule every QuNex run is placed
+# by, as bin/qunex.sh decides it: gmri log_folder, from the folders and the
+# --logfolder the run was given. Prints the folder and exits on failure
+decide_log_folder() {
+    local gmri decided status
+    local -a run_gmri
+    gmri="$(cd "$(dirname "${BASH_SOURCE[0]}")" > /dev/null && pwd)/../../python/qx_utilities/gmri"
+    if [ ! -x "${gmri}" ]; then
+        gmri=$(command -v gmri)
+    fi
+    if [ -z "${gmri}" ]; then
+        echo "ERROR: gmri not found, so the log folder of ${scriptName} can not be decided."
+        echo "       Run it from a QuNex installation, or set up the QuNex environment."
+        exit 1
+    fi
+    # gmri is python started as `python`; where there is only python3, it runs with that
+    run_gmri=("${gmri}")
+    if ! command -v python > /dev/null 2>&1 && head -n 1 "${gmri}" | grep -q python; then
+        if command -v python3 > /dev/null 2>&1; then
+            run_gmri=("$(command -v python3)" "${gmri}")
+        else
+            echo "ERROR: python not found, so the log folder of ${scriptName} can not be decided."
+            echo "       A download runs QuNex (gmri): put python or python3 on PATH, or set up the QuNex environment."
+            exit 1
+        fi
+    fi
+    decided=$("${run_gmri[@]}" log_folder --command=xnat_upload_download --timestamp="${RunTimeStamp}" \
+            ${StatedStudyFolder:+--studyfolder="${StatedStudyFolder}"} \
+            ${StatedSessionsFolder:+--sessionsfolder="${StatedSessionsFolder}"} \
+            ${LogFolder:+--logfolder="${LogFolder}"})
+    status=$?
+    # 126/127: the interpreter gmri names could not be run, which is not the inputs' fault
+    if [ ${status} -eq 126 ] || [ ${status} -eq 127 ]; then
+        echo "${decided}"
+        echo "ERROR: QuNex (gmri) could not be run, so the log folder of ${scriptName} can not be decided."
+        echo "       Put python on PATH, or set up the QuNex environment."
+        exit 1
+    elif [ ${status} -ne 0 ]; then
+        echo "${decided}"
+        echo "ERROR: Could not decide where the logs of ${scriptName} go. Check your inputs."
+        exit 1
+    fi
+    # the folder is the last line, after anything gmri warns about
+    LogFolder=$(echo "${decided}" | tail -n 1)
+    if ! mkdir -p "${LogFolder}"; then
+        echo "ERROR: Could not create the log folder ${LogFolder}. Check that it can be written to."
+        exit 1
+    fi
+}
 
 # -- Initialize global output variables
 unset CASES
@@ -182,6 +252,7 @@ unset XNATErrorsUpload
 unset XNATSuccessUpload
 unset BIDSFormat
 unset DownloadPath
+unset LogFolder
 
 # -- Parse arguments
 StudyFolder=`opts_GetOpt "--studyfolder" $@`
@@ -189,6 +260,8 @@ SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 ResetCredentials=`opts_GetOpt "--resetcredentials" $@`
 CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'`
 XNAT_CREDENTIAL_FILE=`opts_GetOpt "--xnatcredentialfile" $@`
+XNAT_USER_NAME=`opts_GetOpt "--xnatuser" "$@"`
+XNAT_PASSWORD=`opts_GetOpt "--xnatpass" "$@"`
 XNAT_HOST_NAME=`opts_GetOpt "--xnathost" $@`
 XNAT_PROJECT_ID=`opts_GetOpt "--xnatprojectid" $@`
 XNAT_SUBJECT_LABELS=`opts_GetOpt "--xnatsubjectlabels" "$@" | sed 's/,/ /g;s/|/ /g'`; XNAT_SUBJECT_LABELS=`echo "$XNAT_SUBJECT_LABELS" | sed 's/,/ /g;s/|/ /g'`
@@ -201,6 +274,28 @@ DICOMPath=`opts_GetOpt "--dicompath" $@`
 RUN_TYPE=`opts_GetOpt "--runtype" $@`
 BIDSFormat=`opts_GetOpt "--bidsformat" $@`
 DownloadPath=`opts_GetOpt "--downloadpath" $@`
+LogFolder=`opts_GetOpt "--logfolder" "$@"`
+
+# the run's log folder is decided from the folders as they were given
+StatedStudyFolder="${StudyFolder}"
+StatedSessionsFolder="${SessionsFolder}"
+
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+# an upload changes into the folders it reads, so the existing ones are made
+# absolute. The study, when not given, is the folder the sessions folder is in
+if [ -d "${SessionsFolder}" ]; then
+    SessionsFolder=$(cd "${SessionsFolder}" > /dev/null && pwd)
+fi
+if [ -d "${DICOMPath}" ]; then
+    DICOMPath=$(cd "${DICOMPath}" > /dev/null && pwd)
+fi
+if [ -z "${StudyFolder}" ] && [ -n "${SessionsFolder}" ]; then
+    StudyFolder=$(dirname "${SessionsFolder}")
+fi
 
 ## -- Check run type
 if [[ -z ${RUN_TYPE} ]]; then
@@ -254,24 +349,30 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         echo ""
         exit 1
     fi
-    if [[ -z ${DownloadPath} ]]; then
-        if [] -z ${StudyFolder} []; then
-            usage
-            echo "ERROR: --studyfolder not specified."
-            echo ""
-            exit 1
-        fi
-        if [ -z ${SessionsFolder} ]; then
-            SessionsFolder="${StudyFolder}/sessions"
-        fi
-        DownloadPath="${SessionsFolder}/inbox"
-    fi
     ## -- Check BIDS format
     if [[ -z ${BIDSFormat} ]]; then
         BIDSFormat="no"
         echo "Note: --bidsformat flag not specified. Setting to --bidsformat=$BIDSFormat."
         echo ""
     fi
+    # the data goes to the inbox of the sessions folder, unless --downloadpath
+    # names another folder
+    if [[ -z ${DownloadPath} ]]; then
+        if [ -z "${SessionsFolder}" ]; then
+            usage
+            echo "ERROR: Neither --studyfolder nor --sessionsfolder specified, and no --downloadpath given."
+            echo ""
+            exit 1
+        fi
+        if [[ ${BIDSFormat} == "yes" ]]; then
+            DownloadPath="${SessionsFolder}/inbox/BIDS"
+        else
+            DownloadPath="${SessionsFolder}/inbox"
+        fi
+    fi
+    # the XNAT project information the download fetches is kept in the run's
+    # log folder
+    decide_log_folder
 fi
 
 ## -- Checks if running upload
@@ -286,9 +387,9 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     ## -- Check if single upload requested
     if [ -z ${DICOMPath} ]; then
         ## -- Check session folder if DICOMPath is not set
-        if [ -z ${SessionsFolder} ]; then
+        if [ -z "${SessionsFolder}" ]; then
             usage
-            echo "ERROR: --sessionsfolder=<folder-with-sessions> not specified."
+            echo "ERROR: Neither --studyfolder nor --sessionsfolder specified, and no --dicompath given."
             echo ""
             exit 1
         fi
@@ -324,7 +425,7 @@ if [[ -z ${ResetCredentials} ]]; then ResetCredentials="no"; fi
 if [[ -z ${XNAT_CREDENTIAL_FILE} ]]; then XNAT_CREDENTIAL_FILE=".xnat"; fi
 
 ## -- Reset credentials
-if [[ "${ResetCredential}" == "yes" ]]; then
+if [[ "${ResetCredentials}" == "yes" ]]; then
     echo ""
     echo " -- Reseting XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} "
     echo ""
@@ -334,16 +435,22 @@ fi
 ## -- Check for valid xNAT credential file
 if [ -f ${HOME}/${XNAT_CREDENTIAL_FILE} ]; then
     echo ""
-    ceho " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} found. Performing credential checks... "
+    echo " -- XNAT credentials in ${HOME}/${XNAT_CREDENTIAL_FILE} found. Performing credential checks... "
     echo ""
     XNAT_USER_NAME=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f1`
-    XNAT_PASSWORD=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2`
+    XNAT_PASSWORD=`cat ${HOME}/${XNAT_CREDENTIAL_FILE} | cut -d: -f2-`
     if [[ ! -z ${XNAT_USER_NAME} ]] && [[ ! -z ${XNAT_PASSWORD} ]]; then
         echo ""
-        ceho " -- XNAT credentials generated in ${HOME}/${XNAT_CREDENTIAL_FILE} " 
+        echo " -- XNAT credentials generated in ${HOME}/${XNAT_CREDENTIAL_FILE} " 
         echo ""
-        ceho " -- Proceeding with XNAT ${RUN_TYPE}..."
+        echo " -- Proceeding with XNAT ${RUN_TYPE}..."
         echo ""
+    else
+        echo ""
+        echo "ERROR: ${HOME}/${XNAT_CREDENTIAL_FILE} does not hold a username and a password."
+        echo "       Re-run with --resetcredentials=yes to regenerate it."
+        echo ""
+        exit 1
     fi
 else
     echo ""
@@ -364,13 +471,23 @@ else
         if read -s answer; then
             XNAT_PASSWORD=$answer
         fi
-        
+
+        # nothing is read without a terminal (e.g. under a scheduler), and an
+        # empty credential file would be used as it is by the next run
+        if [[ -z ${XNAT_USER_NAME} ]] || [[ -z ${XNAT_PASSWORD} ]]; then
+            echo ""
+            echo "ERROR: No XNAT username and password given. Use --xnatuser and --xnatpass,"
+            echo "       or run interactively to generate ${HOME}/${XNAT_CREDENTIAL_FILE}."
+            echo ""
+            exit 1
+        fi
+
         echo $XNAT_USER_NAME:$XNAT_PASSWORD >> ${HOME}/${XNAT_CREDENTIAL_FILE}
         chmod 400 ${HOME}/${XNAT_CREDENTIAL_FILE}
         echo ""
-        ceho " -- XNAT credentials generated in ${HOME}/${XNAT_CREDENTIAL_FILE}"
+        echo " -- XNAT credentials generated in ${HOME}/${XNAT_CREDENTIAL_FILE}"
         echo ""
-        ceho " -- Proceeding with XNAT ${RUN_TYPE}..."
+        echo " -- Proceeding with XNAT ${RUN_TYPE}..."
         echo ""
     fi
 fi
@@ -380,6 +497,7 @@ echo ""
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     if [[ -z ${DICOMPath} ]]; then
+        echo "   Study folder: ${StudyFolder}"
         echo "   Folder with all sessions: ${SessionsFolder}"
         echo "   Sessions to process: ${CASES}"
     else
@@ -396,6 +514,7 @@ echo "-- ${scriptName}: Specified Command-Line Options - Start --"
     echo "   XNAT BIDS format: ${BIDSFormat}"
     if [[ ${RUN_TYPE} == "download" ]]; then
         echo "   Download path: ${DownloadPath}"
+        echo "   Log folder: ${LogFolder}"
     fi
     if [[ ${BIDSFormat} == "yes" ]]; then
         echo "   BIDS format input specified: ${BIDSFormat}"
@@ -417,9 +536,9 @@ main() {
 if [[ ${RUN_TYPE} == "download" ]]; then
 
     echo ""
-    ceho "       ********************************************"
-    ceho "       ****** Setting up XNAT host download *******"
-    ceho "       ********************************************"
+    echo "       ********************************************"
+    echo "       ****** Setting up XNAT host download *******"
+    echo "       ********************************************"
     echo ""
     
     ## -- Function to run on each session
@@ -465,15 +584,6 @@ if [[ ${RUN_TYPE} == "download" ]]; then
                 CASE="${XNAT_SUBJECT_LABEL}"
             fi
             
-            if [[ ${BIDSFormat} == "yes" ]] && [ ! -z ${SessionsFolder} ]; then
-                DownloadPath="${SessionsFolder}/inbox/BIDS"
-                mkdir -p ${DownloadPath} &> /dev/null
-                echo ""
-                echo " -- Note: --bidsformat='yes' and --sessionsfolder=$SessionsFolder are both set" 
-                echo "    Downloading data to: $DownloadPath"
-                echo ""
-            fi
-            
             echo ""
             echo " -- Running:    curl -k -b "JSESSIONID=$JSESSION" -X GET "${XNAT_HOST_NAME}/data/archive/projects/${XNAT_PROJECT_ID}/sessions/${XNAT_SUBJECT_ID}/experiments/${XNAT_ACCSESSION_ID}/scans/ALL/files?format=zip" > ${DownloadPath}/${CASE}.zip "
             echo ""
@@ -514,8 +624,9 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     # ------------------------------------------------------------------------------
     #  -- Setup the JSESSION and clean up prior temp folders:
     # ------------------------------------------------------------------------------
-    ## -- Get credentials
-    XNAT_CREDENTIALS=$(cat ${HOME}/${XNAT_CREDENTIAL_FILE})
+    ## -- Get credentials, read from the credential file or given with
+    ## --xnatuser and --xnatpass
+    XNAT_CREDENTIALS="${XNAT_USER_NAME}:${XNAT_PASSWORD}"
     ## -- Open JSESSION to the XNAT Site
     JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "${XNAT_HOST_NAME}/data/JSESSION" )
     echo ""
@@ -539,15 +650,11 @@ if [[ ${RUN_TYPE} == "download" ]]; then
         fi
     fi
     
-    ## -- Clean prior mapping
-    unset TimeStampXNATPath TimeStamp TimeStampXNATPath XNATInfoPath
-    TimeStampXNATPath=`date +%Y-%m-%d_%H.%M.%S.%6N`
-    if [ -z {StudyFolder} ]; then
-        XNATInfoPath="${DownloadPath}/XNATInfo_${TimeStampXNATPath}"
-    else
-        XNATInfoPath="${StudyFolder}/processing/logs/xnatlogs/XNATInfo_${TimeStampXNATPath}"
-    fi
-    mkdir -p ${XNATInfoPath} &> /dev/null
+    ## -- the project information is kept in the run's log folder, in a folder
+    ## of its own, as a log folder may be shared by runs (the legacy layout)
+    unset TimeStamp XNATInfoPath
+    XNATInfoPath="${LogFolder}/XNATInfo_${RunTimeStamp}"
+    mkdir -p "${XNATInfoPath}" &> /dev/null
     if [[ ! -d ${XNATInfoPath} ]]; then
         echo ""
         echo " -- XNAT info folder ${XNATInfoPath} still not found. Check file system paths or permissions..."
@@ -600,14 +707,14 @@ if [[ ${RUN_TYPE} == "download" ]]; then
     ## -- Final download check
     if [[ -z ${DownloadError} ]]; then
         echo ""
-        echo "-- SUCCESS: XNAT download from ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessDownload}"
+        echo -e "-- SUCCESS: XNAT download from ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessDownload}"
         echo ""
         echo "------------------------- Successful completion of work --------------------------------"
         echo ""
     fi
     if [[ ${DownloadError} == 'yes' ]]; then
         echo ""
-        echo "-- ERROR: XNAT download to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsDownload}"
+        echo -e "-- ERROR: XNAT download to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsDownload}"
         echo ""
     fi
     
@@ -626,9 +733,9 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 
     echo ""
-    ceho "       ********************************************"
-    ceho "       ****** Setting up XNAT host upload *********"
-    ceho "       ********************************************"
+    echo "       ********************************************"
+    echo "       ****** Setting up XNAT host upload *********"
+    echo "       ********************************************"
     echo ""
     
     # ------------------------------------------------------------------------------
@@ -735,8 +842,9 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     
     START=$(date +"%s")
     
-    ## -- Get credentials
-    XNAT_CREDENTIALS=$(cat ${HOME}/${XNAT_CREDENTIAL_FILE})
+    ## -- Get credentials, read from the credential file or given with
+    ## --xnatuser and --xnatpass
+    XNAT_CREDENTIALS="${XNAT_USER_NAME}:${XNAT_PASSWORD}"
     
     ## -- Open JSESSION to the XNAT Site
     JSESSION=$(curl -k -X POST -u "$XNAT_CREDENTIALS" "${XNAT_HOST_NAME}/data/JSESSION" )
@@ -988,7 +1096,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     if [[ ${CountFailList}=="" ]]; then 
         if [[ -z ${XNATUploadError} ]]; then
             echo ""
-            echo "-- SUCCESS: XNAT upload to ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessUpload}"
+            echo -e "-- SUCCESS: XNAT upload to ${XNAT_HOST_NAME} completed without error for following sessions: ${XNATSuccessUpload}"
             echo ""
             echo "------------------------- Successful completion of work --------------------------------"
             echo ""
@@ -996,7 +1104,7 @@ if [[ ${RUN_TYPE} == "upload" ]]; then
     fi
     if [[ ${XNATUploadError} == 'yes' ]]; then
         echo ""
-        echo "-- ERROR: XNAT upload to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsUpload}"
+        echo -e "-- ERROR: XNAT upload to ${XNAT_HOST_NAME} failed for following sessions: ${XNATErrorsUpload}"
         echo ""
     fi
     

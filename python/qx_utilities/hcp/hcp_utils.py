@@ -328,6 +328,9 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, _log, run=True):
         else:
             gdcfile = gdcstring
 
+        # the file found is the one handed on, absolute: the HCP scripts take a
+        # relative name from the folder they run in, which is not the HCP
+        # configuration folder it may have been found in
         if gdcfile not in ["", "NONE"]:
             if not os.path.exists(gdcfile):
                 gdcoeffs = os.path.join(hcp["hcp_Config"], gdcfile)
@@ -336,8 +339,10 @@ def check_gdc_coeff_file(gdcstring, hcp, sinfo, _log, run=True):
                     run = False
                 else:
                     _log.step("Gradient distortion coefficients file present.")
+                    gdcfile = os.path.abspath(gdcoeffs)
             else:
                 _log.step("Gradient distortion coefficients file present.")
+                gdcfile = os.path.abspath(gdcfile)
     else:
         gdcfile = "NONE"
 
@@ -649,6 +654,48 @@ def _nhp_postfs_paths(templates_dir, species):
 #                                                      Shared denoising helpers
 
 
+def _bolds_named(entries, boldtargets, boldtags, owners, group, bold_error, _log):
+    """
+    The bolds the entries of one hcp_icafix_bolds group name, and whether
+    each of them is named once.
+
+    An entry is a bold's name or its tag, and a tag names every bold that
+    carries it. ``owners`` maps each bold already placed to its group (None
+    without groups) and is updated; an entry that names no bold goes into
+    ``bold_error``. A bold belongs to one group only, so one named again,
+    whether by its name or its tag, in this group or in another, is an error.
+    """
+    named = []
+    ok = True
+    for entry in entries:
+        if entry not in boldtargets and entry not in boldtags:
+            bold_error.append(entry)
+            continue
+
+        for bold, tag in zip(boldtargets, boldtags):
+            if entry not in (bold, tag):
+                continue
+            if bold not in owners:
+                owners[bold] = group
+                named.append(bold)
+                continue
+
+            ok = False
+            _log.blank()
+            if group is None:
+                _log.error(f"the bold [{bold}] is specified twice!")
+            elif owners[bold] == group:
+                _log.error(
+                    f"the bold [{bold}] is specified twice in the hcp_icafix_bolds group {group}!"
+                )
+            else:
+                _log.error(
+                    f"the bold [{bold}] is specified in the hcp_icafix_bolds groups "
+                    f"{owners[bold]} and {group}, a bold can belong to one group only!"
+                )
+    return named, ok
+
+
 def parse_icafix_bolds(options, bolds, _log, msmall=False):
     # --- Use hcp_icafix parameter to determine if a single fix or a multi fix should be used
     single_fix = True
@@ -673,6 +720,9 @@ def parse_icafix_bolds(options, bolds, _log, msmall=False):
         boldtargets.append(boldtarget)
         boldtags.append(boldtag)
 
+    # the group each bold named so far went into
+    owners = {}
+
     hcp_bolds = None
     if options["hcp_icafix_bolds"] is not None:
         hcp_bolds = options["hcp_icafix_bolds"]
@@ -693,32 +743,25 @@ def parse_icafix_bolds(options, bolds, _log, msmall=False):
                 # get group name
                 split = str.split(g, ":")
 
+                # with groups, every entry needs a group name
+                if len(split) != 2 or not split[0]:
+                    bolds_ok = False
+                    _log.blank()
+                    _log.error(
+                        f"the hcp_icafix_bolds entry [{g}] is not <group name>:<bolds>; "
+                        "with groups every entry needs one"
+                    )
+                    continue
+
                 # create group and add to dictionary
                 if split[0] not in hcp_groups:
                     specified_bolds = str.split(split[1], ",")
-                    group_bolds = []
-
-                    # iterate over all and add to bolds or inject instead of tags
-                    for sb in specified_bolds:
-                        if sb not in boldtargets and sb not in boldtags:
-                            bold_error.append(sb)
-                        else:
-                            # counter
-                            i = 0
-
-                            for b in boldtargets:
-                                if sb == boldtargets[i] or sb == boldtags[i]:
-                                    if sb in hcp_bolds:
-                                        bolds_ok = False
-                                        _log.blank()
-                                        _log.error(f"the bold [{b}] is specified twice!")
-                                    else:
-                                        group_bolds.append(b)
-                                        hcp_bolds.append(b)
-
-                                # increase counter
-                                i = i + 1
-
+                    group_bolds, group_ok = _bolds_named(
+                        specified_bolds, boldtargets, boldtags, owners, split[0],
+                        bold_error, _log,
+                    )
+                    bolds_ok = bolds_ok and group_ok
+                    hcp_bolds += group_bolds
                     hcp_groups[split[0]] = group_bolds
                 else:
                     bolds_ok = False
@@ -730,28 +773,10 @@ def parse_icafix_bolds(options, bolds, _log, msmall=False):
             # specified bolds
             specified_bolds = str.split(hcp_bolds, ",")
 
-            # variable for storing bolds
-            hcp_bolds = []
-
-            # iterate over all and add to bolds or inject instead of tags
-            for sb in specified_bolds:
-                if sb not in boldtargets and sb not in boldtags:
-                    bold_error.append(sb)
-                else:
-                    # counter
-                    i = 0
-
-                    for b in boldtargets:
-                        if sb == boldtargets[i] or sb == boldtags[i]:
-                            if sb in hcp_bolds:
-                                bolds_ok = False
-                                _log.blank()
-                                _log.error(f"the bold [{b}] is specified twice!")
-                            else:
-                                hcp_bolds.append(b)
-
-                        # increase counter
-                        i = i + 1
+            # the bolds, a tag standing for every bold that carries it
+            hcp_bolds, bolds_ok = _bolds_named(
+                specified_bolds, boldtargets, boldtags, owners, None, bold_error, _log
+            )
 
     # if hcp_icafix is empty then bundle all bolds
     else:
@@ -891,36 +916,25 @@ def parse_msmall_bolds(options, bolds, _log):
             hcp_msmall_bolds = []
 
             for mb in msmall_bolds:
-                hmb = None
-                for b in bolds:
-                    # does the name match?
-                    if (
-                        "filename" in b
-                        and mb == b["filename"]
-                        and options["hcp_filename"] == "userdefined"
-                    ):
-                        hmb = b["filename"]
-                        break
-                    # does the number match?
-                    if "bold_number" in b and mb == b["bold_number"]:
-                        hmb = f"{options['hcp_bold_prefix']}{b}"
-                        break
-                    # does the tag match?
-                    if "task" in b and mb == b["task"]:
-                        if "filename" in b and options["hcp_filename"] == "userdefined":
-                            hmb = b["filename"]
-                            break
-                        else:
-                            hmb = f"{options['hcp_bold_prefix']}{b[0]}"
-                            break
+                found = False
+                for b in icafix_group["bolds"]:
+                    # a bold named by its name, its number or its tag is
+                    # known by its name, the way parse_icafix_bolds knows it,
+                    # and a tag names every bold of the group that carries it
+                    _, boldtarget, _ = pc.get_bold_names(b, options)
+                    if mb in (boldtarget, str(b.get("bold_number")), b.get("task")):
+                        found = True
+                        if boldtarget not in hcp_msmall_bolds:
+                            hcp_msmall_bolds.append(boldtarget)
 
-                if hmb is None:
-                    _log.error(f"bold {mb} used in hcp_msmall_bolds but not found in hcp_icafix_bolds!")
+                if not found:
+                    if "name" in icafix_group:
+                        where = f"the hcp_icafix_bolds group {icafix_group['name']}"
+                    else:
+                        where = "hcp_icafix_bolds"
+                    _log.error(f"bold {mb} used in hcp_msmall_bolds but not found in {where}!")
                     pars_ok = False
                     break
-                else:
-                    if hmb not in hcp_msmall_bolds:
-                        hcp_msmall_bolds.append(hmb)
 
             icafix_group["msmall_bolds"] = hcp_msmall_bolds
         else:
@@ -940,7 +954,55 @@ def parse_msmall_bolds(options, bolds, _log):
     return (msmall_groups, single_run, pars_ok)
 
 
-def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
+# the FIX matlab run modes --hcp_matlab_mode names
+MATLAB_RUN_MODES = {"compiled": "0", "interpreted": "1", "octave": "2"}
+
+
+def matlab_run_mode(options: dict, default: str = None):
+    """
+    The FIX matlab run mode (compiled=0, interpreted=1, octave=2): the one
+    --hcp_matlab_mode names, else `default`, else FSL_FIX_MATLAB_MODE from the
+    environment. None when there is none or hcp_matlab_mode is not a mode.
+
+    The mode is read, never set: the pipelines are handed it on their command
+    lines, so a run leaves the environment as it found it.
+    """
+    if options["hcp_matlab_mode"] is not None:
+        return MATLAB_RUN_MODES.get(options["hcp_matlab_mode"])
+    if default is not None:
+        return default
+    return os.environ.get("FSL_FIX_MATLAB_MODE")
+
+
+def matlab_run_mode_ok(options: dict, _log, default: str = None) -> bool:
+    """Whether there is a matlab run mode, see `matlab_run_mode`; says why not."""
+    if matlab_run_mode(options, default) is not None:
+        return True
+    if options["hcp_matlab_mode"] is None:
+        _log.error(
+            "hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n"
+        )
+    else:
+        _log.error(
+            "unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n"
+        )
+    return False
+
+
+def execute_hcp_post_fix(
+    sinfo, options, hcp, run, single_fix, boldinfo, *, matlabrunmode=None,
+    after_icafix=False,
+):
+    """
+    Run HCP PostFix on one bold (`single_fix`) or one multi-run group.
+
+    Called by hcp_post_fix, and by hcp_icafix to chain PostFix after an
+    ICAFix that succeeded -- or, in a dry run, that can be run.
+
+    `matlabrunmode` is the mode the chaining ICAFix ran with; without it, see
+    `matlab_run_mode`. `after_icafix` marks the chained call: a dry run then
+    does not look for the ICA output the ICAFix it did not run would write.
+    """
     # prepare return variables
     log = ReportLog()
     report = {
@@ -987,14 +1049,18 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
     try:
         boldok = True
 
-        # --- check for ICA image
-        boldok = pc.check_for_file(icaimg,
-            f"ICA {boldtarget} present",
-            f"ICA [{icaimg}] missing!",
-            status=boldok,
-            bad_level="error",
-            _log=log,
-        )
+        # --- check for ICA image. Chained after ICAFix in a dry run, it is
+        #     what the ICAFix that was not run would have written
+        if after_icafix and options["run"] != "run":
+            log.detail(f"{printica} is written by ICAFix, not checked")
+        else:
+            boldok = pc.check_for_file(icaimg,
+                f"ICA {boldtarget} present",
+                f"ICA [{icaimg}] missing!",
+                status=boldok,
+                bad_level="error",
+                _log=log,
+            )
 
         # hcp_postfix_reusehighpass
         if options["hcp_postfix_reusehighpass"]:
@@ -1018,23 +1084,11 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
         if options["hcp_postfix_dualscene"] is not None:
             dualscene = options["hcp_postfix_dualscene"]
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        matlabrunmode = None
-        if options["hcp_matlab_mode"] is None:
-            if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                boldok = False
-            else:
-                matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
-        else:
-            if options["hcp_matlab_mode"] == "compiled":
-                matlabrunmode = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                matlabrunmode = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                matlabrunmode = "2"
-            else:
-                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
+        # matlab run mode, compiled=0, interpreted=1, octave=2: the one the
+        # ICAFix this is chained to ran with, else see `matlab_run_mode`
+        if matlabrunmode is None:
+            matlabrunmode = matlab_run_mode(options)
+            if not matlab_run_mode_ok(options, log):
                 boldok = False
 
         # subject/session
@@ -1093,16 +1147,15 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
                 else:
                     report["done"].append(printbold)
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a bold whose inputs are all present can be run
             else:
-                passed, _, failed = pc.check_run(
-                    None, None, "HCP PostFix " + boldtarget, overwrite=False, _log=log
+                log.step(
+                    "HCP PostFix can be run after ICAFix"
+                    if after_icafix
+                    else "HCP PostFix can be run"
                 )
-                if passed is None:
-                    log.step("HCP PostFix can be run")
-                    report["ready"].append(printbold)
-                else:
-                    report["skipped"].append(printbold)
+                report["ready"].append(printbold)
 
         else:
             report["not ready"].append(printbold)
@@ -1129,6 +1182,44 @@ def execute_hcp_post_fix(sinfo, options, hcp, run, single_fix, boldinfo):
 #                                                  DeDriftAndResample executors
 
 
+# the MSMAll settings MSMAllPipeline.sh falls back to when it is not given one
+MSMALL_DEFAULTS = {
+    "hcp_msmall_iteration_modes": "CA_CAT",
+    "hcp_msmall_ica_dim": "40",
+    "hcp_msmall_method": "WRN",
+}
+
+
+def msmall_registration_name(options: dict, longitudinal: bool = False) -> str:
+    """
+    The MSMAll registration DeDriftAndResample applies.
+
+    hcp_resample_regname when it is set, else the name MSMAll gives the
+    registration it computes (MSMAllPipeline.sh): ``<hcp_msmall_outregname>_
+    <number of iteration modes>_d<hcp_msmall_ica_dim>_<hcp_msmall_method>``,
+    ``MSMAll_InitialReg_2_d40_WRN`` with the defaults. hcp_long_msmall does
+    not hand MSMAll these three settings, so a longitudinal run names the
+    registration with MSMAll's defaults.
+    """
+    if options.get("hcp_resample_regname") is not None:
+        return options["hcp_resample_regname"]
+
+    settings = {}
+    for key, default in MSMALL_DEFAULTS.items():
+        value = None if longitudinal else options.get(key)
+        settings[key] = default if value in (None, "") else str(value)
+
+    # MSMAll counts the "_"-separated modes as its iterations
+    iterations = len(settings["hcp_msmall_iteration_modes"].replace("_", " ").split())
+
+    return "%s_%d_d%s_%s" % (
+        options["hcp_msmall_outregname"],
+        iterations,
+        settings["hcp_msmall_ica_dim"],
+        settings["hcp_msmall_method"],
+    )
+
+
 def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
     # prepare return variables
     log = ReportLog()
@@ -1140,6 +1231,9 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         "not ready": [],
         "skipped": [],
     }
+
+    # regname, which the report is filed under, also when the run fails
+    regname = msmall_registration_name(options, longitudinal="long" in sinfo)
 
     try:
         # get group data
@@ -1155,7 +1249,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         # highpass
         highpass = (
             2000
-            if options["hcp_icafix_highpass"] is not None
+            if options["hcp_icafix_highpass"] is None
             else options["hcp_icafix_highpass"]
         )
 
@@ -1191,11 +1285,6 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
             # add latest image
             boldtargets = boldtargets + boldtarget
 
-        # regname
-        regname = "%s_2_d40_WRN" % options["hcp_msmall_outregname"]
-        if options["hcp_resample_regname"] is not None:
-            regname = options["hcp_resample_regname"]
-
         # dedrift reg files
         regfiles = (
             hcp["hcp_base"]
@@ -1227,6 +1316,7 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
         if options["hcp_matlab_mode"] is None:
             if "FSL_FIX_MATLAB_MODE" not in os.environ:
                 log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
+                boldsok = False
             else:
                 matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
         else:
@@ -1240,8 +1330,11 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                 boldsok = False
 
+        # the fix names are cleaned by ReApplyFixPipeline.sh, which reads
+        # FSL_FIX_MATLAB_MODE through FIX's settings.sh to find the MCR in
+        # compiled mode, so the mode is also set for this call alone
         comm = (
-            '%(script)s \
+            'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
             --path="%(path)s" \
             --subject="%(subject)s" \
             --fix-names="%(fixnames)s" \
@@ -1291,12 +1384,6 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "hcp_resample_dontfixnames"
             ].replace(",", "@")
 
-        if options["hcp_msmall_myelin_target"] is not None:
-            comm += (
-                "                --myelin-target-file="
-                + options["hcp_msmall_myelin_target"]
-            )
-
         if options["hcp_resample_inregname"] is not None:
             comm += (
                 "                --input-reg-name=" + options["hcp_resample_inregname"]
@@ -1337,16 +1424,11 @@ def execute_hcp_single_dedrift_and_resample(sinfo, options, hcp, run, group):
                 else:
                     report["done"].append(regname)
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a group whose inputs are all present can be run
             else:
-                passed, _, failed = pc.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP DeDriftAndResample can be run")
-                    report["ready"].append(regname)
-                else:
-                    report["skipped"].append(regname)
+                log.step("HCP DeDriftAndResample can be run")
+                report["ready"].append(regname)
 
         else:
             report["not ready"].append(regname)
@@ -1458,9 +1540,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
         boldtargets = boldtargets + groupbolds
 
         # regname
-        regname = "%s_2_d40_WRN" % options["hcp_msmall_outregname"]
-        if options["hcp_resample_regname"] is not None:
-            regname = options["hcp_resample_regname"]
+        regname = msmall_registration_name(options, longitudinal="long" in sinfo)
 
         # dedrift reg files
         regfiles = (
@@ -1561,12 +1641,6 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 "hcp_resample_dontfixnames"
             ].replace(",", "@")
 
-        if options["hcp_msmall_myelin_target"] is not None:
-            comm += (
-                "                --myelin-target-file="
-                + options["hcp_msmall_myelin_target"]
-            )
-
         if options["hcp_resample_inregname"] is not None:
             comm += (
                 "                --input-reg-name=" + options["hcp_resample_inregname"]
@@ -1596,9 +1670,10 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                     concatname = concatname.upper()
                     boldnames = "NONE"
                 # wrong input
-                elif len(en_split) == 0:
+                elif len(en_split) < 2:
                     runok = False
                     log.error("invalid input, check the hcp_resample_extractnames parameter!")
+                    continue
                 # else check if concatname is in groups
                 else:
                     # extract fix names ok?
@@ -1677,16 +1752,11 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                 else:
                     report["done"].append(grouptargets)
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a group whose inputs are all present can be run
             else:
-                passed, _, failed = pc.check_run(
-                    None, None, "HCP DeDriftAndResample", overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP DeDriftAndResample can be run")
-                    report["ready"].append(grouptargets)
-                else:
-                    report["skipped"].append(grouptargets)
+                log.step("HCP DeDriftAndResample can be run")
+                report["ready"].append(grouptargets)
 
         else:
             report["not ready"].append(grouptargets)
@@ -1706,29 +1776,42 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
     return {"r": log.text, "report": report}
 
 
-def handle_hcp_links(groupfolder, sessions, options, remove=False):
+def handle_hcp_links(groupfolder, sessions, options, remove=False, *, _log=None):
     """
-    Creates/removes soft links to session HCP folders for commands that operate 
-    across multiple sessions
+    Creates/removes soft links to session HCP folders for commands that operate
+    across multiple sessions.
+
+    Returns False when the HCP folder of a session could not be linked (the
+    error is noted in `_log` when given), True otherwise.
     """
 
     if not os.path.exists(groupfolder):
         os.makedirs(groupfolder)
 
-    abs_sessionsfolder = os.path.abspath(options['sessionsfolder'])
+    status = True
 
     for session in sessions:
         session_id = session['id']
-        source_path = os.path.join(abs_sessionsfolder, session_id, 'hcp', session_id)
+        # the session's own (resolved) hcp folder, the one get_hcp_paths uses
+        source_path = os.path.abspath(
+            os.path.join(session["hcp"], session_id + options["hcp_suffix"])
+        )
         target_path = os.path.join(groupfolder, session_id + options["hcp_suffix"])
 
         if not remove:
-            gc.link_or_copy(source_path, target_path, symlink=True)
+            status = gc.link_or_copy(
+                source_path,
+                target_path,
+                status=status,
+                name=f"HCP folder of session {session_id}",
+                symlink=True,
+                _log=_log,
+            )
         else:
             if os.path.exists(target_path):
                 os.unlink(target_path)
 
-    return
+    return status
 
 
 def write_transmit_bias_voltages(sessions, options, voltages_file, _log):
@@ -1746,10 +1829,13 @@ def write_transmit_bias_voltages(sessions, options, voltages_file, _log):
     for session in sessions:
         subject = session["id"] + options["hcp_suffix"]
 
+        if "hcp" not in session:
+            _log.error(f"Cannot create hcp_voltages file. There is no hcp info for session {session['id']} in the batch file")
+            return False
+
+        # the session's own (resolved) hcp folder
         json_file = os.path.join(
-            options["sessionsfolder"],
-            session["id"],
-            "hcp",
+            session["hcp"],
             subject,
             "unprocessed",
             "rfMRI_REST1_AP",

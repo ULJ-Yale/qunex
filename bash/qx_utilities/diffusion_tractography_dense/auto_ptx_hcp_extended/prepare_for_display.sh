@@ -18,6 +18,10 @@ Usage: prepare_for_display <AutoPtx_ResultsDir> <threshold> <binarise_flag>
 
     if binarise_flag is 0, then prepare a call to display thresholded tracts in FSLview.
 
+    <AutoPtx_ResultsDir> is either the autoPtx results of a session, which hold
+    <structure>/tracts/tractsNorm.nii.gz, or the output of average_auto_ptx.sh,
+    which holds <structure>.nii.gz. The images are written into it.
+
 EOF
     exit 1
 }
@@ -29,8 +33,24 @@ thresh=$2
 bin_flag=$3
 MNI_brain="\$FSLDIR/data/standard/MNI152_T1_1mm_brain.nii.gz"
 
-structures=$QUNEXLIBRARYETC/auto_ptx/structure_list
+# the autoPtx data: structure list, protocols and luts
+if [ -n "${QUNEXLIBRARYETC}" ]; then
+    AutoPtxData=${QUNEXLIBRARYETC}/auto_ptx
+else
+    AutoPtxData=$(cd "$(dirname "$0")/../../../.." && pwd)/qx_library/etc/auto_ptx
+fi
+
+structures=${AutoPtxData}/structure_list
 dest=$ResultsDir
+
+if [ ! -d "${dest}" ]; then
+    echo "ERROR: prepare_for_display: results folder ${dest} not found."
+    exit 1
+fi
+if [ ! -f "${structures}" ]; then
+    echo "ERROR: prepare_for_display: structure list ${structures} not found."
+    exit 1
+fi
 
 if [ "${bin_flag}" -eq "1" ]; then 
     command=$dest/viewAll_3D_${thresh}
@@ -48,7 +68,7 @@ setIntentCode() {
     # exit if the above didn't generate a decent file
     if [ `cat ${tmpbase} | wc -l` -le 1 ] ; then
     echo "==ERROR== Header not recognized. Exiting..."
-    exit 0;
+    exit 1;
     fi
 
     # append intent_code to header
@@ -73,18 +93,26 @@ comIt=0
 viewstr="fslview ${MNI_brain}"
 while read line; do
         struct=`echo $line | awk '{print $1}'`
+        [ -z "${struct}" ] && continue
         comIt=$(( $comIt + 1 ))
-        #tracts=$tractSrc/$struct/tracts/tractsNorm.nii.gz
-        tracts=$struct.nii.gz
+        # a session's results, or the average of several
+        if [ -f $struct/tracts/tractsNorm.nii.gz ]; then
+            tracts=$struct/tracts/tractsNorm.nii.gz
+        elif [ -f $struct.nii.gz ]; then
+            tracts=$struct.nii.gz
+        else
+            echo "ERROR: prepare_for_display: no tracts of ${struct} in ${dest}."
+            exit 1
+        fi
         if [ "${bin_flag}" -eq "1" ]; then 
 	    tracts_thr=${struct}_bin
-	    $FSLDIR/bin/fslmaths $tracts -thr $thresh -bin -mul $comIt -range $tracts_thr
+	    $FSLDIR/bin/fslmaths $tracts -thr $thresh -bin -mul $comIt -range $tracts_thr || exit 1
             setIntentCode $tracts_thr 3
-            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ $QUNEXLIBRARYETC/auto_ptx/luts/c${comIt}.lut
+            viewstr=$viewstr\ $tracts_thr\ -b\ 0.1,${comIt}.01\ -l\ ${AutoPtxData}/luts/c${comIt}.lut
 	else
             comIt=$(( $comIt - 1 ))
 	    tracts_thr=${struct}_thr
-	    imcp $tracts $tracts_thr
+	    imcp $tracts $tracts_thr || exit 1
             setIntentCode $tracts_thr 3
             viewstr=$viewstr\ $tracts_thr\ -b\ ${thresh},0.01\ -l\ `echo ${arr[$comIt]}`
             comIt=$(( $comIt + 1 ))

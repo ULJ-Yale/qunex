@@ -40,8 +40,11 @@ import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.log as gl
 import qx_utilities.general.process as gp
+import qx_utilities.general.scheduler as gs
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import ReportLog
+
+from .utils import build_hcp_session, default_options, write_script
 
 
 # defined at module level so a ProcessPoolExecutor could pickle it, the same
@@ -140,6 +143,24 @@ class CombinedCommand(Command):
         return combined_step
 
 
+class ShellScriptCommand(Command):
+    name = "run_shell_script"
+
+    def load_callable(self):
+        from qx_utilities.processing.simple import run_shell_script
+
+        return run_shell_script
+
+
+class MapCommand(Command):
+    name = "map_hcp_data"
+
+    def load_callable(self):
+        from qx_utilities.hcp.map_hcp_data import map_hcp_data
+
+        return map_hcp_data
+
+
 @pytest.fixture
 def study(tmp_path):
     """A study with one session and a batch file naming it."""
@@ -179,7 +200,7 @@ def run_step(study, settings=None, shell="touch %(checkfile)s", command=None, **
         command=qx_command.name,
     )
     options, sources, _ = gp.merge_options(qx_command.name, args, header)
-    folders = gc.deduce_folders({**header, **args}, qx_command.name)
+    folders = gc.deduce_folders({**header, **args})
     run_context = gl.RunContext(qx_command.name, args, settings, folders)
     gl.set_active(settings)
 
@@ -255,6 +276,91 @@ def test_a_deprecated_log_destination_still_reaches_do_options_check(study, caps
     name = comlogs_in(logfolder / "comlogs")[0]
     assert (study / "sessions" / "S01" / "logs" / "comlogs" / name).exists()
     assert "--comlog_folders" in capsys.readouterr().out
+
+
+def test_run_shell_script_places_its_comlog_in_every_comlog_folder(study):
+    """
+    It never resolved `--comlog_folders`, so its comlog stayed in the run's
+    folder whatever that said. Resolving it does not change what the script
+    is told: `{{comlogs}}` is still the run's comlogs folder, not the list the
+    destinations are resolved into.
+    """
+    script = study / "hello.sh"
+    script.write_text('echo "hello {{id}} in {{comlogs}}"\n')
+
+    logfolder, runlog = run_step(
+        study,
+        command=ShellScriptCommand(),
+        script=str(script),
+        comlog_folders="study,session",
+    )
+
+    (name,) = comlogs_in(logfolder / "comlogs")
+    assert name.startswith("done_run_shell_script-hello.sh_S01_"), name
+    session_copy = study / "sessions" / "S01" / "logs" / "comlogs" / name
+    assert session_copy.exists() and str(session_copy) in runlog
+
+    said = (logfolder / "comlogs" / name).read_text()
+    assert "hello S01 in %s\n" % (logfolder / "comlogs") in said
+    assert "['" not in said
+
+
+def test_map_hcp_data_resolves_comlog_folders(tmp_path):
+    """After the call its comlogs are the resolved list, the session's among them."""
+    from qx_utilities.hcp.map_hcp_data import map_hcp_data
+
+    sinfo, sessionsfolder = build_hcp_session(str(tmp_path))
+    options = default_options(
+        run="test",
+        sessionsfolder=sessionsfolder,
+        comlogs=str(tmp_path / "comlogs"),
+        comlog_folders="study,session",
+    )
+
+    map_hcp_data(sinfo, options)
+
+    assert options["comlogs"] == [
+        str(tmp_path / "comlogs"),
+        os.path.join(sessionsfolder, sinfo["id"], "logs", "comlogs"),
+    ]
+
+
+def test_map_hcp_data_places_its_comlog_in_every_comlog_folder(study, monkeypatch):
+    """
+    The comlog of its one external call, which resamples the segmentation,
+    stayed in the run's folder whatever `--comlog_folders` said. FSL's flirt is
+    stood in for by a script that writes the image it is asked for. The
+    surface spec file it rewrites on the way was left open.
+    """
+    tools = study / "bin"
+    tools.mkdir()
+    write_script(
+        tools / "flirt",
+        '#!/bin/sh\necho "flirt $*"\nwhile [ $# -gt 0 ]; do\n'
+        '    if [ "$1" = "-out" ]; then touch "$2"; fi\n    shift\ndone\n',
+    )
+    monkeypatch.setenv("PATH", "%s%s%s" % (tools, os.pathsep, os.environ["PATH"]))
+    mni = study / "sessions" / "S01" / "hcp" / "S01" / "MNINonLinear"
+    (mni / "fsaverage_LR32k").mkdir(parents=True)
+    for name in ["T1w.nii.gz", "aparc+aseg.nii.gz", "T1w_restore.2.nii.gz"]:
+        (mni / name).write_text("")
+    (mni / "fsaverage_LR32k" / "S01.32k_fs_LR.wb.spec").write_text("S01.L.surf.gii\n")
+
+    logfolder, runlog = run_step(
+        study, command=MapCommand(), comlog_folders="study,session"
+    )
+
+    (name,) = comlogs_in(logfolder / "comlogs")
+    assert name.startswith("done_") and "flirt" in name, name
+    assert (study / "sessions" / "S01" / "logs" / "comlogs" / name).exists()
+    assert (
+        "flirt -interp nearestneighbour" in (logfolder / "comlogs" / name).read_text()
+    )
+    assert "lores: generated" in runlog
+
+    images = study / "sessions" / "S01" / "images" / "segmentation" / "hcp"
+    spec = images / "fsaverage_LR32k" / "32k_fs_LR.wb.spec"
+    assert spec.read_text() == "L.surf.gii\n\n", "named without the session id"
 
 
 # --------------------------------------------------- whether it is deleted
@@ -497,3 +603,27 @@ def test_the_log_survives_the_process_pool(study):
 
     assert "---> external step done for S01" in runlog
     assert "     ... S01 ---> external step ran" in runlog
+
+
+# --------------------------------------------------------- a scheduled run
+
+
+def test_a_scheduler_only_the_batch_file_header_states_is_refused(study, monkeypatch):
+    """
+    Only the command line submits a run: a job reads the batch file again, so
+    a scheduler its header states would have every job submit itself again.
+    It used to end in a KeyError.
+    """
+    submitted = []
+    monkeypatch.setattr(gs, "schedule", lambda **kw: submitted.append(kw) or ("", "1"))
+    batch = study / "batch.txt"
+    batch.write_text("_scheduler: SLURM,time=1\n---\n" + batch.read_text())
+
+    with pytest.raises(ge.CommandError) as refused:
+        run_step(study)
+
+    assert refused.value.error == "Scheduler given in the batch file"
+    assert not submitted
+
+    run_step(study, scheduler="SLURM,time=1")
+    assert len(submitted) == 1, "the command line's is submitted"

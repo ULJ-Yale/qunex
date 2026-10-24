@@ -12,8 +12,9 @@ Where a run's logs live, and who owns the files.
 
 QuNex writes two kinds of log file:
 
-- one **runlog** per invocation -- ``Log-<command>-<timestamp>.log`` in the log
-  folder -- holding the call that was made and the report each session
+- one **runlog** per invocation -- ``Log-<name>-<timestamp>.log`` in the log
+  folder, ``<name>`` being the command, or ``run_recipe_<recipe>`` for a
+  recipe -- holding the call that was made and the report each session
   produced. :class:`RunContext` owns it: it is created once, before any
   dispatch, and shared by every worker the run spawns.
 - one **comlog** per external call -- ``<tags>_<timestamp>.log`` in
@@ -25,6 +26,12 @@ QuNex writes two kinds of log file:
 Both no-op when the resolved :class:`~qx_utilities.general.log.LogSettings`
 turn them off, so callers never have to ask whether logging is on.
 
+The log folder itself is decided once, where the run starts, by
+``general.folders.run_folders`` -- the one rule ``gmri``, ``run_recipe`` and
+the container launcher follow -- and handed to :class:`RunContext`;
+:func:`log_folder` applies the same rule for a caller that hands over only the
+folders it deduced.
+
 There is a third file, written only when it is asked for: the **status
 record**. A parent process that runs QuNex as a subprocess -- ``run_recipe``
 -- passes ``--logstatus=<path>``, and :meth:`RunContext.write_status` puts the
@@ -35,7 +42,9 @@ Note the import direction: nothing here may import ``general.core`` or
 ``processing.core`` at all -- both are consumers of this package. What this
 module needs from them it is given: :func:`comlog_folder` takes the log folder
 rather than deducing it, and the banner it heads a comlog with is the log
-package's own :func:`~general.log.report.print_qunex_header`.
+package's own :func:`~general.log.report.print_qunex_header`. The rule for
+where a run logs is ``general.folders``', a leaf that imports nothing from
+QuNex.
 """
 
 import contextlib
@@ -49,10 +58,12 @@ from datetime import datetime
 
 import yaml
 
+import qx_utilities.general.folders as gf
 from qx_utilities.general.log.report import print_qunex_header
 
-# the timestamp both file names and headers are stamped with
-TIMESTAMP = "%Y-%m-%d_%H.%M.%S.%f"
+# the timestamp both file names and headers are stamped with -- the one a run's
+# log folder is named with, so `general.folders` owns it
+TIMESTAMP = gf.TIMESTAMP
 
 # comlog name parts are joined with this, and the joined stem is capped: a long
 # command plus a long session id must not produce a name the file system
@@ -145,58 +156,69 @@ def call_echo(command, args, session=None):
 
 def log_folder(command, args, settings, folders, timestamp):
     """
-    Decide where this run's logs go.
+    Decide where this run's logs go, by the one rule
+    :func:`general.folders.log_folder` holds.
 
-    An explicit ``--logfolder`` wins. Inside a study the logs go to
-    ``<study>/logs/<timestamp>_<command>``, or to ``<study>/processing/logs``
-    under the ``legacy`` layout. Outside a study the ``outside_study`` setting
-    decides: ``home`` (the default, ``~/qunex_logs``), ``cwd``, or a path.
+    A ``logfolder`` the run states wins; a relative one is taken from the
+    study the run knows, once that study exists, else from the current
+    folder. Otherwise a run in a study logs in
+    ``<study>/logs/<timestamp>_<command>``, or in ``<study>/processing/logs``
+    under ``--logfolder=legacy`` or the ``legacy`` layout, and a run outside a
+    study -- whatever the layout -- in a ``<timestamp>_<command>`` folder of
+    its own, in the one the ``outside_study`` setting names: ``home`` (the
+    default, ``~/qunex_logs``), ``cwd``, or a path.
+
+    The entry points decide the folder with ``general.folders.run_folders``
+    and hand it to :class:`RunContext`, which calls this only when it is not
+    given; they alone know whether the command creates its study, so the
+    study is never taken to be one being created here.
 
     Parameters:
-        command: the command name.
-        args: the parsed arguments; ``logfolder`` is read from them.
-        settings: the resolved :class:`LogSettings`.
-        folders: the folders deduced by ``general.core.deduce_folders``;
-            ``basefolder`` is read from them.
+        command: the name the run is filed under.
+        args: the parsed arguments; read for ``logfolder`` only when `folders`
+            does not carry what the run stated.
+        settings: the resolved :class:`LogSettings`; its ``layout`` and
+            ``outside_study`` are read.
+        folders: the folders deduced by ``general.core.deduce_folders``:
+            ``basefolder``, and -- when it has them -- ``stated``, the
+            parameters the run states that place it, and ``known``, whether
+            the run named its study or a sessions folder in it.
         timestamp: the run's timestamp.
 
     Returns:
         the absolute path of the log folder.
     """
-    explicit = (args or {}).get("logfolder")
-    if explicit and explicit != "legacy":
-        return os.path.abspath(explicit)
+    folders = folders or {}
+    stated = folders.get("stated")
+    if stated is None:
+        stated = gf.placement_parameters(args)
 
-    basefolder = (folders or {}).get("basefolder")
+    return gf.log_folder(
+        command,
+        timestamp,
+        stated,
+        folders.get("basefolder"),
+        folders.get("known", False),
+        settings.layout,
+        settings.outside_study,
+    )
 
-    if explicit == "legacy" or settings.layout == "legacy":
-        if basefolder:
-            return os.path.join(basefolder, "processing", "logs")
-        return os.path.abspath(".")
 
-    runfolder = "%s_%s" % (timestamp, command)
-
-    if basefolder:
-        return os.path.join(basefolder, "logs", runfolder)
-
-    if settings.outside_study == "cwd":
-        root = os.path.abspath(".")
-    elif settings.outside_study == "home":
-        root = os.path.join(os.path.expanduser("~"), "qunex_logs")
-    else:
-        root = os.path.abspath(os.path.expanduser(settings.outside_study))
-
-    return os.path.join(root, runfolder)
+def _current_folder():
+    """The current folder, or None when it no longer exists."""
+    try:
+        return os.getcwd()
+    except OSError:
+        return None
 
 
 def comlog_folder(logfolder):
     """
     Where the comlogs go, under a run's log folder.
 
-    For callers that open a comlog without holding a :class:`RunContext`. The
-    caller resolves the log folder -- with ``general.core.deduce_folders``
-    when all it has is a sessions folder -- because deducing a study's layout
-    is not this package's business.
+    For callers that open a comlog without holding a :class:`RunContext`,
+    given the run's log folder -- a command that declares ``logfolder`` is
+    handed it by ``gmri``.
 
     Parameters:
         logfolder: the run's log folder.
@@ -433,28 +455,55 @@ class RunContext:
     None and every write is dropped.
 
     Attributes:
+        name: what the run's folder and runlog are filed under.
         logfolder: where this run's logs go.
         comlogfolder: the ``comlogs`` subfolder of it.
         path: the runlog, or None when no runlog is written.
+        startfolder: the folder the run was started from, or None when it no
+            longer exists.
     """
 
-    def __init__(self, command, args, settings, folders, timestamp=None, tag=None):
+    def __init__(
+        self,
+        command,
+        args,
+        settings,
+        folders=None,
+        timestamp=None,
+        tag=None,
+        name=None,
+        logfolder=None,
+        startfolder=None,
+    ):
         """
         Parameters:
-            command: the command name as invoked.
+            command: the command name as invoked, for the call echo, the
+                final report and the status record.
             args: the arguments it was called with, for the call echo.
             settings: the resolved :class:`LogSettings`.
-            folders: the folders deduced by ``general.core.deduce_folders``.
+            folders: the folders deduced by ``general.core.deduce_folders``,
+                which the log folder is decided from when it is not given.
             timestamp: the run's timestamp; defaults to now.
             tag: an extra marker for the runlog file name, e.g. ``long``.
+            name: what the run's folder and runlog are filed under -- the
+                command, or ``run_recipe_<recipe>``
+                (``general.folders.run_name``); defaults to the command.
+            logfolder: the log folder, when the entry point has already
+                decided it with ``general.folders.run_folders``.
+            startfolder: the folder the run was started from, before it
+                entered its study; defaults to the current folder. A job the
+                run submits starts there, and settles its folders from there
+                as this run did.
         """
         self.command = command
+        self.name = name or command
         self.args = dict(args or {})
         self.settings = settings
         self.timestamp = timestamp or datetime.now().strftime(TIMESTAMP)
+        self.startfolder = startfolder or _current_folder()
 
-        self.logfolder = log_folder(
-            command, self.args, settings, folders, self.timestamp
+        self.logfolder = logfolder or log_folder(
+            self.name, self.args, settings, folders, self.timestamp
         )
         self.comlogfolder = os.path.join(self.logfolder, "comlogs")
 
@@ -463,7 +512,7 @@ class RunContext:
             self.path = os.path.join(
                 self.logfolder,
                 "Log-%s%s-%s.log"
-                % (command, "-" + tag if tag else "", self.timestamp),
+                % (self.name, "-" + tag if tag else "", self.timestamp),
             )
 
     def write(self, text):

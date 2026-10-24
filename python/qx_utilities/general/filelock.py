@@ -91,7 +91,8 @@ def cleanup():
             os.unlink(lock_file)
 
     for status_file in statuses:
-        status = open(status_file, 'r').read().strip()
+        with open(status_file, 'r') as f:
+            status = f.read().strip()
         if 'done' not in status:
             os.unlink(status_file)
 
@@ -115,7 +116,8 @@ def open_status(filename, status=""):
 # write to the status file
 def write_status(filename, status="", mode="w"):
     try:
-        open(filename, mode).write(status)
+        with open(filename, mode) as f:
+            f.write(status)
         return True
     except Exception:
         return False
@@ -127,7 +129,8 @@ def wait_status(filename, status, delay=0.5):
     while True:
         try:
             # check content
-            content = open(filename, 'r').read()
+            with open(filename, 'r') as f:
+                content = f.read()
             if status in content:
                 return status
 

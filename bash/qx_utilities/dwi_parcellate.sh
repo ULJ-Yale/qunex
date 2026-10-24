@@ -21,33 +21,47 @@ Warning:
     The command assumes Human Connectome Project folder structure for
     preprocessing. Dense Connectome DWI data needs to be in the following folder::
 
-        <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
+        <sessionsfolder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
 
 ..  qx_command:
     type: processing.session
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study data folder.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --session (str):
-        Comma separated list of sessions to run.
+        The id of the session to run. To run the command over several
+        sessions, give them with --sessions or --batchfile instead: qunex then
+        runs it once for each session.
 
     --matrixversion (str):
         Matrix solution version to run parcellation on; e.g. 1 or 3.
 
     --parcellationfile (str):
-        Specify the absolute path of the file you want to use for parcellation
+        Specify the file you want to use for parcellation: an absolute path, or
+        one relative to the study folder
         (e.g. /data/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii).
 
     --outname (str):
         Specify the suffix output name of the pconn file.
 
-    --lengths (str, defaults 'no'):
+    --overwrite (str, default 'no'):
+        Whether to overwrite existing data (yes) or not (no). Note that
+        previous data is deleted before the run, so in the case of a failed
+        command run, previous results are lost.
+
+    --lengths (str, default 'no'):
         Parcellate lengths matrix ('yes' / 'no').
 
-    --waytotal (str, defaults 'none'):
+    --waytotal (str, default 'none'):
         Use the waytotal normalized version of the DWI dense connectome.
         Default:
 
@@ -88,8 +102,8 @@ Examples:
     ::
 
         qunex dwi_parcellate \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --matrixversion='3' \\
             --parcellationfile='<dlabel_file_for_parcellation>' \\
             --overwrite='no' \\
@@ -100,8 +114,8 @@ Examples:
     ::
 
         qunex dwi_parcellate \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --matrixversion='3' \\
             --parcellationfile='<dlabel_file_for_parcellation>' \\
             --overwrite='no' \\
@@ -128,7 +142,7 @@ fi
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
-    # SessionsFolder
+    # StudyFolder or SessionsFolder
     # Session
     # MatrixVersion     e.g. 1 or 3
     # ParcellationFile  in *.dlabel.nii format
@@ -143,6 +157,7 @@ get_options() {
 local scriptName=$(basename ${0})
 local arguments=($@)
 # -- Initialize global output variables
+unset StudyFolder
 unset SessionsFolder
 unset Session
 unset MatrixVersion
@@ -170,6 +185,10 @@ while [ ${index} -lt ${numArgs} ]; do
         --version)
             version_show $@
             exit 0
+            ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
             ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
@@ -204,7 +223,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;
         *)
-            usage
             echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
@@ -212,28 +230,30 @@ while [ ${index} -lt ${numArgs} ]; do
     esac
 done
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check required parameters
-if [ -z ${SessionsFolder} ]; then
-    usage
-    echo "ERROR: <sessions-folder-path> not specified>"
+if [ -z "${SessionsFolder}" ]; then
+    echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
-    usage
-    echo "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${MatrixVersion} ]; then
-    usage
-    echo "ERROR: <matrix_version_value> not specified>"
+    echo "ERROR: <matrix_version_value> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
-    usage
-    echo "ERROR: <file_for_parcellation> not specified>"
+    echo "ERROR: <file_for_parcellation> not specified"
     echo ""
     exit 1
 fi
@@ -248,8 +268,7 @@ if [ -z ${Lengths} ]; then
     echo ""
 fi
 if [ -z ${OutName} ]; then
-    usage
-    echo "ERROR: <name_of_output_pconn_file> not specified>"
+    echo "ERROR: <name_of_output_pconn_file> not specified"
     exit 1
 fi
 
@@ -314,7 +333,7 @@ echo "      Parcellated DWI Connectome Output:       ${DWIOutput}/${DWIOutFilePc
 
 # -- Delete any existing output sub-directories
 if [ "$Overwrite" == "yes" ]; then
-    echo "--- Deleting prior runs for $DiffData..."
+    echo "--- Deleting prior runs for $CASE..."
     echo ""
     rm -f "$DWIOutput"/"$DWIOutFileDPconn" > /dev/null 2>&1
     rm -f "$DWIOutput"/"$DWIOutFilePconn" > /dev/null 2>&1

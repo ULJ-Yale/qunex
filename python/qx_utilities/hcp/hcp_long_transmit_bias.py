@@ -20,6 +20,7 @@ import shutil
 from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
@@ -31,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_long_transmit_bias [... processing options]``
+    ``hcp_long_transmit_bias [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP Longitudinal Transmit Bias Pipeline.
 
@@ -42,9 +43,15 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsubjects (int, default 1):
             How many subjects to run in parallel.
@@ -117,6 +124,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
         --hcp_b1tx_phase_divisor (str, default '800'):
             What to divide the phase map by to obtain proportion of intended
+            flip angle.
 
         --hcp_pt_fmri_names (str, default <list of all BOLDs>):
             A comma separated list of fMRI runs to use SE/SBRef files from. Set
@@ -151,9 +159,6 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
             If myelin mapping was done using version 1.2.3 or earlier of
             wb_command, set this flag.
 
-        --hcp_regname (str, default 'MSMSulc'):
-            The name of the registration used.
-
         --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
 
@@ -167,7 +172,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
             'interpreted' is the default.
 
     Notes:
-        hcp_transmit_bias_individual parameter mapping:
+        hcp_long_transmit_bias parameter mapping:
 
             ================================== ============================
             QuNex parameter                    HCPpipelines parameter
@@ -188,7 +193,6 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
             ``hcp_transmit_res``               ``transmit-res``
             ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
             ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
-            ``hcp_regname``                    ``reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
@@ -199,14 +203,14 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
         Example run::
 
             qunex hcp_long_transmit_bias \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal Transmit Bias Pipeline", label="Subject")
 
     run = True
     report = ""
@@ -219,23 +223,21 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
         hcp = _check_hcp_info(sinfo, options)
 
         # sort out the folder structure
-        sessionsfolder = options["sessionsfolder"]
-        subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
-        study_folder = os.path.join(subjectsfolder, subject_id)
+        study_folder = os.path.join(
+            gf.subjects_folder(options["studyfolder"]), subject_id
+        )
         if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+            if options["run"] == "run":
+                os.makedirs(study_folder)
+            else:
+                log.detail(f"test, not created: {study_folder}")
 
-        # logdir
+        # logdir, created just before the run
         logdir = os.path.join(
             options["logfolder"],
             "comlogs",
             f"extra_logs_hcp_long_transmit_bias_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
 
         if options["hcp_transmit_mode"] is None:
             log.error("the hcp_transmit_mode parameter is mandatory!")
@@ -291,16 +293,6 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
             # check and set parameters given the mode
             # AFI
             if options["hcp_transmit_mode"] == "AFI":
-                if not options["hcp_afi_tr_two"]:
-                    log.error("the hcp_afi_tr_two parameter is not provided!")
-                    run = False
-                if not options["hcp_afi_angle"]:
-                    log.error("the hcp_afi_angle parameter is not provided!")
-                    run = False
-                if not options["hcp_group_corrected_myelin"]:
-                    log.error("the hcp_group_corrected_myelin parameter is not provided!")
-                    run = False
-
                 if options["hcp_afi_tr_one"]:
                     comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
                 else:
@@ -391,6 +383,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
             else:
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
 
             # optional general parameters
             if options["hcp_transmit_res"]:
@@ -416,7 +409,16 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 log.rule(after=1)
 
             # -- Test file
-            if options["run"] == "run":
+            if not run:
+                log.step("Subject cannot be processed.")
+                report = "not ready"
+                failed = 1
+
+            elif options["run"] == "run":
+                if os.path.exists(logdir):
+                    shutil.rmtree(logdir)
+                os.makedirs(logdir)
+
                 endlog, _, failed = pc.run_external_for_file(
                     None,
                     comm,
@@ -437,33 +439,30 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 else:
                     report = "processing failed"
 
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
+                # append the files in logdir to the comlog, if one was kept:
+                # there is none after a clean run with --log=remove
+                if endlog:
+                    with open(endlog, "a", encoding="utf-8") as log_file:
+                        _append_sorted_logdir_to_log(log_file, logdir)
+                        # print succesful completion
+                        if failed == 0:
+                            print(
+                                f"\n---> Successful completion of task at {datetime.now()}",
+                                file=log_file,
+                            )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
 
-            # -- just checking
+            # just checking, there is no test file to check against
             else:
-                passed, _, _ = pc.check_run(
-                    None, None, "HCP Longitudinal Transmit Bias", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP Longitudinal Transmit Bias can be run")
-                    report = "ready"
-                else:
-                    log.step("HCP Longitudinal Transmit Bias cannot be run")
-                    report = "not ready"
+                log.step("HCP Longitudinal Transmit Bias can be run")
+                report = "ready"
 
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_long_transmit_bias", e))

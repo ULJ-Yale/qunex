@@ -28,12 +28,14 @@ from qx_utilities.hcp.hcp_utils import (
     parse_icafix_bolds,
     _build_skipped_report,
     do_hcp_options_check,
+    matlab_run_mode,
+    matlab_run_mode_ok,
 )
 
 
 def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_apply_auto_reclean [... processing options]``
+    ``hcp_apply_auto_reclean [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the ApplyAutoRecleanPipeline step of HCP Pipeline
     (ApplyAutoRecleanPipeline.sh).
@@ -55,9 +57,15 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -110,13 +118,13 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             folder by default.
 
         --hcp_autoreclean_model_to_use (str, default 'MLP,RandomForest'):
-            A comma separeted list of models to use. HCP available models are:
+            A comma separated list of models to use. HCP available models are:
             MLP, RandomForest, Xgboost and XgboostEnsemble. Will use MLP and
             RandomForest by default.
 
         --hcp_autoreclean_vote_threshold (int):
-            A decision threshold for determing reclassifications,
-            should be less than to equal to the number of models to use.
+            A decision threshold for determining reclassifications,
+            should be less than or equal to the number of models to use.
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
@@ -125,7 +133,7 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be generated and populated in the
-        MNINonLinear folder inside the same sessions's root hcp folder.
+        MNINonLinear folder inside the same session's root hcp folder.
 
     Notes:
         hcp_apply_auto_reclean parameter mapping:
@@ -135,29 +143,29 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             ================================== =======================
             ``hcp_icafix_bolds``               ``fmri-names``
             ``hcp_icafix_bolds``               ``mrfix-concat-name``
-            ``hcp_icafix_highpass``            ``bandpass``
-            ``hcp_bold_res``                   ``fmri-resolution``
-            ``hcp_lowresmesh``                 ``low-res-mesh``
+            ``hcp_icafix_highpass``            ``fix-high-pass``
+            ``hcp_bold_res``                   ``fmrires``
+            ``hcp_lowresmesh``                 ``low-res``
             ``hcp_grayordinatesres``           ``grayordinatesres``
             ``hcp_bold_smoothFWHM``            ``smoothingFWHM``
             ``hcp_autoreclean_model_folder``   ``model-folder``
             ``hcp_autoreclean_model_to_use``   ``model-to-use``
             ``hcp_autoreclean_vote_threshold`` ``vote-threshold``
-            ``hcp_matlab_mode``                ``matlabrunmode``
+            ``hcp_matlab_mode``                ``matlab-run-mode``
             ================================== =======================
 
     Examples:
         ::
 
             qunex hcp_apply_auto_reclean \\
-                --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions
+                --studyfolder=. \\
+                --batchfile=processing/batch.txt
 
         ::
 
             qunex hcp_apply_auto_reclean \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_matlab_mode="interpreted"
     """
@@ -203,21 +211,10 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             level="info",
         )
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] is None:
-            if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                pars_ok = False
-        else:
-            if options["hcp_matlab_mode"] == "compiled":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "2"
-            else:
-                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
-                pars_ok = False
+        # matlab run mode, compiled=0, interpreted=1, octave=2: the executor
+        # hands it to the pipeline, the environment is left alone
+        if not matlab_run_mode_ok(options, log):
+            pars_ok = False
 
         if not pars_ok:
             raise ge.CommandFailed(
@@ -258,21 +255,21 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
 
         report = (
             sinfo["id"],
-            "HCP ApplyAytoReclean: " + "; ".join(rep),
+            "HCP ApplyAutoReclean: " + "; ".join(rep),
             len(report["failed"] + report["incomplete"] + report["not ready"]),
         )
 
     except ge.CommandFailed as e:
         log.command_failed(e)
-        report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
+        report = (sinfo["id"], "HCP ApplyAutoReclean failed", 1)
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
-        report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
+        report = (sinfo["id"], "HCP ApplyAutoReclean failed", 1)
     except Exception:
         log.unknown_error()
-        report = (sinfo["id"], "HCP ApplyAytoReclean failed", 1)
+        report = (sinfo["id"], "HCP ApplyAutoReclean failed", 1)
 
-    log.close(pipeline="HCP ApplyAytoReclean")
+    log.close(pipeline="HCP ApplyAutoReclean")
 
     return log.result(report)
 
@@ -282,10 +279,15 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
     if single_fix:
         groupname = None
         bolds = [re]
+        # a single-run bold has no group, it is reported under its own name
+        unit, _, _ = pc.get_bold_names(re, options)
+        what = f"bold {unit}"
     else:
         # get group data
         groupname = re["name"]
         bolds = re["bolds"]
+        unit = groupname
+        what = f"group {groupname}"
 
     # prepare return variables
     log = ReportLog()
@@ -300,7 +302,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.rule(before=1)
-        log.action("Processing", f"group {groupname}", options["run"])
+        log.action("Processing", what, options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -350,26 +352,16 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 else options["hcp_icafix_highpass"]
             )
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2
-        if options["hcp_matlab_mode"] is None:
-            if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                run = False
-        else:
-            if options["hcp_matlab_mode"] == "compiled":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "0"
-            elif options["hcp_matlab_mode"] == "interpreted":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "1"
-            elif options["hcp_matlab_mode"] == "octave":
-                os.environ["FSL_FIX_MATLAB_MODE"] = "2"
-            else:
-                log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
-                run = False
-
-        matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
+        # matlab run mode, compiled=0, interpreted=1, octave=2. A single-run
+        # reclean calls ReApplyFixPipeline.sh, which in compiled mode reads
+        # FSL_FIX_MATLAB_MODE through FIX's settings.sh to find the MCR, so
+        # the mode is also set for this call alone
+        matlabrunmode = matlab_run_mode(options)
+        if not matlab_run_mode_ok(options, log):
+            run = False
 
         comm = (
-            '%(script)s \
+            'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
             --fmri-names="%(boldimgs)s" \
@@ -432,30 +424,36 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=[options["logtag"], groupname],
+                    logtags=[options["logtag"], unit],
                     full_test=None,
                     shell=True,
                     _log=log,
                 )
 
                 if failed:
-                    report["failed"].append(groupname)
+                    report["failed"].append(unit)
                 else:
-                    report["done"].append(groupname)
+                    report["done"].append(unit)
+
+            # -- just checking: there is no file to check the run against, so
+            #    one whose inputs are all present can be run
+            else:
+                log.step("HCP ApplyAutoReclean can be run")
+                report["ready"].append(unit)
 
         else:
-            report["not ready"].append(groupname)
+            report["not ready"].append(unit)
             if options["run"] == "run":
                 log.error("something missing, skipping this group!")
             else:
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
+        log.raw(f"\n\n\n --- Failed during processing of {what} with error:\n")
         log.raw(str(errormessage))
-        report["failed"].append(groupname)
+        report["failed"].append(unit)
     except Exception:
-        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
-        report["failed"].append(groupname)
+        log.info(f" --- Failed during processing of {what} with error:\n {traceback.format_exc()}\n")
+        report["failed"].append(unit)
 
     return {"r": log.text, "report": report}

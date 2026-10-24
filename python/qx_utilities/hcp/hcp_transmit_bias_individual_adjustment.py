@@ -27,7 +27,7 @@ from qx_utilities.hcp.hcp_utils import do_hcp_options_check
 
 def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_transmit_bias_individual_adjustment([... processing options])``
+    ``hcp_transmit_bias_individual_adjustment [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the HCP Transmit Bias Pipeline Phase 3, Individual Adjustment.
     
@@ -38,9 +38,15 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -108,9 +114,6 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             Resolution to use for transmit field, default equal to
             hcp_grayordinatesres.
 
-        --hcp_regname (str, default 'MSMSulc'):
-            The name of the registration used.
-
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
@@ -123,7 +126,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
-        --hcp_manual_receive (str, default ''):
+        --hcp_manual_receive (str, default 'false'):
             Whether Phase1 used unprocessed scans to correct for not using PSN when acquiring scans.
 
     Notes:
@@ -143,7 +146,6 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             ``hcp_group_uncorrected_myelin``   ``group-uncorrected-myelin``
             ``hcp_pt_reference_value_file``    ``pt-reference-value-file``
             ``hcp_transmit_res``               ``transmit-res``
-            ``hcp_regname``                    ``reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
@@ -154,7 +156,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
         Example run::
 
             qunex hcp_transmit_bias_individual_adjustment \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
@@ -225,16 +227,6 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
             # AFI
             if options["hcp_transmit_mode"] == "AFI":
 
-                if not options["hcp_afi_tr_two"]:
-                    log.error("the hcp_afi_tr_two parameter is not provided!")
-                    run = False
-                if not options["hcp_afi_angle"]:
-                    log.error("the hcp_afi_angle parameter is not provided!")
-                    run = False
-                if not options["hcp_group_corrected_myelin"]:
-                    log.error("the hcp_group_corrected_myelin parameter is not provided!")
-                    run = False
-
                 if options["hcp_afi_tr_one"]:
                     comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
                 else:
@@ -293,6 +285,7 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
 
             else:
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
 
             # optional general parameters
             if options["hcp_manual_receive"]:
@@ -330,19 +323,12 @@ def hcp_transmit_bias_individual_adjustment(sinfo, options, overwrite=False, thr
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None,
-                    None,
-                    "HCP Transmit Bias Phase 3,Individual Adjustment",
-                    overwrite=overwrite,
-                    _log=log,
-                )
-                if passed is None:
-                    log.step("HCP Transmit Bias Phase 3,Individual Adjustment can be run")
-                    report = "HCP Transmit Bias Phase 3,Individual Adjustment can be run"
-                    failed = 0
+                log.step("HCP Transmit Bias Phase 3,Individual Adjustment can be run")
+                report = "HCP Transmit Bias Phase 3,Individual Adjustment can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

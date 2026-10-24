@@ -15,6 +15,8 @@ import fnmatch
 import importlib.machinery
 import importlib.util
 import os
+import subprocess
+import types
 from pathlib import Path
 
 import pytest
@@ -201,6 +203,107 @@ def test_a_bash_script_is_passed_the_run_parameters_it_declares(gmri, monkeypatc
     assert "--sessions='S01'" in ran[0]
     assert "--parsessions" not in ran[0], "the run's parameters are not the script's"
     assert "--batchfile" not in ran[0], "nor is a file it cannot read"
+
+
+def test_a_bash_script_is_not_handed_the_comlog_parameters_of_a_processing_command(
+    gmri, monkeypatch
+):
+    """
+    `--log`, `--logtag` and `--comlog_folders` steer the comlogs of a
+    processing command. A script's output is kept in a comlog of the run's
+    own, and a script stops on an option it does not know, so it is handed
+    one only when it declares it.
+    """
+    ran = []
+    monkeypatch.setattr(
+        gmri.gb.gl, "run_and_log", lambda com, name, run=None: ran.append(com) or 0
+    )
+    monkeypatch.setattr(gmri.gb.os.path, "exists", lambda path: True)
+    args = {
+        "sessionsfolder": "/study/sessions",
+        "comlog_folders": "session",
+        "log": "remove",
+        "logtag": "x",
+    }
+
+    gmri.gb.run(gmri.qx_commands.get("dwi_dtifit"), args, session="S01")
+
+    assert "--sessionsfolder='/study/sessions'" in ran[0]
+    assert "comlog_folders" not in ran[0]
+    assert "--log=" not in ran[0] and "--logtag=" not in ran[0]
+
+    declares = types.SimpleNamespace(
+        name="tagged",
+        path="tagged.sh",
+        root=str(REPO_ROOT),
+        args=[],
+        options=[types.SimpleNamespace(name="logtag")],
+    )
+    gmri.gb.run(declares, args, session="S01")
+
+    assert "--logtag='x'" in ran[1], "a script that declares one is handed it"
+    assert "comlog_folders" not in ran[1] and "--log=" not in ran[1]
+
+
+def test_a_bash_command_given_comlog_parameters_runs_its_script_without_them(
+    gmri, tmp_path, monkeypatch
+):
+    """The same through `gmri`, where a command line or a recipe step names them."""
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    ran = []
+    monkeypatch.setattr(
+        gmri.gb.gl, "run_and_log", lambda com, name, run=None: ran.append(com) or 0
+    )
+
+    gmri.runCommand(
+        "dwi_dtifit",
+        {
+            "studyfolder": str(study),
+            "sessions": "S01",
+            "log": "keep",
+            "logtag": "x",
+            "comlog_folders": "session",
+        },
+    )
+
+    (command,) = ran
+    assert "--sessions='S01'" in command
+    assert "comlog_folders" not in command
+    assert "--log=" not in command and "--logtag=" not in command
+
+
+def test_a_value_reaches_the_script_as_it_was_given(gmri, tmp_path, monkeypatch):
+    """
+    A script's command line is run through a shell, each value in single
+    quotes. A value holding an apostrophe ended them early, and a QuNex in a
+    folder whose name has a space split the script's path in two: the shell
+    failed on either line.
+    """
+    ran = []
+    monkeypatch.setattr(
+        gmri.gb.gl, "run_and_log", lambda com, name, run=None: ran.append(com) or 0
+    )
+    root = tmp_path / "qu nex"
+    (root / "bash").mkdir(parents=True)
+    (root / "bash" / "echo_args.sh").write_text('printf "%s\\n" "$@"\n')
+    command = types.SimpleNamespace(
+        name="echo_args",
+        path="echo_args.sh",
+        root=str(root),
+        args=[],
+        options=[
+            types.SimpleNamespace(name="note"),
+            types.SimpleNamespace(name="other"),
+        ],
+    )
+
+    gmri.gb.run(command, {"note": "rest's run", "other": "plain"})
+
+    assert "--other='plain'" in ran[0], "a value is quoted as it always was"
+    said = subprocess.run(ran[0], shell=True, capture_output=True, text=True)
+    assert said.returncode == 0, said.stderr
+    assert said.stdout.splitlines() == ["--note=rest's run", "--other=plain"]
 
 
 def test_a_run_that_dies_still_reports_that_it_failed(gmri, tmp_path):
@@ -474,6 +577,33 @@ def test_a_header_name_nobody_stated_is_a_no_op(gmri, tmp_path, monkeypatch, cap
 
     assert called["unzip"] == "no"
     assert "not taken from the batch file header" not in capsys.readouterr().out
+
+
+def test_an_unset_given_without_a_value_names_nothing(
+    gmri, tmp_path, monkeypatch, capsys
+):
+    """
+    Either unset as a flag alone, with no name after it: it unsets nothing,
+    as a name nobody stated does. The run used to stop with a traceback, the
+    flag's True read as a list of names.
+    """
+    called = unset_run(
+        gmri,
+        tmp_path,
+        monkeypatch,
+        {"unset_batch_header_parameters": True},
+        header="_unzip: no\n_gzip: folder\n",
+    )
+
+    assert called["unzip"] == "no" and called["gzip"] == "folder"
+    assert "not taken from the batch file" not in capsys.readouterr().out
+
+    options = {"hcp_brainsize": "170", "unset_batch_session_parameters": True}
+    soptions, _ = gmri.gcs.update_options(
+        {"id": "S01", "_hcp_brainsize": "130"}, options, {}
+    )
+    assert soptions["hcp_brainsize"] == "130", "the session's own entry applies"
+    assert gmri.gcs.report_unset([], options) == ""
 
 
 @pytest.mark.parametrize("spelling", ["log", "comlog_folders", "comlog_*"])

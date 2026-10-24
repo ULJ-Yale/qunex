@@ -21,7 +21,6 @@ from concurrent.futures import ProcessPoolExecutor
 from datetime import datetime
 from functools import partial
 
-import qx_utilities.processing.core as pc
 import qx_utilities.processing.workflow.qc_summary as qcs
 import qx_utilities.processing.workflow.qc_summary_bold as qcb
 import qx_utilities.processing.workflow.qc_summary_report as qcr
@@ -63,7 +62,7 @@ QC_SUMMARY_PARAMETERS = [
 
 def run_qc_summary(sinfo, options, overwrite=False, thread=0):
     """
-    ``run_qc_summary [... processing options]``
+    ``run_qc_summary [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Compile the study's quality control information into tables and a report.
 
@@ -74,9 +73,15 @@ def run_qc_summary(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parelements (int, default 1):
             How many sessions to read in parallel. The command is run once for
@@ -226,22 +231,22 @@ def run_qc_summary(sinfo, options, overwrite=False, thread=0):
         Using the defaults::
 
             qunex run_qc_summary \\
-                --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions
+                --studyfolder=. \\
+                --batchfile=processing/batch.txt
 
         Reading eight sessions at a time, without the slow temporal SNR pass::
 
             qunex run_qc_summary \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --parelements=8 \\
                 --qc_summary_tsnr=no
 
         The structural stages alone, tables only::
 
             qunex run_qc_summary \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --qc_summary_modules="prefs fs postfs" \\
                 --qc_summary_report=no
     """
@@ -525,8 +530,12 @@ def session_metrics(session, options, modules):
     base = None
 
     try:
-        folders = pc.get_session_folders(session, options)
-        base = folders.get("hcp")
+        # the session's HCP folder, named as `processing/core.py`'s
+        # `get_session_folders` names it but not resolved through it: that
+        # creates every folder it names, so a session that never had an HCP
+        # folder would be given one and the check below would always pass
+        if session.get("hcp"):
+            base = os.path.join(session["hcp"], session["id"] + options["hcp_suffix"])
         if not base or not os.path.isdir(base):
             _log.warning(f"no HCP folder for {session['id']}, "
                          "only the BOLD measures can be read")

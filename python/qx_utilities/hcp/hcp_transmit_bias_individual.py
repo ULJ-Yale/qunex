@@ -28,7 +28,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_transmit_bias_individual [... processing options]``
+    ``hcp_transmit_bias_individual [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP Transmit Bias Individual Only Pipeline.
 
@@ -39,9 +39,15 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -104,6 +110,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_b1tx_phase_divisor (str, default '800'):
             What to divide the phase map by to obtain proportion of intended
+            flip angle.
 
         --hcp_pt_fmri_names (str, default <list of all BOLDs>):
             A comma separated list of fMRI runs to use SE/SBRef files from. Set
@@ -139,7 +146,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_receive_bias_body_coil (str, default ''):
             Image acquired with body coil receive, to be used with
-            --hcp_receive_head_body_coil.
+            --hcp_receive_bias_head_coil.
 
         --hcp_receive_bias_head_coil (str, default ''):
             Matched image acquired with head coil receive.
@@ -167,9 +174,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
         --hcp_gdcoeffs (str, default ''):
             Path to a file containing gradient distortion coefficients.
-
-        --hcp_regname (str, default 'MSMSulc'):
-            The name of the registration used.
 
         --hcp_lowresmesh (str, default '32'):
             Mesh resolution.
@@ -215,7 +219,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
             ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
             ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
             ``hcp_gdcoeffs``                   ``scanner-grad-coeffs``
-            ``hcp_regname``                    ``reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ``hcp_matlab_mode``                ``matlab-run-mode``
@@ -225,7 +228,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
         Example run::
 
             qunex hcp_transmit_bias_individual \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
@@ -299,16 +302,6 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     else:
                         log.error("the hcp_afi_image parameter is not provided, and QuNex cannot find the T1w AFI image in the HCP unprocessed/T1w folder!")
                         run = False
-
-                if not options["hcp_afi_tr_two"]:
-                    log.error("the hcp_afi_tr_two parameter is not provided!")
-                    run = False
-                if not options["hcp_afi_angle"]:
-                    log.error("the hcp_afi_angle parameter is not provided!")
-                    run = False
-                if not options["hcp_group_corrected_myelin"]:
-                    log.error("the hcp_group_corrected_myelin parameter is not provided!")
-                    run = False
 
                 if options["hcp_afi_tr_one"]:
                     comm += f"                --afi-tr-one={options['hcp_afi_tr_one']}"
@@ -419,6 +412,7 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
 
             else:
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
 
             # optional general parameters
             if options["hcp_unproc_t1w_list"] is not None:
@@ -519,19 +513,12 @@ def hcp_transmit_bias_individual(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None,
-                    None,
-                    "HCP Transmit Bias Individual Only",
-                    overwrite=overwrite,
-                    _log=log,
-                )
-                if passed is None:
-                    log.step("HCP Transmit Bias Individual Only can be run")
-                    report = "HCP Transmit Bias Individual Only can be run"
-                    failed = 0
+                log.step("HCP Transmit Bias Individual Only can be run")
+                report = "HCP Transmit Bias Individual Only can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

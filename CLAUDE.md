@@ -9,7 +9,7 @@ for organizing, preprocessing, QA-ing, and analyzing neuroimaging data. The code
 mixed-language (Python, Bash, MATLAB/Octave) and historically inconsistent. **Prefer
 pragmatic, focused improvements over strict rewrites.**
 
-- Version: see `VERSION.md` (currently 1.5.0). `qx_library` is a git submodule (see `.gitmodules`).
+- Version: see `VERSION.md` (currently 1.6.0). `qx_library` is a git submodule (see `.gitmodules`).
 - Docs: https://qunex.readthedocs.io · Forum: https://forum.qunex.yale.edu
 - License: GPL-3.0-or-later (REUSE-compliant; every file carries SPDX headers — preserve them).
 
@@ -23,7 +23,9 @@ pragmatic, focused improvements over strict rewrites.**
 - `python/qx_utilities/` — Python implementation, the bulk of active development:
   - `general/` — core utilities, parsing, sessions, DICOM/BIDS/NIfTI, scheduler, `gmri` driver,
     and the `log/` package (the suite-wide runlog — `report.py`, `context.py`, `settings.py`;
-    see **Command logging** below).
+    see **Command logging** below). `folders.py` (`gf`) holds the study layout and the rule for
+    where a run logs; `placement.py` is how `gmri` anchors, places and enters a run (see
+    **Study folders and session files**).
   - `processing/` — preprocessing workflows (`workflow.py`, `dwi.py`, `fs.py`, `fsl.py`, ...).
     `processing/core.py` holds the low-level report/run primitives (`run_external_for_file`,
     `check_run`, `check_for_file`, `check_for_files`, `use_or_skip_bold`, and the comlog
@@ -34,7 +36,8 @@ pragmatic, focused improvements over strict rewrites.**
     In `hcp/`, each processing command lives in its own `hcp_<command>.py` file (e.g.
     `hcp_pre_freesurfer.py`, `hcp_fmri_volume.py`); shared code is in `hcp_utils.py` (option
     checks, BOLD/gdc parsing, denoising executors), `hcp_paths.py` (`get_hcp_paths`), `qc_hcp.py`
-    (visual QC), `import_hcp.py`/`export_hcp.py`/`setup_hcp.py`. There is no `process_hcp.py`.
+    (visual QC), `tica_folders.py` (the study dir and group folder of `hcp_temporal_ica`),
+    `import_hcp.py`/`export_hcp.py`/`setup_hcp.py`. There is no `process_hcp.py`.
   - `qx_registry.py` / `qx_registry_build.py` — the command registry. Commands are discovered
     automatically from `.. qx_command:` blocks in python/matlab/bash docstrings; there is no
     hand-maintained command list. Add a command by writing its docstring block, then rebuild
@@ -109,9 +112,9 @@ prints it. `general/log/` owns the runlog:
   word, so `log.action` takes any length of phrase; `general/log/report.py`'s module level
   `action(text, run)` tags text used as a **value** (a summary string), and wants the whole
   leading phrase so the tag does not land mid-sentence.
-- **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions` and
-  `general/parsing`, and everything else imports it.** So the run/check helpers are called where
-  they live, with the log as the **last, keyword-only** argument:
+- **`general/log/` is a leaf: it imports nothing from the tree but `general/exceptions`,
+  `general/folders` and `general/parsing`, and everything else imports it.** So the run/check
+  helpers are called where they live, with the log as the **last, keyword-only** argument:
 
   ```python
   status = pc.check_for_file(f["t1"], "present", "missing", _log=log)
@@ -156,7 +159,82 @@ prints it. `general/log/` owns the runlog:
   comlog being opened and are inert there. Nothing is opened under `--test`. External output never reaches the runlog: `trace()`
   writes to the comlog and never to the log's records, so the traffic is one way by construction.
   `hcp/qc_hcp.py` is the deliberate exception — its jobs run in a `ProcessPoolExecutor` and
-  cannot share one open file, so its 11 sites keep per-call comlogs and `remove=True`.
+  cannot share one open file, so its 11 sites keep per-call comlogs and `remove=True`. Those
+  comlogs are still the run's: they go to `options["comlogs"]`, the run's `comlogs` folder and
+  the `--comlog_folders` destinations.
+- **Where a run logs is decided once, by one function.** A run keeps all its logs in one
+  folder: its runlog, `comlogs/`, `batchlogs/` (each scheduled job's output, and the container
+  launcher's job scripts) and, for a recipe, `status/`. The folder is a `logfolder` the run
+  states — command line, else the recipe file, else the batch file header; a relative one is
+  taken from `Placement.base`, else the current folder — else
+  `<study>/logs/<timestamp>_<name>` (`legacy`: `<study>/processing/logs`), else, outside a
+  study, `~/qunex_logs/<timestamp>_<name>` or where `outside_study` says; `<name>` is
+  `gf.run_name` (`run_recipe_<recipe>` for a recipe).
+  `gf.run_folders` decides it, called by `placement.place_run` in `gmri`, by `run_recipe` called
+  on its own, by the launcher's `host_placement` through the splice, and by `bin/qunex.sh`
+  through `gmri log_folder`. Everything a run starts — scheduler jobs, recipe invocations and
+  steps, the container's command — is handed `--logfolder` and uses it as it is. Never derive
+  a log folder anywhere else: no `<study>/logs` joins, no `processing/logs`, no `~/qunex`. A
+  command that needs its run's folder declares `logfolder`, and `gmri` hands it `run.logfolder`
+  (`run_recipe`, `export_hcp`, `schedule`). `tests/test_log_placement.py` holds the launcher to
+  `gmri`'s answers. `run_qc.sh` keeps working files of its own elsewhere: the scene scripts
+  it generates and their output, in `<outpath>/qclog`. `xnat_upload_download.sh`, run on its
+  own, asks `gmri log_folder` for its run's folder and keeps the XNAT project information a
+  download fetches there (`tests/test_xnat_logs.py`).
+
+## Study folders and session files
+
+`--studyfolder` is the main path parameter, and `general/folders.py` (`gf`) holds the study
+layout. The sessions folder is the one named — on the command line, in a batch file header or in
+a recipe, a named one always wins — else `<studyfolder>/sessions`, else the current folder; the
+study is the one named, else the folder a named sessions folder is in, else the study marked by
+`.qunexstudy` at or above the current folder (`gf.find_study`), else the current folder's parent.
+
+- `process.merge_options` settles both into `options`, absolute: the study from the current
+  folder, a relative sessions folder from the study any tier names (a derived sessions folder is
+  reported with the source `studyfolder`; an empty one, as from a recipe variable that expanded
+  to nothing, is not named and leaves a lower tier's). Processing commands read
+  `options["studyfolder"]` and `options["sessionsfolder"]` and never derive one from the other:
+  no `dirname(sessionsfolder)`, no `replace("sessions", "subjects")` — use
+  `gf.subjects_folder` / `gf.processing_folder`.
+- **Relative paths are taken from the study.** A run that knows its study — named in any tier
+  (command line, then recipe, then batch file header), or the folder a named sessions folder
+  is in, never a study found only by its `.qunexstudy` marker — takes every relative path it is
+  given from the study folder, because the command runs in it. `gmri` sets that up in order:
+  `placement.anchor` makes what is read before the study is known absolute
+  (`bio.anchor_command_line`: the study from the current folder; the batch file, a `.list` and
+  the recipe file from the command-line study; `run_recipe`'s recipe read once, with
+  `recipe.recipe_folders`); `merge_options` settles both folders; `placement.hand_on_folders`
+  hands them on; `placement.place_run` (`gf.run_folders`) decides, still in the start folder,
+  the study, `Placement.base` and the log folder; `placement.work_in_study` warns and enters
+  `Placement.base`; `runCommand` restores the caller's folder on every exit. `Placement.base`
+  is `gf.path_base`: a known study that exists (`gf.study_exists`, where a folder holding only
+  QuNex's logs does not count) and that the command does not create (`bio.CREATES_STUDY`).
+  Never entered: a study-creating command, a study that does not exist yet, and `run_recipe`
+  (its steps enter their own study; its external steps run in the study once it exists).
+  Scheduled jobs start in `run.startfolder` and decide again. So a command resolves a user's
+  relative path against the current folder and nothing else: never
+  `os.path.join(studyfolder, <user path>)`, never `dirname(sessionsfolder)`. Make a path
+  absolute before changing folder, writing it into a file (a scene, a symlink, a queued script)
+  or handing it to a process that starts elsewhere. Only `placement.enter` and
+  `gmri.runCommand` may call `os.chdir` (`tests/test_relative_paths_runs.py`). A run's logs
+  follow the same tiers, but go into a study only when it is named or marked: the current
+  folder's parent, the study of a run that names neither folder when none is marked, is never
+  where it logs. A relative `--logfolder` is taken from `Placement.base`, else the current
+  folder.
+- A python utility that takes `sessionsfolder` also takes `studyfolder=None` (last in its
+  signature, so positional callers keep working) and resolves with
+  `gf.sessions_folder(studyfolder, sessionsfolder)`. `gmri` hands the derived sessions folder to
+  every command that declares `sessionsfolder`, and forwards `--studyfolder` to a bash script only
+  if the script documents it — so a script that documents it must parse it.
+- Session and batch files record a session's folders (`dicom`, `raw_data`, `data`, `hcp`, `bids`,
+  `hcpls`, `nhp`) **relative to the session folder** (`hcp: hcp`). Write literals or
+  `gf.session_relative(path, session_folder)`, never `abspath`. They are read back against
+  `<sessionsfolder>/<id>`: `gc.resolve_sessions(..., sessionsfolder=...)` does it, `gmri` does it
+  only after the batch header is merged (`resolve_folders=False`, then
+  `gf.resolve_sessions_folders(sessions, options["sessionsfolder"])`), and code that reads a
+  session file itself calls `gf.resolve_session_folders(record, session_folder)`. Absolute values
+  from older studies are used as they are. `general/batch_io.py` returns them as written.
 
 ## Comment style
 
@@ -225,17 +303,27 @@ the same table the CLI parses) and `build_hcp_session(root)` (a minimal session 
 gate: a command that never reads `options["run"]` does the work regardless of the flag, and both
 `processing/fs.py` (4 commands) and `processing/workflow.py` (5) shipped that way — copying files,
 invoking FSL/R/MATLAB, and in two cases deleting existing outputs a dry run then never
-regenerated. When writing or reviewing a processing command:
+regenerated. (Only `gmri` gates what it runs itself: under `--test` a bash or matlab command is
+named as `test, not run: <call>` and not started, and `run_recipe` does the same for an external
+step and for a utility step that does not take `--test`.) When writing or reviewing a processing
+command:
 
 - guard every side effect — external calls, copies and links, deletions, `os.makedirs`, image
-  writes, and a file lock, which writes a `.lock`;
+  writes, a file lock, which writes a `.lock`, and environment variables. Hand a value to the
+  subprocess (`FSL_FIX_MATLAB_MODE=<n> <command>` on a shell command line) rather than setting
+  `os.environ`: a value set there also reaches every later session of the run. The one
+  exception is process setup: `extensions.register_extension_paths` names the extensions'
+  folders (`<EXT>PATH`/`LIB`/`BIN`, `PATH`) when QuNex is imported, before `--test` is read,
+  the same for a run and a dry run, as the environment script does;
 - **report what would have happened** rather than falling silent: `... test, not run: <command>`,
   `test, not copied:`, `test, not removed:`. A dry run that guards its work but says nothing is
   not worth running. `fs.py`'s `_run_external`/`_copy` and `workflow.py`'s
   `_run_external`/`_link_or_copy`/`_remove` are the helpers that spell this once per file;
 - watch for a check that reads what the guarded step would have written. Both files had one, and
   in each the dry run reported a failure and returned before naming the tools it would have run —
-  the check belongs inside the branch that does the work.
+  the check belongs inside the branch that does the work. `pc.present(f, key, options)` answers
+  for a name `pc.get_file_names` links from a legacy 4dfp image only in a real run, and a step
+  chained after a guarded one is still reported (hcp_icafix's dry run names its PostFix).
 
 `tests/test_fs_dryrun.py` and `tests/test_workflow_dryrun.py` are the pattern: nothing executed,
 no file written/changed/removed, and the tool still named. Note they compare **files only** —
@@ -256,7 +344,8 @@ commit both when you touch what they are built from:
 
 ```bash
 qunex build_qx_registry     # qx_commands.yaml, from the qx_command docstrings
-qunex build_qx_container    # bin/qunex_container, from general/batch_io.py and VERSION.md
+qunex build_qx_container    # bin/qunex_container, from general/batch_io.py, general/folders.py
+                            # and VERSION.md
 ```
 
 - `qx_commands.yaml` — the command registry. Rebuilding is idempotent: `generated_at` is the one
@@ -264,12 +353,17 @@ qunex build_qx_container    # bin/qunex_container, from general/batch_io.py and 
   nothing else changed, so a no-op rebuild leaves no diff.
 - `bin/qunex_container` — the launcher that runs on the login node, outside the container, in the
   host python. It can not import QuNex, so `qx_container_build.py` splices `general/batch_io.py`
-  into it. The splice writes three things: the `# Version <x> [QIO]` line in the header, from
-  `VERSION.md`; the imports batch_io needs, **merged into the container's own import block** at
-  the top, which is what keeps the file free of E402/F811; and the module body, between the
-  `BEGIN GENERATED`/`END GENERATED` markers. Only that body region is off limits by hand — the
-  import block is ordinary code the command adds to and never prunes, so an import that stops
-  being needed is removed by deleting it there.
+  (the batch file parser, and the paths a command line names) and `general/folders.py` (the
+  study layout, and where a run logs) into it, both modules in **one** generated region. The
+  splice writes three things: the `# Version <x> [QIO]` line in the header, from
+  `VERSION.md`; the imports the two modules need, **merged into the container's own import
+  block** at the top, which is what keeps the file free of E402/F811; and the module bodies,
+  between the `BEGIN GENERATED`/`END GENERATED` markers. Only that body region is off limits
+  by hand — the import block is ordinary code the command adds to and never prunes, so an
+  import that stops being needed is removed by deleting it there. Both modules must stay
+  standard library only, must not import each other, and must not define a name the other
+  module or the launcher defines (`tests/test_container_drift.py`). `general/placement.py` is
+  not spliced: the launcher never changes folder.
 
 `.github/workflows/generated.yml` rebuilds both on every pull request into `develop` and on every
 commit to `develop`. On a pull request it commits the rebuild to the pull request's own branch, so

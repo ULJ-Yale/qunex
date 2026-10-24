@@ -29,10 +29,11 @@ Import the names from here, not from the submodules::
 
 so the internal split can move without touching the ~42 modules that log.
 
-Note for the layer below: nothing in this package may import
-``general.core`` or ``processing.core`` at module level -- those import
-paths run the other way. Where a helper from them is needed, import it
-lazily inside the function.
+Note for the layer below: nothing in this package may import ``general.core``
+or ``processing.core`` at all, at module level or inside a function -- those
+import paths run the other way. The package imports nothing from the tree but
+the leaves ``general.exceptions``, ``general.folders`` and
+``general.parsing``; ``tests/test_log_is_a_leaf.py`` holds it to that.
 """
 
 from qx_utilities.general.log.context import (
@@ -66,7 +67,6 @@ from qx_utilities.general.log.settings import (
     USER_SETTINGS_PATHS,
     LogSettings,
     active,
-    apply_study_settings,
     load_settings,
     resolve_logging,
     set_active,
@@ -88,7 +88,6 @@ __all__ = [
     "USER_SETTINGS_PATHS",
     "action",
     "active",
-    "apply_study_settings",
     "call_echo",
     "comlog_folder",
     "comlog_name",

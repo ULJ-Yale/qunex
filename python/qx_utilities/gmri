@@ -40,7 +40,9 @@ from qx_utilities.general import run_bash as gb
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
+from qx_utilities.general import folders as gf
 from qx_utilities.general import log as gl
+from qx_utilities.general import placement as gpl
 from qx_registry import qx_commands
 
 
@@ -70,6 +72,30 @@ help = r"""DESCRIPTION: QuNex suite python-based general neuroimaging utilities
 ======================================
 
   qunex --a
+
+
+ Relative paths and logs
+=========================
+
+  A command that names its study, with --studyfolder or with --sessionsfolder
+  (the study is then the folder the sessions folder is in), on the command
+  line, in the batch file header or in a recipe, runs in the study folder and
+  takes every relative path it is given from there, once the study exists.
+  --studyfolder itself is taken from the current folder, and the batch file,
+  a .list file and the recipe file from the study the command line names.
+  A command that names neither folder, and create_study, manage_study and
+  copy_study, take relative paths from the current folder.
+
+  Each run keeps all its logs in a folder of its own,
+  <studyfolder>/logs/<date>_<time>_<command>, and prints it as
+  "---> Logs: <folder>". A run that names neither folder logs in the study
+  marked by .qunexstudy at or above the current folder; a run outside a study
+  logs in ~/qunex_logs, unless the outside_study setting says otherwise.
+  --logfolder names another folder, a relative one taken as other relative
+  paths are; --logfolder=legacy is <studyfolder>/processing/logs.
+
+  Details: https://qunex.readthedocs.io/en/latest/wiki/Overview-GeneralUse.html
+  and https://qunex.readthedocs.io/en/latest/wiki/Overview-Logging.html
 """
 
 
@@ -86,6 +112,19 @@ def _call_summary(outcome):
         or ("completed with errors" if outcome.failed else "completed"),
         " [log: %s]" % outcome.comlog if outcome.comlog else "",
     )
+
+
+def _not_run(line, run):
+    """
+    A dry run of a matlab or bash call: says what it would run and runs
+    nothing. 0, or 1 when there is nothing to run, which was said.
+    """
+    if line is None:
+        return 1
+    text = "\ntest, not run: %s\n" % line
+    print(text)
+    run.write(text)
+    return 0
 
 
 def _bash_sessions(qx_command, sessions, args):
@@ -110,9 +149,29 @@ def _bash_sessions(qx_command, sessions, args):
 
 
 def runCommand(command, args):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    """
+    Runs `command` with `args`, and returns to the folder it was started from
+    however it ends: a run that knows its study works in the study folder
+    (`placement.work_in_study`), and a caller in the same process -- a test,
+    a script importing gmri, the handlers of `main` -- must not be left there.
+    """
+    try:
+        start = os.getcwd()
+    except OSError:
+        start = None
 
-    folders = gc.deduce_folders(args, command, timestamp)
+    try:
+        return _run_command(command, args, start)
+    finally:
+        if start:
+            try:
+                os.chdir(start)
+            except OSError:
+                pass
+
+
+def _run_command(command, args, start):
+    timestamp = datetime.now().strftime(gf.TIMESTAMP)
 
     # --- check if command is deprecated
     if command != "check_deprecated_commands":
@@ -120,6 +179,25 @@ def runCommand(command, args):
 
         # -- remap deprecated arguments
         args = gcs.check_deprecated_parameters(args, command)
+
+    # -- what the command line names that is read before the study is known,
+    #    made absolute: the study from the current folder, and the batch file,
+    #    a `.list` of sessions and the recipe file from the study the command
+    #    line -- or a `run_recipe` call's recipe, read here once -- names. One
+    #    that names something only in the current folder is said before it is
+    #    looked for
+    typed = args
+    args, recipe, recipe_named, early_study = gpl.anchor(command, args)
+    # the warnings said before the runlog exists, for it once it does
+    placement_notes = []
+    gpl.warn_read_early(typed, early_study, start, placement_notes)
+
+    # -- a first answer for the sessions folder `--sessions` are matched in,
+    #    from the names in use: a deprecated `--basefolder` is a sessions
+    #    folder. The header read below can still move it. The folders a
+    #    recipe names stand in for a command line that names neither, so
+    #    they fill only what it leaves unnamed
+    folders = gc.deduce_folders({**args, **recipe_named})
 
     qx_command = qx_commands.get(command.strip())
 
@@ -141,6 +219,9 @@ def runCommand(command, args):
         if folders["sessionsfolder"] is None:
             folders["sessionsfolder"] = "."
 
+        # the folders the session records name are relative to each session's
+        # folder, and the header read here can still move the sessions folder,
+        # so they are resolved below, once that is settled
         sessions, batch_header = gc.resolve_sessions(
             batchfile=args.get("batchfile"),
             sessions=args.get("sessions"),
@@ -148,24 +229,15 @@ def runCommand(command, args):
             sessionsfolder=folders["sessionsfolder"],
             command=command,
             verbose=False,
+            resolve_folders=False,
         )
 
         # what the run said not to take from the header, taken out here rather
-        # than at the merge: the header is read again below to deduce the
-        # folders, and a parameter that is not to be taken is not to be taken
-        # for that either.
-        #
-        # Twice, around the remap of the deprecated spellings, because the
-        # names a header *states* and the names it *contributes* are not the
-        # same set -- a header saying `log:` contributes `log` and
-        # `comlog_folders`, one of them under a name nobody wrote. Filtering on
-        # both sides is what makes either spelling work. `merge_options` remaps
-        # again and finds nothing left to do, the remap being idempotent.
-        unset = gcs.unset_patterns(args.get(gcs.UNSET_BATCH_HEADER))
-        batch_header, as_written = gcs.without_unset(batch_header, unset)
-        batch_header = gcs.check_deprecated_parameters(batch_header, command)
-        batch_header, as_remapped = gcs.without_unset(batch_header, unset)
-        unset_from_header = sorted(set(as_written) | set(as_remapped))
+        # than at the merge: the header places the run below as well, and a
+        # parameter that is not to be taken is not to be taken for that either
+        batch_header, unset_from_header = gpl.without_unset(
+            batch_header, args, command
+        )
 
     # -- sort arguments
     bargs = {}
@@ -213,41 +285,82 @@ def runCommand(command, args):
     filled = {key: value for key, value in filled.items() if key not in args}
     bargs = {**bargs, **filled}
 
+    # -- the two folders as the merge settled them, absolute, for everything
+    #    that is handed the command line from here on: a relative sessions
+    #    folder is taken from a study any tier names. `filled` has them so
+    #    already
+    gpl.hand_on_folders(options, (args, bargs, eargs))
+
     # -- the threads the command may use. `bin/qunex.sh` sets this before it
     #    hands over, so a run started there arrives with it set and this
     #    changes nothing; the two are entry points to the same dispatcher and
-    #    have to run a command the same way
+    #    have to run a command the same way. Neither sets it for a dry run,
+    #    which starts nothing that would read it
     gcs.set_omp_threads(options)
 
-    # -- the header may have moved the study, so the folders are deduced again.
-    #    From what was actually stated rather than from the merged options: the
-    #    `arglist` defaults would otherwise answer for folders nobody named
-    if batch_header:
-        folders = gc.deduce_folders({**batch_header, **args}, command, timestamp)
+    # -- and the sessions' own folders, against the sessions folder the run
+    #    works on. The merged options have it whichever tier named it, and
+    #    whether it was named or taken to be the study's `sessions` folder
+    if sessions:
+        gf.resolve_sessions_folders(sessions, options["sessionsfolder"])
 
-    # -- how, and whether, this run is logged
-    log_settings = gl.resolve_logging(
+    # -- a processing run that names neither its study nor its sessions folder
+    #    works in the current folder, as it always has. The sessions' own
+    #    folders are resolved against it as well, so it is said rather than
+    #    left for the run to find out
+    if processing and sources.get("sessionsfolder") == "default":
+        print(
+            "WARNING: Neither --studyfolder nor --sessionsfolder was given, the "
+            "current folder is taken to be the sessions folder [%s]."
+            % options["sessionsfolder"],
+            file=sys.stderr,
+        )
+
+    # -- where the run is, the folder it takes its relative paths from, where
+    #    it logs and how, and whether, it is logged: decided here, once, in the
+    #    folder it was started in, by the rule every entry point follows --
+    #    from what was actually stated rather than from the merged options,
+    #    whose `arglist` defaults would otherwise answer for folders nobody
+    #    named. The header and a `run_recipe`'s recipe file may name the study
+    placement = gpl.place_run(
+        command, args, batch_header, timestamp, qx_command, recipe=recipe
+    )
+
+    # -- the run works in its study from here on -- its logging, its banner and
+    #    the command, and every script and tool the command starts -- and says
+    #    so when that is not where it was started
+    moved, workfolder = gpl.work_in_study(
         command,
-        args,
-        qx_command=qx_command,
-        studyfolder=folders["basefolder"],
-        legacy_skip=gcs.logskip_commands,
+        placement,
+        typed,
+        start,
+        scheduled="scheduler" in args,
+        notes=placement_notes,
     )
 
     # the helpers at the bottom of `processing.core` hold no context; this is
     # the only way the answer reaches them
+    log_settings = placement.settings
     gl.set_active(log_settings)
 
     # -- one runlog per run, shared by every call this invocation makes; built
-    #    before any dispatch, so every path gets the same one
+    #    before any dispatch, so every path gets the same one. Everything the
+    #    run starts -- a scheduler job, a recipe, a recipe step -- is handed
+    #    this folder and logs in it as well, and a job starts where the run did
     run = gl.RunContext(
         command,
         args,
         log_settings,
-        folders,
         timestamp=timestamp,
         tag="long" if options.get("longitudinal") else None,
+        name=placement.name,
+        logfolder=placement.logfolder,
+        startfolder=start,
     )
+
+    # -- and a command that takes a log folder is handed the run's
+    if not processing and qx_command.has_arg("logfolder"):
+        bargs["logfolder"] = filled["logfolder"] = run.logfolder
 
     # -- the runlog header, and then what the command is about to be run with
     #    and where each of it came from. Before the dispatch, so a run that
@@ -260,7 +373,7 @@ def runCommand(command, args):
     #    it builds its own run context and writes its own runlog, and a second
     #    one from here would only duplicate it
     recipe_runs_itself = (
-        command == "run_recipe" and sessions is None and "scheduler" not in args
+        command == "run_recipe" and not sessions and "scheduler" not in args
     )
 
     if log_settings.enabled and not recipe_runs_itself:
@@ -270,6 +383,10 @@ def runCommand(command, args):
         # did when `process.run` built the context and printed it there
         if processing:
             print(header)
+
+        # on the console already, as they were said
+        for note in placement_notes:
+            run.write(note + "\n")
 
         # a processing command is handed the merged dictionary and reports it;
         # every other class is called with parameters, and reports those, so
@@ -284,8 +401,20 @@ def runCommand(command, args):
         # study's header happens to state today
         banner += gcs.report_unset(unset_from_header, options)
 
+        if moved:
+            banner += "\n%srelative paths are taken from the study folder: %s\n" % (
+                gl.INDENT,
+                workfolder,
+            )
+        banner += "\n---> Logs: %s\n" % run.logfolder
+
         print(banner)
         run.write(banner)
+
+    # -- a job reads the batch file header again where it starts, and is handed
+    #    the study the run settled rather than reading a relative one from there
+    if "scheduler" in args:
+        args = gpl.for_jobs(command, args, options, placement)
 
     # -- is this a processing command?
     if processing:
@@ -298,9 +427,10 @@ def runCommand(command, args):
 
         if "scheduler" in args:
             # the job is submitted, not run: what it did is for the run on the
-            # node to report, so there is no record to write here. A bash
-            # command is scheduled per session, as `bin/qunex.sh` scheduled it
-            # (one submission inside its per session loop)
+            # node to report in its runlog, and the status record, when one is
+            # asked for, says what was submitted. A bash command is scheduled
+            # per session, as `bin/qunex.sh` scheduled it (one submission
+            # inside its per session loop)
             gs.run_through_scheduler(
                 command,
                 sessions=sessions if qx_command.language == "bash" else None,
@@ -310,12 +440,33 @@ def runCommand(command, args):
             )
             return
 
+        # a dry run names each call it would make and makes none: no script
+        # and no matlab function reads --test, so handed on it ran for real.
+        # The line is the one a real run makes, without the flag
+        dry = options.get("run", "run") != "run"
+        if dry:
+            cargs = {k: v for k, v in cargs.items() if k not in ("test", "run")}
+
         if qx_command.language == "matlab":
-            codes = [(command, gm.run(qx_command, cargs, run=run))]
+            codes = [
+                (command, _not_run(gm.command_line(qx_command, cargs)[0], run))
+                if dry
+                else (command, gm.run(qx_command, cargs, run=run))
+            ]
         else:
+            # a script run over the sessions of a batch file at once is handed
+            # their ids: it cannot read the batch file they came from, which is
+            # a run level parameter it is not passed
+            if sessions and not ({"session", "sessions"} & set(cargs)):
+                cargs[gb.session_parameter(qx_command)] = ",".join(
+                    session["id"] for session in sessions
+                )
+
             codes = [
                 ("%s: %s" % (command, sid) if sid else command,
-                 gb.run(qx_command, cargs, run=run, session=sid))
+                 _not_run(gb.command_line(qx_command, cargs, session=sid), run)
+                 if dry
+                 else gb.run(qx_command, cargs, run=run, session=sid))
                 for sid in _bash_sessions(qx_command, sessions, cargs)
             ]
 
@@ -326,7 +477,9 @@ def runCommand(command, args):
             [
                 (
                     name,
-                    "completed" if not code else "failed with exit code %s" % code,
+                    ("test, not run" if dry else "completed")
+                    if not code
+                    else "failed with exit code %s" % code,
                     1 if code else 0,
                 )
                 for name, code in codes
@@ -401,15 +554,14 @@ def runCommand(command, args):
                     if "SLURM_ARRAY_TASK_ID" in os.environ:
                         recipe_args["sessions"] = (",").join(untouched_all_sessions)
 
-                    # copy recipe args to eargs
+                    # copy recipe args to eargs: what run_recipe does not take
+                    # itself, it hands its steps
                     run_recipe_kwargs = [
-                        "recipe_file",
-                        "recipe",
-                        "steps",
-                        "startwith",
-                        "xnat",
-                        "logfolder",
-                        "verbose",
+                        name
+                        for name in inspect.signature(
+                            qx_command.load_callable()
+                        ).parameters
+                        if name not in ("eargs", "log_settings")
                     ]
                     recipe_eargs = {}
                     to_delete = []
@@ -423,12 +575,11 @@ def runCommand(command, args):
 
                     recipe_args["eargs"] = recipe_eargs
 
-                    # the recipe builds its own RunContext from these -- the
-                    # recipe file can move the study -- but every parallel
-                    # recipe of one invocation logs into one folder
+                    # every recipe of one invocation logs into the run's
+                    # folder, by the settings the run resolved for its study:
+                    # the run was placed with the recipe file's tier already
                     recipe_args["log_settings"] = log_settings
-                    if not recipe_args.get("logfolder"):
-                        recipe_args["logfolder"] = run.logfolder
+                    recipe_args["logfolder"] = run.logfolder
 
                     # disable within recipe parallelism
                     recipe_eargs["parsessions"] = 1
@@ -511,10 +662,13 @@ def runCommand(command, args):
             for session in sessions:
                 targs = dict(bargs)
                 name = command + ": " + session["id"]
-                sessionsfolder = os.path.join(folders["sessionsfolder"], session["id"])
+                # the session's folder, in the sessions folder the run works
+                # on -- the merged one, which every tier and the study's own
+                # `sessions` folder have had their say on
+                sessionfolder = os.path.join(options["sessionsfolder"], session["id"])
                 for targ in ["sourcefolder", "folder"]:
                     if qx_command.has_arg(targ):
-                        targs[targ] = sessionsfolder
+                        targs[targ] = sessionfolder
 
                 calls.append(
                     {
@@ -616,6 +770,11 @@ def print_help(com):
         elif cmd and cmd.language == "bash":
             print_bash_help(cmd)
 
+        # --- `gmri log_folder`, which `bin/qunex.sh` calls; not a registered
+        #     command, so its usage is the docstring of what answers it
+        elif com == "log_folder":
+            print("\n" + inspect.cleandoc(gpl.print_log_folder.__doc__) + "\n")
+
         else:
             print(f"\nERROR: Requested command ('{com}') is not supported. Refer to general QuNex usage.\n")
 
@@ -683,6 +842,15 @@ def main(args=None):
         if comm == 'build_qx_container' and not wants_help:
             from qx_container_build import build_qx_container
             build_qx_container()
+            sys.exit(0)
+
+        # where a run would log, for `bin/qunex.sh`; not a registered command,
+        # see `placement.print_log_folder`
+        if comm == 'log_folder' and not wants_help:
+            for arg in args[1:]:
+                key, sep, value = arg.partition("=")
+                opts[key.strip("-")] = value if sep else True
+            gpl.print_log_folder(opts)
             sys.exit(0)
 
         help_request = False

@@ -31,9 +31,9 @@ Parameters:
         sessions (equivalent to a list, but with manual specification).
 
     --targetf (str):
-        Specify the absolute path for output folder. If using
-        --runtype='individual' and left empty the output will default to
-        --inputpath location for each session.
+        Specify the output folder: an absolute path, or one relative to the
+        study folder. If using --runtype='individual' and left empty the output
+        will default to --inputpath location for each session.
 
     --overwrite (str, default 'no'):
         Whether to overwrite existing data (yes) or not (no). Note that
@@ -45,11 +45,19 @@ Parameters:
         'false').
 
     --flist (str):
-        Specify ∗.list file of session information. If specified then
-        --sessionsfolder, --inputfile, --session and --outname are omitted.
+        Specify ∗.list file of session information for a 'list' run. A 'list'
+        run does not need --sessionsfolder, --sessions, --inputfiles,
+        --inputpath or --outname.
 
-    --sessionsfolder (str):
-        Path to study sessions folder.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given for an
+        'individual' or a 'group' run.
 
     --sessions (str):
         Comma separated list of sessions to run.
@@ -59,8 +67,8 @@ Parameters:
         /bold1_Atlas_MSMAll.dtseries.nii,bold2_Atlas_MSMAll.dtseries.nii).
 
     --inputpath (str):
-        Specify path of the file you want to use relative to the master study
-        folder and session directory (e.g. '/images/functional/').
+        Specify path of the file you want to use relative to the session's
+        folder, ``<sessionsfolder>/<session>`` (e.g. '/images/functional/').
 
     --outname (str):
         Specify the suffix name of the output file name.
@@ -109,7 +117,7 @@ Parameters:
         mDs:n
             computes proportion of voxels within n strength ranges of r
         aDs:n
-            computes proportion of våoxels within n strength ranges of
+            computes proportion of voxels within n strength ranges of
             absolute r
         pDs:n
             computes proportion of voxels within n strength ranges of positive r
@@ -187,13 +195,14 @@ Examples:
     ::
 
         qunex compute_bold_fc \\
-            --sessionsfolder='<folder_with_sessions>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --calculation='seed' \\
             --runtype='individual' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --inputfiles='<files_to_compute_connectivity_on>' \\
             --inputpath='/images/functional' \\
             --extractdata='yes' \\
+            --outname='<name_of_output_file>' \\
             --ignore='udvarsme' \\
             --roinfo='ROI_Names_File.names' \\
             --options='' \\
@@ -205,7 +214,8 @@ Examples:
     ::
 
         qunex compute_bold_fc \\
-            --sessionsfolder='<folder_with_sessions>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --calculation='seed' \\
             --runtype='list' \\
             --flist='sessions.list' \\
             --extractdata='yes' \\
@@ -221,10 +231,10 @@ Examples:
     ::
 
         qunex compute_bold_fc \\
-            --sessionsfolder='<folder_with_sessions>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --calculation='gbc' \\
             --runtype='individual' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --inputfiles='bold1_Atlas_MSMAll.dtseries.nii' \\
             --inputpath='/images/functional' \\
             --extractdata='yes' \\
@@ -244,7 +254,7 @@ Examples:
     ::
 
         qunex compute_bold_fc \\
-            --sessionsfolder='<folder_with_sessions>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --calculation='gbc' \\
             --runtype='list' \\
             --flist='sessions.list' \\
@@ -331,7 +341,7 @@ fi
 
 ########################################## OUTPUTS #########################################
 
-# -- Outputs will be files located in the location specified in the outputpath
+# outputs are written to the folder given by --targetf
 
 # -- Get the command line options for this script
 
@@ -360,6 +370,7 @@ local arguments=("$@")
 
 # -- Initialize global output variables
 
+unset StudyFolder      # --studyfolder=
 unset SessionsFolder   # --sessionsfolder=
 unset CASES            # --sessions=
 unset InputFiles       # --inputfile=
@@ -402,6 +413,10 @@ while [ ${index} -lt ${numArgs} ]; do
         --version)
             version_show $@
             exit 0
+            ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
             ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
@@ -504,7 +519,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;
         *)
-              usage
               echo "ERROR: Unrecognized Option: ${argument}"
               echo ""
               exit 1
@@ -513,7 +527,23 @@ while [ ${index} -lt ${numArgs} ]; do
 done
 echo ""
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check general required parameters
+if [ -z ${Calculation} ]; then
+    echo ""
+    echo "ERROR: <type_of_calculation> not specified. Check usage."; echo ""
+    exit 1
+fi
+# a dense calculation is always an individual run, so it is settled before the
+# output folder is checked
+if [ ${Calculation} == "dense" ]; then
+    RunType="individual"
+fi
 
 # an individual run defaults the output to the input location of each session,
 # which is what --targetf documents and what the loop below fills in
@@ -521,14 +551,6 @@ if [ -z "${OutPath}" ] && [ "${RunType}" != "individual" ]; then
     echo ""
     echo "ERROR: <path_for_output> not specified. Check usage."; echo ""
     exit 1
-fi
-if [ -z ${Calculation} ]; then
-    echo ""
-    echo "ERROR: <type_of_calculation> not specified. Check usage."; echo ""
-    exit 1
-fi
-if [ ${Calculation} == "dense" ]; then
-    RunType="individual"
 fi
 if [ -z ${RunType} ]; then
     echo ""
@@ -539,9 +561,9 @@ fi
 # -- Check run type (group or individual)
 if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     # -- Check options for individual run
-    if [ -z ${SessionsFolder} ]; then
+    if [ -z "${SessionsFolder}" ]; then
         echo ""
-        echo "ERROR: <sessions-folder-path> not specified>. Check usage."; echo ""
+        echo "ERROR: Neither --studyfolder nor --sessionsfolder specified. Check usage."; echo ""
         echo ""
         exit 1
     fi
@@ -559,7 +581,7 @@ if [ ${RunType} == "individual" ] || [ ${RunType} == "group" ]; then
     fi
     if [ -z ${InputPath} ]; then
         echo ""
-        echo "ERROR: <absolute_path_to_data> not specified. Check usage."; echo ""
+        echo "ERROR: <path_to_data> not specified. Check usage."; echo ""
         echo ""
         exit 1
     fi
@@ -684,10 +706,6 @@ if [ ${Calculation} == "gbc" ]; then
     fi
 fi
 
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
-
 # -- Report options
 echo ""
 echo "-- ${scriptName}: Specified Command-Line Options - Start --"
@@ -801,6 +819,11 @@ if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
 fi
 
 if [ ${Calculation} != "dense" ]; then
+    # a list run reads the list it was given. Set before the cat below, which
+    # reads its standard input when it is given no file
+    if [ ${RunType} == "list" ]; then
+        FinalInput=${FileList}
+    fi
     # -- Echo inputs
     echo ""
     echo "--- Functional connectivity inputs:"
@@ -810,10 +833,6 @@ if [ ${Calculation} != "dense" ]; then
     # -- Echo outputs
     echo "Seed functional connectivity will be saved here for each specified ROI:"
     echo "  ---> ${OutPath}"
-    # -- Check if list set
-    if [ ${RunType} == "list" ]; then
-        FinalInput=${FileList}
-    fi
     # -- Check if FC seed run is specified
         if [ -z "$ExtractData" ]; then ExtractData="no"; fi
         if [ -z "$Covariance" ]; then Covariance="true"; fi

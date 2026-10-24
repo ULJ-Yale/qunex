@@ -13,6 +13,12 @@ implementation of that job in the suite — `general/core.py` wraps it as
 `resolve_sessions()`, and `bin/qunex_container` gets a spliced copy of this
 file.
 
+Three more jobs live here because the launcher does them on the host as well:
+making absolute the paths a command line names before the run knows its study
+(`anchor_command_line`), leaving out what a run unsets from a batch file
+(`without_unset`, which `general/commands_support.py` re-exports), and reading
+what the shell code of a command line exports (`bash_post_exports`).
+
 Because of that splice it imports **nothing from QuNex**: the container runs on
 a login node, in the host python, with no QuNex on the path. It therefore also
 raises its own `BatchError` rather than `general.exceptions`; `resolve_sessions`
@@ -24,6 +30,7 @@ import fnmatch
 import glob
 import os
 import re
+import shlex
 from collections import UserList
 from copy import deepcopy
 
@@ -235,6 +242,12 @@ def read_batch(filename, verbose=False):
     Reads a `batch.txt` or `session.txt` file and returns a tuple of the list of
     session records and the parameters specified in the header. Raises
     BatchError if the file can not be read or parsed.
+
+    The folders a record names (`hcp`, `raw_data`, ...) are returned as they
+    are written, which is relative to the session's folder: this module does
+    not know where that is. `general/core.resolve_sessions` resolves them, and
+    with `verbose` warns about the ones that do not exist; here `verbose` only
+    warns about a record without an id.
     """
 
     s = _read_file(filename)
@@ -242,8 +255,11 @@ def read_batch(filename, verbose=False):
     s = s.replace("\n\n", "\n")
     s = re.sub("^#.*?\n", "", s)
 
-    s = s.split("\n---")
-    s = [e for e in s if len(e) > 10]
+    # the first block is the header, whatever its length: dropping a short one
+    # made the first session the header, and its own overrides the study's. An
+    # empty header leaves the text starting with the separator itself
+    s = re.split(r"(?:^|\n)---", s)
+    s = s[:1] + [e for e in s[1:] if e.strip()]
 
     nsearch = re.compile(r"(.*?)\((.*)\)")
     csearch = re.compile(r"c([0-9]+)$")
@@ -352,20 +368,6 @@ def read_batch(filename, verbose=False):
                         dic["id"] = dic["session"]
                     slist.append(dic)
 
-                    # check paths
-                    if verbose:
-                        for field in ["dicom", "raw_data", "data", "hpc"]:
-                            if field in dic and not os.path.exists(dic[field]):
-                                print(
-                                    "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!"
-                                    % (
-                                        dic["id"],
-                                        field,
-                                        dic[field],
-                                        os.path.basename(filename),
-                                    )
-                                )
-
             # done with the parameters block
             first = False
 
@@ -417,7 +419,106 @@ def read_list(filename, verbose=False):
 
 
 # ------------------------------------------------------------------------------
-#                                                   Select sessions from a source
+#                                                     Paths a command line names
+
+# the commands whose `--studyfolder` names the study they create rather than
+# one they work in: everything they are given is taken from the current folder.
+# With their deprecated names, which the container launcher is given as typed
+CREATES_STUDY = (
+    "create_study",
+    "manage_study",
+    "copy_study",
+    "createStudy",
+    "manageStudy",
+)
+
+# a `--sessions` value that names a file of sessions rather than the sessions
+LIST_FILE = re.compile(r"^\s*\S+\.list\s*$")
+
+# what a command line names that is read before the study is known, and is
+# taken from the study the command line names
+READ_EARLY = ("batchfile", "recipe_file")
+
+
+def run_path(path, base=None):
+    """
+    ``run_path(path, base=None)``
+
+    A path a run is given, made absolute: environment variables and `~` are
+    expanded, and a relative path is taken from `base` -- the study the run
+    works in -- or from the current folder when there is none. An empty value,
+    and anything that is not a string (a flag given without a value), is
+    returned as it is.
+    """
+    if not isinstance(path, str) or not path.strip():
+        return path
+
+    path = os.path.expanduser(os.path.expandvars(path.strip()))
+    return os.path.normpath(os.path.join(base or os.getcwd(), path))
+
+
+def anchor_command_line(args, command=None, study=None):
+    """
+    ``anchor_command_line(args, command=None, study=None)``
+
+    What a command line names that is read before the run knows every study it
+    may name -- a batch file header and a recipe can name one too -- made
+    absolute:
+
+    - `studyfolder` from the current folder, and so `logstatus`, a file the
+      caller reads;
+    - `sessionsfolder` from the study the command line names. Named without
+      one it is left as it is typed: `process.merge_options` settles it once
+      the batch file header is read, which can name the study it is in;
+    - `batchfile`, a `.list` file given to `sessions` and `recipe_file` from
+      the study the command line names, else from the folder a sessions folder
+      it names is in, else from `study` -- a study known from elsewhere, the
+      one `run_recipe`'s recipe names -- else from the current folder.
+
+    A command that creates its study (`CREATES_STUDY`) takes all of them from
+    the current folder.
+
+    Returns:
+        a copy of `args` with those values absolute, and the study the files
+        were taken from (None when that was the current folder).
+    """
+    args = dict(args)
+    creates = command in CREATES_STUDY
+
+    if args.get("studyfolder") or args.get("sessionsfolder") or creates:
+        study = None
+
+    if isinstance(args.get("studyfolder"), str) and args["studyfolder"].strip():
+        args["studyfolder"] = run_path(args["studyfolder"])
+        if not creates:
+            study = args["studyfolder"]
+            if isinstance(args.get("sessionsfolder"), str):
+                args["sessionsfolder"] = run_path(args["sessionsfolder"], study)
+
+    if study is None and not creates and isinstance(args.get("sessionsfolder"), str):
+        if args["sessionsfolder"].strip():
+            # left relative, for a study the header may name, but what it says
+            args["sessionsfolder"] = os.path.expanduser(
+                os.path.expandvars(args["sessionsfolder"].strip())
+            )
+            study = os.path.dirname(run_path(args["sessionsfolder"]))
+
+    for key in READ_EARLY:
+        if key in args:
+            args[key] = run_path(args[key], study)
+
+    sessions = args.get("sessions")
+    if isinstance(sessions, str) and LIST_FILE.match(sessions):
+        args["sessions"] = run_path(sessions, study)
+
+    if "logstatus" in args:
+        args["logstatus"] = run_path(args["logstatus"])
+
+    return args, study
+
+
+# ------------------------------------------------------------------------------
+#                                                  Select sessions from a source
 
 
 def _split_sessions(sessions):
@@ -458,7 +559,7 @@ def resolve(
     # a `*.list` file is a session specification, so it can also arrive through
     # sessions: it is the source of the sessions when there is no batch file,
     # and selects within one when there is
-    if sessions and re.match(r"^\s*\S+\.list\s*$", sessions):
+    if sessions and LIST_FILE.match(sessions):
         list_records = read_list(sessions.strip(), verbose=verbose)
         if records:
             sessions = ",".join([e["id"] for e in list_records if "id" in e])
@@ -504,3 +605,337 @@ def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
         slist = SessionList([{"id": e} for e in ids])
 
     return slist.filter_by_string(filter)
+
+
+# ------------------------------------------------------------------------------
+#                                            Not taking what the batch file says
+#
+# A batch file states parameters for every command of a study, and since the
+# header reaches every command class, a name it states can land somewhere its
+# author did not have in mind -- `targetfile` is declared by four commands that
+# write four different files. These say "not from there", one per batch tier,
+# and they are run level parameters, so they can be written on the command line
+# and at every level of a recipe.
+UNSET_BATCH_HEADER = "unset_batch_header_parameters"
+UNSET_BATCH_SESSION = "unset_batch_session_parameters"
+
+
+def unset_patterns(stated):
+    """
+    ``unset_patterns(stated)``
+
+    The patterns an unset states: a name, a comma separated list of them, or an
+    array -- the forms a recipe's `unset_parameters` already takes, so there is
+    one convention rather than two. An empty list states nothing, which is how
+    a step opts back in under a run wide `all`. So does a flag given without a
+    value (`--unset_batch_header_parameters` alone): it names nothing.
+    """
+    if stated is None or isinstance(stated, bool):
+        return []
+    if isinstance(stated, str):
+        stated = stated.split(",")
+    return [str(pattern).strip() for pattern in stated if str(pattern).strip()]
+
+
+def is_unset(name, patterns):
+    """
+    ``is_unset(name, patterns)``
+
+    Whether any of `patterns` unsets `name`. A pattern is a parameter name, a
+    glob over parameter names (`hcp_*`), `*`, or `all` -- the last being the
+    spelling QuNex uses for "every one of them" elsewhere, and free here since
+    no command declares a parameter of that name.
+
+    `fnmatchcase` rather than `fnmatch`, as in `SessionList`: the answer must
+    not depend on the operating system. `_` is not a metacharacter, so `hcp_*`
+    matches what it looks like it matches.
+    """
+    return any(
+        pattern in ("all", "*") or name == pattern or fnmatch.fnmatchcase(name, pattern)
+        for pattern in patterns
+    )
+
+
+def without_unset(options, patterns):
+    """
+    ``without_unset(options, patterns)``
+
+    The options left once the patterns have taken out what they name, and the
+    names they took. The names are returned because a pattern is not a list: a
+    run has to be able to say what `hcp_*` removed on the day it ran, rather
+    than leaving a reader to work it out from the release it ran on.
+    """
+    if not options or not patterns:
+        return options, []
+
+    unset = sorted(key for key in options if is_unset(key, patterns))
+
+    return {key: value for key, value in options.items() if key not in unset}, unset
+
+
+# ------------------------------------------------------------------------------
+#                                     What the shell code of a command line sets
+#
+# A recipe's `{{$NAME}}` label can be set by shell code run before the command
+# -- qunex_container's --bash_post, a scheduled run's --bash -- rather than by
+# the environment the run starts in. Where a run logs is decided before that
+# code runs, so the variables it exports are read from it here, for the
+# launcher on the host and for `gmri` alike.
+
+# what bash takes as it is written -- a quoted or escaped `$`, backtick or `~`
+# -- marked by `_shell_text` with characters no command line holds, and read
+# back by `_shell_value`
+_LITERAL = {"$": "\x00", "`": "\x01", "~": "\x02"}
+_WRITTEN = {marker: char for char, marker in _LITERAL.items()}
+
+
+def _shell_text(text):
+    """
+    ``_shell_text(text)``
+
+    The shell code `text` as `_shell_statements` reads it: without comments
+    -- from a `#` that begins a word, outside quotes, to the end of its line;
+    a `#` inside a word, or quoted, is no comment -- and with each `$`,
+    backtick and `~` that bash takes as it is written, quoted or escaped,
+    marked (`_LITERAL`).
+
+    Raises:
+        ValueError: when `text` holds a character used as a mark.
+    """
+    if any(marker in text for marker in _WRITTEN):
+        raise ValueError("the shell code holds a character used as a mark")
+
+    kept, quote, escaped, comment, word_start = [], None, False, False, True
+    for char in text:
+        if comment:
+            if char != "\n":
+                continue
+            comment = False
+        elif escaped:
+            escaped = False
+            if char in "$`" or (char == "~" and quote is None):
+                # in place of the backslash, which bash takes away
+                kept[-1], word_start = _LITERAL[char], False
+                continue
+        elif quote == "'":
+            if char == quote:
+                quote = None
+            else:
+                char = _LITERAL.get(char, char)
+        elif quote == '"':
+            if char == quote:
+                quote = None
+            elif char == "\\":
+                escaped = True
+            elif char == "~":
+                char = _LITERAL[char]
+        elif char == "\\":
+            escaped = True
+        elif char in "'\"":
+            quote = char
+        elif char == "#" and word_start:
+            comment = True
+            continue
+        kept.append(char)
+        word_start = not (quote or escaped) and char in " \t\r\n;&|()<>"
+    return "".join(kept)
+
+
+def _shell_statements(text):
+    """
+    ``_shell_statements(text)``
+
+    The simple statements of the shell code `text` that run in the shell
+    itself, each as the list of its words, quotes taken away (`_shell_text`),
+    and whether it surely runs. Not one in a pipeline, nor one in the
+    background -- a `&` puts there the whole list of statements joined by
+    `&&` and `||` it ends. Each command is taken to succeed: a statement after
+    `&&` runs, and one after `||`, which runs only when what comes before it
+    fails, may run. A line break ends a statement as `;` does, except right
+    after `&&`, `||` or `|`.
+
+    Raises:
+        ValueError: on a quote that is not closed.
+    """
+    lexer = shlex.shlex(_shell_text(text), posix=True, punctuation_chars=";&|\n")
+    lexer.commenters = ""
+    lexer.whitespace = " \t\r"
+    lexer.whitespace_split = True
+
+    # the lists of statements joined by `&&`, `||` and `|`, each statement
+    # with what joins it to the next
+    lists, current, words = [], [], []
+    for token in list(lexer) + [";"]:
+        if not token or not set(token) <= set(";&|\n"):
+            words.append(token)
+            continue
+        joins = next((mark for mark in ("||", "&&", "|", "&") if mark in token), ";")
+        if not words and set(token) == {"\n"} and current:
+            if current[-1][1] in ("&&", "||", "|"):
+                continue
+        current.append((words, joins))
+        words = []
+        if joins in (";", "&"):
+            lists.append(current)
+            current = []
+
+    statements = []
+    for current in lists:
+        if current[-1][1] == "&":
+            continue
+        joined = ";"
+        for words, joins in current:
+            if words and "|" not in (joined, joins):
+                statements.append((words, joined != "||"))
+            joined = joins
+    return statements
+
+
+# a word of shell code that sets a variable; in its value, a reference to a
+# variable, or a mark of what is taken as it is written
+_SHELL_ASSIGNMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(\+?)=(.*)", re.S)
+_SHELL_REFERENCE = re.compile(
+    r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))|([\x00-\x02])"
+)
+
+
+def _shell_value(value, variables):
+    """
+    ``_shell_value(value, variables)``
+
+    `value`, the right of an assignment, as bash expands it, when the host can
+    tell: written out, or referring with `$NAME` or `${NAME}` to one of
+    `variables`; a `~` that begins it is `$HOME`. None for a value made any
+    other way -- by a command (`$(...)`, a backtick) or another expansion
+    (`${NAME:-...}`, `$1`, `~user`) -- and for one that refers to a variable
+    `variables` does not hold.
+    """
+    if value == "~" or value.startswith("~/"):
+        value = "${HOME}" + value[1:]
+
+    found = _SHELL_REFERENCE.findall(value)
+    referred = [braced or bare for braced, bare, _ in found if braced or bare]
+    other = _SHELL_REFERENCE.sub("", value)
+    if (
+        "$" in other
+        or "`" in other
+        or value.startswith("~")
+        or ":~" in value
+        or any(name not in variables for name in referred)
+    ):
+        return None
+
+    def expanded(match):
+        braced, bare, mark = match.groups()
+        return _WRITTEN[mark] if mark else variables[braced or bare]
+
+    return _SHELL_REFERENCE.sub(expanded, value)
+
+
+def _builtin_operands(words):
+    """
+    ``_builtin_operands(words)``
+
+    The options and the operands of the builtin that `words` call, as bash
+    tells them apart: the options come first, until `--` or the first word
+    that is not one.
+    """
+    operands, flags = words[1:], ""
+    while operands and operands[0].startswith("-") and operands[0] != "-":
+        option = operands.pop(0)
+        if option == "--":
+            break
+        flags += option[1:]
+    return flags, operands
+
+
+def bash_post_exports(bash_post, environ=None):
+    """
+    ``bash_post_exports(bash_post, environ=None)``
+
+    What the `export` statements of shell code run before a command set for
+    it -- `qunex_container`'s --bash_post inside the container, a scheduled
+    run's --bash on the node -- as far as can be told before that code runs
+    (`_shell_value`), the variables of `environ` -- the environment unless
+    another is given -- and those the code set before taken as known. Only a statement that
+    runs in the shell that runs the command counts (`_shell_statements`), and
+    whatever a sourced file sets is not seen. `unset` and `export -n` take an
+    export back, a later assignment changes what is exported, and an array is
+    never exported.
+    """
+    if not isinstance(bash_post, str) or not bash_post.strip():
+        return {}
+
+    try:
+        statements = _shell_statements(bash_post)
+    except ValueError:
+        return {}
+
+    known = dict(os.environ if environ is None else environ)
+    assigned, arrays, exports = set(), set(), {}
+
+    def forget(name):
+        known.pop(name, None)
+        exports.pop(name, None)
+        assigned.discard(name)
+
+    for words, surely in statements:
+        assignments = [m for m in map(_SHELL_ASSIGNMENT.match, words) if m]
+        flags, operands = _builtin_operands(words)
+        array = [m.group(1) for m in assignments if m.group(3).startswith("(")]
+        if array or not surely:
+            # the words of an array are not told apart from the statement's,
+            # and a statement that may not run sets what it sets or not
+            touched = [m.group(1) for m in assignments]
+            if words[0] in ("export", "unset"):
+                touched += operands
+            for name in touched:
+                forget(name)
+            arrays.update(array)
+            continue
+
+        if words[0] == "unset":
+            # `-f` unsets a function, not a variable
+            if "f" not in flags:
+                for name in operands:
+                    forget(name)
+                    arrays.discard(name)
+            continue
+        if words[0] == "export" and "f" not in flags:
+            mode = "unexport" if "n" in flags else "export"
+        elif len(assignments) == len(words):
+            # variables of the shell, for what refers to them later
+            mode, operands = "assign", words
+        else:
+            continue
+
+        # an export's words are expanded before it runs, assignments one by one
+        before = dict(known)
+        for word in operands:
+            match = _SHELL_ASSIGNMENT.match(word)
+            if match is None:
+                if mode == "export" and word in assigned:
+                    exports[word] = known[word]
+                elif mode == "unexport":
+                    exports.pop(word, None)
+                continue
+
+            name, append, value = match.groups()
+            variables = known if mode == "assign" else before
+            if append or name in arrays:
+                value = None
+            else:
+                value = _shell_value(value, variables)
+            if value is None:
+                # set, to a value the host can not tell
+                forget(name)
+                continue
+
+            known[name] = value
+            assigned.add(name)
+            if mode == "unexport":
+                exports.pop(name, None)
+            elif mode == "export" or name in exports:
+                exports[name] = value
+
+    return exports

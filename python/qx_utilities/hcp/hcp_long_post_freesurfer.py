@@ -20,6 +20,7 @@ import shutil
 from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
@@ -32,9 +33,9 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_long_post_freesurfer [... processing options]``
+    ``hcp_long_post_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
-    Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
+    Run the HCP Longitudinal PostFreeSurfer Pipeline (PostFreeSurferPipelineLongLauncher.sh).
 
     ..  qx_command:
         type: processing.subject
@@ -49,9 +50,15 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ""):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default "."):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsubjects (int, default 1):
             How many subjects to run in parallel.
@@ -186,8 +193,10 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 - POSTFS-TP2 (PostFreesurfer timepoint stage 2).
 
     Output files:
-        The results of this step will be present in the
-        <study_folder>/<sessions_folder>/<subject_id>.
+        The results of this step will be present in the subject's
+        longitudinal folder, <studyfolder>/subjects/<subject id>, set up by
+        hcp_long_freesurfer: the template in <subject id>.long.<template> and
+        each session in <session id>.long.<template>.
 
     Notes:
         hcp_long_post_freesurfer parameter mapping:
@@ -225,16 +234,16 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_long_post_freesurfer \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
     """
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal Post FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal Post FS Pipeline", label="Subject")
 
     run = True
-    report = {"done": [], "failed": [], "ready": [], "not ready": []}
+    report = ""
     failed = 0
 
     try:
@@ -382,19 +391,16 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             refmyelinmaps = options["hcp_refmyelinmaps"]
 
-        # logdir
+        # logdir, created just before the run
         logdir = os.path.join(
             options["logfolder"],
             "comlogs",
             f"extra_logs_hcp_long_post_freesurfer_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
 
         # subject folder
         studyfolder = os.path.join(
-            options["sessionsfolder"].replace("sessions", "subjects"), subject_id
+            gf.subjects_folder(options["studyfolder"]), subject_id
         )
 
         # build the command
@@ -481,6 +487,10 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             tfile = None
 
             if options["run"] == "run":
+                if os.path.exists(logdir):
+                    shutil.rmtree(logdir)
+                os.makedirs(logdir)
+
                 endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
@@ -501,21 +511,30 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 else:
                     report = "processing failed"
 
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
+                # append the files in logdir to the comlog, if one was kept:
+                # there is none after a clean run with --log=remove
+                if endlog:
+                    with open(endlog, "a", encoding="utf-8") as log_file:
+                        _append_sorted_logdir_to_log(log_file, logdir)
+                        # print succesful completion
+                        if failed == 0:
+                            print(
+                                f"\n---> Successful completion of task at {datetime.now()}",
+                                file=log_file,
+                            )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
 
+            # just checking, there is no test file to check against
+            else:
+                log.step("HCP Longitudinal Post FS can be run")
+                report = "ready"
+
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_long_post_freesurfer", e))

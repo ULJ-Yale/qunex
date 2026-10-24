@@ -24,9 +24,11 @@ import sys
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 
+import qx_utilities.general.batch_io as bio
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.scheduler as gs
 from qx_utilities.general import extensions
 
@@ -74,6 +76,7 @@ arglist = [
     ["# ---- Basic settings"],
     ["batchfile", "", str],
     ["sessions", "", str],
+    ["studyfolder", "", is_none],
     ["sessionsfolder", "", os.path.abspath],
     ["logfolder", "", is_none],
     [
@@ -1155,6 +1158,11 @@ for line in flaglist:
 # ==============================================================================
 #                                                              MERGING PARAMETERS
 #
+
+# the two folders a run names its study with
+_FOLDERS = ("studyfolder", "sessionsfolder")
+
+
 def merge_options(command, args, header=None):
     """
     ``merge_options(command, args, header=None)``
@@ -1174,8 +1182,23 @@ def merge_options(command, args, header=None):
 
     Returns:
         The merged options, for every name in them the tier its value came
-        from - one of "default", "batch file", "recipe" or "command line" -
+        from - one of "default", "batch file", "recipe" or "command line", or
+        "studyfolder" for a sessions folder derived from the study folder -
         and what those tiers stated, before `arglist`'s converters recoded it.
+
+        `sessionsfolder` is the one stated, else the `sessions` folder of the
+        stated `studyfolder`, else the current folder; `studyfolder` is the
+        one stated, else the folder the sessions folder is in, and with neither
+        folder stated the study marked by `.qunexstudy` at or above the current
+        folder, else the current folder's parent.
+
+        Both are absolute, in the options and in what was stated alike, with
+        `~` and environment variables expanded, whichever tier named them: the
+        study is taken from the current folder, and a sessions folder from the
+        study any tier names, else from the current folder. An empty one --
+        a recipe variable that expanded to nothing -- names no folder: it
+        leaves the one the batch file header names, as the rule that places
+        the run does.
     """
     options = {"command_ran": command}
     sources = {"command_ran": "default"}
@@ -1204,6 +1227,14 @@ def merge_options(command, args, header=None):
 
     for key, value in args.items():
         source = "recipe" if key in from_recipe else "command line"
+
+        # an empty folder -- a recipe variable that expanded to nothing --
+        # names none, so it leaves the one the header names in place, as the
+        # rule that places the run (`general.folders.placement_parameters`)
+        # leaves it
+        if key in _FOLDERS and _blank(value) and not _blank(options.get(key)):
+            continue
+
         if key in flist:
             take(
                 source,
@@ -1216,6 +1247,22 @@ def merge_options(command, args, header=None):
     for key in options:
         if type(options[key]) is str:
             options[key] = os.path.expandvars(options[key])
+
+    # the two folders, absolute before anything is derived from them or handed
+    # on, whichever tier named them
+    _absolute_folders(command, options)
+
+    # a run that names its study and not its sessions folder works on the
+    # study's `sessions` folder. Settled before what was stated is taken, so
+    # that a command declaring `sessionsfolder` is handed the folder whichever
+    # of the two the run named; a sessions folder stated in any tier wins. An
+    # empty one -- a recipe variable that expanded to nothing -- is not named,
+    # as `deduce_folders` takes it
+    if not options.get("sessionsfolder"):
+        sources["sessionsfolder"] = "default"
+    if sources["sessionsfolder"] == "default" and options.get("studyfolder"):
+        options["sessionsfolder"] = gf.sessions_folder(options["studyfolder"])
+        sources["sessionsfolder"] = gcs.FROM_STUDYFOLDER
 
     # what the tiers said, before the recode below has its way with it. A
     # command called with parameters rather than with this dictionary keeps
@@ -1255,11 +1302,61 @@ def merge_options(command, args, header=None):
                 "Please check acceptable inputs for %s!" % (line[0]),
             )
 
+    # and a run that does not name its study is in the one its sessions folder
+    # is in. Left "default", so that it is never handed to a command as if
+    # somebody had named it: `create_study` takes the folder it creates. A run
+    # that names neither folder works in the current one, and its study is the
+    # one marked above it -- where its logs go -- else the current one's parent
+    if sources["sessionsfolder"] == "default":
+        options["studyfolder"] = gf.find_study(
+            options["sessionsfolder"]
+        ) or gf.study_folder(None, options["sessionsfolder"])
+    else:
+        options["studyfolder"] = gf.study_folder(
+            options["studyfolder"], options["sessionsfolder"]
+        )
+
     # impute unspecified parameters. An imputed value stays "default": nobody
     # specified it, which is what the source says
     options = gcs.impute_parameters(options, command)
 
     return options, sources, stated
+
+
+def _blank(value) -> bool:
+    """Whether `value` is a string that names nothing: empty, or spaces."""
+    return isinstance(value, str) and not value.strip()
+
+
+def _absolute_folders(command: str, options: dict) -> None:
+    """
+    Makes the study and the sessions folder in `options` absolute, in place:
+    the study is taken from the current folder, and a sessions folder from the
+    study when one is named, else from the current folder -- it then names the
+    study. An empty folder is one nobody named, and is left empty; one of
+    nothing but spaces is emptied.
+
+    Raises:
+        ge.CommandError: when a folder is given as a bare flag, without a value.
+    """
+    for key in _FOLDERS:
+        if isinstance(options.get(key), bool):
+            raise ge.CommandError(
+                command,
+                "Invalid parameter value!",
+                "Parameter `%s` is specified without a folder:" % key,
+                "---> --%s" % key,
+                "Please give it as --%s=<folder>!" % key,
+            )
+        if _blank(options.get(key)):
+            options[key] = ""
+
+    if options.get("studyfolder"):
+        options["studyfolder"] = bio.run_path(options["studyfolder"])
+    if options.get("sessionsfolder"):
+        options["sessionsfolder"] = bio.run_path(
+            options["sessionsfolder"], options.get("studyfolder") or None
+        )
 
 
 # ==============================================================================
@@ -1325,7 +1422,10 @@ def run(qx_command, args, sessions, options, sources, run_context):
 
     # --------------------------------------------------------------------------
     #                                                      start writing the log
-    os.makedirs(comlogfolder, exist_ok=True)
+    # a dry run writes no comlog, and a real one creates the folder itself when
+    # it opens one; made here so the folder is there from the start of a run
+    if options["run"] == "run":
+        os.makedirs(comlogfolder, exist_ok=True)
 
     stati = []
 
@@ -1380,7 +1480,25 @@ def run(qx_command, args, sessions, options, sources, run_context):
     # =======================================================================
     #                                               RUN BY SESSION PROCESSING
     if not os.path.exists(options["sessionsfolder"]):
-        os.mkdir(options["sessionsfolder"])
+        if options["run"] == "test":
+            sout = "test, not created: %s\n" % options["sessionsfolder"]
+            print(sout)
+            run_context.write(sout)
+
+        # the folder it would be made in has to be there already. The run's
+        # logs are written into the study it names before this, so a folder
+        # holding nothing but logs is a mistyped study as much as a missing one
+        elif not gf.study_exists(os.path.dirname(options["sessionsfolder"])):
+            raise ge.CommandFailed(
+                qx_command.name,
+                "Missing study folder",
+                "The sessions folder %s can not be created, the folder it should "
+                "be in does not exist, or holds nothing but logs."
+                % options["sessionsfolder"],
+                "Please check --studyfolder / --sessionsfolder!",
+            )
+        else:
+            os.mkdir(options["sessionsfolder"])
 
     if nprocess > 0:
         nsessions = [sessions.pop(0) for e in range(nprocess) if sessions]
@@ -1514,6 +1632,21 @@ def run(qx_command, args, sessions, options, sources, run_context):
     #
     # TODO: adapt for subject and study level processing
     else:
+        # only the command line submits a run: a job reads the batch file
+        # again, and a scheduler its header states would have it submit
+        # itself rather than run. It used to end in a KeyError
+        if not args.get("scheduler"):
+            raise ge.CommandError(
+                qx_command.name,
+                "Scheduler given in the batch file",
+                "The batch file header states the scheduler [%s], and a run is "
+                "submitted to a scheduler only by --scheduler on the command "
+                "line." % options["scheduler"],
+                "Please give --scheduler on the command line, and take "
+                "_scheduler out of the batch file header or unset it with "
+                "--unset_batch_header_parameters=scheduler.",
+            )
+
         # schedule
         gs.run_through_scheduler(
             qx_command.name,

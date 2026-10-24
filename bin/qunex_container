@@ -5,14 +5,15 @@
 #
 # SPDX-License-Identifier: GPL-3.0-or-later
 #
-# Version 1.5.4 [QIO]
+# Version 1.6.0 [QIO]
 
 from __future__ import division, print_function
 
-# `general/batch_io.py` is spliced in below, and `qunex build_qx_container`
-# merges the imports it needs into this block
+# `general/batch_io.py` and `general/folders.py` are spliced in below, and
+# `qunex build_qx_container` merges the imports they need into this block
 import fnmatch
 import glob
+import json
 import math
 import os
 import re
@@ -21,8 +22,16 @@ import subprocess
 import sys
 import time
 from collections import UserList
+from collections import namedtuple
 from copy import deepcopy
 from datetime import datetime
+
+# the settings files and a recipe file, which say where a run logs, are YAML:
+# read with PyYAML when the host python has it, and said to be unread when not
+try:
+    import yaml
+except ImportError:
+    yaml = None
 
 
 class CommandError(Exception):
@@ -68,9 +77,7 @@ def schedule(
     output=None,
     parsessions=1,
     parelements=1,
-    logfolder=None,
-    slurm_array=False,
-    timestamp=None,
+    script_path=None,
 ):
     """
     qunex_command scheduler
@@ -107,19 +114,26 @@ def schedule(
         specifies a path to a log file that should store standard output of the
         submitted job
     stderr
-        specified a path to a log file that should store error output of the
+        specifies a path to a log file that should store error output of the
         submitted job
     both
         specifies a path to a log file that should store joint standard and
         error outputs of the submitted job
+    return
+        specifies whether the result of submitting the job (stdout, stderr or
+        both) is returned rather than printed; none prints it
 
-    Examples:
+    A log file named without a folder is in the current one. Examples:
 
     . "stdout:processing.log"
     . "stdout:processing.output.log|stderr:processing.error.log"
 
     Do not specify error and standard outputs both using --output parameter and
     scheduler specific options within settings string.
+
+    qunex_container itself always names the output of each job it submits:
+    the file --console_out names, else its own, in the batchlogs folder of the
+    run's log folder.
 
     SCHEDULER SPECIFICS
     ===================
@@ -232,17 +246,28 @@ def schedule(
                 "File not found",
                 f"The specified script does not exist! [{script}]",
             )
-        command = open(script, "r", encoding="UTF-8")
+        with open(script, "r", encoding="UTF-8") as f:
+            command = f.read()
 
     # dirs
     if workdir is not None:
+        # absolute, as a job does not start where it was submitted from on
+        # every scheduler: PBS and GridEngine start it in the home folder
+        workdir = os.path.abspath(workdir)
         if not os.path.exists(workdir):
             raise CommandFailed(
                 "schedule",
                 "Folder does not exist",
                 f"The specified working directory does not exist! [{workdir}]",
             )
-        command = f"cd {workdir}\n" + command
+        # quoted for the shell in the warning as well, where the double quotes
+        # are closed around it: inside them a `"` in the folder's name would
+        # end the string, and a `$` would be expanded
+        folder = shlex.quote(workdir)
+        command = (
+            f'cd {folder} || echo "WARNING: could not change into "{folder}", '
+            'relative paths are taken from $(pwd)" >&2\n'
+        ) + command
 
     if environment is not None:
         if not os.path.exists(environment):
@@ -251,26 +276,43 @@ def schedule(
                 "File not found",
                 f"The specified environment script does not exist! [{environment}]",
             )
-        command = open(environment, "r", encoding="UTF-8") + "\n" + command
+        with open(environment, "r", encoding="UTF-8") as f:
+            command = f.read() + "\n" + command
 
     # do search replace
     if replace is not None:
         replace = [e.strip().split(":") for e in replace.split("|")]
 
         for key, value in replace:
-            command.replace("{{%s}}" % (key), value)
-
-    # logfolder
-    if logfolder is None:
-        logfolder = os.path.join(os.path.expanduser("~"), "qunex")
-        if not os.path.exists(logfolder):
-            os.makedirs(logfolder)
+            command = command.replace("{{%s}}" % (key), value)
 
     # parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
     if output is not None:
-        for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-            if not os.path.exists(os.path.dirname(v)) and k != "return":
+        for directive in output.split("|"):
+            # split at the first colon only: a path may hold one of its own
+            k, _, v = [f.strip() for f in directive.partition(":")]
+            if k not in outputs or not v:
+                raise CommandError(
+                    "schedule",
+                    "Misspecified parameter",
+                    f"Could not read the output directive '{directive}': it has to "
+                    "be stdout, stderr or both with a log file, or return with "
+                    "stdout, stderr, both or none.",
+                )
+            if k == "return":
+                if v not in ("stdout", "stderr", "both", "none"):
+                    raise CommandError(
+                        "schedule",
+                        "Misspecified parameter",
+                        f"return has to be stdout, stderr, both or none, got: {v}",
+                    )
+                outputs[k] = None if v == "none" else v
+                continue
+            # absolute, as it is written into the job script: a file named
+            # without a folder is in the current one, which exists
+            v = os.path.abspath(v)
+            if not os.path.exists(os.path.dirname(v)):
                 raise CommandFailed(
                     "schedule",
                     "Folder does not exist",
@@ -278,15 +320,6 @@ def schedule(
                     "Please check your paths!",
                 )
             outputs[k] = v
-    else:
-        # log name
-        if not slurm_array:
-            logname = f"/qunex_container_{timestamp}.txt"
-        else:
-            logname = f"/qunex_container_job%a_{timestamp}.txt"
-
-        outputs["stdout"] = os.path.join(logfolder, logname)
-        outputs["stderr"] = os.path.join(logfolder, logname.replace(".txt", ".err"))
 
     if outputs["both"] is not None:
         outputs["stderr"] = outputs["both"]
@@ -330,6 +363,8 @@ def schedule(
             s_command += f"#PBS -o {outputs['stdout']}\n"
         if outputs["stderr"] is not None:
             s_command += f"#PBS -e {outputs['stderr']}\n"
+        if outputs["both"]:
+            s_command += "#PBS -j oe\n"
 
         com = "qsub"
 
@@ -404,12 +439,12 @@ def schedule(
         serr = None
         sout = subprocess.PIPE
 
-    # store command
-    script_path = os.path.join(logfolder, f"qunex_{scheduler_name}_{timestamp}.sh")
-    with open(script_path, "w", encoding="UTF-8") as f:
-        f.write(s_command)
-        f.write("\n")
-        f.write(command)
+    # keep what was submitted, beside the job's output
+    if script_path:
+        with open(script_path, "w", encoding="UTF-8") as f:
+            f.write(s_command)
+            f.write("\n")
+            f.write(command)
 
     run = subprocess.Popen(
         com, shell=True, stdin=subprocess.PIPE, stdout=sout, stderr=serr, close_fds=True
@@ -426,10 +461,11 @@ def schedule(
         return result
 
 
-# --- BEGIN GENERATED from general/batch_io.py — do not edit; run `qunex build_qx_container` ---
+# --- BEGIN GENERATED from general/batch_io.py and general/folders.py — do not edit; run `qunex build_qx_container` ---
 # the container runs on a login node with no QuNex on the path, so it carries a
-# copy of the one parser rather than importing it. what this needs is imported
-# at the top of the file, with the container's own imports
+# copy of the code it shares with QuNex rather than importing it: the batch file
+# parser, and the study layout with the rule for where a run logs. what these
+# need is imported at the top of the file, with the container's own imports
 
 
 class BatchError(ValueError):
@@ -639,6 +675,12 @@ def read_batch(filename, verbose=False):
     Reads a `batch.txt` or `session.txt` file and returns a tuple of the list of
     session records and the parameters specified in the header. Raises
     BatchError if the file can not be read or parsed.
+
+    The folders a record names (`hcp`, `raw_data`, ...) are returned as they
+    are written, which is relative to the session's folder: this module does
+    not know where that is. `general/core.resolve_sessions` resolves them, and
+    with `verbose` warns about the ones that do not exist; here `verbose` only
+    warns about a record without an id.
     """
 
     s = _read_file(filename)
@@ -646,8 +688,11 @@ def read_batch(filename, verbose=False):
     s = s.replace("\n\n", "\n")
     s = re.sub("^#.*?\n", "", s)
 
-    s = s.split("\n---")
-    s = [e for e in s if len(e) > 10]
+    # the first block is the header, whatever its length: dropping a short one
+    # made the first session the header, and its own overrides the study's. An
+    # empty header leaves the text starting with the separator itself
+    s = re.split(r"(?:^|\n)---", s)
+    s = s[:1] + [e for e in s[1:] if e.strip()]
 
     nsearch = re.compile(r"(.*?)\((.*)\)")
     csearch = re.compile(r"c([0-9]+)$")
@@ -756,20 +801,6 @@ def read_batch(filename, verbose=False):
                         dic["id"] = dic["session"]
                     slist.append(dic)
 
-                    # check paths
-                    if verbose:
-                        for field in ["dicom", "raw_data", "data", "hpc"]:
-                            if field in dic and not os.path.exists(dic[field]):
-                                print(
-                                    "WARNING: session %s - folder %s: %s specified in %s does not exist! Check your paths!"
-                                    % (
-                                        dic["id"],
-                                        field,
-                                        dic[field],
-                                        os.path.basename(filename),
-                                    )
-                                )
-
             # done with the parameters block
             first = False
 
@@ -821,7 +852,106 @@ def read_list(filename, verbose=False):
 
 
 # ------------------------------------------------------------------------------
-#                                                   Select sessions from a source
+#                                                     Paths a command line names
+
+# the commands whose `--studyfolder` names the study they create rather than
+# one they work in: everything they are given is taken from the current folder.
+# With their deprecated names, which the container launcher is given as typed
+CREATES_STUDY = (
+    "create_study",
+    "manage_study",
+    "copy_study",
+    "createStudy",
+    "manageStudy",
+)
+
+# a `--sessions` value that names a file of sessions rather than the sessions
+LIST_FILE = re.compile(r"^\s*\S+\.list\s*$")
+
+# what a command line names that is read before the study is known, and is
+# taken from the study the command line names
+READ_EARLY = ("batchfile", "recipe_file")
+
+
+def run_path(path, base=None):
+    """
+    ``run_path(path, base=None)``
+
+    A path a run is given, made absolute: environment variables and `~` are
+    expanded, and a relative path is taken from `base` -- the study the run
+    works in -- or from the current folder when there is none. An empty value,
+    and anything that is not a string (a flag given without a value), is
+    returned as it is.
+    """
+    if not isinstance(path, str) or not path.strip():
+        return path
+
+    path = os.path.expanduser(os.path.expandvars(path.strip()))
+    return os.path.normpath(os.path.join(base or os.getcwd(), path))
+
+
+def anchor_command_line(args, command=None, study=None):
+    """
+    ``anchor_command_line(args, command=None, study=None)``
+
+    What a command line names that is read before the run knows every study it
+    may name -- a batch file header and a recipe can name one too -- made
+    absolute:
+
+    - `studyfolder` from the current folder, and so `logstatus`, a file the
+      caller reads;
+    - `sessionsfolder` from the study the command line names. Named without
+      one it is left as it is typed: `process.merge_options` settles it once
+      the batch file header is read, which can name the study it is in;
+    - `batchfile`, a `.list` file given to `sessions` and `recipe_file` from
+      the study the command line names, else from the folder a sessions folder
+      it names is in, else from `study` -- a study known from elsewhere, the
+      one `run_recipe`'s recipe names -- else from the current folder.
+
+    A command that creates its study (`CREATES_STUDY`) takes all of them from
+    the current folder.
+
+    Returns:
+        a copy of `args` with those values absolute, and the study the files
+        were taken from (None when that was the current folder).
+    """
+    args = dict(args)
+    creates = command in CREATES_STUDY
+
+    if args.get("studyfolder") or args.get("sessionsfolder") or creates:
+        study = None
+
+    if isinstance(args.get("studyfolder"), str) and args["studyfolder"].strip():
+        args["studyfolder"] = run_path(args["studyfolder"])
+        if not creates:
+            study = args["studyfolder"]
+            if isinstance(args.get("sessionsfolder"), str):
+                args["sessionsfolder"] = run_path(args["sessionsfolder"], study)
+
+    if study is None and not creates and isinstance(args.get("sessionsfolder"), str):
+        if args["sessionsfolder"].strip():
+            # left relative, for a study the header may name, but what it says
+            args["sessionsfolder"] = os.path.expanduser(
+                os.path.expandvars(args["sessionsfolder"].strip())
+            )
+            study = os.path.dirname(run_path(args["sessionsfolder"]))
+
+    for key in READ_EARLY:
+        if key in args:
+            args[key] = run_path(args[key], study)
+
+    sessions = args.get("sessions")
+    if isinstance(sessions, str) and LIST_FILE.match(sessions):
+        args["sessions"] = run_path(sessions, study)
+
+    if "logstatus" in args:
+        args["logstatus"] = run_path(args["logstatus"])
+
+    return args, study
+
+
+# ------------------------------------------------------------------------------
+#                                                  Select sessions from a source
 
 
 def _split_sessions(sessions):
@@ -862,7 +992,7 @@ def resolve(
     # a `*.list` file is a session specification, so it can also arrive through
     # sessions: it is the source of the sessions when there is no batch file,
     # and selects within one when there is
-    if sessions and re.match(r"^\s*\S+\.list\s*$", sessions):
+    if sessions and LIST_FILE.match(sessions):
         list_records = read_list(sessions.strip(), verbose=verbose)
         if records:
             sessions = ",".join([e["id"] for e in list_records if "id" in e])
@@ -910,47 +1040,1407 @@ def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
     return slist.filter_by_string(filter)
 
 
+# ------------------------------------------------------------------------------
+#                                            Not taking what the batch file says
+#
+# A batch file states parameters for every command of a study, and since the
+# header reaches every command class, a name it states can land somewhere its
+# author did not have in mind -- `targetfile` is declared by four commands that
+# write four different files. These say "not from there", one per batch tier,
+# and they are run level parameters, so they can be written on the command line
+# and at every level of a recipe.
+UNSET_BATCH_HEADER = "unset_batch_header_parameters"
+UNSET_BATCH_SESSION = "unset_batch_session_parameters"
+
+
+def unset_patterns(stated):
+    """
+    ``unset_patterns(stated)``
+
+    The patterns an unset states: a name, a comma separated list of them, or an
+    array -- the forms a recipe's `unset_parameters` already takes, so there is
+    one convention rather than two. An empty list states nothing, which is how
+    a step opts back in under a run wide `all`. So does a flag given without a
+    value (`--unset_batch_header_parameters` alone): it names nothing.
+    """
+    if stated is None or isinstance(stated, bool):
+        return []
+    if isinstance(stated, str):
+        stated = stated.split(",")
+    return [str(pattern).strip() for pattern in stated if str(pattern).strip()]
+
+
+def is_unset(name, patterns):
+    """
+    ``is_unset(name, patterns)``
+
+    Whether any of `patterns` unsets `name`. A pattern is a parameter name, a
+    glob over parameter names (`hcp_*`), `*`, or `all` -- the last being the
+    spelling QuNex uses for "every one of them" elsewhere, and free here since
+    no command declares a parameter of that name.
+
+    `fnmatchcase` rather than `fnmatch`, as in `SessionList`: the answer must
+    not depend on the operating system. `_` is not a metacharacter, so `hcp_*`
+    matches what it looks like it matches.
+    """
+    return any(
+        pattern in ("all", "*") or name == pattern or fnmatch.fnmatchcase(name, pattern)
+        for pattern in patterns
+    )
+
+
+def without_unset(options, patterns):
+    """
+    ``without_unset(options, patterns)``
+
+    The options left once the patterns have taken out what they name, and the
+    names they took. The names are returned because a pattern is not a list: a
+    run has to be able to say what `hcp_*` removed on the day it ran, rather
+    than leaving a reader to work it out from the release it ran on.
+    """
+    if not options or not patterns:
+        return options, []
+
+    unset = sorted(key for key in options if is_unset(key, patterns))
+
+    return {key: value for key, value in options.items() if key not in unset}, unset
+
+
+# ------------------------------------------------------------------------------
+#                                     What the shell code of a command line sets
+#
+# A recipe's `{{$NAME}}` label can be set by shell code run before the command
+# -- qunex_container's --bash_post, a scheduled run's --bash -- rather than by
+# the environment the run starts in. Where a run logs is decided before that
+# code runs, so the variables it exports are read from it here, for the
+# launcher on the host and for `gmri` alike.
+
+# what bash takes as it is written -- a quoted or escaped `$`, backtick or `~`
+# -- marked by `_shell_text` with characters no command line holds, and read
+# back by `_shell_value`
+_LITERAL = {"$": "\x00", "`": "\x01", "~": "\x02"}
+_WRITTEN = {marker: char for char, marker in _LITERAL.items()}
+
+
+def _shell_text(text):
+    """
+    ``_shell_text(text)``
+
+    The shell code `text` as `_shell_statements` reads it: without comments
+    -- from a `#` that begins a word, outside quotes, to the end of its line;
+    a `#` inside a word, or quoted, is no comment -- and with each `$`,
+    backtick and `~` that bash takes as it is written, quoted or escaped,
+    marked (`_LITERAL`).
+
+    Raises:
+        ValueError: when `text` holds a character used as a mark.
+    """
+    if any(marker in text for marker in _WRITTEN):
+        raise ValueError("the shell code holds a character used as a mark")
+
+    kept, quote, escaped, comment, word_start = [], None, False, False, True
+    for char in text:
+        if comment:
+            if char != "\n":
+                continue
+            comment = False
+        elif escaped:
+            escaped = False
+            if char in "$`" or (char == "~" and quote is None):
+                # in place of the backslash, which bash takes away
+                kept[-1], word_start = _LITERAL[char], False
+                continue
+        elif quote == "'":
+            if char == quote:
+                quote = None
+            else:
+                char = _LITERAL.get(char, char)
+        elif quote == '"':
+            if char == quote:
+                quote = None
+            elif char == "\\":
+                escaped = True
+            elif char == "~":
+                char = _LITERAL[char]
+        elif char == "\\":
+            escaped = True
+        elif char in "'\"":
+            quote = char
+        elif char == "#" and word_start:
+            comment = True
+            continue
+        kept.append(char)
+        word_start = not (quote or escaped) and char in " \t\r\n;&|()<>"
+    return "".join(kept)
+
+
+def _shell_statements(text):
+    """
+    ``_shell_statements(text)``
+
+    The simple statements of the shell code `text` that run in the shell
+    itself, each as the list of its words, quotes taken away (`_shell_text`),
+    and whether it surely runs. Not one in a pipeline, nor one in the
+    background -- a `&` puts there the whole list of statements joined by
+    `&&` and `||` it ends. Each command is taken to succeed: a statement after
+    `&&` runs, and one after `||`, which runs only when what comes before it
+    fails, may run. A line break ends a statement as `;` does, except right
+    after `&&`, `||` or `|`.
+
+    Raises:
+        ValueError: on a quote that is not closed.
+    """
+    lexer = shlex.shlex(_shell_text(text), posix=True, punctuation_chars=";&|\n")
+    lexer.commenters = ""
+    lexer.whitespace = " \t\r"
+    lexer.whitespace_split = True
+
+    # the lists of statements joined by `&&`, `||` and `|`, each statement
+    # with what joins it to the next
+    lists, current, words = [], [], []
+    for token in list(lexer) + [";"]:
+        if not token or not set(token) <= set(";&|\n"):
+            words.append(token)
+            continue
+        joins = next((mark for mark in ("||", "&&", "|", "&") if mark in token), ";")
+        if not words and set(token) == {"\n"} and current:
+            if current[-1][1] in ("&&", "||", "|"):
+                continue
+        current.append((words, joins))
+        words = []
+        if joins in (";", "&"):
+            lists.append(current)
+            current = []
+
+    statements = []
+    for current in lists:
+        if current[-1][1] == "&":
+            continue
+        joined = ";"
+        for words, joins in current:
+            if words and "|" not in (joined, joins):
+                statements.append((words, joined != "||"))
+            joined = joins
+    return statements
+
+
+# a word of shell code that sets a variable; in its value, a reference to a
+# variable, or a mark of what is taken as it is written
+_SHELL_ASSIGNMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_]*)(\+?)=(.*)", re.S)
+_SHELL_REFERENCE = re.compile(
+    r"\$(?:\{([A-Za-z_][A-Za-z0-9_]*)\}|([A-Za-z_][A-Za-z0-9_]*))|([\x00-\x02])"
+)
+
+
+def _shell_value(value, variables):
+    """
+    ``_shell_value(value, variables)``
+
+    `value`, the right of an assignment, as bash expands it, when the host can
+    tell: written out, or referring with `$NAME` or `${NAME}` to one of
+    `variables`; a `~` that begins it is `$HOME`. None for a value made any
+    other way -- by a command (`$(...)`, a backtick) or another expansion
+    (`${NAME:-...}`, `$1`, `~user`) -- and for one that refers to a variable
+    `variables` does not hold.
+    """
+    if value == "~" or value.startswith("~/"):
+        value = "${HOME}" + value[1:]
+
+    found = _SHELL_REFERENCE.findall(value)
+    referred = [braced or bare for braced, bare, _ in found if braced or bare]
+    other = _SHELL_REFERENCE.sub("", value)
+    if (
+        "$" in other
+        or "`" in other
+        or value.startswith("~")
+        or ":~" in value
+        or any(name not in variables for name in referred)
+    ):
+        return None
+
+    def expanded(match):
+        braced, bare, mark = match.groups()
+        return _WRITTEN[mark] if mark else variables[braced or bare]
+
+    return _SHELL_REFERENCE.sub(expanded, value)
+
+
+def _builtin_operands(words):
+    """
+    ``_builtin_operands(words)``
+
+    The options and the operands of the builtin that `words` call, as bash
+    tells them apart: the options come first, until `--` or the first word
+    that is not one.
+    """
+    operands, flags = words[1:], ""
+    while operands and operands[0].startswith("-") and operands[0] != "-":
+        option = operands.pop(0)
+        if option == "--":
+            break
+        flags += option[1:]
+    return flags, operands
+
+
+def bash_post_exports(bash_post, environ=None):
+    """
+    ``bash_post_exports(bash_post, environ=None)``
+
+    What the `export` statements of shell code run before a command set for
+    it -- `qunex_container`'s --bash_post inside the container, a scheduled
+    run's --bash on the node -- as far as can be told before that code runs
+    (`_shell_value`), the variables of `environ` -- the environment unless
+    another is given -- and those the code set before taken as known. Only a statement that
+    runs in the shell that runs the command counts (`_shell_statements`), and
+    whatever a sourced file sets is not seen. `unset` and `export -n` take an
+    export back, a later assignment changes what is exported, and an array is
+    never exported.
+    """
+    if not isinstance(bash_post, str) or not bash_post.strip():
+        return {}
+
+    try:
+        statements = _shell_statements(bash_post)
+    except ValueError:
+        return {}
+
+    known = dict(os.environ if environ is None else environ)
+    assigned, arrays, exports = set(), set(), {}
+
+    def forget(name):
+        known.pop(name, None)
+        exports.pop(name, None)
+        assigned.discard(name)
+
+    for words, surely in statements:
+        assignments = [m for m in map(_SHELL_ASSIGNMENT.match, words) if m]
+        flags, operands = _builtin_operands(words)
+        array = [m.group(1) for m in assignments if m.group(3).startswith("(")]
+        if array or not surely:
+            # the words of an array are not told apart from the statement's,
+            # and a statement that may not run sets what it sets or not
+            touched = [m.group(1) for m in assignments]
+            if words[0] in ("export", "unset"):
+                touched += operands
+            for name in touched:
+                forget(name)
+            arrays.update(array)
+            continue
+
+        if words[0] == "unset":
+            # `-f` unsets a function, not a variable
+            if "f" not in flags:
+                for name in operands:
+                    forget(name)
+                    arrays.discard(name)
+            continue
+        if words[0] == "export" and "f" not in flags:
+            mode = "unexport" if "n" in flags else "export"
+        elif len(assignments) == len(words):
+            # variables of the shell, for what refers to them later
+            mode, operands = "assign", words
+        else:
+            continue
+
+        # an export's words are expanded before it runs, assignments one by one
+        before = dict(known)
+        for word in operands:
+            match = _SHELL_ASSIGNMENT.match(word)
+            if match is None:
+                if mode == "export" and word in assigned:
+                    exports[word] = known[word]
+                elif mode == "unexport":
+                    exports.pop(word, None)
+                continue
+
+            name, append, value = match.groups()
+            variables = known if mode == "assign" else before
+            if append or name in arrays:
+                value = None
+            else:
+                value = _shell_value(value, variables)
+            if value is None:
+                # set, to a value the host can not tell
+                forget(name)
+                continue
+
+            known[name] = value
+            assigned.add(name)
+            if mode == "unexport":
+                exports.pop(name, None)
+            elif mode == "export" or name in exports:
+                exports[name] = value
+
+    return exports
+
+
+SESSIONS = "sessions"
+SUBJECTS = "subjects"
+PROCESSING = "processing"
+
+# what marks a folder as the root of a study (`.mnapstudy` before QuNex)
+STUDY_MARKERS = (".qunexstudy", ".mnapstudy")
+
+# the fields of a session record that name one of the session's folders
+SESSION_FOLDER_FIELDS = ("dicom", "raw_data", "data", "hcp", "bids", "hcpls", "nhp")
+
+
+# ------------------------------------------------------------------------------
+#                                                                   study layout
+
+
+def sessions_folder(studyfolder=None, sessionsfolder=None, default="."):
+    """
+    ``sessions_folder(studyfolder=None, sessionsfolder=None, default=".")``
+
+    The sessions folder a command works on: ``sessionsfolder`` when it is
+    given, else the ``sessions`` folder of ``studyfolder``, else ``default``.
+    Returned as given, not made absolute.
+    """
+    if sessionsfolder:
+        return sessionsfolder
+    if studyfolder:
+        return os.path.join(studyfolder, SESSIONS)
+    return default
+
+
+def study_folder(studyfolder=None, sessionsfolder=None):
+    """
+    ``study_folder(studyfolder=None, sessionsfolder=None)``
+
+    The absolute path of the study folder: ``studyfolder`` when it is given,
+    else the folder ``sessionsfolder`` is in, else None.
+    """
+    if studyfolder:
+        return os.path.abspath(studyfolder)
+    if sessionsfolder:
+        return os.path.dirname(os.path.abspath(sessionsfolder))
+    return None
+
+
+def subjects_folder(studyfolder):
+    """The study's subjects folder, where longitudinal results are kept."""
+    return os.path.join(studyfolder, SUBJECTS)
+
+
+def processing_folder(studyfolder):
+    """The study's processing folder, where batch files and lists are kept."""
+    return os.path.join(studyfolder, PROCESSING)
+
+
+def find_study(path):
+    """
+    ``find_study(path)``
+
+    The study ``path`` is in: the first folder from ``path`` upwards that
+    carries a study marker, or None when there is none. ``path`` itself is
+    tested first, so a command run from the root of a study is run inside it.
+    """
+    folder = os.path.abspath(path)
+    while folder and folder != os.path.dirname(folder):
+        if any(os.path.exists(os.path.join(folder, m)) for m in STUDY_MARKERS):
+            return folder
+        folder = os.path.dirname(folder)
+    return None
+
+
+# ------------------------------------------------------------------------------
+#                                                   folders in a session record
+
+
+def session_relative(path, session_folder):
+    """
+    ``session_relative(path, session_folder)``
+
+    How a session file records ``path``: relative to ``session_folder`` when
+    it is inside it, absolute when it is somewhere else -- a relative value
+    is read back against the session folder, so it has to be one.
+    """
+    if not path:
+        return path
+
+    folder = os.path.abspath(session_folder)
+    target = os.path.abspath(path)
+
+    if target == folder or target.startswith(folder + os.sep):
+        return os.path.relpath(target, folder)
+
+    return target
+
+
+def resolve_session_folders(record, session_folder):
+    """
+    ``resolve_session_folders(record, session_folder)``
+
+    Makes the folders a session record names absolute, against the session's
+    own folder. An absolute value, and one starting with ``~``, is left as it
+    is. Changes the record in place and returns it.
+    """
+    for field in SESSION_FOLDER_FIELDS:
+        value = record.get(field)
+        if not isinstance(value, str) or not value.strip():
+            continue
+        value = value.strip()
+        if os.path.isabs(value) or value.startswith("~"):
+            continue
+        record[field] = os.path.normpath(
+            os.path.join(os.path.abspath(session_folder), value)
+        )
+    return record
+
+
+def resolve_sessions_folders(sessions, sessionsfolder):
+    """
+    ``resolve_sessions_folders(sessions, sessionsfolder)``
+
+    Makes the folders every session record names absolute, each against its
+    session's folder -- the folder in ``sessionsfolder`` named after the
+    session's id. A record without an id is left as it is. Changes the
+    records in place and returns them.
+    """
+    for record in sessions or []:
+        if isinstance(record, dict) and record.get("id"):
+            resolve_session_folders(record, os.path.join(sessionsfolder, record["id"]))
+    return sessions
+
+
+# ------------------------------------------------------------------------------
+#                                                               where a run logs
+#
+# a run keeps its logs in one folder -- its runlog, its comlogs, the output of
+# the jobs it submits, the job scripts a launcher writes for it and the status
+# records of a recipe -- decided once, by the entry point the run was started
+# at, with `run_folders`; everything the run starts is handed that folder with
+# `--logfolder` and uses it as it is, so nothing below the entry point decides
+# again (`run_qc` alone keeps working files of its own, the scene scripts it
+# writes and their output, in its `qclog` folder)
+#
+# the same call says which folder the run takes its relative paths from: the
+# study it knows, once that study exists and unless the run creates it
+
+# the folder of a study its runs log in, and the folder of the legacy layout
+LOGS = "logs"
+LEGACY_LOGS = os.path.join(PROCESSING, "logs")
+
+# the folder under the home folder the runs outside any study log in
+OUTSIDE_STUDY_LOGS = "qunex_logs"
+
+# `--logfolder=legacy` names the legacy layout rather than a folder
+LEGACY = "legacy"
+
+# the log layouts, and the named values of the `outside_study` setting
+LAYOUTS = ("default", "legacy", "nested")
+OUTSIDE_STUDY = ("home", "cwd")
+
+# the settings files the layout and `outside_study` are read from: the user's,
+# accepted in exactly one of these places, and the study's own
+USER_SETTINGS_PATHS = (
+    "~/.qunex_settings.yaml",
+    "~/qunex_settings.yaml",
+    "~/qunex/qunex_settings.yaml",
+    "~/.qunex/qunex_settings.yaml",
+)
+STUDY_SETTINGS_FILE = "qunex_settings.yaml"
+
+# the stamp a run's folder, its runlog and its comlogs carry
+TIMESTAMP = "%Y-%m-%d_%H.%M.%S.%f"
+
+# the deprecated names of the parameters that place a run -- the part of
+# `commands_support.deprecated_parameters` this rule reads, kept here because
+# the container launcher can not import that module;
+# `tests/test_log_placement.py` fails when the two disagree
+FOLDER_ALIASES = {
+    "basefolder": "sessionsfolder",
+    "subjectsfolder": "sessionsfolder",
+    "sfolder": "sourcefolder",
+}
+
+# the commands QuNex has renamed, and the names each had before:
+# "new_command_name": ["deprecated_name1", "deprecated_name2", ...]. Kept here,
+# rather than in `commands_support`, which takes it from here and adds the
+# ones extensions declare, because the container launcher can not import that
+# module and names a run after its command as QuNex does (`run_name`)
+DEPRECATED_COMMANDS = {
+    "fc_compute_ab_corr": ["fc_ComputeABCorr"],
+    "fc_compute_ab_corr_kca": ["fc_ComputeABCorrKCA"],
+    "fc_compute_gbc3": ["fc_ComputeGBC3"],
+    "fc_compute_gbcd": ["fc_ComputeGBCd"],
+    "fc_compute_roifc": [
+        "fc_ComputeROIFC",
+        "fc_ComputeROIFCGroup",
+        "fc_compute_roifc_group",
+    ],
+    "fc_compute_seedmaps": [
+        "fc_ComputeSeedMaps",
+        "fc_compute_seedmaps_group",
+        "fc_ComputeSeedMapsGroup",
+    ],
+    "fc_compute_seedmaps_multiple": ["fc_ComputeSeedMapsMultiple"],
+    "fc_extract_roi_timeseries_masked": ["fc_ExtractROITimeseriesMasked"],
+    "fc_extract_trial_timeseries_masked": ["fc_ExtractTrialTimeseriesMasked"],
+    "fc_segment_mri": ["fc_fcMRISegment", "fc_mri_segment"],
+    "fc_preprocess": ["fc_Preprocess"],
+    "fc_preprocess_conc": ["fc_PreprocessConc"],
+    "general_image_overlap": ["qa_imgOverlap"],
+    "general_compute_bold_list_stats": ["g_ComputeBOLDListStats"],
+    "general_compute_bold_stats": ["g_ComputeBOLDStats"],
+    "general_compute_group_bold_stats": ["g_ComputeGroupBOLDStats"],
+    "general_extract_roi_glm_values": ["g_ExtractROIGLMValues"],
+    "general_extract_glm_volumes": ["g_ExtractGLMVolumes"],
+    "general_extract_roi_values": ["g_ExtractROIValues"],
+    "general_find_peaks": ["g_FindPeaks"],
+    "general_parcellated2dense": ["g_Parcellated2Dense"],
+    "general_plot_bold_timeseries": ["g_PlotBoldTS"],
+    "general_plot_bold_timeseries_list": ["g_PlotBoldTSList"],
+    "general_qa_concfile": ["g_QAConcFile"],
+    "general_image_conjunction": ["g_ConjunctionG"],
+    "stats_compute_behavioral_correlations": ["s_ComputeBehavioralCorrelations"],
+    "stats_p2z": ["s_p2Z"],
+    "stats_ttest_dependent": ["s_TTestDependent"],
+    "stats_ttest_independent": ["s_TTestIndependent"],
+    "stats_ttest_zero": ["s_TTestZero"],
+    "run_qc": ["runQC", "RunQC", "QCPreproc"],
+    "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
+    "compute_bold_fc": [
+        "BOLDcomputeFC",
+        "bold_compute_fc",
+        "compute_fc_bold",
+        "fc_compute_wrapper",
+        "computeBOLDfc",
+    ],
+    "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
+    "data_sync": ["DataSync"],
+    "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
+    "dwi_eddy_qc": ["DWIeddyQC"],
+    "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
+    "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
+    "run_qc_dwi_dtifit": [
+        "runQC_DWIFSLdtifit",
+        "run_qc_dwi_fsl_dtifit",
+        "runQC_DWIDTIFIT",
+    ],
+    "dwi_legacy_gpu": ["dwi_legacy", "hcpdLegacy", "DWILegacy"],
+    "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
+    "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
+    "dwi_seed_tractography_dense": ["DWIseedTractographyDense", "DWISeedTractography"],
+    "run_qc_t1w": ["runQC_T1w"],
+    "run_qc_t2w": ["runQC_T2w"],
+    "run_qc_myelin": ["runQC_Myelin"],
+    "run_qc_bold": ["runQC_BOLD"],
+    "run_qc_bold_fc": ["runQC_BOLDfc"],
+    "run_qc_dwi": ["runQC_DWI"],
+    "run_qc_dwi_process": ["runQC_DWIProcess"],
+    "run_qc_dwi_bedpostx": ["runQC_DWIBedpostX"],
+    "run_qc_custom": ["runQC_Custom"],
+    "run_qc_rawnii": ["runQC_rawNII"],
+    "extract_roi": ["extractROI", "ROIExtract", "roi_extract"],
+    "matlab_help": ["matlabHelp"],
+    "gmri_function": ["gmriFunction"],
+    "organize_dicom": ["organizeDicom"],
+    "dwi_pre_tractography": ["DWIpreTractography", "pretractographyDense"],
+    "aws_hcp_sync": ["AWSHCPsync"],
+    "map_hcp_files": ["mapHCPFiles"],
+    "auto_ptx": ["autoPtx"],
+    "compute_bold_fc_gbc": ["computeBOLDfcGBC"],
+    "compute_bold_fc_seed": ["computeBOLDfcSeed"],
+    "list_dicom": ["listDicom"],
+    "split_dicom": ["splitDicom"],
+    "sort_dicom": ["sortDicom"],
+    "import_hcp": ["HCPLSImport", "importHCP"],
+    "import_bids": ["BIDSImport", "importBIDS"],
+    "import_dicom": ["processInbox", "importDICOM"],
+    "export_hcp": ["mapIO", "exportHCP"],
+    "list_session_info": ["listSubjectInfo", "listSessionInfo"],
+    "create_session_info": ["getHCPReady", "createSessionInfo"],
+    "create_study": ["createStudy"],
+    "get_dicom_info": ["getDICOMInfo"],
+    "map_bids2nii": ["mapBIDS2nii"],
+    "map_hcpls2nii": ["mapHCPLS2nii"],
+    "run_nil_folder": ["runNILFolder"],
+    "run_nil": ["runNIL"],
+    "slice_image": ["sliceImage"],
+    "setup_hcp": ["setupHCP"],
+    "create_batch": ["createBatch"],
+    "manage_study": ["manageStudy"],
+    "create_list": ["createList"],
+    "create_conc": ["createConc"],
+    "gather_behavior": ["gatherBehavior"],
+    "pull_sequence_names": ["pullSequenceNames"],
+    "batch_tag2namekey": ["batchTag2NameKey"],
+    "join_fidl": ["joinFidl"],
+    "join_fidl_folder": ["joinFidlFolder"],
+    "split_fidl": ["splitFidl"],
+    "check_fidl": ["checkFidl"],
+    "map2pals": ["map2PALS"],
+    "map2hcp": ["map2HCP"],
+    "mask_map": ["maskMap"],
+    "join_maps": ["joinMaps"],
+    "run_palm": ["runPALM"],
+    "create_ws_palm_design": ["createWSPALMDesign"],
+    "get_dicom_fields": ["getDICOMFields"],
+    "change_dicom_files": ["changeDICOMFiles"],
+    "map_hcp_data": ["mapHCPData"],
+    "get_bold_data": ["getBOLDData"],
+    "create_bold_brain_masks": ["createBOLDBrainMasks"],
+    "run_basic_segmentation": ["runBasicSegmentation"],
+    "get_fs_data": ["getFSData"],
+    "run_subcortical_fs": ["runSubcorticalFS"],
+    "run_full_fs": ["runFullFS"],
+    "compute_bold_stats": ["computeBOLDStats"],
+    "create_stats_report": ["createStatsReport"],
+    "extract_nuisance_signal": ["extractNuisanceSignal"],
+    "preprocess_bold": ["preprocessBold"],
+    "preprocess_conc": ["preprocessConc"],
+    "hcp_pre_freesurfer": ["hcp_PreFS", "hcp1"],
+    "hcp_freesurfer": ["hcp_FS", "hcp2"],
+    "hcp_post_freesurfer": ["hcp_PostFS", "hcp3"],
+    "hcp_fmri_volume": ["hcp_fMRIVolume", "hcp4"],
+    "hcp_fmri_surface": ["hcp_fMRISurface", "hcp5"],
+    "hcp_icafix": ["hcp_ICAFix"],
+    "hcp_post_fix": ["hcp_PostFix"],
+    "hcp_reapply_fix": ["hcp_ReApplyFix"],
+    "hcp_msmall": ["hcp_MSMAll"],
+    "hcp_dedrift_and_resample": ["hcp_DeDriftAndResample"],
+    "hcp_diffusion": ["hcp_Diffusion", "hcpd"],
+    "run_shell_script": ["runShellScript"],
+    "create_bold_list": ["createBoldList"],
+    "create_conc_list": ["createConcList"],
+    "map_raw_data": ["mapRawData"],
+    "hcp_task_fmri_analysis": ["hcp_TaskfMRIAnalysis"],
+    "dwi_xtract": ["fsl_xtract"],
+    "dwi_f99": ["fsl_f99"],
+}
+
+# a deprecated name, in lower case, and the name it has now
+_CURRENT_COMMANDS = {
+    old.lower(): new for new, olds in DEPRECATED_COMMANDS.items() for old in olds
+}
+
+
+# where a run that names no study looks for the one it is in, in this order,
+# before it looks at the current folder
+STUDY_HINTS = ("logfolder", "sourcefolder", "folder", "reference")
+
+# every parameter that places a run
+PLACEMENT_PARAMETERS = ("studyfolder", "sessionsfolder") + STUDY_HINTS
+
+# how a recipe says that a parameter is not to be inherited
+UNSET_PARAMETERS = "unset_parameters"
+
+# a `{{$NAME}}` label in a recipe file, found as `run_recipe` finds it: from
+# `{{` to the first `}}` after it, across a line break as well
+_LABEL = re.compile(r"\{\{.*?\}\}", re.S)
+
+# what `run_folders` returns: the name the run is filed under; its study, and
+# whether the study is known (named, rather than found by its marker); the
+# folder it takes its relative paths from, None for the current folder; its
+# log folder; and the settings the `settings` callable returned for the study
+Placement = namedtuple("Placement", "name studyfolder known base logfolder settings")
+
+# the two settings that place a run's logs
+LogPlacement = namedtuple("LogPlacement", "layout outside_study")
+
+
+class PlacementError(ValueError):
+    """A run that can not be placed: an unset label, or an invalid setting."""
+
+
+def current_command(command):
+    """
+    ``current_command(command)``
+
+    The name `command` has now: a deprecated name of a QuNex command, in any
+    case, is the name it was renamed to (``DEPRECATED_COMMANDS``), as
+    ``commands_support.check_deprecated_commands`` maps it; any other is
+    returned as it is.
+    """
+    if not isinstance(command, str):
+        return command
+    return _CURRENT_COMMANDS.get(command.lower(), command)
+
+
+def run_name(command, args=None):
+    """
+    ``run_name(command, args=None)``
+
+    The name a run's log folder and runlog are filed under: the command, by
+    the name it has now (:func:`current_command`), and for ``run_recipe`` the
+    recipe as well -- ``run_recipe_<recipe>``, a path separator in the
+    recipe's name read as ``_``, or ``run_recipe_steps`` for a run of
+    ``--steps`` without a recipe file.
+    """
+    command = current_command(command)
+    if command != "run_recipe":
+        return command
+
+    args = args or {}
+    if not args.get("recipe_file"):
+        return "run_recipe_steps"
+    if args.get("recipe"):
+        return "run_recipe_%s" % str(args["recipe"]).replace(os.sep, "_")
+    return command
+
+
+def recipe_parameters(recipe_data, recipe):
+    """
+    ``recipe_parameters(recipe_data, recipe)``
+
+    The parameters a parsed recipe file states for every step of ``recipe``:
+    its ``global_parameters``, overridden by the recipe's own ``parameters``,
+    less the ones the recipe unsets. Labels are left as they are written. An
+    empty dict when the file holds no such recipe, and a section that is not a
+    mapping states nothing -- `run_recipe` reports both, and validates how an
+    unset is spelled.
+    """
+    recipes = recipe_data.get("recipes") if isinstance(recipe_data, dict) else None
+    if not isinstance(recipes, dict) or not isinstance(recipes.get(recipe), dict):
+        return {}
+
+    parameters = recipe_data.get("global_parameters")
+    parameters = dict(parameters) if isinstance(parameters, dict) else {}
+    own = recipes[recipe].get("parameters")
+    own = dict(own) if isinstance(own, dict) else {}
+
+    stated = own.pop(UNSET_PARAMETERS, None)
+    if isinstance(stated, str):
+        unset = stated.split(",")
+    elif isinstance(stated, (list, tuple)):
+        unset = [str(name) for name in stated]
+    else:
+        unset = []
+    for key in [key for key in own if isinstance(key, str) and key.startswith("-")]:
+        own.pop(key)
+        unset.append(key[1:])
+
+    parameters.update(own)
+    for name in unset:
+        parameters.pop(name.strip(), None)
+    return parameters
+
+
+def inject_labels(value, environ=None):
+    """
+    ``inject_labels(value, environ=None)``
+
+    ``value`` with every ``{{$NAME}}`` label of a recipe file replaced by
+    ``NAME`` from ``environ``, the environment unless another is given.
+    Anything that is not a string holding a label is returned as it is.
+    Raises PlacementError on a label ``environ`` does not hold: a recipe can
+    not be run half resolved.
+    """
+    if not isinstance(value, str) or "{{" not in value or "}}" not in value:
+        return value
+
+    environ = os.environ if environ is None else environ
+    for label in _LABEL.findall(value):
+        name = label.replace("{", "").replace("}", "")
+        if not name.startswith("$") or name[1:] not in environ:
+            raise PlacementError(
+                "Cannot inject values marked with double curly braces in the "
+                "recipe. Label [%s] not found in system environment variables." % label
+            )
+        value = value.replace(label, environ[name[1:]])
+    return value
+
+
+def _canonical(parameters):
+    """
+    `parameters` under the names they have now, remapped as
+    `commands_support.check_deprecated_parameters` remaps them: a later key
+    wins over an earlier one, and a deprecated name with no value is dropped
+    rather than taking the place of the name it has now.
+    """
+    canonical = {}
+    for key, value in (parameters or {}).items():
+        if key in FOLDER_ALIASES:
+            if not value:
+                continue
+            key = FOLDER_ALIASES[key]
+        canonical[key] = value
+    return canonical
+
+
+def recipe_placement(recipe_data, recipe, environ=None):
+    """
+    ``recipe_placement(recipe_data, recipe, environ=None)``
+
+    The recipe file's tier of the parameters that place a `run_recipe` run:
+    those of :func:`recipe_parameters` that are among `PLACEMENT_PARAMETERS`,
+    under the names they have now, with their labels injected from
+    ``environ`` -- the environment unless another is given. QuNex and the
+    container launcher read the tier with it; the launcher on the host may
+    not hold every variable the run will.
+
+    Returns:
+        ``(parameters, unresolved)``: the parameters, and a ``(name, message)``
+        pair for each one with a label ``environ`` does not hold. Such a
+        parameter is left out rather than raised on, so that the caller can
+        say so and place the run by the other tiers.
+    """
+    parameters, unresolved = {}, []
+    for key, value in _canonical(recipe_parameters(recipe_data, recipe)).items():
+        if key not in PLACEMENT_PARAMETERS:
+            continue
+        try:
+            parameters[key] = inject_labels(value, environ)
+        except PlacementError as e:
+            unresolved.append((key, str(e)))
+    return parameters, unresolved
+
+
+def placement_parameters(*tiers):
+    """
+    ``placement_parameters(*tiers)``
+
+    The parameters that place a run, each from the first tier that states it.
+    The tiers are given highest first -- the command line, the recipe file of
+    a `run_recipe` run, the batch file header -- and a deprecated name counts
+    as the name it has now. An empty value, as from a recipe variable that
+    expanded to nothing, is not stated, and ``$NAME`` and ``~`` are expanded,
+    as `process.merge_options` and `batch_io.run_path` expand them, so that
+    the folders a run logs to are the ones its command works in.
+    """
+    stated = {}
+    for tier in tiers:
+        for key, value in _canonical(tier).items():
+            if key in stated or key not in PLACEMENT_PARAMETERS:
+                continue
+            if not isinstance(value, str) or not value.strip():
+                continue
+            stated[key] = os.path.expanduser(os.path.expandvars(value.strip()))
+    return stated
+
+
+def _absolute(path, base):
+    """`path` made absolute against `base`, and normalised."""
+    return os.path.normpath(os.path.join(base, path))
+
+
+def run_study(stated, cwd=None):
+    """
+    ``run_study(stated, cwd=None)``
+
+    The study a run is in, and whether it is known. The study is known when
+    the run names it, or names a sessions folder, which is in its study.
+    Otherwise it is the study marked by `.qunexstudy` at or above the first of
+    `STUDY_HINTS` the run states that is in one, else at or above the current
+    folder; else there is none and the run is outside a study. Takes what
+    `placement_parameters` returns.
+    """
+    cwd = os.path.abspath(cwd or os.getcwd())
+
+    if stated.get("studyfolder"):
+        return _absolute(stated["studyfolder"], cwd), True
+    if stated.get("sessionsfolder"):
+        return os.path.dirname(_absolute(stated["sessionsfolder"], cwd)), True
+
+    for hint in STUDY_HINTS:
+        value = stated.get(hint)
+        if value and value != LEGACY:
+            study = find_study(_absolute(value, cwd))
+            if study:
+                return study, False
+
+    return find_study(cwd), False
+
+
+def study_exists(folder):
+    """
+    ``study_exists(folder)``
+
+    Whether the study ``folder`` exists: a folder holding something other than
+    QuNex's logs. A run's logs are written into the study it names before the
+    command runs, so a folder holding nothing but those logs -- ``logs``, or
+    ``processing`` with nothing but ``logs`` in it -- is a study that does not
+    exist yet. A second run, a job the run submitted, and a recipe's external
+    step then decide as the first run did.
+    """
+    if not folder:
+        return False
+    try:
+        entries = set(os.listdir(folder)) - {LOGS}
+    except OSError:
+        return False
+    if entries != {PROCESSING}:
+        return bool(entries)
+    try:
+        return bool(set(os.listdir(os.path.join(folder, PROCESSING))) - {LOGS})
+    except OSError:
+        # a `processing` that can not be listed is not one the logs made
+        return True
+
+
+def path_base(study, known, creating=False):
+    """
+    ``path_base(study, known, creating=False)``
+
+    The folder a run takes its relative paths from: the study it knows -- the
+    one it names, or the one a sessions folder it names is in -- once that
+    study exists (:func:`study_exists`), unless the run's command creates it.
+    None means the current folder, which is where a run that names neither
+    folder takes them from, even inside a study its marker shows.
+    """
+    if study and known and not creating and study_exists(study):
+        return study
+    return None
+
+
+def outside_folder(outside_study="home", cwd=None, home=None):
+    """
+    ``outside_folder(outside_study="home", cwd=None, home=None)``
+
+    The folder the runs outside any study log in, by the ``outside_study``
+    setting: ``home`` is ``~/qunex_logs``, ``cwd`` the current folder, and
+    anything else a path -- taken against the current folder when it is
+    relative, there being no study to take it against.
+    """
+    cwd = os.path.abspath(cwd or os.getcwd())
+
+    if not outside_study or outside_study == "home":
+        return os.path.join(home or os.path.expanduser("~"), OUTSIDE_STUDY_LOGS)
+    if outside_study == "cwd":
+        return cwd
+    if home and (outside_study == "~" or outside_study.startswith("~/")):
+        outside_study = home + outside_study[1:]
+    return _absolute(os.path.expanduser(outside_study), cwd)
+
+
+def log_folder(
+    name,
+    timestamp,
+    stated,
+    study,
+    known,
+    layout="default",
+    outside_study="home",
+    cwd=None,
+    home=None,
+    creating=False,
+):
+    """
+    ``log_folder(name, timestamp, stated, study, known, layout="default", outside_study="home", cwd=None, home=None, creating=False)``
+
+    The folder a run logs in. A ``logfolder`` the run states is that folder;
+    a relative one is taken from the folder the run takes every relative path
+    from -- :func:`path_base`, else the current folder. Otherwise the run gets
+    a folder of its own, ``<timestamp>_<name>``: in the study's ``logs``
+    folder, or -- under ``--logfolder=legacy`` or ``layout: legacy`` -- the
+    study's ``processing/logs``, which every run of the study shares. A run
+    outside a study gets its folder in the ``outside_study`` folder, whatever
+    the layout: there is no study to collect it in.
+    """
+    named = (stated or {}).get("logfolder")
+    if named and named != LEGACY:
+        base = path_base(study, known, creating)
+        return _absolute(named, base or os.path.abspath(cwd or os.getcwd()))
+
+    if study:
+        if named == LEGACY or layout == LEGACY:
+            return os.path.join(study, LEGACY_LOGS)
+        return os.path.join(study, LOGS, "%s_%s" % (timestamp, name))
+
+    return os.path.join(
+        outside_folder(outside_study, cwd, home), "%s_%s" % (timestamp, name)
+    )
+
+
+def user_settings_files(home=None):
+    """The user settings files that exist, of the places one is accepted in."""
+    home = home or os.path.expanduser("~")
+    paths = [os.path.join(home, path[2:]) for path in USER_SETTINGS_PATHS]
+    return [path for path in paths if os.path.isfile(path)]
+
+
+def placement_settings(*sections):
+    """
+    ``placement_settings(*sections)``
+
+    The ``layout`` and ``outside_study`` the ``logging:`` sections of the
+    settings files state, each later section overriding the earlier ones key
+    by key -- the user's first, then the study's. Raises PlacementError on a
+    section that is not a mapping, and on a value QuNex does not take.
+    """
+    merged = {}
+    for section in sections:
+        if section and not isinstance(section, dict):
+            raise PlacementError(
+                "logging must be a mapping of settings, got: %r" % (section,)
+            )
+        merged.update(section or {})
+
+    layout = merged.get("layout", "default")
+    outside_study = merged.get("outside_study", "home")
+    if layout not in LAYOUTS:
+        raise PlacementError(
+            "logging.layout must be one of [%s], got: %r" % (", ".join(LAYOUTS), layout)
+        )
+    if not isinstance(outside_study, str):
+        raise PlacementError(
+            "logging.outside_study must be one of [%s] or a path, got: %r"
+            % (", ".join(OUTSIDE_STUDY), outside_study)
+        )
+    return LogPlacement(layout, outside_study)
+
+
+def run_folders(
+    name, tiers, timestamp, settings=None, cwd=None, home=None, creating=False
+):
+    """
+    ``run_folders(name, tiers, timestamp, settings=None, cwd=None, home=None, creating=False)``
+
+    Where a QuNex run is, where it takes its relative paths from, and where it
+    logs: the one rule every entry point follows -- `gmri` for every command
+    it runs, `run_recipe` called on its own, `qunex_container` on the host
+    through its copy of this module, and `bin/qunex.sh` through
+    `gmri log_folder`.
+
+    Parameters:
+        name: what the run is filed under, from :func:`run_name`.
+        tiers: the dictionaries that state the run's parameters, highest
+            first: the command line, the recipe file's run wide parameters
+            for `run_recipe`, the batch file header.
+        timestamp: the run's stamp, as :data:`TIMESTAMP` formats it.
+        settings: a callable given the study (or None) that returns the
+            resolved logging settings -- anything with ``layout`` and
+            ``outside_study`` -- or None for the defaults.
+        cwd, home: the current and the home folder, for tests.
+        creating: whether the run's command creates the study it names
+            (``create_study``, ``manage_study``, ``copy_study``), and so takes
+            no relative path from it.
+
+    Returns:
+        a :data:`Placement`.
+    """
+    stated = placement_parameters(*tiers)
+    study, known = run_study(stated, cwd)
+    base = path_base(study, known, creating)
+    resolved = settings(study) if settings else LogPlacement("default", "home")
+    logfolder = log_folder(
+        name,
+        timestamp,
+        stated,
+        study,
+        known,
+        resolved.layout,
+        resolved.outside_study,
+        cwd,
+        home,
+        creating,
+    )
+    return Placement(name, study, known, base, logfolder, resolved)
+
+
 # --- END GENERATED ---
 
 
-def get_logs_folder(rootfolder, command, timestamp, legacy_logfolder):
+def _read_yaml(path, what, function="qunex_container"):
     """
-    ``get_logs_folder(args)``
+    ``_read_yaml(path, what, function="qunex_container")``
 
-    Tries to deduce the location of study specific logs folder based on the
-    provided arguments.
+    A YAML file the launcher reads to place a run -- a settings file or a
+    recipe file, as `what` names it -- parsed, or None when there is no such
+    file. Without PyYAML in the host python the file can not be read here: the
+    launcher says so when the file states something that places a run, and
+    goes on as if it stated nothing.
+
+    Raises:
+        CommandError: from `function`, when the file can not be read or parsed.
     """
-    # extract folder
-    f = os.path.abspath(rootfolder)
-
-    # basefolder
-    basefolder = None
-
-    # is this the root already
-    if os.path.exists(os.path.join(f, ".qunexstudy")):
-        basefolder = f
-    elif os.path.exists(os.path.join(f, ".mnapstudy")):
-        basefolder = f
-    # try to find the root
-    else:
-        while os.path.dirname(f) and os.path.dirname(f) != "/":
-            f = os.path.dirname(f)
-            if os.path.exists(os.path.join(f, ".qunexstudy")):
-                basefolder = f
-                break
-            elif os.path.exists(os.path.join(f, ".mnapstudy")):
-                basefolder = f
-                break
-
-    # log folder
-    if basefolder is None:
+    if not isinstance(path, str) or not os.path.isfile(path):
         return None
-    elif legacy_logfolder:
-        logfolder = os.path.join(basefolder, "processing", "logs")
-    else:
-        logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
 
-    return logfolder
+    try:
+        with open(path, "r", encoding="UTF-8") as f:
+            if yaml is not None:
+                return yaml.safe_load(f)
+            text = f.read()
+    except (OSError, ValueError) as e:
+        raise CommandError(function, f"Could not read {what}", path, str(e))
+    except Exception as e:
+        # PyYAML's own errors, which are not of either kind
+        raise CommandError(function, f"Could not parse {what}", path, str(e))
+
+    names = ("layout", "outside_study") + PLACEMENT_PARAMETERS + tuple(FOLDER_ALIASES)
+    if re.search(r"^\s*(%s)\s*:" % "|".join(names), text, re.M):
+        print(
+            f"WARNING: The host python has no PyYAML, so qunex_container can not "
+            f"read the {what} [{path}], and what it states about where the run's "
+            f"files and logs are is not applied to this run. Install PyYAML for "
+            f"the python that runs qunex_container, or name --studyfolder or "
+            f"--logfolder on the command line."
+        )
+    return None
+
+
+def host_settings(study):
+    """
+    ``host_settings(study)``
+
+    The `layout` and `outside_study` a run is placed by, read as QuNex reads
+    them (`general/log/settings.py`): from the user's settings file, which is
+    in at most one of the places one is accepted in, and from the
+    `qunex_settings.yaml` of `study` over it, key by key. `study` is None for
+    a run outside one.
+
+    Raises:
+        CommandError: on more than one user settings file, on a file that
+            does not hold a mapping, and on a setting QuNex does not take.
+    """
+    users = user_settings_files()
+    if len(users) > 1:
+        raise CommandError(
+            "qunex settings",
+            "More than one user settings file found",
+            f"QuNex reads user settings from one file only, but found {len(users)}:",
+            *[f"    {path}" for path in users],
+            "Please keep the one you want and remove or rename the others.",
+        )
+
+    sections = []
+    for path in users + ([os.path.join(study, STUDY_SETTINGS_FILE)] if study else []):
+        content = _read_yaml(path, "settings file", "qunex settings")
+        if content is None:
+            continue
+        if not isinstance(content, dict):
+            raise CommandError(
+                "qunex settings",
+                "Invalid settings file",
+                f"{path} does not hold a mapping of settings sections.",
+            )
+        section = content.get("logging")
+        if section and not isinstance(section, dict):
+            raise CommandError(
+                "qunex settings",
+                "Invalid logging setting",
+                f"logging must be a mapping of settings, got: {section!r}",
+                f"Please write the logging section of {path} as indented "
+                "`key: value` lines under `logging:`.",
+            )
+        sections.append(section)
+
+    try:
+        return placement_settings(*sections)
+    except PlacementError as e:
+        raise CommandError("qunex settings", "Invalid logging setting", str(e))
+
+
+def host_recipe_parameters(command, args, environ=None):
+    """
+    ``host_recipe_parameters(command, args, environ=None)``
+
+    For run_recipe, what its recipe file states that places the run -- its
+    tier of `run_folders`, as `recipe_placement` reads it -- with its labels
+    injected from `environ`, the environment unless another is given. A label
+    `environ` does not hold leaves its parameter out, and is said: the
+    variable may be set inside the container in a way the host does not see.
+    """
+    if command != "run_recipe" or not isinstance(args.get("recipe_file"), str):
+        return {}
+    if not args.get("recipe"):
+        return {}
+
+    data = _read_yaml(args["recipe_file"], "recipe file")
+    parameters, unresolved = recipe_placement(data, args["recipe"], environ)
+    for key, message in unresolved:
+        print(
+            f"WARNING: {message} The recipe's {key} can not be resolved on the "
+            f"host, so it does not place this run's logs. Export the variable in "
+            f"--bash_post (export NAME=value) or name --studyfolder or "
+            f"--logfolder on the command line."
+        )
+
+    return parameters
+
+
+def host_anchor(command, cargs, environ=None):
+    """
+    ``host_anchor(command, cargs, environ=None)``
+
+    The command line, with what it names that is read before the run knows
+    every study it may name made absolute as QuNex makes it absolute
+    (`general/placement.py`'s `anchor`): the study from the current folder,
+    and the batch file, a `.list` of sessions and the recipe file from the
+    study the command line names, else from the current folder. A deprecated
+    name of a folder counts as the name it has now.
+
+    For run_recipe the recipe file is read here, once for the run, its labels
+    injected from `environ` (`host_recipe_parameters`). When the command line
+    names no study, the study the recipe names is the one the batch file and
+    a list of sessions are found in, as QuNex finds them there; a sessions
+    folder it names without a study is taken from that study.
+
+    Returns:
+        ``(anchored, recipe, recipe_named, study)``: the anchored arguments;
+        the recipe file's tier of `run_folders`, empty for every other
+        command; the study and the sessions folder the recipe names, settled
+        absolute, when they stand in for a command line that names neither,
+        else empty; and the study the files read early were taken from, None
+        for the current folder.
+
+    Raises:
+        CommandError: when the recipe file can not be read or parsed.
+    """
+    cargs = _canonical(cargs)
+    anchored, study = anchor_command_line(cargs, command)
+    recipe = host_recipe_parameters(command, anchored, environ)
+
+    named = {
+        key: recipe[key]
+        for key in ("studyfolder", "sessionsfolder")
+        if isinstance(recipe.get(key), str) and recipe[key].strip()
+    }
+    if study is not None or not named:
+        # a sessions folder named without a study, from the study the recipe
+        # names, as QuNex takes it (`placement._sessions_in_recipe_study`)
+        sessions = anchored.get("sessionsfolder")
+        if (
+            isinstance(sessions, str)
+            and sessions.strip()
+            and not str(anchored.get("studyfolder") or "").strip()
+            and "studyfolder" in named
+        ):
+            anchored["sessionsfolder"] = run_path(
+                sessions, run_path(named["studyfolder"])
+            )
+        return anchored, recipe, {}, study
+
+    # settled as QuNex settles what a recipe names: the study from the current
+    # folder, and a sessions folder from that study
+    if "studyfolder" in named:
+        named["studyfolder"] = run_path(named["studyfolder"])
+    if "sessionsfolder" in named:
+        named["sessionsfolder"] = run_path(
+            named["sessionsfolder"], named.get("studyfolder")
+        )
+    study = study_folder(named.get("studyfolder"), named.get("sessionsfolder"))
+
+    anchored, _ = anchor_command_line(
+        {**cargs, "recipe_file": anchored["recipe_file"]}, command, study=study
+    )
+    return anchored, recipe, named, study
+
+
+def host_placement(command, cargs, header, timestamp, bash_post=None, recipe=None):
+    """
+    ``host_placement(command, cargs, header, timestamp, bash_post=None, recipe=None)``
+
+    Where this run is and where it logs, decided on the host before the
+    container starts: by the rule QuNex places every run by (`run_folders`,
+    spliced above from general/folders.py), from the tiers QuNex reads -- the
+    command line, the recipe file of a run_recipe run and the batch file
+    header, in that order -- and from the settings files (`host_settings`).
+    The header is taken less what the run unsets from it, as QuNex takes it.
+
+    `recipe` is the recipe file's tier `host_anchor` read; when it is not
+    given the recipe file is read here, its labels injected from the
+    environment and from what `bash_post` exports. The launcher keeps its own
+    files in the log folder, and hands the folder to the command in the
+    container with --logfolder, so that all of a run's logs are in one folder.
+
+    Returns:
+        the `Placement`.
+
+    Raises:
+        CommandError: when the settings files or the recipe file can not be
+            used.
+    """
+    patterns = unset_patterns(cargs.get(UNSET_BATCH_HEADER))
+    header, _ = without_unset(header or {}, patterns)
+    header, _ = without_unset(_canonical(header), patterns)
+
+    if recipe is None:
+        environ = {**os.environ, **bash_post_exports(bash_post)}
+        recipe = host_recipe_parameters(command, cargs, environ)
+
+    return run_folders(
+        run_name(command, cargs),
+        [cargs, recipe, header],
+        timestamp,
+        settings=host_settings,
+        creating=command in CREATES_STUDY,
+    )
+
+
+def expand_session_globs(sessions, sessionsfolder):
+    """
+    ``expand_session_globs(sessions, sessionsfolder)``
+
+    The sessions a run without a batch file names, with every glob among them
+    (`*`, `?`, `[...]`) expanded into what it matches in `sessionsfolder`. A
+    plain id is kept as it is given, and so is a glob that matches nothing: an
+    import names sessions whose folders do not exist yet. A `*.list` file is
+    returned as it is, as it is read rather than matched.
+    """
+    if not sessions or not sessionsfolder or LIST_FILE.match(sessions):
+        return sessions
+
+    ids = []
+    for e in _split_sessions(sessions):
+        matched = []
+        if re.search(r"[*?[]", e):
+            matched = sorted(
+                os.path.basename(m) for m in glob.glob(os.path.join(sessionsfolder, e))
+            )
+        ids += matched or [e]
+
+    return ",".join(ids)
+
+
+def anchored_binds(bind, docker=False):
+    """
+    ``anchored_binds(bind, docker=False)``
+
+    What --bind names, `<source>[:<destination>[:<options>]]` separated by
+    commas, with each relative source taken from the folder the launcher is
+    run from, as its other options are: a scheduled job does not start there
+    on every scheduler, PBS and GridEngine start it in the home folder. For
+    Docker a source that is a bare name is a volume, not a folder, and is left
+    as it is.
+    """
+    if not isinstance(bind, str) or not bind.strip():
+        return bind
+
+    binds = []
+    for spec in bind.split(","):
+        source, colon, rest = spec.partition(":")
+        source = source.strip()
+        folder = not docker or source.startswith((".", "~")) or "/" in source
+        if source and folder and (source.startswith("~") or not os.path.isabs(source)):
+            source = run_path(source)
+        binds.append(source + colon + rest)
+    return ",".join(binds)
+
+
+def write_status_record(path, command, timestamp, stati):
+    """
+    ``write_status_record(path, command, timestamp, stati)``
+
+    Writes the status record `--logstatus` asks for, in the shape QuNex
+    writes it (`RunContext.write_status`), for a call whose jobs are
+    submitted: they are not handed the path, as each would write the same
+    file and the last to finish would overwrite the others. `stati` are
+    `(session, summary, failed)` triples, `failed` None for a job whose
+    outcome is not known here. Without PyYAML it is written as JSON, which
+    YAML reads.
+    """
+    failed = [f for _, _, f in stati]
+    record = {
+        "command": command,
+        "timestamp": timestamp,
+        "runlog": None,
+        "failed": None if None in failed else sum(failed),
+        "sessions": [
+            {"id": sid, "summary": summary, "failed": f} for sid, summary, f in stati
+        ],
+    }
+    folder = os.path.dirname(path)
+    if folder:
+        os.makedirs(folder, exist_ok=True)
+    with open(path, "w", encoding="UTF-8") as f:
+        if yaml is not None:
+            yaml.safe_dump(record, f, sort_keys=False, default_flow_style=False)
+        else:
+            json.dump(record, f, indent=2)
 
 
 def main(args=None):
@@ -978,7 +2468,7 @@ def main(args=None):
     ======
 
     --container         specifies either the path to the Singularity/Apptainer
-                        container image  or the full specification of the Docker
+                        container image or the full specification of the Docker
                         container to be used (e.g. qunex/qunex_suite:0_45_07).
     --bash_pre          If any additional commands have to be run in bash before the
                         execution of qunex_container command itself. Use a semicolon
@@ -988,9 +2478,10 @@ def main(args=None):
                         Use a semicolon separated list to chain multiple commands.
                         ['']
     --bind              Used for binding external folders in order for the system in
-                        the container to have access to relvant data. Maps to -B
-                        parameter of Singularity/Apptainer and -v parmaeter of
-                        Docker.
+                        the container to have access to relevant data. Maps to -B
+                        parameter of Singularity/Apptainer and -v parameter of
+                        Docker. A relative folder is taken from the folder
+                        qunex_container is run from.
     --nocleanenv        By default QuNex will use the --cleanenv flag of
                         Singularity/Apptainer so your local environment setup will
                         not be propagated into the container. If you want to disable
@@ -1000,11 +2491,12 @@ def main(args=None):
                         flag is not set by default.
     --cuda_path         Can be used to bind a local CUDA version over the one in the
                         system.
-    --nv                An old way of using using CUDA inside Singularity/Apptainer.
+    --nv                An old way of using CUDA inside Singularity/Apptainer.
                         If provided then --nv option will be used when executing.
     --script            If a script is to be run against the Singularity/Apptainer
                         container rather than a single command, the path to the
-                        script to be run is specified here. ['']
+                        script to be run is specified here. The run is filed
+                        under the script's name. ['']
     --containeropt      A string that lists the additional options to be used when
                         running the container. The parameters are to be specified in
                         a string exactly as they would be on a command line, e.g.
@@ -1013,13 +2505,19 @@ def main(args=None):
 
                             "-d -v /host/directory:/container/directory"
     --scheduler         A string that specifies the details to use to submit the
-                            container job to a scheduling system.
+                        container job to a scheduling system.
+    --console_out       Where the scheduler writes the output of each job, as
+                        "<key>:<file>" pairs separated by pipes: stdout, stderr
+                        or both (the two together). A file named without a
+                        folder is in the current one. By default each job writes
+                        both to a file of its own in the batchlogs folder of the
+                        run's log folder (see RESULTS).
     --scheduling_delay  A string that specifies the delay to use when scheduling
                         the container job. This can be useful to avoid overloading
                         the scheduling system.
     --parjobs           Specify the maximum amount of jobs that will be created
                         and run in parallel. By default this equals the number
-                        of sessions your provided.
+                        of sessions you provided.
     --parsessions       Specify the amount of sessions that will be run in parallel
                         inside each created job. [1]
     --parelements       Specify the amount of elements that will be run in parallel
@@ -1036,27 +2534,76 @@ def main(args=None):
                         relevant parameters (--bind, --cuda, --bash_pre,
                         --bash_post, --nocleanenv, --cuda_path, --nv,
                         --containeropt) will be applied.
-    --logsfoder         Where to put the QuNex logs, will be set automatically
-                        to <qunexstudy>/logs if not provided, use "legacy" to
-                        set to the legacy variant <qunexstudy>/processing/logs.
+    --logfolder         The folder the run logs in. When it is not given, it is
+                        the one QuNex decides on:
+                        <study>/logs/<date>_<time>_<command> for the study the
+                        run names (on the command line, in the recipe file of
+                        run_recipe or in the batch file header), else for the
+                        study marked by .qunexstudy at or above the current
+                        folder; for a run outside a study, a folder of its own
+                        in ~/qunex_logs, or where the outside_study setting
+                        says. "legacy" is <study>/processing/logs. A relative
+                        path is taken from the run's study when the run names
+                        it (or a sessions folder in it), the study exists and
+                        the command does not create it; else from the current
+                        folder. The folder is decided here, on the host, and
+                        handed to every job.
 
     Selecting sessions
     ------------------
 
     `--batchfile`, `--sessions` and `--filter` are read by `qunex_container`
     to work out how many sessions the run has and how to spread them over
-    jobs, and are then passed on to the command unchanged: `--batchfile` names
-    the batch file, `--sessions` selects within it by id or glob pattern, and
+    jobs, and are then passed on to the command: `--batchfile` names the
+    batch file, `--sessions` selects within it by id or glob pattern, and
     `--filter` selects by a `<key>:<value>` pair of the session's batch file
     entry. They are resolved by the same code the suite itself uses, so the
     sessions a job is sized for are the sessions the command runs over.
 
+    Relative paths
+    --------------
+
+    `qunex_container` takes relative paths as QuNex does. The study folder is
+    taken from the folder `qunex_container` is run from. The batch file, a
+    `.list` file given to `--sessions` and the recipe file are taken from the
+    study the command line names (or the folder a `--sessionsfolder` it names
+    is in; for run_recipe also the study the recipe names), else from the
+    folder `qunex_container` is run from. They are handed to the command
+    absolute, as are the study folder and a sessions folder named with it.
+
+    The command starts in the folder `qunex_container` was run from, and takes
+    every other relative path from there as QuNex does: from the study, once
+    the study exists. The container has to see that folder, which it does
+    when it is in your home folder or bound with `--bind`; when it does not,
+    a warning names the folder the command starts in instead. `--container`,
+    `--script`, `--bind` and `--cuda_path` are `qunex_container`'s own, and
+    are taken from the folder it is run from.
+
     RESULTS
     =======
 
-    `qunex_container` will compile a temporary file with the relevant commands
-    to submit to the container. The file will be created in the users home
-    folder.
+    `qunex_container` decides the run's log folder before anything runs,
+    prints it as `---> Logs: <folder>`, and hands it to the command in the
+    container with `--logfolder`, so that all the logs of the run are in one
+    folder. A `--script` run has no command to hand it to: each QuNex command
+    the script runs logs in a folder of its own, unless the script gives it a
+    `--logfolder`. `qunex_container`'s own files are in the folder's
+    `batchlogs`: the script each job runs in the container
+    (`qunex_container_command_<date>_<time>_<job>.sh`)
+    and, with `--scheduler`, the script submitted for each job and the job's
+    output, its standard output and error together
+    (`<scheduler>_<command>[_job<NN>].<date>_<time>.sh` and `.log`). The log
+    folder has to be visible inside the container: your home folder always
+    is, a study elsewhere through `--bind`.
+
+    The log folder is decided by the rule QuNex places every run by, so it
+    reads the batch file header, the recipe file of run_recipe and the
+    `qunex_settings.yaml` settings files. It reads the YAML files with
+    PyYAML; when the host python has none, it says which file it could not
+    read and places the run without it. A recipe's `{{$VAR}}` labels are
+    resolved from the environment `qunex_container` runs in and from the
+    `export NAME=VALUE` statements of `--bash_post`; a label it can not
+    resolve is said, and does not place the run.
 
     If a script parameter is specified, in case of a Singularity/Apptainer
     container, the script will be executed using the `bash <script>` command.
@@ -1096,7 +2643,7 @@ def main(args=None):
     Running a QuNex command in a container::
 
         qunex_container hcp_freesurfer \\
-            --sessionsfolder=/data/study/sessions \\
+            --studyfolder=/data/study \\
             --batchfile=/data/study/processing/batch.txt \\
             --parsessions=4 \\
             --container=/apptainer/qunex_suite-0_38_10.sif \\
@@ -1134,6 +2681,35 @@ def main(args=None):
                 "WARNING: It seems like you are using the sessions parameters to pass the location of the batch file to QuNex. This functionality will be deprecated, use the batchfile parameter for specifying the location of the batchfile."
             )
 
+    # what the command line states, read as QuNex reads a command line, and
+    # what it names that is read before the command runs made absolute here,
+    # on the host, as QuNex makes it absolute (`host_anchor`): the study from
+    # the current folder, and the batch file, a list of sessions and the
+    # recipe file from the study the command line names -- for run_recipe,
+    # else the one its recipe names. The command inside is handed them so,
+    # and finds them whatever folder the container or a scheduled job starts in
+    cargs, first = {}, None
+    for arg in args:
+        if arg.startswith("--"):
+            key, eq, value = arg[2:].partition("=")
+            cargs[key] = value if eq else True
+        elif first is None:
+            first = arg
+
+    environ = {**os.environ, **bash_post_exports(cargs.get("bash_post"))}
+    try:
+        anchored, recipe, recipe_named, named_study = host_anchor(first, cargs, environ)
+    except CommandError as e:
+        print(f"\nERROR: {e.error}\n" + "\n".join(str(h) for h in e.hints))
+        exit(1)
+
+    # the folder this was started from: the command inside works there, as it
+    # would outside the container, when the container can see it
+    try:
+        invoked_from = os.getcwd()
+    except OSError:
+        invoked_from = None
+
     env_status = False
     scheduler = None
     container = None
@@ -1155,13 +2731,13 @@ def main(args=None):
     sessionsfolder = None
     studyfolder = None
     sessionids = None
-    logfolder = None
     containeropt = ""
     output = None
     parinfo = None
     overwrite = None
     scheduling_delay = 0
     interactive = False
+    logstatus = None
 
     for arg in args:
         # cleanup -- at start
@@ -1174,6 +2750,9 @@ def main(args=None):
                 k, scheduler = arg.split("=", 1)
             elif arg.startswith("container="):
                 k, container = arg.split("=", 1)
+                # an image file, absolute so that a scheduled job finds it
+                if container.endswith((".sif", ".simg")):
+                    container = run_path(container)
             elif arg.startswith("containeropt="):
                 k, containeropt = arg.split("=", 1)
             elif arg.startswith("console_out="):
@@ -1186,8 +2765,12 @@ def main(args=None):
                 k, bind = arg.split("=", 1)
             elif arg.startswith("cuda_path="):
                 k, cuda_path = arg.split("=", 1)
+                # bound into the container, from wherever a scheduled job starts
+                cuda_path = run_path(cuda_path)
             elif arg.startswith("script="):
                 k, script = arg.split("=", 1)
+                # the launcher's own, taken from where it is run
+                script = run_path(script)
             elif arg.startswith("parjobs="):
                 k, parjobs = arg.split("=", 1)
                 parjobs = int(parjobs)
@@ -1201,22 +2784,26 @@ def main(args=None):
                 parelements = int(parelements)
             elif arg.startswith("sessionsfolder="):
                 k, sessionsfolder = arg.split("=", 1)
+                sessionsfolder = anchored.get(k, sessionsfolder)
                 command += f'--{k}="{sessionsfolder}" '
             elif arg.startswith("studyfolder="):
                 k, studyfolder = arg.split("=", 1)
+                studyfolder = anchored.get(k, studyfolder)
                 command += f'--{k}="{studyfolder}" '
             elif arg.startswith("sessions="):
                 k, sessions = arg.split("=", 1)
+                sessions = anchored.get(k, sessions)
             elif arg.startswith("batchfile="):
                 k, batchfile = arg.split("=", 1)
+                batchfile = anchored.get(k, batchfile)
             elif arg.startswith("filter="):
                 k, batchfilter = arg.split("=", 1)
             elif arg.startswith("sessionids="):
                 k, sessionids = arg.split("=", 1)
             elif arg.startswith("logfolder="):
-                logfolder = arg.split("=", 1)
-                logfolder = logfolder[1]
-                command += f"--logfolder={logfolder} "
+                # not passed on as it is given: the run's log folder is decided
+                # below, from this as well, and handed to the command once
+                pass
             elif arg.startswith("overwrite="):
                 overwrite = arg.split("=", 1)
                 overwrite = overwrite[1]
@@ -1237,8 +2824,16 @@ def main(args=None):
             elif arg.startswith("scheduling_delay="):
                 k, scheduling_delay = arg.split("=", 1)
                 scheduling_delay = int(scheduling_delay)
+            elif arg.startswith("logstatus="):
+                # a status file, as it was anchored: handed to a job that runs
+                # here, written here for jobs that are submitted
+                k, logstatus = arg.split("=", 1)
+                logstatus = anchored.get(k, logstatus)
             elif "=" in arg:
                 k, v = arg.split("=", 1)
+                # the recipe file, as it was anchored
+                if k in READ_EARLY:
+                    v = anchored.get(k, v)
                 command += f'--{k}="{v}" '
             else:
                 command += f"--{arg} "
@@ -1249,7 +2844,7 @@ def main(args=None):
     fail = False
 
     # timestamp
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    timestamp = datetime.now().strftime(TIMESTAMP)
 
     if interactive and env_status:
         print("ERROR: Cannot use interactive mode with env_status!")
@@ -1302,31 +2897,7 @@ def main(args=None):
         )
         exit(1)
 
-    # logfolder folder
     homedir = os.path.expanduser("~")
-    legacy_logfolder = False
-    if logfolder and logfolder == "legacy":
-        legacy_logfolder = True
-
-    if not logfolder and sessionsfolder is not None:
-        logfolder = get_logs_folder(
-            sessionsfolder, qx_command, timestamp, legacy_logfolder
-        )
-    elif not logfolder and studyfolder is not None:
-        if legacy_logfolder:
-            logfolder = os.path.join(studyfolder, "processing", "logs")
-        else:
-            logfolder = os.path.join(studyfolder, "logs", f"{timestamp}_{qx_command}")
-
-    # fallback to home
-    fallback_logfolder = False
-    if not logfolder:
-        fallback_logfolder = True
-        logfolder = os.path.join(homedir, "qunex")
-
-    if not os.path.exists(logfolder):
-        print(f"\n---> Log folder does not exist, creating it: {logfolder}\n")
-        os.makedirs(logfolder)
 
     if container is None:
         print(
@@ -1336,6 +2907,10 @@ def main(args=None):
 
     # Docker or Apptainer
     apptainer = container.endswith(".simg") or container.endswith(".sif")
+
+    # the folders the container sees, from where this runs, as a job may start
+    # anywhere
+    bind = anchored_binds(bind, docker=not apptainer)
 
     # just report env status and quit
     if env_status:
@@ -1435,7 +3010,8 @@ def main(args=None):
                 "ERROR: It seems like you passed the batchfile both through the sessions and the batchfile parameters!"
             )
             exit(1)
-        batchfile = sessions
+        # a batch file, found where QuNex would find it
+        batchfile = run_path(sessions, named_study)
         sessions = sessionids
         sessionids = None
     elif sessions is not None and sessionids is not None:
@@ -1449,13 +3025,32 @@ def main(args=None):
     # number of sessions
     n_sessions = None
 
-    # get sessionsids
+    # get sessionsids: with no batch file the sessions are the ones named, and
+    # only a glob among them is matched against the session folders -- of the
+    # sessions folder the command line names, under any of its names, else of
+    # the study it names, else of the folders run_recipe's recipe names, as
+    # QuNex matches them. An import names sessions that do not exist yet, and
+    # its `--sessions` can be a list of patterns over the inbox, so nothing it
+    # names is matched
+    folders = recipe_named or anchored
+    glob_folder = sessions_folder(
+        *[
+            value if isinstance(value, str) and value.strip() else None
+            for value in (folders.get("studyfolder"), folders.get("sessionsfolder"))
+        ],
+        default=None,
+    )
+    if qx_command.startswith("import_"):
+        glob_folder = None
+
     try:
-        slist, _ = resolve(
+        slist, header = resolve(
             batchfile=batchfile,
-            sessions=sessions,
+            sessions=(
+                sessions if batchfile else expand_session_globs(sessions, glob_folder)
+            ),
             filter=batchfilter,
-            sessionsfolder=sessionsfolder,
+            sessionsfolder=glob_folder if batchfile else None,
         )
     except BatchError as e:
         print(f"\nERROR: {e}\n")
@@ -1540,7 +3135,7 @@ def main(args=None):
                         if parjobs is None:
                             scheduler_params["array"] = f"0-{n_jobs}"
                         else:
-                            scheduler_params["array"] = f"0-{n_jobs}%%{parjobs}"
+                            scheduler_params["array"] = f"0-{n_jobs}%{parjobs}"
                     else:
                         scheduler_params[s.strip()] = None
 
@@ -1573,7 +3168,7 @@ def main(args=None):
     # if scheduler is not None and we do not have a multi_session_command then setup parallelism
     if (
         scheduler is not None
-        and (sessions is not None or batchfile is not None)
+        and g_sessionids
         and not multi_session_command
     ):
         # if parjobs is None each session is its own job
@@ -1635,8 +3230,39 @@ def main(args=None):
             for i in range(0, parjobs):
                 print(f"    Job #{i + 1} will run sessions: {sessionids_array[i]}")
 
-    # execute
+    # where the run logs: decided here, by the rule QuNex places every run by,
+    # and handed to the command in the container, so that the launcher's job
+    # scripts and the scheduler's output are in one folder with the command's
+    # own logs. A call that runs nothing makes no folder
     if parinfo is None:
+        # a run of a script rather than of a command is filed under the script
+        if script:
+            run_command = os.path.splitext(os.path.basename(script))[0]
+        else:
+            run_command = first
+        try:
+            placement = host_placement(
+                run_command or "qunex_container",
+                anchored,
+                header,
+                timestamp,
+                recipe=recipe if run_command == first else {},
+            )
+        except CommandError as e:
+            print(f"\nERROR: {e.error}\n" + "\n".join(str(h) for h in e.hints))
+            exit(1)
+
+        logfolder = placement.logfolder
+        batchlogs = os.path.join(logfolder, "batchlogs")
+        os.makedirs(batchlogs, exist_ok=True)
+        print(f"\n---> Logs: {logfolder}\n", flush=True)
+
+        # a job of several is numbered in what it leaves, as QuNex numbers the
+        # jobs it submits itself
+        jobs_over_sessions = bool(sessionids_array) and scheduler is not None
+        stati = []
+
+        # execute
         for i in range(0, parjobs):
             qx_command = command
 
@@ -1644,47 +3270,61 @@ def main(args=None):
             if batchfile is not None:
                 qx_command += f'--batchfile="{batchfile}" '
 
-            # add sessions to command?
+            # add sessions to command? Sessions that matched no folder go on
+            # as they were given: an import names the sessions it is to create
             if i < len(sessionids_array):
                 qx_command += f'--sessions="{sessionids_array[i]}" '
+            elif sessions is not None and not sessionids_array:
+                qx_command += f'--sessions="{sessions}" '
 
             # add filter to command?
             if batchfilter is not None:
                 qx_command += f'--filter="{batchfilter}" '
 
-            # logs folder
-            if not fallback_logfolder:
-                qx_command += f'--logfolder="{logfolder}" '
+            # the run's log folder, which the command logs in as it is
+            qx_command += f'--logfolder="{logfolder}" '
+
+            # the status record: the one job run here writes its own
+            if logstatus and not scheduler:
+                qx_command += f'--logstatus="{logstatus}" '
 
             # prepare the schedule file; one per job, as the scheduled job reads
             # it when it starts and every job here carries a different chunk of
             # the sessions
-            script_name = f"qunex_container_command_{timestamp}_{i}.sh"
-            if legacy_logfolder:
-                script_path = os.path.join(logfolder, "batchlogs", script_name)
-            else:
-                script_path = os.path.join(logfolder, script_name)
+            script_path = os.path.join(
+                batchlogs, f"qunex_container_command_{timestamp}_{i}.sh"
+            )
+            with open(script_path, "w", encoding="UTF-8") as f:
+                print("source /opt/qunex/env/qunex_environment.sh", file=f)
 
-            if not os.path.exists(os.path.dirname(script_path)):
-                os.makedirs(os.path.dirname(script_path))
-            f = open(script_path, "w", encoding="UTF-8")
+                # the folder qunex_container was run from, so that the command
+                # takes from there what it would take from there outside the
+                # container -- Docker starts it in a folder of its own, a PBS
+                # or GridEngine job in the home folder. Quoted for the shell in
+                # the warning as well, where the double quotes are closed
+                # around it: inside them a `"` in its name would end the string
+                if invoked_from:
+                    folder = shlex.quote(invoked_from)
+                    print(
+                        f'cd {folder} 2>/dev/null || echo "WARNING: "{folder}" is '
+                        "not visible in the container, relative paths are taken "
+                        'from $(pwd)" >&2',
+                        file=f,
+                    )
 
-            print("source /opt/qunex/env/qunex_environment.sh", file=f)
+                if bash_post:
+                    print(bash_post, file=f)
 
-            if bash_post:
-                print(bash_post, file=f)
-
-            if script:
-                if apptainer:
-                    print("bash " + script, file=f)
+                if script:
+                    if apptainer:
+                        print("bash " + shlex.quote(script), file=f)
+                    else:
+                        # as it is: a line of a here document is text
+                        with open(script, "r", encoding="UTF-8") as sfile:
+                            text = sfile.read()
+                        f.write(text if text.endswith("\n") else text + "\n")
                 else:
-                    with open(script, "r", encoding="UTF-8") as sfile:
-                        for line in sfile:
-                            print(line, file=f)
-            else:
-                print("bash /opt/qunex/bin/qunex.sh " + qx_command, file=f)
-
-            f.close()
+                    print("bash /opt/qunex/bin/qunex.sh " + qx_command, file=f)
 
             # setup the container command
             container_command = ""
@@ -1704,7 +3344,10 @@ def main(args=None):
                 if cuda_path:
                     container_bind = f"{container_bind},{cuda_path}:/usr/local/cuda/"
 
-                container_command += f"--bind {container_bind} "
+                # quoted, as are the image and the job script below: a path
+                # made absolute carries the folder it was taken from, spaces
+                # and all
+                container_command += f"--bind {shlex.quote(container_bind)} "
 
                 # containeropt
                 if containeropt:
@@ -1736,7 +3379,9 @@ def main(args=None):
                 if nv:
                     container_command += "--nv "
 
-                container_command += f"{container.strip()} bash {script_path.strip()}"
+                container_command += (
+                    f"{shlex.quote(container.strip())} bash {shlex.quote(script_path)}"
+                )
             else:
                 container_command += "docker run "
 
@@ -1748,11 +3393,11 @@ def main(args=None):
 
                 # bind cuda path if provided
                 if cuda_path:
-                    container_bind += f"{container_bind},{cuda_path}:/usr/local/cuda"
+                    container_bind += f",{cuda_path}:/usr/local/cuda"
 
                 bind_list = container_bind.split(",")
                 for b in bind_list:
-                    container_command += f"-v {b} "
+                    container_command += f"-v {shlex.quote(b)} "
 
                 # containeropt
                 if containeropt:
@@ -1762,24 +3407,52 @@ def main(args=None):
                 if cuda:
                     container_command += "--gpus all "
 
-                container_command += f"{container.strip()} bash {script_path.strip()}"
+                container_command += (
+                    f"{shlex.quote(container.strip())} bash {shlex.quote(script_path)}"
+                )
 
             if scheduler:
+                # the job's output, both streams, named as QuNex names the
+                # output of the jobs it submits, `<scheduler>_<run>[_jobNN]`,
+                # and the script that was submitted beside it
+                job = f"_job{i:02d}" if jobs_over_sessions and not slurm_array else ""
+                stem = f"{scheduler_name}_{placement.name}{job}.{timestamp}"
+                joblog = os.path.join(
+                    batchlogs,
+                    f"{scheduler_name}_{placement.name}"
+                    f"{'_job%a' if slurm_array else job}.{timestamp}.log",
+                )
                 schedule(
                     command=container_command,
                     scheduler_name=scheduler_name,
                     scheduler_params=scheduler_params.copy(),
-                    output=output,
+                    output=output or f"both:{joblog}",
                     parsessions=parsessions,
                     parelements=parelements,
-                    logfolder=logfolder,
-                    slurm_array=slurm_array,
-                    timestamp=timestamp,
+                    script_path=os.path.join(batchlogs, f"{stem}.sh"),
+                    # started from the launch folder, which Apptainer then
+                    # binds, as a PBS or GridEngine job starts in the home one
+                    workdir=invoked_from,
                 )
+                # the sessions of this job, or the run, in the status record
+                job_sessions = (
+                    sessionids_array[i].split(",")
+                    if i < len(sessionids_array)
+                    else [run_command or "qunex_container"]
+                )
+                stati += [
+                    (sid, f"submitted (job {i:02d})", None) for sid in job_sessions
+                ]
                 # sleep here for scheduling_delay
                 time.sleep(scheduling_delay)
             else:
                 subprocess.run(container_command, shell=True, check=False)
+
+        # the submitted jobs are not handed the status record: it is written here
+        if logstatus and scheduler:
+            write_status_record(
+                logstatus, run_command or "qunex_container", timestamp, stati
+            )
 
 
 if __name__ == "__main__":

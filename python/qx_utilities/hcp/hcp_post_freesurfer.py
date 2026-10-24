@@ -31,7 +31,7 @@ from qx_utilities.hcp.hcp_utils import _nhp_postfs_paths
 
 def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_post_freesurfer [... processing options]``
+    ``hcp_post_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the PostFS step of the HCP Pipeline (PostFreeSurferPipeline.sh).
 
@@ -48,9 +48,15 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -86,7 +92,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             working folders and the 'MNINonLinear' folder.
 
         --hcp_filename (str, default 'automated'):
-            How to name the BOLD files once mapped intothe hcp input folder
+            How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
@@ -146,7 +152,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             Path to the location of the FreeSurfer look up table file.
 
         --hcp_thickness_regression (str, default 'BOTH'):
-            Wwhether to use the updated curvature-thickness regression, set to
+            Whether to use the updated curvature-thickness regression, set to
             'OLD', 'NEW' or 'BOTH', defaults to 'BOTH'.
 
         --hcp_species (str, default 'Human'):
@@ -177,7 +183,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
-        in the sessions's root hcp folder.
+        in the session's root hcp folder.
 
     Notes:
         Runs the PostFreeSurfer step (PostFreeSurferPipeline.sh) of the HCP
@@ -220,8 +226,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         Example run from the base study folder with test flag::
 
             qunex hcp_post_freesurfer \\
+                --studyfolder="." \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
                 --parsessions="10" \\
                 --overwrite="no" \\
                 --test
@@ -229,8 +235,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         Example run with absolute paths with scheduler::
 
             qunex hcp_post_freesurfer \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
                 --parsessions="4" \\
                 --hcp_t2="NONE" \\
                 --overwrite="yes" \\
@@ -239,16 +245,16 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         Additional examples::
 
             qunex hcp_post_freesurfer \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10
 
         ::
 
             qunex hcp_post_freesurfer \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
                 --hcp_t2=NONE
@@ -256,8 +262,8 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         Example run for a non-human primate (NHP) species::
 
             qunex hcp_post_freesurfer \\
+                --studyfolder="." \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
                 --parsessions="4" \\
                 --hcp_species="MacaqueRhesus" \\
                 --overwrite="yes"

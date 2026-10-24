@@ -24,8 +24,8 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import pe_dir_map, get_hcp_paths
 from qx_utilities.general.log import SessionLog, ReportLog
@@ -117,7 +117,7 @@ def _check_echospacing(echospacing, _log):
 
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_fmri_volume [... processing options]``
+    ``hcp_fmri_volume [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the fMRI Volume (GenericfMRIVolumeProcessingPipeline.sh) step of HCP
     Pipeline.
@@ -142,9 +142,15 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -287,7 +293,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         --hcp_bold_slicetimingfile (str, default 'FALSE'):
             Whether to use custom slice timing file 'TRUE' or 'FALSE'.
             You can prepare these files manually or you can use the
-            functinality witin the setup_hcp command. The file will be then used
+            functionality within the setup_hcp command. The file will be then used
             for the --tcustom parameter of FSL slicetimer. The file should be
             located in the BOLD folder, using the same name, but with the
             `_slicetimer.txt` suffix.
@@ -455,16 +461,16 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
-        in the sessions's root hcp folder::
+        in the session's root hcp folder::
 
             study
             └─ sessions
                └─ subject1_session1
                   └─ hcp
                      └─ subject1_session1
-                       └─ MNINonlinear
-                          └─ Results
-                             └─ BOLD_1
+                        └─ MNINonLinear
+                           └─ Results
+                              └─ BOLD_1
 
     Notes:
         These last parameters enable fine-tuning of preprocessing and deserve
@@ -477,7 +483,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         As a movement correction target, either each BOLD can be independently
         registered to T1 image, or all BOLD images can be motion correction
         aligned to the first BOLD in the series and only that image is
-        registered to the T1 structural image (--hcp_bold_moveref). Do note
+        registered to the T1 structural image (--hcp_bold_movref). Do note
         that in this case also distortion correction will be computed for the
         first BOLD image in the series only and applied to all subsequent BOLD
         images after they were motion-correction aligned to the first BOLD.
@@ -513,7 +519,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             to use in which case. Each option of the string has to be divided
             by a pipe '|' character and it has to specify, which information to
             look up, a possible value, and a file to use in that case,
-            separated by a colon ':' character. The information too look up
+            separated by a colon ':' character. The information to look up
             needs to be present in the description of that session. Standard
             options are e.g.::
 
@@ -523,7 +529,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             Where device is formatted as ``<manufacturer>|<model>|<serial number>``.
 
             If specifying a string it also has to include a `default` option,
-            which will be used in the information was not found. An example
+            which will be used if the information was not found. An example
             could be::
 
                 "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
@@ -606,7 +612,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             spin-echo recorded before the BOLD image in question. In this case,
             if BOLD registration target is set to the first BOLD image (using
             ``hcp_bold_movref``), the BOLD image registration target will be
-            also changed to the fist BOLD image after the new spin-echo pair.
+            also changed to the first BOLD image after the new spin-echo pair.
             Specifically with ``independent`` ``hcp_bold_seimg`` an example
             sequence might be::
 
@@ -713,7 +719,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_volume  \\
                 --batchfile="processing/batch.txt"  \\
-                --sessionsfolder="sessions"  \\
+                --studyfolder="."  \\
                 --parsessions="10"  \\
                 --parelements="4"  \\
                 --overwrite="no"  \\
@@ -722,13 +728,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
         Run using absolute paths with additional options and scheduler::
 
             qunex hcp_fmri_volume  \\
-                --batchfile="<path_to_study_folder>/processing/batch.txt"
-                --sessionsfolder="<path_to_study_folder>/sessions"  \\
+                --batchfile="<path_to_study_folder>/processing/batch.txt"  \\
+                --studyfolder="<path_to_study_folder>"  \\
                 --parsessions="4"  \\
                 --parelements="2"  \\
                 --hcp_bold_doslicetime="TRUE"  \\
-                --hcp_bold_movereg="MCFLIRT"  \\
-                --hcp_bold_moveref="first"  \\
+                --hcp_bold_movreg="MCFLIRT"  \\
+                --hcp_bold_movref="first"  \\
                 --hcp_bold_mask="T1_DILATED2x_fMRI_FOV"  \\
                 --overwrite="yes"  \\
                 --scheduler="SLURM,time=24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=day"
@@ -737,7 +743,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_volume \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --overwrite=no \\
                 --parsessions=10
 
@@ -745,13 +751,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_volume \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --overwrite=no \\
                 --parsessions=10 \\
                 --hcp_bold_movref=first \\
                 --hcp_bold_seimg=first \\
                 --hcp_bold_refreg=nonlinear \\
-                --hcp_bold_mask=DILATED
+                --hcp_bold_mask=T1_DILATED_fMRI_FOV
 
     """
 
@@ -1913,14 +1919,12 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
 
         # longitudinal mode
         if options["longitudinal"]:
-            studyfolder = gc.deduce_folders(options)["basefolder"]
-            if not studyfolder:
-                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                run = False
             # replace path (elements[0])
             elements[0] = (
                 "path",
-                os.path.join(studyfolder, "subjects", sinfo["subject"]),
+                os.path.join(
+                    gf.subjects_folder(options["studyfolder"]), sinfo["subject"]
+                ),
             )
             elements.append(("is-longitudinal", "1"))
             elements.append((
@@ -1969,7 +1973,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                     # -> bold MNINonLinear results folder
                     bold_folder = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget)
                     if os.path.exists(bold_folder):
-                        log.detail(f"removing preexisting MNINonLinar results bold folder [{bold_folder}]")
+                        log.detail(f"removing preexisting MNINonLinear results bold folder [{bold_folder}]")
                         shutil.rmtree(bold_folder)
 
                     # -> bold T1w results folder
@@ -2026,15 +2030,18 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                 else:
                     report["done"].append(printbold)
 
-            # -- just checking
+            # -- just checking. A longitudinal run has no test file, and
+            #    nothing to find done
             else:
-                passed, _, failed = pc.check_run(
-                    tfile,
-                    full_test,
-                    "HCP fMRIVolume " + boldtarget,
-                    overwrite=overwrite,
-                    _log=log,
-                )
+                passed = None
+                if tfile is not None:
+                    passed, _, failed = pc.check_run(
+                        tfile,
+                        full_test,
+                        "HCP fMRIVolume " + boldtarget,
+                        overwrite=overwrite,
+                        _log=log,
+                    )
                 if passed is None:
                     log.step("HCP fMRIVolume can be run")
                     report["ready"].append(printbold)

@@ -20,7 +20,10 @@ import os
 import pytest
 
 import qx_utilities.processing.core as pc
-from qx_utilities.hcp.hcp_icafix import execute_hcp_multi_icafix
+from qx_utilities.hcp.hcp_icafix import (
+    execute_hcp_multi_icafix,
+    execute_hcp_single_icafix,
+)
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import execute_hcp_post_fix
 
@@ -101,8 +104,8 @@ def test_post_fix_forwards_the_pipeline_command(postfix_session, stub_external):
 
 
 def test_post_fix_reports_failure_when_the_run_fails(postfix_session, monkeypatch):
-    def fake(checkfile, run, description, r="", **kwargs):
-        return r, "error.log", None, 1
+    def fake(checkfile, run, description, **kwargs):
+        return "error.log", None, 1
 
     monkeypatch.setattr(pc, "run_external_for_file", fake)
     sinfo, options, hcp = postfix_session
@@ -111,6 +114,7 @@ def test_post_fix_reports_failure_when_the_run_fails(postfix_session, monkeypatc
 
     assert result["report"]["failed"] == [GROUP]
     assert result["report"]["done"] == []
+    assert "Traceback" not in result["r"], "the failure is the run's, not an error"
 
 
 def _icafix_group(hcp, bolds=("BOLD_1", "BOLD_2")):
@@ -162,17 +166,19 @@ def test_chain_names_icafix_when_icafix_itself_fails(postfix_session, monkeypatc
 
     calls = []
 
-    def fake(checkfile, run, description, r="", **kwargs):
+    def fake(checkfile, run, description, **kwargs):
         calls.append(run)
-        return r, "log", None, 1
+        return "log", None, 1
 
     monkeypatch.setattr(pc, "run_external_for_file", fake)
 
-    report = execute_hcp_multi_icafix(sinfo, options, False, hcp, True, group)["report"]
+    result = execute_hcp_multi_icafix(sinfo, options, False, hcp, True, group)
+    report = result["report"]
 
     assert report["failed"] == ["%s (ICAFix)" % GROUP]
     # a failed ICAFix must not go on to run PostFix
     assert not any("PostFix" in c for c in calls)
+    assert "Traceback" not in result["r"], "the failure is the run's, not an error"
 
 
 def test_summary_is_unqualified_when_postfix_is_disabled(postfix_session, stub_external):
@@ -203,3 +209,95 @@ def test_post_fix_is_not_ready_without_the_ica_image(tmp_path, stub_external):
 
     assert result["report"]["not ready"] == [GROUP]
     assert stub_external == []
+
+
+@pytest.mark.parametrize(
+    "mode, expected",
+    [
+        # single-run ICAFix defaults to octave, and so does the PostFix after it
+        (None, "2"),
+        ("compiled", "0"),
+    ],
+)
+def test_single_run_chain_hands_both_stages_the_matlab_mode(
+    postfix_session, stub_external, monkeypatch, mode, expected
+):
+    """
+    hcp_fix reads FSL_FIX_MATLAB_MODE through FIX's settings.sh, and the
+    executor used to set it in the process environment for that -- which is
+    also how the chained PostFix learned it. Both are handed it on their
+    command lines now, and the environment is left as it was.
+    """
+    sinfo, options, hcp = postfix_session
+    options["hcp_icafix_postfix"] = True
+    options["hcp_matlab_mode"] = mode
+    monkeypatch.setenv("FSL_FIX_MATLAB_MODE", "1")
+    boldinfo = _icafix_group(hcp, bolds=("BOLD_1",))["bolds"][0]
+    # what the (stubbed) hcp_fix would have written, and PostFix reads
+    results = os.path.join(hcp["hcp_nonlin"], "Results", "BOLD_1")
+    open(os.path.join(results, "BOLD_1_hp2000_clean.nii.gz"), "w").close()
+    environment = dict(os.environ)
+
+    report = execute_hcp_single_icafix(sinfo, options, False, hcp, True, boldinfo)["report"]
+
+    assert dict(os.environ) == environment
+    fix, postfix = [call["run"] for call in stub_external]
+    assert fix.startswith("FSL_FIX_MATLAB_MODE=%s " % expected)
+    assert '--matlab-run-mode="%s"' % expected in postfix
+    assert report["done"] == ["1 (ICAFix)", "1 (PostFix)"]
+
+
+def test_multi_run_chain_hands_both_stages_the_matlab_mode(
+    postfix_session, stub_external, monkeypatch
+):
+    sinfo, options, hcp = postfix_session
+    options["hcp_icafix_postfix"] = True
+    monkeypatch.setenv("FSL_FIX_MATLAB_MODE", "1")
+    environment = dict(os.environ)
+
+    execute_hcp_multi_icafix(sinfo, options, False, hcp, True, _icafix_group(hcp))
+
+    assert dict(os.environ) == environment
+    fix, postfix = [call["run"] for call in stub_external]
+    assert fix.startswith("FSL_FIX_MATLAB_MODE=0 ")
+    assert "--matlab-run-mode=0" in fix
+    assert '--matlab-run-mode="0"' in postfix
+
+
+def test_a_real_run_still_checks_for_the_ica_output(tmp_path, stub_external):
+    """Only a dry run chained after ICAFix skips the check; a real run cannot."""
+    sinfo, sessionsfolder = build_hcp_session(tmp_path, bolds=True)
+    options = default_options(
+        sessionsfolder=sessionsfolder,
+        run="run",
+        hcp_matlab_mode="compiled",
+        comlogs=str(tmp_path / "comlogs"),
+        logtag="",
+    )
+    hcp = get_hcp_paths(sinfo, options)
+
+    result = execute_hcp_post_fix(
+        sinfo, options, hcp, True, False, GROUP, after_icafix=True
+    )
+
+    assert result["report"]["not ready"] == [GROUP]
+    assert stub_external == []
+
+
+def test_a_concatenation_only_run_chains_no_postfix(postfix_session, stub_external):
+    """
+    hcp_fix_multi_run stops after the concatenation, so the PostFix chained on
+    could only find the ICA output missing: every such run was reported failed.
+    """
+    sinfo, options, hcp = postfix_session
+    options["hcp_icafix_postfix"] = True
+    options["hcp_icafix_concatenate_only"] = True
+    os.remove(os.path.join(hcp["hcp_nonlin"], "Results", GROUP, "%s_hp0_clean.nii.gz" % GROUP))
+
+    result = execute_hcp_multi_icafix(sinfo, options, False, hcp, True, _icafix_group(hcp))
+
+    assert len(stub_external) == 1
+    assert '--concatenate-only="TRUE"' in stub_external[0]["run"]
+    assert result["report"]["done"] == ["%s (ICAFix)" % GROUP]
+    assert result["report"]["not ready"] == []
+    assert "PostFix not chained" in result["r"]

@@ -6,14 +6,18 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-Guard against a stale spliced parser in ``bin/qunex_container``.
+Guard against a stale splice in ``bin/qunex_container``.
 
 The container can not import QuNex — it runs on the login node, outside the
-container — so it carries a generated copy of ``general/batch_io.py``. This test
-re-splices from the current source and fails if the committed container
-disagrees, the same arrangement ``test_registry_drift.py`` has with
-``qx_commands.yaml``. The fix is always to run ``qunex build_qx_container`` and
-commit the result.
+container — so it carries a generated copy of ``general/batch_io.py`` and
+``general/folders.py``, one after the other in one region. This test re-splices
+from the current source and fails if the committed container disagrees, the
+same arrangement ``test_registry_drift.py`` has with ``qx_commands.yaml``. The
+fix is always to run ``qunex build_qx_container`` and commit the result.
+
+The spliced modules and the launcher's own code share one namespace. So each
+module may import nothing but the standard library, which also keeps either
+from importing the other, and no name may be defined in two of the three.
 
 The remaining tests cover the two things the splice writes outside that region —
 the version line in the header and the imports merged into the container's own
@@ -21,11 +25,14 @@ import block — and load the container to exercise the spliced code, which is
 also what proves the region is wired in rather than merely present.
 """
 
-import importlib.util
-from importlib.machinery import SourceFileLoader
+import ast
+import sys
 from pathlib import Path
 
+import pytest
+
 import qx_container_build
+from tests.utils import load_container
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 CONTAINER = REPO_ROOT / "bin" / "qunex_container"
@@ -46,20 +53,54 @@ group: control
 """
 
 
-def load_container():
-    # the container has no .py extension, so it needs its loader named
-    loader = SourceFileLoader("qunex_container", str(CONTAINER))
-    spec = importlib.util.spec_from_loader(loader.name, loader)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def launcher_own_code():
+    """The launcher without its generated region: the code written by hand."""
+    text = CONTAINER.read_text()
+    start = text.index("# --- BEGIN GENERATED from ")
+    end = text.index(qx_container_build.END, start) + len(qx_container_build.END)
+    return text[:start] + text[end:]
 
 
-def test_committed_container_matches_batch_io():
+def top_level_names(text):
+    """The names a module defines at its top level, and the names it imports."""
+    defined, imported = set(), set()
+
+    def visit(body):
+        for node in body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                defined.add(node.name)
+            elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+                targets = (
+                    node.targets if isinstance(node, ast.Assign) else [node.target]
+                )
+                defined.update(
+                    name.id
+                    for target in targets
+                    for name in ast.walk(target)
+                    if isinstance(name, ast.Name)
+                )
+            elif isinstance(node, (ast.Import, ast.ImportFrom)):
+                imported.update(
+                    (alias.asname or alias.name).split(".")[0] for alias in node.names
+                )
+            elif isinstance(node, (ast.If, ast.Try, ast.With, ast.For, ast.While)):
+                # what a guarded import or a fallback binds is top level too
+                for field in ("body", "orelse", "finalbody"):
+                    visit(getattr(node, field, []))
+                for handler in getattr(node, "handlers", []):
+                    visit(handler.body)
+
+    visit(ast.parse(text).body)
+    return defined, imported
+
+
+def test_committed_container_matches_the_spliced_modules():
     assert CONTAINER.exists(), f"missing {CONTAINER}"
 
     rebuilt = qx_container_build.render(
-        CONTAINER.read_text(), BATCH_IO.read_text(), qx_container_build.read_version()
+        CONTAINER.read_text(),
+        qx_container_build.spliced_modules(),
+        qx_container_build.read_version(),
     )
 
     assert rebuilt == CONTAINER.read_text(), (
@@ -76,10 +117,10 @@ def test_the_container_states_the_suite_version():
 
 def test_the_spliced_region_carries_no_imports():
     """
-    The splice moves batch_io's imports into the container's own import block.
+    The splice moves the modules' imports into the container's own import block.
 
-    Left where they are they land halfway down the file, which is E402 six times
-    over and F811 for the two the container already imports.
+    Left where they are they land halfway down the file, which is E402 for
+    each of them and F811 for the ones the container already imports.
     """
     text = CONTAINER.read_text()
     region = text[text.index(qx_container_build.BEGIN) : text.index(qx_container_build.END)]
@@ -89,6 +130,94 @@ def test_the_spliced_region_carries_no_imports():
     ]
 
     assert not stranded, "imports left in the generated region: %s" % stranded
+
+
+@pytest.mark.parametrize(
+    "module", qx_container_build.MODULES, ids=lambda module: module.name
+)
+def test_every_spliced_module_imports_only_the_stdlib(module):
+    """
+    The launcher runs in the host python, with no QuNex and maybe no site
+    packages on the path: anything else a spliced module imports is a broken
+    launcher, and the other spliced module among them -- the two are one
+    namespace there, not two modules.
+    """
+    imported = set()
+    for node in ast.walk(ast.parse(module.read_text())):
+        if isinstance(node, ast.Import):
+            imported.update(alias.name for alias in node.names)
+        elif isinstance(node, ast.ImportFrom):
+            imported.add("." * node.level + (node.module or ""))
+
+    reaching = sorted(
+        name for name in imported if name.split(".")[0] not in sys.stdlib_module_names
+    )
+
+    assert not reaching, (
+        "%s imports %s. It is spliced into bin/qunex_container, which runs with "
+        "no QuNex and no site packages on the path — it may import nothing but "
+        "the standard library." % (module.name, reaching)
+    )
+
+
+def test_the_spliced_modules_and_the_container_share_no_names():
+    """
+    One namespace: a name two of them define is one definition replacing the
+    other in the launcher, whichever comes later, and one a module defines
+    where the launcher imports it replaces the import for the whole file.
+    """
+    sources = {module.name: module.read_text() for module in qx_container_build.MODULES}
+    sources["bin/qunex_container"] = launcher_own_code()
+    names = {source: top_level_names(text) for source, text in sources.items()}
+
+    clashes = set()
+    for source, (defined, _) in names.items():
+        for other, (other_defined, other_imported) in names.items():
+            if other == source:
+                continue
+            for name in defined & other_defined:
+                clashes.add(
+                    "%s: defined in %s" % (name, " and ".join(sorted((source, other))))
+                )
+            for name in defined & other_imported:
+                clashes.add("%s: defined in %s, imported in %s" % (name, source, other))
+
+    assert not clashes, sorted(clashes)
+
+
+def test_the_build_rewrites_the_region_an_earlier_build_named():
+    """
+    A region is found by any `BEGIN GENERATED from` line, so the one a build
+    of a single module wrote is found and rewritten with both, once; and one
+    module's text is still accepted as it was before.
+    """
+    container = (
+        "#!/usr/bin/env python\n# Version 0.0.0 [QIO]\n\n"
+        "from __future__ import division\n\nimport os\n\n\n"
+        "# --- BEGIN GENERATED from general/batch_io.py — do not edit; run "
+        "`qunex build_qx_container` ---\nstale = 1\n# --- END GENERATED ---\n\n\n"
+        "def main():\n    return os.getcwd()\n"
+    )
+
+    rebuilt = qx_container_build.render(
+        container, qx_container_build.spliced_modules(), "9.9.9"
+    )
+
+    assert rebuilt.count("# --- BEGIN GENERATED from ") == 1
+    assert qx_container_build.BEGIN in rebuilt
+    assert "stale = 1" not in rebuilt
+    assert "\ndef resolve(" in rebuilt and "\ndef run_folders(" in rebuilt
+    assert "\nfrom collections import namedtuple\n" in rebuilt, "folders.py's import"
+    assert "# Version 9.9.9 [QIO]" in rebuilt
+    assert (
+        qx_container_build.render(
+            rebuilt, qx_container_build.spliced_modules(), "9.9.9"
+        )
+        == rebuilt
+    ), "a rebuild of a rebuilt container changes nothing"
+
+    single = qx_container_build.render(container, BATCH_IO.read_text(), "9.9.9")
+    assert "\ndef resolve(" in single and "\ndef run_folders(" not in single
 
 
 def test_the_container_resolves_and_filters(tmp_path):

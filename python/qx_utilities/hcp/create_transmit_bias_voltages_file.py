@@ -23,7 +23,7 @@ from qx_utilities.hcp.hcp_utils import write_transmit_bias_voltages
 
 def create_transmit_bias_voltages_file(sessions, options, overwrite=True, thread=0):
     """
-    ``create_transmit_bias_voltages_file [... processing options]``
+    ``create_transmit_bias_voltages_file [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Create the transmit bias voltages file for a group of sessions.
 
@@ -41,9 +41,15 @@ def create_transmit_bias_voltages_file(sessions, options, overwrite=True, thread
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -64,7 +70,7 @@ def create_transmit_bias_voltages_file(sessions, options, overwrite=True, thread
         ::
 
             qunex create_transmit_bias_voltages_file \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_voltages="<path_to_study_folder>/processing/voltages.txt"
     """

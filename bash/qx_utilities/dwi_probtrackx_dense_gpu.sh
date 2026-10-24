@@ -15,7 +15,7 @@ usage() {
 ``dwi_probtrackx_dense_gpu``
 
 Run the probtrackxgpu dense whole-brain connectome generation by
-calling ${ScriptsFolder}/run_matrix1.sh or ${ScriptsFolder}/run_matrix3.sh.
+calling run_matrix1.sh or run_matrix3.sh from the --scriptsfolder folder.
 
 Warning:
     The command assumes the Human Connectome Project folder structure and
@@ -26,31 +26,40 @@ Warning:
 
     Processed DWI data needs to be here::
 
-        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion
 
     BedpostX output data needs to be here::
 
-        <study_folder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
 
     You can use the --diffusion_folder parameter to change this if needed.
 
     T1w images need to be in MNINonLinear space here::
 
-        <study_folder>/<session>/hcp/<session>/MNINonLinear
+        <sessionsfolder>/<session>/hcp/<session>/MNINonLinear
 
 ..  qx_command:
     type: processing.session
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
 
     --diffusion_folder (str):
-        Path to the diffusion folder.
+        Path to the folder with the BedpostX outputs, used instead of
+        ``<sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX``.
+        Unlike in dwi_bedpostx_gpu, this is the ``.bedpostX`` folder itself
+        and not the diffusion folder bedpostx was run on.
 
     --overwrite (str, default 'no'):
         Whether to overwrite existing data (yes) or not (no). Note that
@@ -107,14 +116,17 @@ Parameters:
     --steplength (str, default '0.5'):
         Generic parameter set by default (will be parameterized in the future).
 
+    --nogpu (flag, default 'no'):
+        If set, this command will be processed using a CPU instead of a GPU.
+
 Output files:
     Dense Connectome CIFTI Results in MNI space for Matrix1 will be here::
 
-       <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn1.dconn.nii.gz
+       <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/Conn1.dconn.nii.gz
 
     Dense Connectome CIFTI Results in MNI space for Matrix3 will be here::
 
-       <study_folder>/<session>/hcp/<session>/MNINonLinear/Results/Conn3.dconn.nii.gz
+       <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/Conn3.dconn.nii.gz
 
 Notes:
     Use:
@@ -132,7 +144,7 @@ Notes:
         session.
 
         Next, a log transformation is computed on the waytotal normalized data,
-        which will yield stronger connectivity values for longe-range
+        which will yield stronger connectivity values for long-range
         projections. Log-transformation accounts for algorithmic distance bias
         in tract generation (path probabilities drop with distance as
         uncertainty is accumulated).
@@ -142,8 +154,8 @@ Notes:
 
         The outputs for these files will be in::
 
-            /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii
-            /<path_to_study_sessions_folder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii
+            <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm.dconn.nii.gz
+            <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/Results/Tractography/<MatrixName>_waytotnorm_log.dconn.nii.gz
 
     Apptainer (Singularity) and GPU support:
         If nogpu is not provided, this command will facilitate GPUs to speed
@@ -159,8 +171,8 @@ Examples:
     ::
 
         qunex dwi_probtrackx_dense_gpu \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --scheduler='<name_of_scheduler_and_options>' \\
             --omatrix1='yes' \\
             --nsamplesmatrix1='10000' \\
@@ -171,8 +183,8 @@ Examples:
     ::
 
         qunex dwi_probtrackx_dense_gpu \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --scheduler='<name_of_scheduler_and_options>' \\
             --omatrix1='yes' \\
             --nsamplesmatrix1='10000' \\
@@ -211,6 +223,7 @@ get_options() {
     }
 
     # -- Initialize global output variables
+    unset StudyFolder
     unset SessionsFolder
     unset Session
     unset Overwrite
@@ -227,6 +240,7 @@ get_options() {
     unset DiffusionFolder
 
     # -- Parse arguments
+    StudyFolder=`opts_GetOpt "--studyfolder" $@`
     SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
     CASE=`opts_GetOpt "--session" "$@" | sed 's/,/ /g;s/|/ /g'`
     # the documented spelling, and the one qunex passes; --session is what the
@@ -242,10 +256,22 @@ get_options() {
     store_streamlines_length=`opts_GetOpt "--storestreamlineslength" $@`
     force_matrix1=`opts_GetOpt "--forcematrix1" $@`
     nogpu=`opts_GetOpt "--nogpu" $@`
+    # --nogpu is a flag, and given without a value it asks for the cpu
+    for fn in "$@"; do
+        if [[ "$fn" == "--nogpu" ]]; then nogpu="yes"; fi
+    done
+    # --nogpu='true' asks for the cpu as well
+    if [[ "${nogpu,,}" == "true" ]] || [[ "${nogpu,,}" == "yes" ]]; then nogpu="yes"; fi
     DiffusionFolder=`opts_GetOpt "--diffusion_folder" $@`
 
+    # the sessions are in the sessions folder of the study, unless
+    # --sessionsfolder names another one
+    if [[ -z ${SessionsFolder} ]] && [[ -n ${StudyFolder} ]]; then
+        SessionsFolder="${StudyFolder}/sessions"
+    fi
+
     if [[ -z ${SessionsFolder} ]]; then
-        echo "ERROR: <sessionsfolder> not specified"
+        echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
         echo ""
         exit 1
     fi
@@ -276,12 +302,16 @@ get_options() {
     # -- Optional parameters
     if [[ -z ${ScriptsFolder} ]]; then ScriptsFolder="${HCPPIPEDIR_dMRITractFull}/tractography_gpu_scripts"; fi
 
+    # run_matrix*.sh reads its arguments by position, so an empty nogpu would
+    # hand it the diffusion folder in the place of nogpu
+    if [[ -z ${nogpu} ]]; then nogpu="no"; fi
+
     # minimumfilesize
     minimumfilesize="100000000"
 
-    # -- Set StudyFolder
-    cd $SessionsFolder/../ &> /dev/null
-    StudyFolder=`pwd` &> /dev/null
+    # the study folder, when not given, is the folder the sessions folder is
+    # in; found in a subshell, so that the working directory does not change
+    StudyFolder="${StudyFolder:-$(cd "${SessionsFolder}/.." 2> /dev/null && pwd)}"
 
     # -- distance correction flag
     if [ "$distance_correction" == "yes" ] || [ "$distance_correction" == "YES" ]; then

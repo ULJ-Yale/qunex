@@ -30,7 +30,7 @@ from qx_utilities.processing.workflow.dryrun import mcommand
 
 def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     r"""
-    ``preprocess_conc [... processing options]``
+    ``preprocess_conc [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Preproces conc bundles of BOLD images.
 
@@ -58,17 +58,21 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     ..  qx_command:
         type: processing.session
 
-
-
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
 
-        --parsessions (str, default 1):
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
+
+        --parsessions (int, default 1):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
@@ -98,9 +102,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             placed in. The comlog is created at the first provided location and
             then linked or copied to the others. The valid locations are:
 
-            - 'study'   (for the default:
-              ``<study>/processing/logs/comlogs`` location)
-            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'study'   (for the run's log folder, by default
+              ``<studyfolder>/logs/<run folder>/comlogs``)
+            - 'session' (for ``<sessionsfolder>/<session id>/logs/comlogs``)
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
@@ -128,7 +132,7 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             An optional prefix to place in front of processing name extensions
             in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
 
-        --bold_variant (str, default detailed below):
+        --bold_variant (str, default ''):
             Optional variant of HCP BOLD preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
 
@@ -157,16 +161,18 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     Notes:
         The --bolds and --event_file parameters provide names based on which the
-        the appropriate .conc and .fidl files are searched for. Both are first
-        searched for in `images<img_suffix>/functional<bold_variant>/concs` and
-        images<img_suffix>/functional<bold_variant>/events folders
-        respectively. There they would be named as `[<session
-        id>_]<boldname>_<image_target>_<conc name>.conc` and `[<session
-        id>_]<boldname>_<image_target>_<fidl name>.fidl`. If the files are not
-        present in the relevant individual session's folders, they are searched
-        for in the `<sessionsfolder>/inbox/events` and
-        `<sessionsfolder>/inbox/concs` folder. In that case the "<session id>_"
-        in the \*.fidl and \*.conc file name is not optional but required.
+        appropriate .conc and .fidl files are searched for. They are first
+        looked for in the session's
+        `images<img_suffix>/functional<bold_variant>/concs` and
+        `images<img_suffix>/functional<bold_variant>/events` folders, as
+        `<boldname><bold_tail>_<image_target>_<conc name>.conc` (with the NIfTI
+        or CIFTI tail, and 'dtseries' for a 'cifti' target) and
+        `<fidl name>.fidl`. If a file is not there, or --overwrite is set, it
+        is searched for as `<session id>_<name>` in `<sessionsfolder>/inbox`
+        and its `events` and (a conc file) `concs` folders, then, with or
+        without the `<session id>_` prefix, in the session's `hcp` or `data`
+        folder (see --image_source), and copied into the session's folder. A
+        fidl file is only looked for when --bold_nuisance includes 'e'.
 
         The --bold_actions parameter specifies the actions, denoted by a single
         letter, that will be executed in the sequence listed:
@@ -189,8 +195,8 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             If `conc_use` is set to relative (the default), then the only
             information taken from the conc files will be the bold numbers. The
             actual location of the bold files will be constructed from the
-            information on the location of the session's sesion folder present
-            in the batch file, and the `bold_variant` setting, whereas the
+            session's folder (`<sessionsfolder>/<session id>`) and the
+            `bold_variant` setting, whereas the
             specific bold file name and file format (e.g. .nii.gz vs.
             .dtseries.nii) to use will depend on `boldname`, `image_target`,
             `nifti_tail` and `cifti_tail` settings. This allows for flexible
@@ -205,7 +211,9 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
             the BOLD files, then `conc_use` should be set to `absolute`. In
             this case both the specific location as well as the specific
             filename specified in the conc file will be used exactly as
-            specified. In this case, do check and make sure that the
+            specified; bold statistics and nuisance information are read from
+            the nearest folder on the bold file's path that is named after the
+            session id. In this case, do check and make sure that the
             information in the conc file is valid and it matches with
             `boldname` and `image_target` parameters, and that the `nifti_tail`
             is specified correctly, as it will be used to obtain bold
@@ -367,7 +375,6 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                 Results:
                     The resulting smoothed files are saved with '_s' added to
                     the BOLD root filename.
-
 
         Temporal filtering:
             Temporal filtering is accomplished using img_filter nimage method.
@@ -578,38 +585,38 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
     Examples:
         Activation analysis::
 
-            qunex preprocess_conc \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
-                --bolds=SRT \\
-                --event_file=SRT \\
-                --glm_name=-M1 \\
-                --bold_actions="s,r,c" \\
-                --bold_nuisance=e \\
-                --mov_bad=none \\
-                --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \\
-                --glm_matrix=both \\
-                --glm_residuals=none \\
+            qunex preprocess_conc \
+                --studyfolder=. \
+                --batchfile=fcMRI/sessions_hcp.txt \
+                --overwrite=no \
+                --parsessions=10 \
+                --bolds=SRT \
+                --event_file=SRT \
+                --glm_name=-M1 \
+                --bold_actions="s,r,c" \
+                --bold_nuisance=e \
+                --mov_bad=none \
+                --event_string="block:boynton|target:9|target:9>target_rt:1:within:z" \
+                --glm_matrix=both \
+                --glm_residuals=none \
                 --pignore="hipass=keep|regress=keep|lopass=keep"
 
         Functional connectivity preprocessing::
 
-            qunex preprocess_conc \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
-                --bolds=SRT \\
-                --event_file=SRT \\
-                --glm_name=-FC \\
-                --bold_actions="s,h,r,c,l" \\
-                --bold_nuisance="m,V,WM,WB,1d,e" \\
-                --mov_bad=udvarsme \\
-                --event_string="block:boynton|target:9" \\
-                --glm_matrix=none \\
-                --glm_residuals=save \\
+            qunex preprocess_conc \
+                --studyfolder=. \
+                --batchfile=fcMRI/sessions_hcp.txt \
+                --overwrite=no \
+                --parsessions=10 \
+                --bolds=SRT \
+                --event_file=SRT \
+                --glm_name=-FC \
+                --bold_actions="s,h,r,c,l" \
+                --bold_nuisance="m,V,WM,WB,1d,e" \
+                --mov_bad=udvarsme \
+                --event_string="block:boynton|target:9" \
+                --glm_matrix=none \
+                --glm_residuals=save \
                 --pignore="hipass=linear|regress=ignore|lopass=linear"
     """
     log = ReportLog()
@@ -719,20 +726,28 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
                     boldname = options["boldname"] + boldnum
                     bolds.append(boldnum)
 
-                    # if absolute path flag use session folder from conc file
-                    if options["conc_use"] == "absolute":
-                        # extract session folder from conc file
-                        options["sessionsfolder"] = (c[0].split(sinfo["id"]))[0]
-                        d["s_base"] = options["sessionsfolder"] + sinfo["id"]
-                        options["bold_tail"] = (c[0].split(boldname))[1].replace(
-                            pc.get_extension(options["image_target"]), ""
-                        )
-
                     log.raw("\n\nLooking up: " + boldname + " ...")
 
+                    # with conc_use=absolute the bold's files are resolved in the
+                    # session folder it is in, through a copy of the options: the
+                    # next conc bundle is still looked for in the run's own
+                    foptions = options
+                    if options["conc_use"] == "absolute":
+                        s_base = _conc_session_folder(c[0], sinfo["id"])
+                        if s_base is None:
+                            log.error(f"{c[0]} is not in a folder named {sinfo['id']}, the session folder it is in is not known!")
+                            rstatus = False
+                            check["bad"].append(boldnum)
+                            continue
+                        d["s_base"] = s_base
+                        tail = os.path.basename(c[0]).split(boldname)[1]
+                        options["bold_tail"] = tail.replace(pc.get_extension(options["image_target"]), "")
+                        foptions = dict(options, sessionsfolder=os.path.dirname(s_base))
+
                     # --- filenames
-                    f = pc.get_file_names(sinfo, options)
-                    f.update(pc.get_bold_file_names(sinfo, boldname, options))
+                    # the links a dry run did not make are noted once, not per bold
+                    f = pc.get_file_names(sinfo, foptions, _log=log if c is conc[0] else None)
+                    f.update(pc.get_bold_file_names(sinfo, boldname, foptions))
 
                     # if absolute path flag use also exact filename (extension)
                     if options["conc_use"] == "absolute":
@@ -970,3 +985,16 @@ def preprocess_conc(sinfo, options, overwrite=False, thread=0):
 
     # print r
     return log.result(report, failed, sinfo["id"])
+
+
+def _conc_session_folder(boldfile: str, session_id: str) -> str | None:
+    """
+    The nearest folder on `boldfile`'s path whose whole name is `session_id`,
+    or None: an id met earlier in the path or inside a longer name is not it.
+    """
+    folder = os.path.dirname(boldfile)
+    while folder and folder != os.path.dirname(folder):
+        if os.path.basename(folder) == session_id:
+            return folder
+        folder = os.path.dirname(folder)
+    return None

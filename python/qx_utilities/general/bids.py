@@ -11,7 +11,8 @@
 Functions for importing and exporting BIDS data to QuNex file structure.
 
 --import_bids         Maps BIDS data to QuNex structure.
---BIDSExport          Exports QuNex data to BIDS structured folder.
+--map_bids2nii        Maps a session's BIDS data to its nii folder.
+--map_nii2bids        Maps the sessions' nii data to BIDS structure.
 
 The commands are accessible from the terminal using qunex command.
 """
@@ -37,6 +38,7 @@ import yaml
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 unwarp = {
@@ -118,8 +120,8 @@ def map_to_qunex_bids(
             "Please check your QuNex installation",
         )
 
-    bids_file = open(bids_structure)
-    content = bids_file.read()
+    with open(bids_structure) as bids_file:
+        content = bids_file.read()
     bids = ast.literal_eval(content)
 
     # -> extract file meta information
@@ -265,10 +267,11 @@ def import_bids(
     fileinfo=None,
     add_json_info="all",
     merge_multi_echo="no",
+    studyfolder=None,
     _log=None,
 ):
     """
-    ``import_bids [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all'] [merge_multi_echo='no']``
+    ``import_bids [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [inbox=<sessionsfolder>/inbox/BIDS] [sessions="*"] [action=link] [overwrite=no] [archive=leave] [bidsname=<inbox folder name>] [fileinfo=short] [add_json_info='all'] [merge_multi_echo='no']``
 
     Maps a BIDS dataset to the QuNex Suite file structure.
 
@@ -276,9 +279,16 @@ def import_bids(
        type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The sessions folder where all the sessions are to be mapped to. It
-            should be a folder within the <study folder>.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The sessions of the BIDS dataset are mapped into
+            it.
 
         --inbox (str, default <sessionsfolder>/inbox/BIDS):
             The location of the BIDS dataset. It can be any of the following:
@@ -287,8 +297,8 @@ def import_bids(
             can contain a single session or a multi-session dataset, or a
             folder that contains a compressed package. For instance the user
             can specify "<path>/<bids_file>.zip" or "<path>" to a folder that
-            contains multiple packages. The default location where the command
-            will look for a BIDS dataset is.
+            contains multiple packages. By default the command looks for a
+            BIDS dataset in `<sessionsfolder>/inbox/BIDS`.
 
         --sessions (str, optional):
             An optional parameter that specifies a comma or pipe separated list
@@ -332,9 +342,13 @@ def import_bids(
             if `archive` is set to 'move' or 'copy'.
 
         --bidsname (str, default detailed below):
-            The optional name of the BIDS dataset. If not provided it will be
+            The optional name of the BIDS dataset. The files that pertain to
+            the dataset as a whole are stored in
+            `<studyfolder>/info/bids/<bidsname>`. If not provided it will be
             set to the name of the inbox folder or the name of the compressed
-            package.
+            package, and to none for a dataset in the default inbox
+            (`<sessionsfolder>/inbox/BIDS`), whose files are stored in
+            `<studyfolder>/info/bids`.
 
         --fileinfo (str, default 'short'):
             What file information to include in the session.txt file. Options
@@ -370,7 +384,7 @@ def import_bids(
         Files pertaining to the study and not specific subject / session are
         stored in::
 
-            <study folder>/info/bids/<bids bame>
+            <studyfolder>/info/bids/<bidsname>
 
         The original BIDS session-level data is stored in::
 
@@ -390,7 +404,7 @@ def import_bids(
 
         The study-level BIDS files are in::
 
-            <studyfolder>/<info>/bids/<bidsname>
+            <studyfolder>/info/bids/<bidsname>
 
     Notes:
         The import_bids command consists of two steps:
@@ -412,7 +426,8 @@ def import_bids(
             <bids_dataset_name> can be provided as a `bidsname` parameter to
             the command call. If `bidsname` is not provided, the name will
             be set to the name of the parent folder or the name of the
-            compressed archive.
+            compressed archive, and left out for a dataset in the default
+            inbox (`<sessionsfolder>/inbox/BIDS`).
 
             The files identified as belonging to a specific session will be
             mapped to folder::
@@ -464,7 +479,7 @@ def import_bids(
         ::
 
             qunex import_bids \\
-                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --studyfolder="<absolute path to study folder>" \\
                 --inbox="<absolute path to folder with bids dataset>" \\
                 --archive=move \\
                 --overwrite=yes
@@ -480,7 +495,7 @@ def import_bids(
         ::
 
             qunex import_bids \\
-                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --studyfolder="<absolute path to study folder>" \\
                 --inbox="<absolute path to folder with bids dataset>" \\
                 --action='copy' \\
                 --archive='leave' \\
@@ -497,7 +512,7 @@ def import_bids(
         ::
 
             qunex import_bids \\
-                --sessionsfolder="<absolute path to study folder>/sessions" \\
+                --studyfolder="<absolute path to study folder>" \\
                 --inbox="<absolute path to folder with bids dataset>" \\
                 --action='copy' \\
                 --archive='leave' \\
@@ -515,9 +530,14 @@ def import_bids(
         ::
 
             qunex import_bids \\
-                --sessionsfolder=myStudy \\
+                --studyfolder=myStudy \\
                 --overwrite=yes \\
                 --bidsname=swga
+
+        The above command would map the BIDS dataset in the study's default
+        inbox, `myStudy/sessions/inbox/BIDS`, replacing any data already
+        mapped for its sessions, and store the files that pertain to the
+        dataset as a whole in `myStudy/info/bids/swga`.
     """
 
     log = gl.log_or_console(_log)
@@ -547,7 +567,7 @@ def import_bids(
             "import_bids",
             "Invalid dataset archive option",
             "%s is not a valid option for dataset archive option!" % (archive),
-            "Please specify one of: move, copy, delete!",
+            "Please specify one of: leave, move, copy, delete!",
         )
 
     if fileinfo not in ["short", "full", None]:
@@ -558,10 +578,8 @@ def import_bids(
             "Please specify one of: short, full!",
         )
 
-    if sessionsfolder is None:
-        sessionsfolder = os.path.abspath(".")
-
-    qxfolders = gc.deduce_folders({"sessionsfolder": sessionsfolder})
+    sessionsfolder = os.path.abspath(gf.sessions_folder(studyfolder, sessionsfolder))
+    studyfolder = gf.study_folder(studyfolder, sessionsfolder)
 
     if inbox is None:
         inbox = os.path.join(sessionsfolder, "inbox", "BIDS")
@@ -618,8 +636,8 @@ def import_bids(
             "Please check your QuNex installation",
         )
 
-    bids_file = open(bids_structure)
-    content = bids_file.read()
+    with open(bids_structure) as bids_file:
+        content = bids_file.read()
     _ = ast.literal_eval(content)
 
     # ---> identification of files
@@ -754,11 +772,15 @@ def import_bids(
         )
 
     # ---> definition of paths
+    # a given name is used as it is; without one the dataset is named after
+    # its folder or package, and a dataset in the study's own inbox has none
     if bidsname is None:
-        if os.path.samefile(inbox, os.path.join(sessionsfolder, "inbox", "BIDS")):
+        # a subject or session folder is in the dataset its name is taken from
+        dataset = metadata_path if folder_type in ["subject", "session"] else inbox
+        default_inbox = os.path.join(sessionsfolder, "inbox", "BIDS")
+        if os.path.exists(default_inbox) and os.path.samefile(dataset, default_inbox):
             bidsname = ""
-    else:
-        if folder_type == "file":
+        elif folder_type == "file":
             bidsname = os.path.basename(inbox)
             bidsname = re.sub(".zip$|.gz$|.tgz$", "", bidsname)
             bidsname = re.sub(".tar$", "", bidsname)
@@ -768,9 +790,9 @@ def import_bids(
             bidsname = inbox.split(os.path.sep)[studyat[folder_type] - 1]
 
     if not bidsname:
-        bidsinfo = os.path.join(qxfolders["basefolder"], "info", "bids")
+        bidsinfo = os.path.join(studyfolder, "info", "bids")
     else:
-        bidsinfo = os.path.join(qxfolders["basefolder"], "info", "bids", bidsname)
+        bidsinfo = os.path.join(studyfolder, "info", "bids", bidsname)
 
     with log.section("Paths:"):
         log.detail(f"bidsinfo    -> {bidsinfo}")
@@ -1121,8 +1143,8 @@ def process_bids(bfolder):
             "Please check your QuNex installation",
         )
 
-    bids_file = open(bids_structure)
-    content = bids_file.read()
+    with open(bids_structure) as bids_file:
+        content = bids_file.read()
     bids = ast.literal_eval(content)
 
     # -> map all the files
@@ -1350,7 +1372,8 @@ def map_bids2nii(
             are existing data stored in `nii` folder.
             The options are:
 
-            - 'no'  ... do not overwrite the data, skip session
+            - 'no'  ... do not overwrite the data, report an error for the
+              session
             - 'yes' ... remove existing files in `nii` folder and redo the
               mapping.
 
@@ -1388,17 +1411,18 @@ def map_bids2nii(
 
         session.txt file:
             The session.txt will be placed in the session base folder. It
-            will contain the information about the session id, subject id
-            location of folders and a list of created NIfTI images with
-            their description.
+            will contain the information about the session id, subject id,
+            location of the session's folders, relative to the session
+            folder, and a list of created NIfTI images with their
+            description.
 
             An example session.txt file would be::
 
-                id: 06_retest
+                session: 06_retest
                 subject: 06
-                bids: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/bids
-                raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-                hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
+                bids: bids
+                raw_data: nii
+                hcp: hcp
 
                 01: T1w
                 02: bold covertverbgeneration
@@ -1412,8 +1436,8 @@ def map_bids2nii(
             NIfTI file in the nii subfolder (e.g. 04.nii.gz for the line
             bisection BOLD sequence). The generated session.txt files form
             the basis for the following HCP and other processing steps.
-            `id` field will be set to the full session name, `subject` will
-            be set to the text preceeding the underscore (`_`) character.
+            `session` field will be set to the full session name, `subject`
+            will be set to the text preceeding the underscore (`_`) character.
 
         bids2nii.log file:
             The `bids2nii.log` provides the information about the date and
@@ -1444,10 +1468,11 @@ def map_bids2nii(
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parsessions`
-            parameters. In this case the command will be run for each of
-            the specified sessions in the sessionsfolder (current directory
-            by default). `sessions` limits the run to the specified id
+            `sessions` and optionally `studyfolder` (or `sessionsfolder`)
+            and `parsessions` parameters. In this case the command will be
+            run for each of the specified sessions in the sessions folder
+            (`<studyfolder>/sessions`, or the current directory when neither
+            is given). `sessions` limits the run to the specified id
             codes, and an optional `filter` parameter selects the sessions
             whose batch file entry matches a key. (for more information see
             online documentation).
@@ -1476,8 +1501,21 @@ def map_bids2nii(
         ::
 
             qunex map_bids2nii \\
-                --folder=. \\
+                --sourcefolder=. \\
                 --overwrite=yes
+
+        The above command maps the BIDS data of the session in the current
+        folder.
+
+        ::
+
+            qunex map_bids2nii \\
+                --studyfolder="<path_to_study_folder>" \\
+                --sessions="s01_baseline,s02_baseline" \\
+                --overwrite=yes
+
+        The above command maps the BIDS data of the two listed sessions in
+        the study's `sessions` folder.
     """
 
     log = gl.log_or_console(_log)
@@ -1786,10 +1824,15 @@ def map_bids2nii(
 
 
 def map_nii2bids(
-    sinfo, options, overwrite=False, action="hardlink", session_mapping_file=None
+    sinfo,
+    options,
+    overwrite=False,
+    thread=0,
+    action="hardlink",
+    session_mapping_file=None,
 ):
     """
-    ``map_nii2bids [batchfile=''] [sessionsfolder='.'] [sessions=''] [overwrite='no'] [action='hardlink'] [session_mapping_file=None]``
+    ``map_nii2bids [batchfile=''] [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [sessions=''] [overwrite='no'] [action='hardlink'] [session_mapping_file=None]``
 
     Maps images from the sessions's nii folder to BIDS structure.
 
@@ -1812,20 +1855,26 @@ def map_nii2bids(
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
 
-        --sessions (str, ''):
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
+
+        --sessions (str, default ''):
             The comma separated list of sessions to process. If not specified,
             all sessions will be processed.
 
         --overwrite (str, default 'no'):
             Parameter that specifies what should be done in cases where there
-            are existing data stored in `nii` folder.
+            are existing data stored in `bids` folder.
             The options are:
 
-            - 'no'  ... do not overwrite the data, skip session
+            - 'no'  ... do not overwrite the data, report an error and stop
             - 'yes' ... remove existing files in `bids` folder and redo the
               mapping.
 
@@ -1855,8 +1904,10 @@ def map_nii2bids(
 
         We run the following command::
 
-            qunex map_nii2bids \
-              --sourcefolder="/data/studies/fMRI/import_bids_test/sessions/01_1" \
+            qunex map_nii2bids \\
+              --studyfolder="/data/studies/fMRI/import_bids_test" \\
+              --batchfile="/data/studies/fMRI/import_bids_test/processing/batch.txt" \\
+              --sessions="01_1" \\
               --overwrite='yes'
 
         In this example, the following mappings are performed:
@@ -1866,7 +1917,7 @@ def map_nii2bids(
         Note that the suffix has been explicitly defined as `magnitude2`,
         otherwise it would implicitly be set to `magnitude`.
 
-        - `11.nii.gz` --> `sub-01_ses-1_task-rest_acq-fullbrain_run-1_bold.nii.gz`
+        - `11.nii.gz` --> `sub-01_ses-1_task-rest_acq-fullbrain_run-2_bold.nii.gz`
 
         In this case suffix was inferred from the image type. Key-value pairs
         not defined in BIDS are ignored (e.g. `fm` in the above case)
@@ -1910,15 +1961,21 @@ def map_nii2bids(
         session_mapping_file = options["session_mapping_file"]
 
     if session_mapping_file is not None:
-        remaps = yaml.safe_load(open(session_mapping_file))
+        with open(session_mapping_file) as mapping_file:
+            remaps = yaml.safe_load(mapping_file)
         log.step(f"Session mapping file {session_mapping_file} loaded")
     else:
         remaps = {}
 
+    test = options.get("run") == "test"
+
     for session_info in sinfo:
-        bidsfolder = session_info["bids"]
-        sourcefolder = bidsfolder[:-5]
-        niifolder = session_info["raw_data"]
+        # the session's folder is the one named after it in the sessions
+        # folder, and a folder its record does not name is the standard one in
+        # it: a session imported from DICOM has no `bids` entry
+        sourcefolder = os.path.join(options["sessionsfolder"], session_info["id"])
+        bidsfolder = session_info.get("bids") or os.path.join(sourcefolder, "bids")
+        niifolder = session_info.get("raw_data") or os.path.join(sourcefolder, "nii")
 
         # --- open nii2bids log file
         if overwrite in ["yes", True, "True"]:
@@ -1926,210 +1983,316 @@ def map_nii2bids(
         else:
             mode = "a"
 
-        bout = open(os.path.join(bidsfolder, "nii2bids.log"), mode)
-        print(
-            "nii to BIDS mapping report, executed on %s"
-            % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")),
-            file=bout,
-        )
-
-        session = session_info["session"]
-        subject = session_info["subject"]
-        print("", file=sys.stdout)
-        [
-            print(f"... mapping subject {subject}, session {session}", file=output)
-            for output in [sys.stdout, bout]
-        ]
-        if subject in remaps.keys():
-            if session in remaps[subject].keys():
-                sessionid = remaps[subject][session]
-                if not sessionid.isalnum():
-                    [
-                        print(
-                            "... WARNING: session name contains non-alphanumeric characters, skipping",
-                            file=output,
-                        )
-                        for output in [sys.stdout, bout]
-                    ]
-                    continue
-                [
-                    print(
-                        f"... remapping session {session} to {sessionid}", file=output
-                    )
-                    for output in [sys.stdout, bout]
-                ]
-            else:
-                sessionid = session
-        elif session == subject:
-            sessionid = None
+        # the log is kept in the bids folder, so the folder has to exist first;
+        # a dry run creates neither
+        if test:
+            logfile = os.devnull
         else:
-            replacement = "x"
-            sessionid = (session.split("_"))[1:]
-            sessionid = replacement.join(sessionid)
-            if not sessionid.isalnum():
-                [
-                    print(
-                        f"... WARNING: session name contains non-alphanumeric characters, replacing them with {replacement}",
-                        file=output,
-                    )
-                    for output in [sys.stdout, bout]
-                ]
-                sessionid = re.sub(r"[^a-zA-Z0-9]", replacement, sessionid)
+            if not os.path.exists(bidsfolder):
+                os.makedirs(bidsfolder)
+            logfile = os.path.join(bidsfolder, "nii2bids.log")
 
-        # --- check for presence of nifti files
-        if os.path.exists(bidsfolder):
-            bidsfiles = len(glob.glob(os.path.join(bidsfolder, "*/*.nii*")))
-            if bidsfiles > 0:
-                if overwrite in ["yes", True, "True"]:
-                    shutil.rmtree(bidsfolder)
-                    os.makedirs(bidsfolder)
-                    log.step("cleaned bids folder, removed existing files")
-                else:
-                    raise ge.CommandFailed(
-                        "map_nii2bids",
-                        "Existing files present!",
-                        "There are existing files in the bids folder [%s]"
-                        % (bidsfolder),
-                        "Please check or set parameter 'overwrite' to yes!",
-                    )
-        else:
-            os.makedirs(bidsfolder)
-
-        # --- read session_hcp.txt file
-        if os.path.exists(os.path.join(sourcefolder, "session_hcp.txt")):
-            log.detail("session_hcp.txt found, reading session info")
-            session_info = gc.read_batch(
-                os.path.join(sourcefolder, "session_hcp.txt")
-            )[0][0]
-        else:
-            raise ge.CommandFailed(
-                "map_nii2bids",
-                "session_hcp.txt is missing!",
-                "Please prepare hcp_mapping.txt file and run create_session_info to prepare 'session_hcp.txt' files",
+        with open(logfile, mode) as bout:
+            print(
+                "nii to BIDS mapping report, executed on %s"
+                % (datetime.now().strftime("%Y-%m-%dT%H:%M:%S")),
+                file=bout,
+            )
+            _map_session_nii2bids(
+                session_info,
+                sourcefolder,
+                bidsfolder,
+                niifolder,
+                overwrite,
+                action,
+                remaps,
+                test,
+                bout,
+                _log=log,
             )
 
-        # --- map files to BIDS
-        images_ids = [i for i in session_info.keys() if i.isdigit()]
+    return log.finish(gl.action("mapping to BIDS completed", options.get("run")))
 
-        dwi_count = len([
-            i for i in images_ids if session_info[i]["name"] in ["dwi", "DWI"]
-        ])
-        if dwi_count > 1:
+
+def _map_session_nii2bids(
+    session_info,
+    sourcefolder,
+    bidsfolder,
+    niifolder,
+    overwrite,
+    action,
+    remaps,
+    test,
+    bout,
+    *,
+    _log,
+):
+    """
+    Map one session's nii images to its bids folder, for map_nii2bids.
+
+    The mapping report goes to `bout`, the session's open `nii2bids.log`.
+    Under --test nothing is created, removed, linked or copied: the names are
+    built as in a real run and every image that would be mapped is named in
+    the log.
+    """
+    session = session_info["session"]
+    subject = session_info["subject"]
+    print("", file=sys.stdout)
+    [
+        print(f"... mapping subject {subject}, session {session}", file=output)
+        for output in [sys.stdout, bout]
+    ]
+    skip, sessionid = _bids_session_id(subject, session, remaps, bout)
+    if skip:
+        return
+
+    # --- check for presence of nifti files
+    cleared = _clear_bids_folder(bidsfolder, overwrite, test, _log=_log)
+
+    # --- read session_hcp.txt file
+    if os.path.exists(os.path.join(sourcefolder, "session_hcp.txt")):
+        _log.detail("session_hcp.txt found, reading session info")
+        session_info = gc.read_batch(
+            os.path.join(sourcefolder, "session_hcp.txt")
+        )[0][0]
+    else:
+        raise ge.CommandFailed(
+            "map_nii2bids",
+            "session_hcp.txt is missing!",
+            "Please prepare hcp_mapping.txt file and run create_session_info to prepare 'session_hcp.txt' files",
+        )
+
+    # --- map files to BIDS
+    images_ids = [i for i in session_info.keys() if i.isdigit()]
+
+    dwi_count = len([
+        i for i in images_ids if session_info[i]["name"] in ["dwi", "DWI"]
+    ])
+    if dwi_count > 1:
+        [
+            print(
+                "... WARNING: Multiple DWI images found, set entity run or other relevant entities to ensure that file names are unique.",
+                file=output,
+            )
+            for output in [sys.stdout, bout]
+        ]
+
+    # what this run has mapped and created: a dry run writes neither, and a
+    # target in a bids folder it would have cleared would be gone
+    mapped = set()
+    created = set()
+
+    errors = 0
+    for image_id in images_ids:
+        image_info = session_info[image_id]
+        image_type = image_info["name"]
+        if image_type[:7] == "boldref":
+            image_type = "boldref"
+        elif image_type[:4] == "bold":
+            image_type = "bold"
+        elif image_type == "":
             [
                 print(
-                    "... WARNING: Multiple DWI images found, set entity run or other relevant entities to ensure that file names are unique.",
+                    f"... ERROR: image type is empty for image {image_id}, skipping",
                     file=output,
                 )
                 for output in [sys.stdout, bout]
             ]
+            continue
+        elif image_type not in bids_mri_types.keys():
+            [
+                print(
+                    f"... ERROR: image type {image_type} does not exists, skipping",
+                    file=output,
+                )
+                for output in [sys.stdout, bout]
+            ]
+            continue
 
-        errors = 0
-        for image_id in images_ids:
-            image_info = session_info[image_id]
-            image_type = image_info["name"]
-            if image_type[:7] == "boldref":
-                image_type = "boldref"
-            elif image_type[:4] == "bold":
-                image_type = "bold"
-            elif image_type == "":
-                [
-                    print(
-                        f"... ERROR: image type is empty for image {image_id}, skipping",
-                        file=output,
-                    )
-                    for output in [sys.stdout, bout]
-                ]
-                continue
-            elif image_type not in bids_mri_types.keys():
-                [
-                    print(
-                        f"... ERROR: image type {image_type} does not exists, skipping",
-                        file=output,
-                    )
-                    for output in [sys.stdout, bout]
-                ]
-                continue
-
-            # create func, anat, fmap folders if needed
-            targetfolder = os.path.join(
-                bidsfolder, bids_mri_types[image_type]["folder"]
-            )
-            if not os.path.exists(targetfolder):
-                log.detail(f"creating folder {targetfolder}")
+        # create func, anat, fmap folders if needed
+        targetfolder = os.path.join(
+            bidsfolder, bids_mri_types[image_type]["folder"]
+        )
+        if not os.path.exists(targetfolder) and targetfolder not in created:
+            created.add(targetfolder)
+            if test:
+                _log.detail(f"test, not created: {targetfolder}")
+            else:
+                _log.detail(f"creating folder {targetfolder}")
                 os.makedirs(targetfolder)
 
-            files_to_map = [
-                filename
-                for filename in os.listdir(niifolder)
-                if filename.startswith(f"{image_id}.")
+        files_to_map = [
+            filename
+            for filename in os.listdir(niifolder)
+            if filename.startswith(f"{image_id}.")
+        ]
+        if len(files_to_map) == 0:
+            [
+                print(
+                    f"... WARNING: no files found for id: {image_id}, skipping",
+                    file=output,
+                )
+                for output in [sys.stdout, bout]
             ]
-            if len(files_to_map) == 0:
+            continue
+
+        if "suffix" in image_info.keys():
+            suffix = image_info["suffix"]
+        else:
+            suffix = bids_mri_types[image_type]["suffix"]
+
+        for file_to_map in files_to_map:
+            extension = ".".join(file_to_map.split(".")[1::])
+            bids_name, errors_ = _create_bids_name(
+                subject, image_info, image_type, suffix, extension, sessionid, bout
+            )
+            errors += errors_
+
+            if bids_name is None:
                 [
                     print(
-                        f"... WARNING: no files found for id: {image_id}, skipping",
+                        f"... ERROR: could not create BIDS name for {file_to_map}, skipping",
+                        file=output,
+                    )
+                    for output in [sys.stdout, bout]
+                ]
+                errors += 1
+                continue
+
+            source_file = os.path.join(niifolder, file_to_map)
+            target_file = os.path.join(targetfolder, bids_name)
+            if target_file in mapped or (
+                os.path.exists(target_file) and not (test and cleared)
+            ):
+                [
+                    print(
+                        f"... WARNING: tried to map {file_to_map} to file {bids_name}, but this target already exists in {targetfolder}, check if mapping is unique",
                         file=output,
                     )
                     for output in [sys.stdout, bout]
                 ]
                 continue
+            mapped.add(target_file)
 
-            if "suffix" in image_info.keys():
-                suffix = image_info["suffix"]
-            else:
-                suffix = bids_mri_types[image_type]["suffix"]
-
-            for file_to_map in files_to_map:
-                extension = ".".join(file_to_map.split(".")[1::])
-                bids_name, errors_ = _create_bids_name(
-                    subject, image_info, image_type, suffix, extension, sessionid, bout
+            if test:
+                verb = "linked" if action == "hardlink" else "copied"
+                _log.detail(
+                    f"test, not {verb}: {file_to_map} -> "
+                    f"{os.path.basename(targetfolder)}/{bids_name}"
                 )
-                errors += errors_
+                continue
 
-                if bids_name is None:
-                    [
-                        print(
-                            f"... ERROR: could not create BIDS name for {file_to_map}, skipping",
-                            file=output,
-                        )
-                        for output in [sys.stdout, bout]
-                    ]
-                    errors += 1
-                    continue
+            [
+                print(
+                    f"... linking {file_to_map} to {os.path.basename(targetfolder)}/{bids_name}",
+                    file=output,
+                )
+                for output in [sys.stdout, bout]
+            ]
+            if action == "hardlink":
+                os.link(source_file, target_file)
+            elif action == "copy":
+                shutil.copy(source_file, target_file)
 
-                source_file = os.path.join(niifolder, file_to_map)
-                target_file = os.path.join(targetfolder, bids_name)
-                if os.path.exists(target_file):
-                    [
-                        print(
-                            f"... WARNING: tried to map {file_to_map} to file {bids_name}, but this target already exists in {targetfolder}, check if mapping is unique",
-                            file=output,
-                        )
-                        for output in [sys.stdout, bout]
-                    ]
-                    continue
+    if errors > 0:
+        if test:
+            where = "the output above"
+        else:
+            where = f"log file {os.path.join(bidsfolder, 'nii2bids.log')}"
+        raise ge.CommandFailed(
+            "map_nii2bids",
+            "Errors during mapping",
+            f"Errors occured during mapping, please check {where} for details",
+        )
 
+
+def _bids_session_id(subject, session, remaps, bout):
+    """
+    The BIDS session label of a session, for map_nii2bids.
+
+    Returns `(skip, sessionid)`. `skip` is True when the session mapping file
+    remaps the session to a label that is not alphanumeric, and `sessionid` is
+    None when the session is named after its subject.
+    """
+    if subject in remaps.keys():
+        if session in remaps[subject].keys():
+            sessionid = remaps[subject][session]
+            if not sessionid.isalnum():
                 [
                     print(
-                        f"... linking {file_to_map} to {os.path.basename(targetfolder)}/{bids_name}",
+                        "... WARNING: session name contains non-alphanumeric characters, skipping",
                         file=output,
                     )
                     for output in [sys.stdout, bout]
                 ]
-                if action == "hardlink":
-                    os.link(source_file, target_file)
-                elif action == "copy":
-                    shutil.copy(source_file, target_file)
+                return True, None
+            [
+                print(
+                    f"... remapping session {session} to {sessionid}", file=output
+                )
+                for output in [sys.stdout, bout]
+            ]
+        else:
+            sessionid = session
+    elif session == subject:
+        sessionid = None
+    else:
+        replacement = "x"
+        sessionid = (session.split("_"))[1:]
+        sessionid = replacement.join(sessionid)
+        if not sessionid.isalnum():
+            [
+                print(
+                    f"... WARNING: session name contains non-alphanumeric characters, replacing them with {replacement}",
+                    file=output,
+                )
+                for output in [sys.stdout, bout]
+            ]
+            sessionid = re.sub(r"[^a-zA-Z0-9]", replacement, sessionid)
 
-        if errors > 0:
-            raise ge.CommandFailed(
-                "map_nii2bids",
-                "Errors during mapping",
-                f"Errors occured during mapping, please check log file {os.path.join(bidsfolder, 'nii2bids.log')} for details",
-            )
+    return False, sessionid
 
-        bout.close()
 
-    return log.finish("mapping to BIDS completed")
+def _clear_bids_folder(bidsfolder, overwrite, test, *, _log):
+    """
+    Empty a bids folder that already holds images, for map_nii2bids.
+
+    With `overwrite` set, removes everything but `nii2bids.log`, which the run
+    is already writing to; without it, raises CommandFailed. Under --test
+    nothing is removed and every entry that would be is named instead.
+
+    Returns True when the folder held images, so that a dry run knows its
+    existing targets would have been removed.
+    """
+    if not glob.glob(os.path.join(bidsfolder, "*/*.nii*")):
+        return False
+
+    if overwrite not in ["yes", True, "True"]:
+        raise ge.CommandFailed(
+            "map_nii2bids",
+            "Existing files present!",
+            "There are existing files in the bids folder [%s]" % (bidsfolder),
+            "Please check or set parameter 'overwrite' to yes!",
+        )
+
+    if test:
+        _log.step(f"existing files in the bids folder {bidsfolder} would be removed")
+
+    # everything but the log this run is already writing to
+    for entry in sorted(os.listdir(bidsfolder)):
+        if entry == "nii2bids.log":
+            continue
+        path = os.path.join(bidsfolder, entry)
+        if test:
+            _log.detail(f"test, not removed: {entry}")
+        elif os.path.isdir(path) and not os.path.islink(path):
+            shutil.rmtree(path)
+        else:
+            os.remove(path)
+
+    if not test:
+        _log.step("cleaned bids folder, removed existing files")
+    return True
 
 
 def _create_bids_name(
@@ -2138,7 +2301,8 @@ def _create_bids_name(
 
     # prepare entities and rules
     bids_spec_path = os.path.join(os.environ["QUNEXPATH"], "qx_library/etc/bids/")
-    bids_schema = json.load(open(bids_spec_path + "schema.json"))
+    with open(bids_spec_path + "schema.json") as schema_file:
+        bids_schema = json.load(schema_file)
 
     raw_rules = bids_schema["rules"]["files"]["raw"][
         bids_mri_types[image_type]["folder"]

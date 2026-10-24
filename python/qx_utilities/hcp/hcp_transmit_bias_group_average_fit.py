@@ -27,7 +27,7 @@ from qx_utilities.hcp.hcp_utils import do_hcp_options_check, handle_hcp_links
 
 def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, thread=0):
     """
-    ``hcp_transmit_bias_group_average_fit [... processing options]``
+    ``hcp_transmit_bias_group_average_fit [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the HCP Transmit Bias Pipeline Phase 2, Group Average Fit.
 
@@ -38,9 +38,15 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -66,28 +72,31 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             inputs are:
 
             a) AFI: actual flip angle sequence with two different echo times,
-            requires the following parameters: afi-image, afi-tr-one,afi-tr-two,
-            afi-angle, group-corrected-myelin.
+            requires the following parameters: afi-tr-one, afi-tr-two,
+            afi-angle, transmit-group-name.
 
             b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
-            following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
+            following parameters: transmit-group-name.
 
             c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
             template transmit-corrected myelin map to derive empirical
-            correction, requires the following parameters: pt-fmri-names,
-            myelin-template, group-uncorrected-myelin, reference-value.
+            correction, requires the following parameters: reference-value-out.
 
-        --hcp_transmit_group_name (str, default ''): 
+        --hcp_transmit_group_name (str, default ''):
             Name for the subgroup of subjects that have good AFI or B1Tx data (e.g. Partial)
 
         --hcp_outgroupname (str, default ''):
-            Output folder inside studyfolder
+            The name of the group folder, in `<sessionsfolder>/transmit_bias`,
+            that the group results are written to.
 
         --hcp_gmwm_template (str, default ''):
-            Output file for GM+WM volume ROI
+            Output file for GM+WM volume ROI. A relative path is taken to be in
+            the `<sessionsfolder>/transmit_bias/<hcp_outgroupname>` folder.
 
         --hcp_group_uncorrected_myelin (str, default ''):
-            Output cifti file for group average of uncorrected myelin
+            Output cifti file for group average of uncorrected myelin. A
+            relative path is taken to be in the
+            `<sessionsfolder>/transmit_bias/<hcp_outgroupname>` folder.
 
         --hcp_all_uncorrected_myelin (str, default ''):
             Output cifti file for concatenated uncorrected myelin
@@ -105,7 +114,9 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             Target flip angle of AFI sequence.
 
         --hcp_pt_reference_value_file (str, default ''):
-            output text file for PseudoTransmit reference value.
+            output text file for PseudoTransmit reference value. A relative
+            path is taken to be in the
+            `<sessionsfolder>/transmit_bias/<hcp_outgroupname>` folder.
 
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
@@ -120,7 +131,11 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             'interpreted' is the default.
 
     Notes:
-        hcp_transmit_bias_individual parameter mapping:
+        The HCP Pipelines ``study-folder`` is ``<sessionsfolder>/transmit_bias``,
+        into which QuNex links the HCP folder of every session; the group
+        results are written to its ``<hcp_outgroupname>`` folder.
+
+        hcp_transmit_bias_group_average_fit parameter mapping:
 
             ================================== ============================
             QuNex parameter                    HCPpipelines parameter
@@ -146,7 +161,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         Example run::
 
             qunex hcp_transmit_bias_group_average_fit \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
@@ -156,8 +171,11 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
 
     run = True
     report = "Error"
-    # only bound once the multi-session path creates the links
-    study_dir = None
+    # the HCP study folder of the group run, into which the HCP folder of
+    # every session is linked
+    study_dir = os.path.join(options["sessionsfolder"], "transmit_bias")
+    # only set once the multi-session path creates the links
+    linked = False
 
     try:
         do_hcp_options_check(options, "hcp_transmit_bias_group_average_fit")
@@ -189,13 +207,14 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             log.error("hcp_transmit_bias_group_average_fit needs to be ran across several sessions!")
             run = False
 
-        # multi session
+        # multi session, flagged before linking so that partial links are
+        # removed as well
+        elif options["run"] == "run":
+            linked = True
+            if not handle_hcp_links(study_dir, sessions, options, False, _log=log):
+                run = False
         else:
-            # set study dir
-            study_dir = os.path.join(
-                options["sessionsfolder"], "transmit_bias"
-            )
-            handle_hcp_links(study_dir, sessions, options, False)
+            log.step(f"test, not linked: the HCP folder of each session into {study_dir}")
 
         if options["hcp_transmit_mode"] is None:
             log.error("the hcp_transmit_mode parameter is mandatory!")
@@ -300,7 +319,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
             # PseudoTransmit
             elif options["hcp_transmit_mode"] == "PseudoTransmit":
                 if options["hcp_pt_reference_value_file"] is None:
-                    log.error("the hcp_group_uncorrected_myelin parameter is mandatory!")
+                    log.error("the hcp_pt_reference_value_file parameter is mandatory!")
                     run = False
                 elif not os.path.isabs(options["hcp_pt_reference_value_file"]) and options["hcp_pt_reference_value_file"][0] != '~':
                     log.warning("hcp_pt_reference_value_file parameter is local")
@@ -309,8 +328,10 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                 else:
                     comm += f"                --reference-value-out={options['hcp_pt_reference_value_file']}"
 
-            else:
+            # B1Tx needs only the transmit group name, checked above
+            elif options["hcp_transmit_mode"] != "B1Tx":
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
 
             # optional general parameters
             if options["hcp_manual_receive"]:
@@ -354,19 +375,12 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
                 # #Remove soft links
                 # handle_hcp_links(study_dir, sessions, options, True)
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a group whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None,
-                    None,
-                    "HCP Transmit Bias Phase 2, Group Average Fit",
-                    overwrite=overwrite,
-                    _log=log,
-                )
-                if passed is None:
-                    log.step("HCP Transmit Bias Phase 2, Group Average Fit can be run")
-                    report = "HCP Transmit Bias Phase 2, Group Average Fit can be run"
-                    failed = 0
+                log.step("HCP Transmit Bias Phase 2, Group Average Fit can be run")
+                report = "HCP Transmit Bias Phase 2, Group Average Fit can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")
@@ -382,7 +396,7 @@ def hcp_transmit_bias_group_average_fit(sessions, options, overwrite=True, threa
         failed = 1
 
     # remove soft links to prevent clutter, but only if they were created
-    if study_dir is not None:
+    if linked:
         handle_hcp_links(study_dir, sessions, options, True)
 
     log.close(pipeline="HCP Transmit Bias Phase 2, Group Average Fit Preprocessing")

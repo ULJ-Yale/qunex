@@ -27,7 +27,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_task_fmri_analysis [... processing options]``
+    ``hcp_task_fmri_analysis [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the Task fMRI analysis step of the HCP Pipeline (TaskfMRIAnalysis.sh).
 
@@ -42,9 +42,15 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session's information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -142,7 +148,8 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             (i.e. no smoothing is done).
 
         --hcp_task_parcellation_file (str, default 'NONE'):
-            Absolute path to the parcellation dlabel file.
+            The parcellation dlabel file: an absolute path, or one relative to
+            the study folder.
 
     Output files:
         The results of this step will be populated in the MNINonLinear
@@ -178,7 +185,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         First level HCP TaskfMRIanalysis::
 
             qunex hcp_task_fmri_analysis \\
-                --sessionsfolder="<study_path>/sessions" \\
+                --studyfolder="<study_path>" \\
                 --batchfile="<study_path>/processing/batch.txt" \\
                 --hcp_task_lvl1tasks="tfMRI_GUESSING_PA" \\
                 --hcp_task_summaryname="tfMRI_GUESSING/tfMRI_GUESSING"
@@ -186,7 +193,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
         Second level HCP TaskfMRIanalysis::
 
             qunex hcp_task_fmri_analysis \\
-                --sessionsfolder="<study_path>/sessions" \\
+                --studyfolder="<study_path>" \\
                 --batchfile="<study_path>/processing/batch.txt" \\
                 --hcp_task_lvl1tasks="tfMRI_GUESSING_AP@tfMRI_GUESSING_PA" \\
                 --hcp_task_lvl2task="tfMRI_GUESSING"
@@ -373,15 +380,12 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP Diffusion", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP fMRI task analysis can be run")
-                    report = "HCP fMRI task analysis can be run"
-                    failed = 0
+                log.step("HCP fMRI task analysis can be run")
+                report = "HCP fMRI task analysis can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

@@ -29,8 +29,14 @@ Notes:
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
@@ -41,14 +47,15 @@ Parameters:
         'eddyQC'.
 
         Note: If selecting 'rawNII' this function performs QC for raw NIFTI
-        images in <sessions_folder>/<case>/nii It requires NIFTI images in
-        <sessions_folder>/<case>/nii/ after either BIDS import of DICOM
-        organization.
+        images in ``<sessionsfolder>/<session>/nii``. It requires NIFTI images
+        in ``<sessionsfolder>/<session>/nii`` after either BIDS import or
+        DICOM organization.
 
-        Session-specific output: <sessions_folder>/<case>/nii/slicesdir
+        Session-specific output: ``<sessionsfolder>/QC/rawNII/<session>``, or
+        ``<outpath>/<session>`` when --outpath is given.
 
-        Uses FSL's 'slicesdir' script to generate PNGs and an HTML file in the
-        above directory.
+        Uses FSL's 'slicesdir' script to generate PNGs and an HTML file, which
+        are then moved to the above directory.
 
         Note: If using 'general' modality, then visualization is
         $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/template_general_qc.wb.scene
@@ -57,15 +64,15 @@ Parameters:
         session-specific data hierarchy.
 
     --datapath (str):
-        Required ---> Specify path for input path relative to the
-        <sessions_folder> if scene is 'general'.
+        Required ---> Specify path for input path relative to the session's
+        folder, ``<sessionsfolder>/<session>``, if scene is 'general'.
 
     --datafile (str):
         Required ---> Specify input data file name if scene is 'general'.
 
     --batchfile (str):
-        Absolute path to local batch file with pre-configured processing
-        parameters.
+        The local batch file with pre-configured processing parameters: an
+        absolute path, or one relative to the study folder.
 
         Note: It can be used in combination with --sessions to select only
         specific cases to work on from the batch file. If --sessions is
@@ -85,15 +92,21 @@ Parameters:
         specified as --hcp_suffix='-run2'
 
     --scenetemplatefolder (str, default '${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc'):
-        Specify the absolute path name of the template folder.
+        The template folder: an absolute path, or one relative to the study
+        folder. It holds the template of the modality,
+        template_<modality>_qc.wb.scene, and for --boldfc
+        template_scalar_bold_qc.wb.scene (pscalar) or
+        template_pconn_bold_qc.wb.scene (pconn). A BOLD template the folder
+        does not hold is taken from the QuNex defaults.
 
         Note: relevant scene template data has to be in the same folder as the
         template scenes.
 
-    --outpath (str, default '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'):
-        Specify the absolute path name of the QC folder you wish the individual
-        images and scenes saved to. If --outpath is unspecified then files are
-        saved to: '<path_to_study_sessions_folder>/QC/<input_modality_for_qc>'.
+    --outpath (str, default '<sessionsfolder>/QC/<modality>'):
+        The QC folder you wish the individual images and scenes saved to: an
+        absolute path, or one relative to the study folder, which is made
+        absolute. If --outpath is unspecified then files are saved to:
+        '<sessionsfolder>/QC/<modality>'.
 
     --scenezip (str, default 'yes'):
         Yes or no. Generates a ZIP file with the scene and all relevant files
@@ -101,17 +114,19 @@ Parameters:
         Note: If scene zip set to yes, then relevant scene files will be zipped
         with an updated relative base folder.
         All paths will be relative to this base --->
-        <path_to_study_sessions_folder>/<session_id>/hcp/<session_id>
+        <sessionsfolder>/<session_id>/hcp/<session_id>
         The scene zip file will be saved to:
         <path_for_output_file>/<session_id>.<input_modality_for_qc>.QC.wb.zip
 
     --userscenefile (str, default ''):
         User-specified scene file name. --modality info is still required to
-        ensure correct run. Relevant data needs to be provided.
+        ensure correct run. Relevant data needs to be provided. Not available
+        for the BOLD modality, where it is ignored with a warning.
 
     --userscenepath (str, default ''):
         Path for user-specified scene and relevant data in the same location.
-        --modality info is still required to ensure correct run.
+        --modality info is still required to ensure correct run. Not available
+        for the BOLD modality, where it is ignored with a warning.
 
     --timestamp (str, default detailed below):
         Allows user to specify unique time stamp or to parse a time stamp from
@@ -150,8 +165,9 @@ Parameters:
         studies depending on processing; e.g. 'Atlas' or 'MSMAll').
 
     --skipframes (str):
-        Specify the number of initial frames you wish to exclude from the BOLD
-        QC calculation.
+        Specify the number of initial frames you wish to leave out of the
+        global signal chart of the BOLD QC. A run that has no more frames than
+        that is charted whole, with a warning.
 
     --snronly (str, default 'no'):
         Specify if you wish to compute only SNR BOLD QC calculation and skip
@@ -173,15 +189,17 @@ Parameters:
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
 
-    --boldfcpath (str, default '<study_folder>/sessions/<session_id>/images/functional'):
-        Specify path for input FC data.
+    --boldfcpath (str, default '<sessionsfolder>/<session_id>/images/functional'):
+        Specify path for input FC data: an absolute path, or one relative to
+        the study folder, which is made absolute, as it is written into the
+        scene file.
         Requires --boldfc='<pconn or pscalar>', --boldfcinput=<image_input>,
         --bolddata or --boldruns or --bolds.
 
     --boldfcinput (str):
         Required. If no --boldfcpath is provided then specify only data input
         name after bold<Number>_ which is searched for in
-        '<sessions_folder>/<session_id>/images/functional'.
+        '<sessionsfolder>/<session_id>/images/functional'.
 
         pscalar FC
            Atlas_hpss_res-mVWMWB_lpss_CAB-NP-718_r_Fz_GBC.pscalar.nii
@@ -192,17 +210,25 @@ Parameters:
         --bolddata or --boldruns or --bolds.
 
     --processcustom (str, default 'no'):
-        Either 'yes' or 'no'. If set to 'yes' then the script looks into:
-        ~/<study_path>/processing/scenes/QC/ for additional custom QC scenes.
+        Either 'yes' or 'no'. If set to 'yes' then the script also renders the
+        custom QC scenes in ``<studyfolder>/processing/scenes/QC/<modality>``.
+        Not available for the BOLD modality, where it is ignored with a
+        warning.
 
         Note: The provided scene has to conform to QuNex QC template
-        standards.xw
+        standards.
 
         See $TOOLS/$QUNEXREPO/qx_library/data/scenes/qc/ for example templates.
         The qc path has to contain relevant files for the provided scene.
 
     --omitdefaults (str, default 'no'):
-        Either 'yes' or 'no'. If set to 'yes' then the script omits defaults.
+        Either 'yes' or 'no'. If set to 'yes' then the default QC of the
+        modality is not run, only the custom scenes (--processcustom) or the
+        user scene (--userscenefile) are rendered. BOLD has neither, so a BOLD
+        run without --boldfc renders nothing, keeps the BOLD QC already made,
+        also with --overwrite='yes', and warns; --snronly='yes' still computes
+        the TSNR reports. The rawNII QC and the BOLD FC QC
+        (--boldfc) are run regardless.
 
     --sourcefile (str, default 'session_hcp.txt'):
             The name of the source session.txt file.
@@ -220,8 +246,8 @@ Parameters:
         provided the default 'automated' will be used.
 
 Output files:
-    With the exception of rawNII, the function generates 3 types of outputs, which
-    are stored within the Study in <path_to_folder_with_sessions>/QC :
+    With the exception of rawNII, the function generates 3 types of outputs,
+    which are stored in --outpath, by default ``<sessionsfolder>/QC/<modality>``:
 
     - .scene files that contain all relevant data loadable into Connectome Workbench
     - .png images that contain the output of the referenced scene file.
@@ -232,22 +258,24 @@ Output files:
        For BOLD data there is also an SNR txt output if specified.
 
     .. note::
-       For raw NIFTI QC outputs are generated in:
-       <sessions_folder>/<case>/nii/slicesdir
+       For raw NIFTI QC outputs are generated in
+       ``<sessionsfolder>/<session>/nii/slicesdir`` and then moved to
+       ``<sessionsfolder>/QC/rawNII/<session>`` (``<outpath>/<session>``).
 
 Notes:
     Raw NIFTI visual QC:
-        -  Input: requires NIFTI images in ``<sessionsfolder>/<case>/nii`` after
-           either BIDS import of DICOM organization
-        -  Session-specific output: ``<sessionsfolder>/<case>/nii/slicesdir``
-        -  Uses FSL's ``slicesdir`` script to generate PNGs and an HTML file in
-           the above directory.
+        -  Input: requires NIFTI images in ``<sessionsfolder>/<session>/nii``
+           after either BIDS import or DICOM organization
+        -  Session-specific output: ``<sessionsfolder>/QC/rawNII/<session>``,
+           or ``<outpath>/<session>`` when ``--outpath`` is given
+        -  Uses FSL's ``slicesdir`` script to generate PNGs and an HTML file,
+           which are then moved to the above directory.
         -  This can be invoked via the ``qunex run_qc`` command.
 
     T1w visual QC:
         -  Input: requires T1w images and hcp_pre_freesurfer-hcp_post_freesurfer
            to have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/T1w``
+        -  Session-specific output: ``<sessionsfolder>/QC/T1w``
 
            -  T1w.QC.png image files for each session will be located in this
               folder
@@ -257,8 +285,11 @@ Notes:
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
-        -  Log Location: logs are created in ``/<study>/sessions/QC/T1w/qclog``
+           ``<sessionsfolder>/QC/<modality>``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/T1w/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors can be found by looking at the QC images formed
@@ -266,7 +297,7 @@ Notes:
     T2w visual QC:
         -  Input: requires T2w images and hcp_pre_freesurfer-hcp_post_freesurfer
            to have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/T2w``
+        -  Session-specific output: ``<sessionsfolder>/QC/T2w``
 
            -  T2w.QC.png image files for each session
            -  T2w.QC.wb.scene image files also produced
@@ -274,8 +305,11 @@ Notes:
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
-        -  Log Location: logs are created in ``/<study>/sessions/QC/T2w/qclog``
+           ``<sessionsfolder>/QC/<modality>``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/T2w/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors will need to be found by looking at the structural
@@ -284,7 +318,7 @@ Notes:
     Myelin map visual QC:
         -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
            have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/myelin``
+        -  Session-specific output: ``<sessionsfolder>/QC/myelin``
 
            -  This will produce a .myelin.QC.wb.png image and a
               myelin.QC.wb.scene file for each session
@@ -292,9 +326,11 @@ Notes:
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
-        -  Log Location: logs are created in
-           ``/<study>/sessions/QC/myelin/qclog``
+           ``<sessionsfolder>/QC/<modality>``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/myelin/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors will need to be found by looking at the myelin images
@@ -302,7 +338,7 @@ Notes:
     BOLD visual QC:
         -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
            have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+        -  Session-specific output: ``<sessionsfolder>/QC/BOLD``
 
            -  A .GStimeseries.QC.wb.png image will be produced for each BOLD in
               this folder
@@ -314,8 +350,11 @@ Notes:
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
-        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+           ``<sessionsfolder>/QC/<modality>``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/BOLD/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors will need to be found by looking at the BOLD images
@@ -325,19 +364,24 @@ Notes:
            ``session_<pipeline>.txt`` info file to determine which BOLDs to run.
            If neither ``--bolddata`` nor ``--batchfile`` is specified, the
            command will return an error.
+        -  Custom and user scenes (``--processcustom``, ``--userscenefile``)
+           are not available for BOLD, a BOLD run ignores them with a warning.
 
     BOLD temporal Signal-to-noise (SNR):
         -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
            have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+        -  Session-specific output: ``<sessionsfolder>/QC/BOLD``
 
            -  A ``<SNR>`` file will be produced for each BOLD in this folder
 
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
-        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+           ``<sessionsfolder>/QC/<modality>``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/BOLD/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors will need to be found by looking at the BOLD images
@@ -354,14 +398,17 @@ Notes:
     BOLD FC QC for scalar and pconn data:
         -  Input: requires BOLD runs and hcp_pre_freesurfer-hcp_fmri_surface to
            have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/BOLD``
+        -  Session-specific output: ``<sessionsfolder>/QC/BOLD``
 
            -  A \*.png image will be produced for each BOLD in this folder
               either for pconn or dscalar
 
         -  If ``--boldfcpath`` is unspecified then default is:
-           ``/<path_to_study_sessions_folder>/sessions/<session>/images/functional``
-        -  Log Location: logs are created in ``/<study>/sessions/QC/BOLD/qclog``
+           ``<sessionsfolder>/<session>/images/functional``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/BOLD/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
            -  Other errors will need to be found by looking at the BOLD images
@@ -373,7 +420,7 @@ Notes:
     DWI visual and motion QC:
         -  Input: requires hcp_diffusion runs and
            hcp_pre_freesurfer-hcp_post_freesurfer to have run successfully
-        -  Session-specific output: ``/<study>/sessions/<session>/QC/DWI``
+        -  Session-specific output: ``<sessionsfolder>/QC/DWI``
 
            -  DWI.QC.png and DWI.QC.wb.scene files
            -  DWI.bedpostx.QC.png and DWI.bedpostx.QC.wb.scene files
@@ -381,14 +428,17 @@ Notes:
         -  Group outputs of all session files is specified via the optional
            ``--outpath`` flag.
         -  If ``--outpath`` is unspecified then files are saved to:
-           ``/<path_to_study_sessions_folder>/QC/<input_modality_for_qc>``
+           ``<sessionsfolder>/QC/<modality>``
 
            -  DWI.dtifit.QC.png and DWI.dtifit.QC.wb.scene files
 
-        -  Log Location: logs are created in ``/<study>/sessions/QC/DWI/qclog``
+        -  Log Location: the scene scripts run_qc generates, and their output,
+           are kept in ``<outpath>/qclog`` (by default
+           ``<sessionsfolder>/QC/DWI/qclog``), while the run's runlog and
+           comlog are in its log folder
 
            -  There will be error logs in this folder if QC could not be run
-           -  Other errors will need to be found by looking at the myelin images
+           -  Other errors will need to be found by looking at the DWI images
 
     Running BOLD QC with tag selection:
         run_qc allows for processing BOLD runs directly via numeric selection
@@ -428,14 +478,14 @@ Examples:
     Raw NII QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --modality='rawNII'
 
     T1w QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
@@ -445,7 +495,7 @@ Examples:
     T2w QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
@@ -455,7 +505,7 @@ Examples:
     Myelin QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
@@ -465,7 +515,7 @@ Examples:
     DWI QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='DWI' \\
@@ -477,7 +527,7 @@ Examples:
     BOLD QC (for a specific BOLD run)::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --outpath='<path_for_output_file>' \\
             --scenetemplatefolder='<path_for_the_template_folder>' \\
@@ -489,7 +539,7 @@ Examples:
     BOLD QC (search for all available BOLD runs)::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --batchfile='<path_to_batch_file>' \\
             --outpath='<path_for_output_file>' \\
@@ -501,7 +551,7 @@ Examples:
     BOLD temporal SNR::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions="<comma_separated_list_of_cases>" \\
             --outpath='<path_for_output_file>' \\
             --modality='BOLD' \\
@@ -514,7 +564,7 @@ Examples:
     BOLD FC QC [pscalar or pconn]::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<comma_separated_list_of_cases>' \\
             --modality='BOLD' \\
             --boldfc='<pscalar_or_pconn>' \\
@@ -525,10 +575,10 @@ Examples:
     DWI visual and motion QC::
 
         qunex run_qc \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions="<comma_separated_list_of_cases>" \\
             --outpath='<path_for_output_file>' \\
-            --templatefolder='<path_for_the_template_folder>' \\
+            --scenetemplatefolder='<path_for_the_template_folder>' \\
             --modality='DWI' \\
             --dwidata='data' \\
             --dwipath='Diffusion' \\
@@ -543,7 +593,7 @@ Examples:
         run_qc call across several sessions using tag selection for all BOLDS::
 
             qunex run_qc \\
-                --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+                --studyfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2' \\
                 --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
                 --sessions='OP268_07032014,OP269_07032014,OP270_07082014' \\
                 --modality='BOLD' \\
@@ -554,7 +604,7 @@ Examples:
 
         run_qc call across several sessions using tag selection for specific BOLDS tagged as 'blink'::
 
-            qunex run_qc --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+            qunex run_qc --studyfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2' \\
                 --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
                 --sessions='OP270_07082014,OP269_07032014' \\
                 --modality='BOLD' \\
@@ -566,7 +616,7 @@ Examples:
         run_qc call across several sessions using numeric selection for select BOLDS::
 
             qunex run_qc \\
-                --sessionsfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/sessions' \\
+                --studyfolder='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2' \\
                 --batchfile='/gpfs/loomis/pi/n3/Studies/MBLab/HCPDev/OP2/processing/batch.txt' \\
                 --sessions='OP270_07082014,OP269_07032014' \\
                 --modality='BOLD' \\
@@ -616,6 +666,7 @@ done
 # -- Get the command line options for this script
 
 # -- Initialize global variables
+unset StudyFolder # --studyfolder=
 unset SessionsFolder # --sessionsfolder=
 unset CASES # --sessions=
 unset Overwrite # --overwrite=
@@ -654,6 +705,7 @@ unset hcp_filename # -- hcp_filename
 runcmd=""
 
 # -- Parse general arguments
+StudyFolder=`opts_GetOpt "--studyfolder" $@`
 SessionsFolder=`opts_GetOpt "--sessionsfolder" $@`
 CASES=`opts_GetOpt "--sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of input cases; removing comma or pipes
 Overwrite=`opts_GetOpt "--overwrite" $@`
@@ -661,7 +713,12 @@ OutPath=`opts_GetOpt "--outpath" $@`
 scenetemplatefolder=`opts_GetOpt "--scenetemplatefolder" $@`
 UserSceneFile=`opts_GetOpt "--userscenefile" $@`
 UserScenePath=`opts_GetOpt "--userscenepath" $@`
-RunQCCustom=`opts_GetOpt "--customqc" $@`
+# --processcustom is the documented name, --customqc the one the shell front end
+# passed
+RunQCCustom=`opts_GetOpt "--processcustom" $@`
+if [ -z "${RunQCCustom}" ]; then
+    RunQCCustom=`opts_GetOpt "--customqc" $@`
+fi
 OmitDefaults=`opts_GetOpt "--omitdefaults" $@`
 HCPSuffix=`opts_GetOpt "--hcp_suffix" $@`
 
@@ -720,12 +777,17 @@ if [ -z "${SessionBatchFile}" ]; then
 fi
 
 # -- Get source file and hcp_filename
-sourcefile=`get_parameters "--sourcefile" $@`
-hcp_filename=`get_parameters "--hcp_filename" $@`
+sourcefile=`opts_GetOpt "--sourcefile" $@`
+hcp_filename=`opts_GetOpt "--hcp_filename" $@`
+
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
 
 # -- Check general required parameters
-if [ -z ${CASES} ]; then
-    usage
+if [ -z "${CASES}" ]; then
     echo "---> ERROR: <session_ids> not specified."; echo ""
     exit 1
 fi
@@ -736,11 +798,19 @@ if [[ ${CASES} == *.txt ]]; then
     echo ""
     CASES=`cat ${SessionBatchFile} | grep "id:" | cut -d ':' -f 2 | sed 's/[[:space:]]\+//g'`
 fi
-if [ -z ${SessionsFolder} ]; then
-    usage
-    echo "---> ERROR: <sessions_folder> not specified."; echo ""
+if [ -z "${SessionsFolder}" ]; then
+    echo "---> ERROR: Neither --studyfolder nor --sessionsfolder specified."; echo ""
     exit 1
 fi
+if [ ! -d "${SessionsFolder}" ]; then
+    echo "---> ERROR: Sessions folder ${SessionsFolder} not found."; echo ""
+    exit 1
+fi
+# the sessions folder is written into the scene files and used after the QC
+# scripts change into the output folder, so it is made absolute. The study, when
+# not given, is the folder it is in
+SessionsFolder=$(cd "${SessionsFolder}" > /dev/null && pwd)
+StudyFolder="${StudyFolder:-$(dirname "${SessionsFolder}")}"
 if [ -z ${Overwrite} ]; then
     Overwrite="no"
     echo "Overwrite value not explicitly specified. Using default: ${Overwrite}"; echo ""
@@ -749,16 +819,48 @@ if [ -z ${OutPath} ]; then
     OutPath="${SessionsFolder}/QC/${Modality}"
     echo "---> Output folder path value not explicitly specified. Using default: ${OutPath}"; echo ""
 fi
+# the QC scripts change into the output folder and then name it again, and the
+# BOLD FC path is written into a scene file, which wb_command reads from the
+# scene's own folder: both are made absolute, against the folder run_qc runs
+# in, which is the study folder when the run names its study
+case "${OutPath}" in /*) ;; *) OutPath="$(pwd)/${OutPath}" ;; esac
+if [ -n "${BOLDfcPath}" ]; then
+    case "${BOLDfcPath}" in /*) ;; *) BOLDfcPath="$(pwd)/${BOLDfcPath}" ;; esac
+fi
 if [ -z ${Modality} ]; then
-    usage
     echo "---> ERROR:  Modality to perform QC on missing [Supported: T1w, T2w, myelin, BOLD, DWI]"; echo ""
     exit 1
 fi
+# yes and no in any case, as hcp_run_qc takes them
+RunQCCustom="${RunQCCustom,,}"
+OmitDefaults="${OmitDefaults,,}"
+SNROnly="${SNROnly,,}"
 if [ -z "$RunQCCustom" ]; then
     RunQCCustom="no";
 fi
-if [ "$RunQCCustom" == "yes" ]; then
-    scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+# custom scenes are read from their own folder, Customscenetemplatefolder, set
+# in main: scenetemplatefolder stays the folder of the default (or user) scenes
+
+# custom and user scenes are not available for BOLD. A warning rather than an
+# error: a recipe or a batch file states processcustom once for all its run_qc
+# steps. It comes before the scene checks below, which would stop the run on a
+# user scene that is not there or take the user scene folder, or the library,
+# for the template folder
+BOLDIgnored=""
+if [ "$Modality" == "BOLD" ] && [ "$RunQCCustom" == "yes" ]; then
+    BOLDIgnored="--processcustom"
+fi
+if [ "$Modality" == "BOLD" ] && [ -n "$UserSceneFile" ]; then
+    BOLDIgnored="${BOLDIgnored:+${BOLDIgnored} and }--userscenefile"
+fi
+if [ "$Modality" == "BOLD" ] && [ -n "$UserScenePath" ]; then
+    BOLDIgnored="${BOLDIgnored:+${BOLDIgnored} and }--userscenepath"
+fi
+if [ -n "$BOLDIgnored" ]; then
+    echo "---> WARNING: Custom and user scenes are not available for BOLD, ignoring ${BOLDIgnored}."; echo ""
+    RunQCCustom="no"
+    UserSceneFile=""
+    UserScenePath=""
 fi
 
 if [ -z "$OmitDefaults" ]; then
@@ -789,8 +891,8 @@ if [ -z "$UserSceneFile" ]; then
 else
     if [ -f "$UserSceneFile" ]; then
         echo "---> User scene file found: ${UserSceneFile}"; echo ""
-        UserScenePath=`echo ${UserSceneFile} | awk -F'/' '{print $1}'`
-        UserSceneFile=`echo ${UserSceneFile} | awk -F'/' '{print $2}'`
+        UserScenePath=$(dirname "${UserSceneFile}")
+        UserSceneFile=$(basename "${UserSceneFile}")
         scenetemplatefolder=${UserScenePath}
     else
         if [ -z "$UserScenePath" ] && [ -z "$scenetemplatefolder" ]; then
@@ -849,12 +951,50 @@ if [ "$Modality" = "BOLD" ]; then
         fi
         # -- Set SkipFrames and SNROnly defaults if missing
         if [ -z "$SkipFrames" ]; then SkipFrames="0"; echo ""; fi
+        if ! [[ "$SkipFrames" =~ ^[0-9]+$ ]]; then
+            echo "---> ERROR: --skipframes=${SkipFrames} is not a number of frames."; echo ""; exit 1
+        fi
+        # read as a decimal number, 08 included
+        SkipFrames=$((10#${SkipFrames}))
         if [ -z "$SNROnly" ]; then SNROnly="no"; echo ""; fi
+        # BOLD has no custom or user scenes to render instead of the default.
+        # The BOLD QC already made is kept: --overwrite removes only what a run
+        # renders again
+        if [ "$OmitDefaults" != "no" ] && [ "$SNROnly" != "yes" ]; then
+            echo "---> WARNING: --omitdefaults=${OmitDefaults} and BOLD has no custom or user scenes, no BOLD QC is rendered"
+            echo "     and the existing BOLD QC is kept. Use --snronly=yes to compute only the TSNR reports."; echo ""
+        fi
     fi
 
     if [ ! -z "$BOLDfc" ]; then
+        # any other value rendered the default BOLD scene with the FC inputs
+        if [ "$BOLDfc" != "pscalar" ] && [ "$BOLDfc" != "pconn" ]; then
+            echo "---> ERROR: --boldfc=${BOLDfc} is not supported, use pscalar or pconn."; echo ""; exit 1
+        fi
         if [ -z "$BOLDfcInput" ]; then
             echo "---> ERROR: Flag --boldfcinput is missing. Check your inputs and re-run."; echo ""; exit 1
+        fi
+    fi
+
+    # the one template the run renders: the folder check above asks only for a
+    # BOLD scene of any kind, and a folder may hold the default BOLD template
+    # and not the FC ones, or the other way round
+    BOLDTemplate=""
+    if [ "$BOLDfc" == "pscalar" ]; then
+        BOLDTemplate="template_scalar_${modality_lower}_qc.wb.scene"
+    elif [ "$BOLDfc" == "pconn" ]; then
+        BOLDTemplate="template_pconn_${modality_lower}_qc.wb.scene"
+    elif [ "$OmitDefaults" == "no" ] && [ "$SNROnly" != "yes" ]; then
+        BOLDTemplate="template_${modality_lower}_qc.wb.scene"
+    fi
+    if [ -n "$BOLDTemplate" ] && [ ! -f "${scenetemplatefolder}/${BOLDTemplate}" ]; then
+        LibraryTemplateFolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
+        if [ -f "${LibraryTemplateFolder}/${BOLDTemplate}" ]; then
+            echo "---> ${scenetemplatefolder} holds no ${BOLDTemplate}."
+            echo "---> Reverting to defaults: ${LibraryTemplateFolder}"; echo ""
+            scenetemplatefolder="${LibraryTemplateFolder}"
+        else
+            echo "---> ERROR: BOLD QC template not found: ${scenetemplatefolder}/${BOLDTemplate}"; echo ""; exit 1
         fi
     fi
 
@@ -880,9 +1020,6 @@ if [ "$Modality" = "general" ] ; then
     if [ -z "$GeneralSceneDataPath" ]; then echo "---> ERROR: Data input path not specified"; echo ""; exit 1; fi
 fi
 
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
 scriptName=$(basename ${0})
 
 # -- Report options
@@ -966,14 +1103,17 @@ echo ""
 
 finalReport(){
 
-    if [ "${CompletionCheck}" == "fail" ]; then
+    # QCFailed remembers a failure of any session or BOLD run, CompletionCheck
+    # only the last check. The exit code is all gmri judges the run by
+    if [ "${CompletionCheck}" == "fail" ] || [ "${QCFailed}" == "yes" ]; then
         echo "------------------------- ERROR --------------------------------"
         echo ""
         echo "   QC generation did not complete correctly."
-        echo "   Check outputs: ${RunQCLogFolder}/QC_${CASE}_ComQUEUE_${Modality}_${TimeStamp}.log"
+        echo "   Check the outputs and logs in: ${RunQCLogFolder:-${OutPath}}"
         echo ""
         echo "----------------------------------------------------------------"
         echo ""
+        exit 1
     else
         echo ""
         echo "------------------------- Successful completion of work --------------------------------"
@@ -1101,32 +1241,29 @@ previousCompletionCheck() {
                     # set working scene file
                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
 
-                    # scene zip?
-                    if [ "$SceneZip" == "yes" ]; then
+                    # check for working scene file
+                    if [ ! -f ${OutPath}/${WorkingSceneFile} ]; then
+                        PreviousCompletionCheck="fail"
+                        return 1
+                    fi
 
-                        # check for timestamped working scene zip file
+                    # check for timestamped working scene file
+                    for f in ${OutPath}/${WorkingSceneFile}.*.GStimeseries.QC.wb.png; do
+                        if [ ! -e $f ]; then
+                            PreviousCompletionCheck="fail"
+                            return 1
+                        fi
+                    done
+
+                    # the zip is made also when the render fails, so it is
+                    # checked beside the png and not in its place
+                    if [ "$SceneZip" == "yes" ]; then
                         for f in ${OutPath}/${WorkingSceneFile}.*.zip; do
                             if [ ! -e $f ]; then
                                 PreviousCompletionCheck="fail"
                                 return 1
                             fi
                         done
-
-                    else
-                        # check for working scene file
-                        if [ ! -f ${OutPath}/${WorkingSceneFile} ]; then
-                            PreviousCompletionCheck="fail"
-                            return 1
-                        fi
-
-                        # check for timestamped working scene file
-                        for f in ${OutPath}/${WorkingSceneFile}.*.GStimeseries.QC.wb.png; do
-                            if [ ! -e $f ]; then
-                                PreviousCompletionCheck="fail"
-                                return 1
-                            fi
-                        done
-
                     fi
                 fi
             fi
@@ -1134,8 +1271,16 @@ previousCompletionCheck() {
     fi
 }
 
-# check if this run was successful
+# check if this run was successful, a failure is remembered in QCFailed: a later
+# check resets CompletionCheck
 completionCheck() {
+    checkCompletion
+    if [ "${CompletionCheck}" == "fail" ]; then
+        QCFailed="yes"
+    fi
+}
+
+checkCompletion() {
 
     echo ""
     echo " --- Running QC completion checks..."
@@ -1312,31 +1457,26 @@ completionCheck() {
 # -- Dummy variable check
 # ------------------------------------------
 
-# Perform checks if scene has proper info:
+# Perform checks if scene has proper info, the scene is in the folder given as
+# the first argument, by default in scenetemplatefolder:
 DummyVariable_Check () {
-    if [[ ${Modality} != "BOLD" ]]; then
-        DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYTIMESTAMP"
-    fi
-    if [[ ${Modality} == "BOLD" ]]; then
-       DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYBOLDDATA _DUMMYBOLDSUFFIX DUMMYTIMESTAMP DUMMYBOLDANNOT"
-    fi
-    if [[ ${Modality} == "BOLD" ]] && [[ ! -z ${BOLDfc} ]]; then
-       DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYIMAGEPATH DUMMYIMAGEFILE DUMMYTIMESTAMP"
-    fi
+    SceneCheckFolder="${1:-${scenetemplatefolder}}"
+    # the tokens a custom or user scene needs, BOLD has neither kind
+    DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYTIMESTAMP"
     if [[ ${Modality} == "general" ]]; then
        DUMMYVARIABLES="DUMMYPATH DUMMYCASE DUMMYIMAGEPATH DUMMYIMAGEFILE DUMMYTIMESTAMP"
     fi
     for DUMMYVARIABLE in ${DUMMYVARIABLES}; do
-        echo ""; echo "Checking $DUMMYVARIABLE is present in scene ${scenetemplatefolder}/${TemplateSceneFile} "; echo ""
-        if [ -z `cat ${scenetemplatefolder}/${TemplateSceneFile} | grep "${DUMMYVARIABLE}"` ]; then
+        echo ""; echo "Checking $DUMMYVARIABLE is present in scene ${SceneCheckFolder}/${TemplateSceneFile} "; echo ""
+        if ! grep -q -- "${DUMMYVARIABLE}" "${SceneCheckFolder}/${TemplateSceneFile}"; then
             echo ""
-            echo " ---> ERROR: ${DUMMYVARIABLE} variable not defined in ${scenetemplatefolder}/${TemplateSceneFile} "
+            echo " ---> ERROR: ${DUMMYVARIABLE} variable not defined in ${SceneCheckFolder}/${TemplateSceneFile} "
             echo "      Fix the scene and re-run!"
             echo ""
             exit 1
         else
             echo ""
-            echo " ---> ${DUMMYVARIABLE} variable found in ${scenetemplatefolder}/${TemplateSceneFile} "
+            echo " ---> ${DUMMYVARIABLE} variable found in ${SceneCheckFolder}/${TemplateSceneFile} "
             echo "      Proceeding..."
             echo ""
         fi
@@ -1359,7 +1499,7 @@ runsnr_BOLD() {
         rm -f ${HCPFolder}/${BOLDRoot}_GS.txt &> /dev/null
         rm -f ${HCPFolder}/${BOLDRoot}_GS.dtseries.nii &> /dev/null
         rm -f ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii &> /dev/null
-        rm -f ${OutPath}/${CASEname}_${BOLD}_TSNR_Report_*
+        rm -f ${OutPath}/${CASEName}_${BOLD}_TSNR_Report_*
     fi
 
     # -- Reduce dtseries
@@ -1372,18 +1512,32 @@ runsnr_BOLD() {
     TR=`fslval ${HCPFolder}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz pixdim4`
     # -- Regenerate outputs
     wb_command -cifti-reduce ${HCPFolder}/${BOLDRoot}.dtseries.nii MEAN ${HCPFolder}/${BOLDRoot}_GS.dtseries.nii -direction COLUMN
-    wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.dtseries.nii -reduce MEAN >> ${HCPFolder}/${BOLDRoot}_GS.txt
-    # -- Check skipped frames
-    if [ ${SkipFrames} > 0 ]; then
-        rm -f ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt &> /dev/null
-        tail -n +${SkipFrames} ${HCPFolder}/${BOLDRoot}_GS.txt >> ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt
-        TR=`cat ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l`
+    wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.dtseries.nii -reduce MEAN > ${HCPFolder}/${BOLDRoot}_GS.txt
+    # -- Check skipped frames: a run they would leave empty is charted whole,
+    # as hcp_run_qc does
+    if [ "${SkipFrames}" -gt 0 ]; then
+        AllFrames=$(wc -l < ${HCPFolder}/${BOLDRoot}_GS.txt)
+        if [ "${SkipFrames}" -ge "${AllFrames}" ]; then
+            echo "---> WARNING: --skipframes=${SkipFrames} leaves none of the ${AllFrames} frames of BOLD ${BOLD}, its global signal chart shows them all."; echo ""
+            OmitFrames="no"
+        else
+            OmitFrames="yes"
+        fi
+    else
+        OmitFrames="no"
+    fi
+    if [ "${OmitFrames}" == "yes" ]; then
+        # the series from frame SkipFrames + 1 on
+        tail -n +$((SkipFrames + 1)) ${HCPFolder}/${BOLDRoot}_GS.txt > ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt
+        Frames=`cat ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt | wc -l`
         wb_command -cifti-create-scalar-series ${HCPFolder}/${BOLDRoot}_GS_omit_initial_${SkipFrames}_TRs.txt ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
-        xmax="$TR"
     else
         wb_command -cifti-create-scalar-series ${HCPFolder}/${BOLDRoot}_GS.txt ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -transpose -series SECOND 0 ${TR}
-        xmax=`fslval ${HCPFolder}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
+        Frames=`fslval ${HCPFolder}/MNINonLinear/Results/${BOLD}/${BOLD}.nii.gz dim4`
     fi
+    # the frames are a TR apart and the chart plots them against their time, so
+    # its axis ends at the duration in seconds
+    xmax=`LC_ALL=C awk -v tr="${TR}" -v frames="${Frames}" 'BEGIN { printf "%.2f", tr * frames }'`
     # -- Get mix/max stats
     ymax=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -reduce MAX | sort -rn | head -n 1`
     ymin=`wb_command -cifti-stats ${HCPFolder}/${BOLDRoot}_GS.sdseries.nii -reduce MAX | sort -n | head -n 1`
@@ -1393,10 +1547,13 @@ runsnr_BOLD() {
 
 # -- Function to run BOLD FC
 runscene_BOLDfc() {
+    # the input folder and file of this session and BOLD: BOLDfcPath and
+    # BOLDfcInput stay as given for the next ones
+    FCPath="${BOLDfcPath:-${SessionsFolder}/${CASE}/images/functional}"
+    FCInput="bold${BOLD}_${BOLDfcInput}"
     if [ -z "$BOLDfcPath" ]; then
-        BOLDfcPath="${SessionsFolder}/${CASE}/images/functional"
         echo ""
-        echo "---> Note: Flag --boldfcpath not provided. Setting now: ${BOLDfcPath}"
+        echo "---> Note: Flag --boldfcpath not provided. Using: ${FCPath}"
         echo ""
     fi
 
@@ -1406,10 +1563,9 @@ runscene_BOLDfc() {
     ComRunBoldfc1="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}"
     ComRunBoldfc2="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
     # -- Add timestamp to the scene and replace paths: DUMMYIMAGEPATH/DUMMYIMAGEFILE
-    BOLDfcInput="bold${BOLD}_${BOLDfcInput}"
     ComRunBoldfc3="sed -i -e 's|DUMMYTIMESTAMP|$TimeStamp|g' ${OutPath}/${WorkingSceneFile}"
-    ComRunBoldfc4="sed -i -e 's|DUMMYIMAGEPATH|$BOLDfcPath|g' ${OutPath}/${WorkingSceneFile}"
-    ComRunBoldfc5="sed -i -e 's|DUMMYIMAGEFILE|$BOLDfcInput|g' ${OutPath}/${WorkingSceneFile}"
+    ComRunBoldfc4="sed -i -e 's|DUMMYIMAGEPATH|$FCPath|g' ${OutPath}/${WorkingSceneFile}"
+    ComRunBoldfc5="sed -i -e 's|DUMMYIMAGEFILE|$FCInput|g' ${OutPath}/${WorkingSceneFile}"
     # -- Add name of png to scene:
     PNGNameBOLDfc="${WorkingSceneFile}.${TimeStamp}.png"
     ComRunBoldPNGNameBOLDfc="sed -i -e 's|DUMMYPNGNAME|$PNGNameBOLDfc|g' ${OutPath}/${WorkingSceneFile}"
@@ -1429,9 +1585,9 @@ runscene_BOLDfc() {
         ComRunBoldfc8="rm ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip &> /dev/null "
         ComRunBoldfc9="cp ${OutPath}/${WorkingSceneFile} ${SessionsFolder}/${CASE}/hcp/${CASE}${HCPSuffix}/"
         ComRunBoldfc10="mkdir -p ${HCPFolder}/qc &> /dev/null"
-        ComRunBoldfc11="cp ${BOLDfcPath}/${BOLDfcInput} ${HCPFolder}/qc"
+        ComRunBoldfc11="cp ${FCPath}/${FCInput} ${HCPFolder}/qc"
         ComRunBoldfc12="sed -i -e 's|$RemoveScenePath|.|g' ${HCPFolder}/${WorkingSceneFile}"
-        ComRunBoldfc13="sed -i -e 's|$BOLDfcPath|./qc/|g' ${HCPFolder}/${WorkingSceneFile}"
+        ComRunBoldfc13="sed -i -e 's|$FCPath|./qc/|g' ${HCPFolder}/${WorkingSceneFile}"
         ComRunBoldfc14="cd ${OutPath}; wb_command -zip-scene-file ${HCPFolder}/${WorkingSceneFile} ${WorkingSceneFile}.${TimeStamp} ${WorkingSceneFile}.${TimeStamp}.zip -base-dir ${HCPFolder}"
         ComRunBoldfc15="rm ${HCPFolder}/${WorkingSceneFile}"
         ComRunBoldfc16="cp ${OutPath}/${WorkingSceneFile}.${TimeStamp}.zip ${HCPFolder}/qc/"
@@ -1500,6 +1656,7 @@ main() {
 
     # -- Get Command Line Options
     get_options "$@"
+    QCFailed=""
     for CASE in ${CASES}; do
         # -- Set basics
         CASEName="${CASE}${HCPSuffix}"
@@ -1517,6 +1674,7 @@ main() {
             popd > /dev/null
             if [ ! -f ${SessionsFolder}/${CASE}/nii/slicesdir/index.html ]; then
                 CompletionCheck="fail"
+                QCFailed="yes"
             else
                 mkdir -p ${OutPath}/${CASE}
                 mv ${SessionsFolder}/${CASE}/nii/slicesdir/* ${OutPath}/${CASE}
@@ -1563,14 +1721,14 @@ main() {
             WorkingSceneFile="${CASEName}.${Modality}.QC.wb.scene"
 
             if [ ! -z "$UserSceneFile" ]; then
-                TemplateSceneFile"${UserSceneFile}"
+                TemplateSceneFile="${UserSceneFile}"
                 WorkingSceneFile="${CASEName}.${Modality}.${UserSceneFile}"
             fi
 
             if [ "$RunQCCustom" == "yes" ]; then
-                scenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
-                CustomTemplateSceneFiles=`ls -f ${scenetemplatefolder}/*.scene | xargs -n 1 basename`
-                echo " ---> Custom scenes requested from ${scenetemplatefolder}"; echo ""
+                Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
+                CustomTemplateSceneFiles=`ls -f ${Customscenetemplatefolder}/*.scene | xargs -n 1 basename`
+                echo " ---> Custom scenes requested from ${Customscenetemplatefolder}"; echo ""
                 echo "      ${CustomTemplateSceneFiles}"; echo ""
             fi
 
@@ -1592,6 +1750,10 @@ main() {
                     if [ "$DtiFitQC" == "yes" ]; then
                         rm -f ${OutPath}/${CASEName}.${Modality}.dtifit.QC.* &> /dev/null
                     fi
+                elif [ ${Modality} == "BOLD" ]; then
+                    # the BOLD loop removes the QC of each BOLD it renders again,
+                    # and keeps the QC a run does not render
+                    echo " --- Note: Overwrite requested. The existing QC of each BOLD is removed before it is rendered again."
                 else
                     echo " --- Note: Overwrite requested. Removing existing ${Modality} QC scene: ${OutPath}/${WorkingSceneFile} "
 
@@ -1606,7 +1768,7 @@ main() {
                     echo "---> Found files from a previous run, skipping this one"
                     echo ""
                     echo "------------------------- Successful completion of work --------------------------------"
-                    return 0
+                    continue
                 fi
             fi
 
@@ -1702,16 +1864,6 @@ main() {
                     BOLDS=`echo "${BOLDS}" | sed 's/,/ /g;s/|/ /g'`; BOLDS=`echo "$BOLDS" | sed 's/,/ /g;s/|/ /g'`
                 fi
 
-                if [ ${Overwrite} == "yes" ]; then
-                    echo ""
-                    echo " --- Note: Overwrite requested. "
-                    for BOLD in $BOLDS
-                    do
-                        echo " --- Removing existing ${Modality} QC scene: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
-                        rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
-                    done
-                fi
-
                 # ----------------------------------------------------------------------
                 # -- Code block to run BOLD loop across BOLD runs
                 # ----------------------------------------------------------------------
@@ -1725,17 +1877,20 @@ main() {
                         echo " --- Working on BOLD FC QC scene..."; echo ""
                         # Inputs
                         if [[ ${BOLDfc} == "pscalar" ]]; then
-                            TemplateSceneFile="template_pscalar_${modality_lower}_qc.wb.scene"
+                            TemplateSceneFile="template_scalar_${modality_lower}_qc.wb.scene"
                         fi
                         if [[ ${BOLDfc} == "pconn" ]]; then
                             TemplateSceneFile="template_pconn_${modality_lower}_qc.wb.scene"
                         fi
-                        scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                         WorkingSceneFile="${CASEName}.${BOLDfc}.${Modality}.${BOLD}.QC.wb.scene"
+                        if [ ${Overwrite} == "yes" ]; then
+                            echo " --- Removing existing ${BOLDfc} ${Modality} QC: ${OutPath}/${CASEName}.${BOLDfc}.${Modality}.${BOLD}.* "
+                            rm -f ${OutPath}/${CASEName}.${BOLDfc}.${Modality}.${BOLD}.* &> /dev/null
+                        fi
                         # -- cp template files
-                        Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
+                        Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                         ComQueue="$Com1"
-                        echo " --- Copied ${scenetemplatefolder}/${TemplateSceneFile} over to ${OutPath}/${WorkingSceneFile}"
+                        echo " --- Copying ${scenetemplatefolder}/${TemplateSceneFile} over to ${OutPath}/${WorkingSceneFile}"
                         runscene_BOLDfc
                         # -- Clean up prior conflicting scripts, generate script and set permissions
                         rm -f ${RunQCLogFolder}/${CASE}_ComQUEUE_${BOLDfc}_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
@@ -1788,6 +1943,7 @@ main() {
                             echo "---> Check presence of your inputs for ${CASE} and BOLD ${BOLD} and re-run! Proceeding to next BOLD run."
                             echo ""
                             CompletionCheck="fail"
+                            QCFailed="yes"
                         else
                             # -- Generate QC statistics for a given BOLD
                             echo "---> Specified BOLD data found. Generating QC statistics commands for BOLD ${BOLD} on ${CASE}..."
@@ -1796,16 +1952,19 @@ main() {
                             if [ "$SNROnly" == "yes" ]; then
                                 runsnr_BOLD
                             else
-                                # -- Check if running defaults w/o UserSceneFile
-                                if [ -z "$UserSceneFile" ] && [ "$OmitDefaults" == 'no' ] && [ "$RunQCCustom" != "yes" ]; then
+                                # -- Check if running defaults, BOLD has no custom or user scenes
+                                if [ "$OmitDefaults" == 'no' ]; then
                                     # Inputs
                                     Modality="BOLD"
                                     TemplateSceneFile="template_${modality_lower}_qc.wb.scene"
-                                    scenetemplatefolder="${TOOLS}/${QUNEXREPO}/qx_library/data/scenes/qc"
                                     WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.QC.wb.scene"
+                                    if [ ${Overwrite} == "yes" ]; then
+                                        echo " --- Removing existing ${Modality} QC: ${OutPath}/${CASEName}.${Modality}.${BOLD}.* "
+                                        rm -f ${OutPath}/${CASEName}.${Modality}.${BOLD}.* &> /dev/null
+                                    fi
                                     # -- cp template files
                                     runsnr_BOLD
-                                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
+                                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                                     Com2="sed -i -e 's|DUMMYXAXISMAX|$xmax|g' ${OutPath}/${WorkingSceneFile}"
                                     Com3="sed -i -e 's|DUMMYYAXISMAX|$ymax|g' ${OutPath}/${WorkingSceneFile}"
                                     Com4="sed -i -e 's|DUMMYYAXISMIN|$ymin|g' ${OutPath}/${WorkingSceneFile}"
@@ -1822,30 +1981,6 @@ main() {
                                     if [ -z ${PreviousCompletionCheck} ] || [ ${PreviousCompletionCheck} == "fail" ]; then
                                         completionCheck
                                     fi
-                                fi
-                            fi
-                            # -- Check if custom QC was specified
-                            if [ "$RunQCCustom" == "yes" ]; then
-                                runsnr_BOLD
-                                for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
-                                    WorkingSceneFile="${CASEName}.${Modality}.${BOLD}.${TemplateSceneFile}"
-                                    DummyVariable_Check
-                                    # -- cp template files
-                                    Com1="cp ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile} &> /dev/null"
-                                    ComQueue="$Com1"
-                                    runscene_BOLD
-                                    CustomRunQUEUE=${ComRunBoldQUEUE}
-                                    # -- Clean up prior conflicting scripts, generate script and set permissions
-                                    rm -f ${RunQCLogFolder}/${CASEName}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh &> /dev/null
-                                    echo "$CustomRunQUEUE" >> ${RunQCLogFolder}/${CASEName}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                                    chmod 770 ${RunQCLogFolder}/${CASEName}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh
-                                    # -- Run script
-                                    ${RunQCLogFolder}/${CASEName}_CustomRunQUEUE_${Modality}_${BOLD}_${TimeStamp}.sh |& tee -a ${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log
-                                    FinalLog="${RunQCLogFolder}/QC_${CASEName}_CustomRunQUEUE_${Modality}_${TimeStamp}.log"
-                                done
-                                # only run completion check if file are missing for the previous run
-                                if [ -z ${PreviousCompletionCheck} ] && [ ${PreviousCompletionCheck} == "fail" ]; then
-                                    completionCheck
                                 fi
                             fi
                         fi
@@ -2288,14 +2423,11 @@ main() {
                     echo ""
                     echo "====================== Process custom scenes: $RunQCCustom ============================="
                     echo ""
-                    Customscenetemplatefolder="${StudyFolder}/processing/scenes/QC/${Modality}"
-                    CustomTemplateSceneFiles=`ls ${StudyFolder}/processing/scenes/QC/${Modality}/*.scene | xargs -n 1 basename`
                     echo "$CustomTemplateSceneFiles"
-                    scenetemplatefolder=${Customscenetemplatefolder}
                     for TemplateSceneFile in ${CustomTemplateSceneFiles}; do
-                        DummyVariable_Check
+                        DummyVariable_Check "${Customscenetemplatefolder}"
                         WorkingSceneFile="${CASEName}.${Modality}.${TemplateSceneFile}"
-                        RunQCCustom1="rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
+                        RunQCCustom1="rsync -aWH ${Customscenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null; rsync -aWH ${Customscenetemplatefolder}/${TemplateSceneFile} ${OutPath}/ &> /dev/null"
                         RunQCCustom2="cp ${OutPath}/${TemplateSceneFile} ${OutPath}/${WorkingSceneFile}"
                         RunQCCustom3="sed -i -e 's|DUMMYPATH|$HCPFolder|g' ${OutPath}/${WorkingSceneFile}"
                         RunQCCustom4="sed -i -e 's|DUMMYCASE|$CASEName|g' ${OutPath}/${WorkingSceneFile}"
@@ -2343,7 +2475,7 @@ main() {
                 fi
                 # -- Check if user specific scene path was provided
                 if [ ! -z "$UserSceneFile" ]; then
-                    TemplateSceneFile"${UserSceneFile}"
+                    TemplateSceneFile="${UserSceneFile}"
                     DummyVariable_Check
                     WorkingSceneFile="${CASEName}.${Modality}.${UserSceneFile}"
                     RunQCUser1="rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null; rsync -aWH ${scenetemplatefolder}/* ${OutPath}/ &> /dev/null"

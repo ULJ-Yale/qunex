@@ -19,6 +19,7 @@ import os.path
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
@@ -29,16 +30,15 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_prep_long [... processing options]``
+    ``hcp_prep_long [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Prepare the data for longitudinal processing with HCP longitudinal
     pipelines. Not needed if the starting point is hcp_long_freesurfer as that
     command does the prep work automatically.
 
     For each subject in the batch file, QuNex will get their sessions and
-    prepare a suitable subject folder by symlinking relevant folders into it. It
-    will symlink both regular session folders and longitudinal sessions folders
-    (defined by hcp_longitudinal_template) if they are present.
+    prepare a suitable subject folder, `<studyfolder>/subjects/<subject id>`,
+    by symlinking the hcp folder of each of the sessions into it.
 
     ..  qx_command:
         type: processing.subject
@@ -47,9 +47,15 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --hcp_longitudinal_template (str, default 'base'):
             Name of the longitudinal template.
@@ -69,13 +75,13 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the
-        <study_folder>/subjects.
+        <studyfolder>/subjects/<subject id> folder.
 
     Examples:
         ::
 
             qunex hcp_prep_long \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_longitudinal_template="base"
     """
@@ -84,9 +90,12 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
 
     log = SessionLog({"id": subject_id}, options, "HCP prep long", label="Subject")
 
-    status = "=> processing completed"
+    status = "processing completed"
     result = {"done": [], "failed": [], "ready": [], "not ready": []}
     failed = 0
+
+    # under --test a session that would be linked is ready, not done
+    linked = "done" if options["run"] == "run" else "ready"
 
     try:
         # checks
@@ -96,24 +105,40 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         _check_hcp_info(sinfo, options)
 
         # sort out the folder structure
-        sessionsfolder = options["sessionsfolder"]
-        subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
-        study_folder = os.path.join(subjectsfolder, subject_id)
+        study_folder = os.path.join(
+            gf.subjects_folder(options["studyfolder"]), subject_id
+        )
         if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+            if options["run"] == "run":
+                os.makedirs(study_folder)
+            else:
+                log.detail(f"test, not created: {study_folder}")
 
         # symlink sessions
         for session in sinfo:
             source_dir = os.path.join(session["hcp"], session["id"])
-            if not os.path.exists(source_dir):
-                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
-                result["failed"] = session["id"]
-
             target_dir = os.path.join(study_folder, session["id"])
-            gc.link_or_copy(source_dir, target_dir, symlink=True)
-            result["done"] = session["id"]
+            if not os.path.exists(source_dir):
+                log.error(f"{source_dir} does not exist, cannot map it into the longitudinal folder structure!")
+                result["failed"].append(session["id"])
+            elif options["run"] == "run":
+                # a link left dangling, e.g. by a study that was moved, is
+                # replaced
+                if os.path.islink(target_dir) and not os.path.exists(target_dir):
+                    os.unlink(target_dir)
+                if gc.link_or_copy(
+                    source_dir,
+                    target_dir,
+                    name=f"session {session['id']}",
+                    symlink=True,
+                    _log=log,
+                ):
+                    result["done"].append(session["id"])
+                else:
+                    result["failed"].append(session["id"])
+            else:
+                log.detail(f"test, not linked: {target_dir} -> {source_dir}")
+                result["ready"].append(session["id"])
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_prep_long", e))
@@ -134,6 +159,9 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
 
     log.close(pipeline="HCP prep long")
 
-    report = f"sessions: {len(result['done'])} done [{result['done']}], {len(result['failed'])} failed [{result['failed']}] => {status}"
+    report = (
+        f"sessions: {len(result[linked])} {linked} [{', '.join(result[linked])}], "
+        f"{len(result['failed'])} failed [{', '.join(result['failed'])}] => {status}"
+    )
     failed = len(result["failed"]) if len(result["failed"]) > 0 else failed
     return log.result((subject_id, report, failed))

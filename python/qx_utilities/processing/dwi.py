@@ -35,9 +35,23 @@ import qx_utilities.processing.core as pc
 from qx_utilities.general.log import ReportLog
 
 
+def _hcp_session_folder(sinfo: dict, options: dict) -> str:
+    """
+    The session's HCP folder, ``<hcp>/<session id><hcp_suffix>``.
+
+    ``<hcp>`` is the folder the session record names, else the ``hcp`` folder
+    in the session's own folder -- a session given by its id alone, without a
+    batch file, has no record of it.
+    """
+    hcp = sinfo.get("hcp") or os.path.join(
+        options["sessionsfolder"], sinfo["id"], "hcp"
+    )
+    return os.path.join(hcp, sinfo["id"] + options["hcp_suffix"])
+
+
 def dwi_f99(sinfo, options, overwrite=False, thread=0):
     """
-    ``dwi_f99 [... processing options]``
+    ``dwi_f99 [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run FSL's F99 registration for macaque diffusion/structural data.
 
@@ -61,9 +75,15 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -77,29 +97,27 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
-        --diffusion_folder (str, default '<sessions_folder>/<session>/NHP/dMRI'):
+        --diffusion_folder (str, default '<sessionsfolder>/<session>/NHP/dMRI'):
             The path to the diffusion folder holding the dtifit results.
 
     Output files:
-        The results of this step will be present in the dMRI/NHP/F99reg
-        folder in the sessions's root::
+        The results of this step will be present in the NHP/F99reg folder of
+        each session::
 
             study
             └─ sessions
                ├─ session1
-               |  └─ dMRI
-               |    └─ NHP
-               |      └─ F99reg
+               |  └─ NHP
+               |    └─ F99reg
                └─ session2
-                  └─ dMRI
-                    └─ NHP
-                      └─ F99reg
+                  └─ NHP
+                    └─ F99reg
 
     Examples:
         ::
 
             qunex dwi_f99 \\
-                --sessionsfolder="/data/macaque_study/sessions" \\
+                --studyfolder="/data/macaque_study" \\
                 --sessions="hilary,jane" \\
                 --overwrite=no \\
                 --parsessions=2
@@ -128,8 +146,6 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         )
         nhp_dir = os.path.join(options["sessionsfolder"], session, "NHP")
         f99reg_dir = os.path.join(nhp_dir, "F99reg")
-        if not os.path.exists(f99reg_dir):
-            os.makedirs(f99reg_dir)
         dtifit_dir = os.path.join(nhp_dir, "dMRI")
 
         # if diffusion folder specified, use that instead
@@ -177,11 +193,15 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
         if run:
             # run
             if options["run"] == "run":
+                # the F99 folder is where the script is run, created here
+                # rather than above so that a dry run leaves nothing behind
+                os.makedirs(f99reg_dir, exist_ok=True)
+
                 # remove previous file
                 if overwrite and os.path.exists(target_file):
                     os.remove(target_file)
 
-                # go to F99 folder before starting workd
+                # go to F99 folder before starting work
                 comm_pre = "CDIR=`pwd`;cd " + f99reg_dir + ";"
 
                 # go back to current dir after work is done
@@ -224,7 +244,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "FSL F99 ready", 0)
                 else:
                     log.step(f"FSL F99 processing for session {session} would be skipped")
-                    report = (sinfo["id"], "FSL F99 would be skipped", 1)
+                    report = (sinfo["id"], "FSL F99 would be skipped", 0)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
@@ -240,7 +260,7 @@ def dwi_f99(sinfo, options, overwrite=False, thread=0):
 
 def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     """
-    ``dwi_xtract [... processing options]``
+    ``dwi_xtract [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run FSL's XTRACT (cross-species tractography) command.
 
@@ -263,9 +283,18 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -282,8 +311,9 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         --diffusion_folder (str, default detailed below):
             The path to the diffusion folder. The bedpostx folder is derived
             from it by appending '.bedpostX'. By default the diffusion folder
-            is set to dMRI for macaques and T1w/Diffusion for humans. If
-            --xtract_bpx is provided, it takes precedence over this parameter.
+            is set to NHP/dMRI in the session's folder for macaques and to
+            hcp/<session>/T1w/Diffusion for humans. If --xtract_bpx is
+            provided, it takes precedence over this parameter.
 
         --species (str, default 'human'):
             Species: human or macaque.
@@ -316,7 +346,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             Pass extra probtrackx2 options as a text file to override defaults
             (e.g. --steplength=0.2).
             For humans it defaults to '', for macaques it defaults to
-            '$TOOLS/python/qx_utilities/templates/nhp/ptx_options'.
+            '$QUNEXPATH/python/qx_utilities/templates/nhp/ptx_options'.
 
         --xtract_mni (flag, optional):
             Run tractography in MNI (diffusion) and not native space. This flag is not set by default.
@@ -328,32 +358,37 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
         --xtract_out (str, default detailed below):
             Output folder for XTRACT results. By default it is set to
-            dMRI/NHP/xtract for macaques and hcp/session/T1w/xtract for humans.
+            NHP/xtract in the session's folder for macaques and to
+            hcp/<session>/T1w/Results/Tractography/xtract for humans
+            (MNINonLinear instead of T1w with --xtract_mni).
 
         --xtract_bpx (str, default detailed below):
-            Bedpostx folder. By default it is set to dMRI.bedpostX for macaques
-            and T1w/Diffusion.bedpostX for humans.
+            Bedpostx folder. By default it is set to NHP/dMRI.bedpostX in the
+            session's folder for macaques and to
+            hcp/<session>/T1w/Diffusion.bedpostX for humans.
 
     Output files:
-        The results of this step will be present in the dMRI/NHP/xtract folder
-        in the sessions's root::
+        For macaques, the results of this step will be present in the
+        NHP/xtract folder of each session::
 
             study
             └─ sessions
                ├─ session1
-               |  └─ dMRI
-               |    └─ NHP
-               |      └─ xtract
+               |  └─ NHP
+               |    └─ xtract
                └─ session2
-                  └─ dMRI
-                    └─ NHP
-                      └─ xtract
+                  └─ NHP
+                    └─ xtract
+
+        For humans, they are in the session's
+        hcp/<session>/T1w/Results/Tractography/xtract folder
+        (MNINonLinear/Results/Tractography/xtract with --xtract_mni).
 
     Examples:
         ::
 
             qunex dwi_xtract \\
-                --sessionsfolder="/data/macaque_study/sessions" \\
+                --studyfolder="/data/example_study" \\
                 --batchfile="/data/example_study/processing/batch.txt" \\
                 --species="human" \\
                 --overwrite=yes
@@ -361,8 +396,8 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex dwi_xtract \\
-                --sessionsfolder="/data/macaque_study/sessions" \\
-                --batchfile="hilary,jane" \\
+                --studyfolder="/data/macaque_study" \\
+                --sessions="hilary,jane" \\
                 --species="macaque" \\
                 --overwrite=no \\
                 --parsessions=2
@@ -399,12 +434,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_dir = os.path.join(nhp_dir, "dMRI.bedpostX")
             output_dir = os.path.join(nhp_dir, "xtract")
         else:
-            hcp_dir = os.path.join(options["sessionsfolder"], session, "hcp")
-            # if sessions is a folder
-            if os.path.isfile(options["sessions"]):
-                hcp_dir = os.path.join(
-                    sinfo["hcp"], sinfo["id"] + options["hcp_suffix"]
-                )
+            hcp_dir = _hcp_session_folder(sinfo, options)
             xfms_dir = os.path.join(hcp_dir, "MNINonLinear", "xfms")
             bedpostx_dir = os.path.join(hcp_dir, "T1w", "Diffusion.bedpostX")
 
@@ -421,10 +451,6 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         if "xtract_out" in options:
             output_dir = options["xtract_out"]
 
-        # create output dir if it does not exist
-        if not os.path.exists(output_dir):
-            os.makedirs(output_dir)
-
         # if diffusion folder specified, derive bedpostx dir from it
         if options["diffusion_folder"]:
             bedpostx_dir = options["diffusion_folder"] + ".bedpostX"
@@ -440,7 +466,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             bedpostx_file = os.path.join(bedpostx_dir, "mean_fsumsamples.nii.gz")
 
         if os.path.exists(bedpostx_file):
-            log.step("f results present.")
+            log.step("bedpostx results present.")
         else:
             log.error("Could not find bedpostx results.")
             report = (sinfo["id"], "Not ready for XTRACT", 1)
@@ -512,7 +538,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
         # report command
         log.rule(before=1, after=1)
-        log.raw("Running FSL F99 command via QuNex:\n\n")
+        log.raw("Running FSL XTRACT command via QuNex:\n\n")
         log.raw(comm.replace("                ", ""))
         log.rule(after=1)
 
@@ -524,6 +550,10 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
         if run:
             # run
             if options["run"] == "run":
+                # create output dir if it does not exist, here rather than
+                # above so that a dry run leaves nothing behind
+                os.makedirs(output_dir, exist_ok=True)
+
                 # remove previous file
                 if overwrite and os.path.exists(target_file):
                     os.remove(target_file)
@@ -564,7 +594,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "FSL XTRACT ready", 0)
                 else:
                     log.step(f"FSL XTRACT processing for session {session} would be skipped")
-                    report = (sinfo["id"], "FSL XTRACT would be skipped", 1)
+                    report = (sinfo["id"], "FSL XTRACT would be skipped", 0)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
@@ -578,12 +608,9 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
     return log.result(report)
 
 
-# -> @register_command(
-#        description="Run CUDIMOT's NODDI microstructure modelling using GPU acceleration.",
-#         type="processing.session.dwi")
 def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
     """
-    ``dwi_noddi_gpu [... processing options]``
+    ``dwi_noddi_gpu [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run CUDIMOT NODDI microstructure modelling using GPU acceleration.
 
@@ -608,9 +635,15 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -647,18 +680,18 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         └─ Diffusion.NODDI_<model>
 
         If a custom diffusion folder is specified with --diffusion_folder, the
-        results will be stored in the same root folder as the input diffusion
-        data, in a subfolder named Diffusion.NODDI_<model>.
+        results will be stored next to it, in a folder named after it:
+        <diffusion_folder>.NODDI_<model>.
 
     Examples:
         ::
 
             qunex dwi_noddi_gpu \\
-                --sessionsfolder="/data/qx_study/sessions" \\
+                --studyfolder="/data/qx_study" \\
                 --batchfile="/data/qx_study/processing/batch.txt"
 
             qunex dwi_noddi_gpu \\
-                --sessionsfolder="/data/qx_study/sessions" \\
+                --studyfolder="/data/qx_study" \\
                 --batchfile="/data/qx_study/processing/batch.txt" \\
                 --noddi_model="Bingham" \\
                 --overwrite=no \\
@@ -700,15 +733,15 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
         )
 
         # session's diffusion dir
-        root_dir = os.path.join(
-            options["sessionsfolder"], session, "hcp", session, "T1w"
-        )
-        diffusion_dir = os.path.join(root_dir, "Diffusion")
+        diffusion_dir = os.path.join(_hcp_session_folder(sinfo, options), "T1w", "Diffusion")
 
         # if diffusion folder specified, use that instead
         if options["diffusion_folder"]:
             diffusion_dir = options["diffusion_folder"]
-            root_dir = os.path.dirname(diffusion_dir)
+
+        # the results, next to the diffusion folder and named after it, as
+        # cudimot writes them to <diffusion folder>.NODDI_<model>
+        results_folder = diffusion_dir.rstrip("/") + ".NODDI_" + options["noddi_model"]
 
         # check that diffusion_dir exists
         if not os.path.exists(diffusion_dir):
@@ -734,10 +767,6 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
             # run
             if options["run"] == "run":
                 # remove previous results if overwrite
-                results_folder = os.path.join(
-                    root_dir, "Diffusion.NODDI_" + options["noddi_model"]
-                )
-
                 if overwrite:
                     if os.path.exists(results_folder):
                         shutil.rmtree(results_folder)
@@ -769,10 +798,14 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                         log.step(f"CUDIMOT NODDI processing for session {session} completed")
                         report = (sinfo["id"], "CUDIMOT NODDI completed", 0)
 
-            # just checking
+            # just checking, against the results the run would leave
             else:
                 passed, _, failed = pc.check_run(
-                    None, None, "CUDIMOT NODDI " + session, overwrite=overwrite, _log=log
+                    results_folder,
+                    None,
+                    "CUDIMOT NODDI " + session,
+                    overwrite=overwrite,
+                    _log=log,
                 )
 
                 if passed is None:
@@ -780,7 +813,7 @@ def dwi_noddi_gpu(sinfo, options, overwrite=False, thread=0):
                     report = (sinfo["id"], "CUDIMOT NODDI ready", 0)
                 else:
                     log.step(f"CUDIMOT NODDI processing for session {session} would be skipped")
-                    report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 1)
+                    report = (sinfo["id"], "CUDIMOT NODDI would be skipped", 0)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")

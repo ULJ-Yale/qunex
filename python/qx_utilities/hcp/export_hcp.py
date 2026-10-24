@@ -25,13 +25,22 @@ import time
 import shutil
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 
-def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no"):
+def _log_hint(endlog, hint="Please check your data and log [%s]!"):
+    """The hint that sends the user to the mapping's record, or to the run's
+    log when no record was kept."""
+    if endlog:
+        return hint % endlog
+    return "Please check your data and the log of this run!"
+
+
+def export_hcp(sessionsfolder=None, batchfile=None, sessions=None, filter=None, mapaction="link", mapto=None, overwrite="no", mapexclude=None, hcp_suffix="", verbose="no", studyfolder=None, logfolder=None):
 
     """
-    ``export_hcp [sessionsfolder="."] [batchfile=None] [sessions=None] [filter=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"]``
+    ``export_hcp [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [batchfile=None] [sessions=None] [filter=None] [mapaction=<how to map>] [mapto=None|<location to map to>] [overwrite="no"] [mapexclude=None] [hcp_suffix=""] [verbose="no"] [logfolder=<the run's log folder>]``
 
     Export HCP style data out of the QuNex Suite file structure.
 
@@ -39,12 +48,15 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The base study sessions folder within the QuNex
-            folder structure to or from which the data are to be
-            mapped. If not specified explicitly, the current working
-            folder will be taken as the location of the
-            sessionsfolder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The data are mapped from the sessions in it.
 
         --batchfile (str, default ''):
             A path to a batch.txt file.
@@ -76,6 +88,13 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         --verbose (str, default 'no'):
             Report details while running.
 
+        --logfolder (str, default '<the run's log folder>'):
+            The run's log folder. The full record of the mapping, every file
+            included whatever --verbose says, is kept in its `comlogs` folder
+            as `<status>_export_hcp_mapping_<timestamp>.log`. QuNex sets it to
+            the folder the run logs in; called without one, export_hcp keeps
+            no record.
+
 
 
     Notes:
@@ -106,8 +125,8 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
 
         We will assume the following:
 
-        - data to be mapped is located in the folder
-          ``/data/studies/myStudy/sessions``
+        - the study is located in the folder ``/data/studies/myStudy``, with
+          the data to be mapped in its ``sessions`` folder
         - a batch file exists in the location
           ``/data/studies/myStudy/processing/batch.txt``
         - we would like to map the data to location
@@ -116,7 +135,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         given the above assumptions the following example commands can be run::
 
             qunex export_hcp \\
-                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --studyfolder=/data/studies/myStudy \\
                 --batchfile=/data/studies/myStudy/processing/batch.txt \\
                 --mapto=/data/outbox/hcp_formatted/myStudy \\
                 --mapexclude=unprocessed \\
@@ -135,10 +154,10 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         ::
 
             qunex export_hcp \\
-                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --studyfolder=/data/studies/myStudy \\
                 --batchfile=/data/studies/myStudy/processing/batch.txt \\
                 --mapto=/data/outbox/hcp_formatted/myStudy \\
-                --filter="group:controls|institution:Yale" \\
+                --filter="group:controls&institution:Yale" \\
                 --mapaction="copy" \\
                 --overwrite=no
 
@@ -151,7 +170,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         ::
 
             qunex export_hcp \\
-                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --studyfolder=/data/studies/myStudy \\
                 --batchfile=/data/studies/myStudy/processing/batch.txt \\
                 --mapto=/data/outbox/hcp_formatted/myStudy \\
                 --sessions="AP*,HQ*" \\
@@ -166,7 +185,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         ::
 
             qunex export_hcp \\
-                --sessionsfolder=/data/studies/myStudy/sessions \\
+                --studyfolder=/data/studies/myStudy \\
                 --batchfile=/data/studies/myStudy/processing/batch.txt \\
                 --mapto=/data/outbox/hcp_formatted/myStudy \\
                 --mapaction="link" \\
@@ -185,6 +204,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
     verbose   = verbose.lower() == 'yes'
 
     # -- export prep
+    sessionsfolder = gf.sessions_folder(studyfolder, sessionsfolder)
     sessionsfolder, mapto, mapexclude = gu.export_prep("export_hcp", sessionsfolder, mapto, mapaction, mapexclude)
 
     # -- prepare sessions
@@ -192,9 +212,13 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
     if not sessions:
         raise ge.CommandFailed("export_hcp", "No session found" , "No sessions found to map based on the provided criteria!", "Please check your data!")
 
-    # -- open logfile
-    logfolder = gc.deduce_folders({'sessionsfolder': sessionsfolder})['logfolder']
-    comlog = gl.ComContext(gl.comlog_folder(logfolder), 'export_hcp').open()
+    # -- the full record of the mapping, in the run's comlogs, whatever
+    #    --verbose says: the call's own comlog holds what reached the console
+    comlog = gl.ComContext(
+        gl.comlog_folder(logfolder) if logfolder else None,
+        'export_hcp', 'mapping',
+        enabled=gl.active().enabled and gl.active().comlog,
+    ).open()
     logfile = comlog.file
 
     # -- start
@@ -231,13 +255,13 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
     for sfile, tfile in to_map:
         if not os.path.exists(sfile):
             missing.append((sfile, tfile))
+        # excluded before the target is checked: an excluded file whose target
+        # existed was overwritten with --overwrite=yes
+        elif mapexclude and any([e.search(sfile) is not None for e in mapexclude]):
+            toexclude.append((sfile, tfile))
         elif os.path.isfile(tfile):
             existing.append((sfile, tfile))
         else:
-            if mapexclude:
-                if any([e.search(sfile) is not None for e in mapexclude]):
-                    toexclude.append((sfile, tfile))
-                    continue
             process.append((sfile, tfile))
 
     if missing:
@@ -246,7 +270,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
             gc.print_and_log("           ---> " + sfile, file=logfile)
         gc.print_and_log("\nMapping Aborted!", file=logfile)
         endlog = comlog.close(status="error")
-        raise ge.CommandFailed("export_hcp", "Source files missing" , "Mapping could not be run as some source files were missing!", "Please check your data and log [%s!" % (endlog))
+        raise ge.CommandFailed("export_hcp", "Source files missing" , "Mapping could not be run as some source files were missing!", _log_hint(endlog))
 
     if existing:
         s = 'Some files already exist'
@@ -254,7 +278,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
             s = "---> WARNING: " + s + " and will be overwritten"
             pre = "             "
             process += existing
-        if overwrite.lower() == 'skip':
+        elif overwrite.lower() == 'skip':
             s = "---> WARNING: " + s + " and will be skipped"
             pre = "             "
         else:
@@ -268,7 +292,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
         if overwrite.lower() == 'no':
             gc.print_and_log("---> Mapping Aborted!", file=logfile)
             endlog = comlog.close(status="error")
-            raise ge.CommandFailed("export_hcp", "Target files exist" , "Mapping could not be run as some target file already exist!", "Please check your data and log [%s]!" % (endlog))
+            raise ge.CommandFailed("export_hcp", "Target files exist" , "Mapping could not be run as some target file already exist!", _log_hint(endlog))
 
     if toexclude:
         gc.print_and_log("---> WARNING: Some files will be excluded from mapping", file=logfile)
@@ -284,7 +308,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
     # -- execute mapping
     # -> clean destination
     if overwrite.lower() == 'yes':
-        for tfile in existing:
+        for _, tfile in existing:
             os.remove(tfile)
 
     # -> map
@@ -361,7 +385,7 @@ def export_hcp(sessionsfolder=".", batchfile=None, sessions=None, filter=None, m
             gc.print_and_log("---> %s ---> %s" % (sfile, tfile), file=logfile)
 
         endlog = comlog.close(status="error")
-        raise ge.CommandFailed("export_hcp", "Some files not mapped" , "Some files could not be mapped!", "Please see log and check your data [%s]!" % (endlog))
+        raise ge.CommandFailed("export_hcp", "Some files not mapped" , "Some files could not be mapped!", _log_hint(endlog, "Please see log and check your data [%s]!"))
 
     gc.print_and_log("---> Mapping completed", file=logfile)
     endlog = comlog.close(status="done")

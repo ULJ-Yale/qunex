@@ -8,7 +8,7 @@
 """
 ``rapidtide.py``
 
-This file holds code for running FSL commands. It
+This file holds code for running rapidtide. It
 consists of functions:
 
 --rapidtide      Runs rapidtide (https://rapidtide.readthedocs.io/).
@@ -25,6 +25,7 @@ All rights reserved.
 """
 
 import os
+import re
 import shutil
 import traceback
 from concurrent.futures import ProcessPoolExecutor
@@ -38,7 +39,7 @@ from qx_utilities.general.log import ReportLog
 
 def rapidtide(sinfo, options, overwrite=False, thread=0):
     """
-    ``rapidtide [... processing options]``
+    ``rapidtide [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run rapidtide command for similarity function calculation on BOLD fMRI data.
 
@@ -63,9 +64,16 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The results are written to the `rapidtide`
+            folder of each session.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -82,24 +90,25 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
-        --bolds (str, default 'rest'):
+        --bolds (str, default 'all'):
             Which bold images to process. You can select bolds through their
             number, name or task (e.g. rest), you can chain multiple conditions
-            together by providing a comma separated list. By default, rest bolds
-            will be used.
+            together by providing a comma separated list. By default, all bolds
+            will be used. When nothing in the batch file matches, the listed
+            values are used as the names of the HCP bold folders.
 
-        --nifti_tail (str, ''):
+        --nifti_tail (str, default ''):
             The tail of BOLD NIfTI images to use. For example, if bold is
             rfMRI_REST1_AP and tail is _hp0_clean_rclean_tclean, then the
             HCP processed BOLD image that will be used is
             rfMRI_REST1_AP_hp0_clean_rclean_tclean.nii.gz.
 
-        --despecklepasses (int, 4):
+        --despecklepasses (int, default 4):
             Detect and refit suspect correlations to disambiguate peak location
             in PASSES passes. Set to 0 to
             disable.
 
-        --filterband (str, 'lfo'):
+        --filterband (str, default 'lfo'):
             Filter data and regressors to specific band. Use None to disable
             filtering. Ranges and options are: vlf: 0.0-0.009Hz,
             lfo: 0.01-0.15Hz, cardiac: 0.66-3.0Hz, hrv_ulf: 0.0-0.0033Hz,
@@ -107,27 +116,27 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             hrv_vhf: 0.4-0.5Hz, lfo_legacy: 0.01-0.15Hz, lfo_tight: 0.01-0.1Hz,
             resp.
 
-        --searchrange (str, '-30.0 30.0'):
+        --searchrange (str, default '-30.0 30.0'):
             Space separated limits for a range of lags.
 
-        --nprocs (int, 1):
+        --nprocs (int, default 1):
             Number of worker processes for multiprocessing. Setting to less than
             1 sets the number of worker processes to number of CPUs.
 
         --nofitfilt (flag):
             Do not zero out peak fit values if fit fails.
 
-        --similaritymetric (str, 'correlation'):
+        --similaritymetric (str, default 'correlation'):
             Similarity metric for finding delay values. Choices are correlation,
             mutualinfo, and hybrid.
 
-        --ampthresh (str, '-1.0'):
+        --ampthresh (str, default '-1.0'):
             For refinement, exclude voxels with correlation coefficients less
-            than the set value. Note htat ampthresh will automatically be set to
+            than the set value. Note that ampthresh will automatically be set to
             the p<0.05 significance level determined by the --numnull option if
-            --nomnull is set greater than 0 and this is not manually specified.
+            --numnull is set greater than 0 and this is not manually specified.
 
-        --outputlevel (str, 'normal'):
+        --outputlevel (str, default 'normal'):
             The level of file output produced. "min" produces only absolutely
             essential files, "less" adds in the sLFO filtered data (rather than
             just filter efficacy metrics), "normal" saves what you would
@@ -136,22 +145,22 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             might possibly want. Selecting "max" will produce ~3x your input
             datafile size as output.
 
-        --spatialfilt (str, '-1.0'):
+        --spatialfilt (str, default '-1.0'):
             Spatially filter fMRI data prior to analysis using the set value in
             mm. Set negative to have rapidtide set it to half the mean voxel
             dimension (a rule of thumb for a good value). Set to 0 to disable.
 
-        --simcalcrange (str, '-1 -1'):
+        --simcalcrange (str, default '-1 -1'):
             2 space separated values that limit correlation calculation to
             data between them in the fmri file. If the end value is set to -1,
-            analysis will go to the last time-point. Negative start values wil
+            analysis will go to the last time-point. Negative start values will
             be set to 0. Default is to use all time-points.
 
         --brainmask (str):
             This specifies the valid brain voxels. No voxels outside of this
             will be used for global mean calculation, correlation, refinement,
             offset calculation, or denoising. Will be set to BOLD's
-            brainmask_fs.2.nii.gz from HCP pipelines by default if it file
+            brainmask_fs.2.nii.gz from HCP pipelines by default if the file
             exists. Set to "None" to disable brain mask.
 
         --graymattermask (str):
@@ -175,7 +184,7 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
             voxel (disables output of fitNorm). Does not perform denoising, only
             calculates the maps.
 
-        --rapidtide_extra_args (str, ''):
+        --rapidtide_extra_args (str, default ''):
             Additional arguments to pass to rapidtide. This is useful for
             passing any additional arguments that are not yet exposed through
             QuNex command line options. The string will be passed to rapidtide
@@ -185,21 +194,22 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex rapidtide \\
-                --sessionsfolder="/data/qunex_study/sessions" \\
+                --studyfolder="/data/qunex_study" \\
                 --batchfile="/data/qunex_study/processing/batch.txt"
 
-            qunex rapidtide \
-                --sessionsfolder="/data/jdemsar/studies/hca_alzheimer/sessions" \
-                --bolds="rfMRI_REST1_AP,rfMRI_REST1_PA,rfMRI_REST2_AP,rfMRI_REST2_PA" \
-                --despecklepasses="4" \
-                --filterband="lfo" \
-                --searchrange="-7.5 15.0" \
-                --nprocs="4" \
-                --nofitfilt \
-                --similaritymetric="hybrid" \
-                --ampthresh="0.15" \
-                --outputlevel="normal" \
-                --spatialfilt="3" \
+            qunex rapidtide \\
+                --studyfolder="/data/qunex_study" \\
+                --batchfile="/data/qunex_study/processing/batch.txt" \\
+                --bolds="rfMRI_REST1_AP,rfMRI_REST1_PA,rfMRI_REST2_AP,rfMRI_REST2_PA" \\
+                --despecklepasses="4" \\
+                --filterband="lfo" \\
+                --searchrange="-7.5 15.0" \\
+                --nprocs="4" \\
+                --nofitfilt \\
+                --similaritymetric="hybrid" \\
+                --ampthresh="0.15" \\
+                --outputlevel="normal" \\
+                --spatialfilt="3" \\
                 --simcalcrange="100 -1"
 
         The first command uses rapidtide defaults across all sessions and their
@@ -226,37 +236,34 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
         # check if we have the session
         session_folder = os.path.join(options["sessionsfolder"], session)
         if not os.path.exists(session_folder):
-            log.raw(f"\n\n---> Session folder {session_folder} does not exist, cannot run rapidtide.")
+            log.error(f"Session folder {session_folder} does not exist, cannot run rapidtide.")
             run = False
-
-        # hcp paths
-        hcp_folders = get_hcp_paths(sinfo, options)
         rapidtide_folder = os.path.join(session_folder, "rapidtide")
-        os.makedirs(rapidtide_folder, exist_ok=True)
 
-        # --- run checks
+        # run checks, and the hcp paths, which can only be had with the hcp info
+        hcp_folders = None
         if "hcp" not in sinfo:
             log.error(f"There is no hcp info for session {sinfo['id']} in batch.txt")
             run = False
+        else:
+            hcp_folders = get_hcp_paths(sinfo, options)
 
         # get bolds
         if not options["bolds"]:
             options["bolds"] = "rest"
         bolds, _, _ = pc.use_or_skip_bold(sinfo, options, _log=log)
 
-        if len(bolds) == 0:
-            # default was used
-            if options["bolds"] == "rest":
-                log.error(f"No BOLD images found for session {sinfo['id']}! Check your data or the contents of the batch file.")
-                run = False
-            else:
-                log.step("Automatic BOLD identification did not find any bolds using the --bolds parameter as is.")
-                boldtargets = options["bolds"].split(",")
-
         boldtargets = []
         for boldinfo in bolds:
             _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
             boldtargets.append(boldtarget)
+
+        # none found with --bolds naming bolds, split as use_or_skip_bold does,
+        # the names are used as they are. `all` or `rest` names none
+        btargets = [e.strip() for e in re.split(r" +|\||, *", options["bolds"]) if e.strip()]
+        if not boldtargets and "all" not in btargets and btargets != ["rest"]:
+            log.step("Automatic BOLD identification did not find any bolds using the --bolds parameter as is.")
+            boldtargets = btargets
 
         # bolds loop
         report = {
@@ -277,8 +284,11 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
 
         # run in parallel
         if run:
+            # created for a run only, so that a dry run leaves nothing behind
+            if options["run"] == "run":
+                os.makedirs(rapidtide_folder, exist_ok=True)
+
             parelements = max(1, min(options["parelements"], len(boldtargets)))
-            ppe = ProcessPoolExecutor(parelements)
             # process
             f = partial(
                 _execute_rapidtide,
@@ -289,20 +299,12 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
                 hcp_folders,
                 rapidtide_folder,
             )
-            results = ppe.map(f, boldtargets)
-
-            # merge r and report
-            for result in results:
-                log.raw(result["r"])
-                run_report = result["report"]
-                if run_report["done"]:
-                    report["done"].extend(run_report["done"])
-                if run_report["failed"]:
-                    report["failed"].extend(run_report["failed"])
-                if run_report["skipped"]:
-                    report["ready"].extend(run_report["ready"])
-                if run_report["ready"]:
-                    report["ready"].extend(run_report["not ready"])
+            with ProcessPoolExecutor(parelements) as ppe:
+                # merge r and report, each bold ends up in exactly one list
+                for result in ppe.map(f, boldtargets):
+                    log.raw(result["r"])
+                    for key in report:
+                        report[key].extend(result["report"][key])
 
             # parse report
             if report["failed"]:
@@ -312,13 +314,11 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
                     len(report["failed"]),
                 )
             else:
-                message = "rapidtide: "
-                sep = ""
-                if report["done"]:
-                    message += f"done: {','.join(report['done'])}"
-                    sep = " | "
-                if report["skipped"]:
-                    message += f"{sep}skipped: {','.join(report['skipped'])}"
+                message = "rapidtide: " + " | ".join(
+                    f"{key}: {','.join(report[key])}"
+                    for key in ("done", "skipped", "ready")
+                    if report[key]
+                )
 
                 report = (
                     sinfo["id"],
@@ -326,7 +326,13 @@ def rapidtide(sinfo, options, overwrite=False, thread=0):
                     0,
                 )
 
-        # rapidtide ------------------------------------------------------------
+        # nothing could be run, the reasons are in the log
+        else:
+            message = "rapidtide not ready"
+            if report["failed"]:
+                message += f": {','.join(report['failed'])}"
+            report = (sinfo["id"], message, 1)
+
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of session {session} with error:\n")
         log.raw(str(errormessage))
@@ -355,26 +361,32 @@ def _execute_rapidtide(
     # get session id
     session = sinfo["id"]
 
-    # main outputs folder
+    # main outputs folder, removed and created for a run only, so that a dry
+    # run leaves the results it would replace where they are
     rapidtide_out = os.path.join(rapidtide_folder, boldtarget)
     if os.path.exists(rapidtide_out):
         if not overwrite:
             log.step(f"Skipping rapidtide for {boldtarget}, output folder already exists, and overwrite is not set: {rapidtide_out}")
             report["skipped"].append(boldtarget)
             return {"r": log.text, "report": report}
-        else:
+        elif options["run"] == "run":
             log.step(f"Removing existing results in {rapidtide_out}")
             shutil.rmtree(rapidtide_out, ignore_errors=True)
-    os.makedirs(rapidtide_out)
+        else:
+            log.step(f"test, not removed: {rapidtide_out}")
+    if options["run"] == "run":
+        os.makedirs(rapidtide_out)
 
     # flirt ------------------------------------------------------------
-    # run flirt to create masks if parameters are not provided
-    if options["graymattermask"] is None and options["whitemattermask"] is None:
+    # run flirt to create masks if parameters are not provided, the default
+    # of either mask is made by it
+    if options["graymattermask"] is None or options["whitemattermask"] is None:
         log.raw(f"\n\n---> Running FSL flirt to create gray or white matter masks for {boldtarget}")
         # in
         in_path = os.path.join(hcp_folders["hcp_nonlin"], "aparc+aseg.nii.gz")
         if not os.path.exists(in_path):
             log.error(f"Cannot find aparc+aseg.nii.gz at {in_path}")
+            run = False
 
         # ref
         ref_path = os.path.join(
@@ -414,44 +426,45 @@ def _execute_rapidtide(
         log.raw(flirt_comm.replace("                ", ""))
         log.rule(after=1)
 
+        # without its inputs there are no masks to run rapidtide with, so the
+        # bold has failed. otherwise the rapidtide step below reports it
+        if not run:
+            report["failed"].append(boldtarget)
+            return {"r": log.text, "report": report}
+
         # run
-        if run:
-            # run
-            if options["run"] == "run":
-                # execute
-                _, _, failed = pc.run_external_for_file(
-                    out_path,
-                    flirt_comm,
-                    "Running FSL flirt",
-                    overwrite=overwrite,
-                    thread=f"{sinfo['id']}_{boldtarget}",
-                    remove=options["log"] == "remove",
-                    task="rapidtide_flirt",
-                    logfolder=options["comlogs"],
-                    logtags=[options["logtag"]],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-                if failed:
-                    log.step(f"FSL flirt processing for session {session} failed")
-                    report["failed"].append(boldtarget)
-                else:
-                    log.step(f"FSL flirt processing for session {session} completed")
-                    report["done"].append(boldtarget)
+        if options["run"] == "run":
+            # execute
+            _, _, failed = pc.run_external_for_file(
+                out_path,
+                flirt_comm,
+                "Running FSL flirt",
+                overwrite=overwrite,
+                thread=f"{sinfo['id']}_{boldtarget}",
+                remove=options["log"] == "remove",
+                task="rapidtide_flirt",
+                logfolder=options["comlogs"],
+                logtags=[options["logtag"]],
+                full_test=None,
+                shell=True,
+                _log=log,
+            )
+            if failed:
+                log.step(f"FSL flirt processing for session {session} failed")
+                report["failed"].append(boldtarget)
+                return {"r": log.text, "report": report}
+            log.step(f"FSL flirt processing for session {session} completed")
 
-            # just checking
+        # just checking
+        else:
+            passed, _, failed = pc.check_run(
+                out_path, None, "FSL flirt " + session, overwrite=overwrite, _log=log
+            )
+
+            if passed is None:
+                log.step("FSL flirt can be run")
             else:
-                passed, _, failed = pc.check_run(
-                    out_path, None, "FSL flirt " + session, overwrite=overwrite, _log=log
-                )
-
-                if passed is None:
-                    log.step("FSL flirt can be run")
-                    report["ready"].append(boldtarget)
-                else:
-                    log.step(f"FSL flirt processing for bold {boldtarget} would be skipped")
-                    report["skipped"].append(boldtarget)
+                log.step(f"FSL flirt processing for bold {boldtarget} would be skipped")
 
     # rapidtide --------------------------------------------------------
     log.raw(f"\n\n---> Running rapidtide for {boldtarget}")
@@ -533,7 +546,7 @@ def _execute_rapidtide(
                 )
             elif options["graymattermask"] is None:
                 if not os.path.exists(default_mask):
-                    log.error("Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
+                    log.error(f"Cannot find the default --graymattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
                     run = False
                 else:
                     rapidtide_comm += (
@@ -549,7 +562,7 @@ def _execute_rapidtide(
                 )
             elif options["whitemattermask"] is None:
                 if not os.path.exists(default_mask):
-                    log.error("Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
+                    log.error(f"Cannot find the default --whitemattermask: aparc+aseg_res-2.nii.gz at {default_mask}")
                     run = False
                 else:
                     rapidtide_comm += (
@@ -576,29 +589,38 @@ def _execute_rapidtide(
                 else:
                     rapidtide_comm += f"                --refineexclude {refineexclude}"
 
-            # execute
-            _, _, failed = pc.run_external_for_file(
-                None,
-                rapidtide_comm,
-                "Running rapidtide",
-                overwrite=overwrite,
-                thread=f"{sinfo['id']}_{boldtarget}",
-                remove=options["log"] == "remove",
-                task="rapidtide",
-                logfolder=options["comlogs"],
-                logtags=[options["logtag"]],
-                full_test=None,
-                shell=True,
-                _log=log,
-            )
-            if failed:
-                log.step(f"rapidtide processing for bold {boldtarget} failed")
+            # a default mask is missing, the errors above say which
+            if not run:
+                log.step(f"rapidtide for bold {boldtarget} not run, inputs missing")
                 report["failed"].append(boldtarget)
-            else:
-                log.step(f"rapidtide processing for session {boldtarget} completed")
 
-        # just checking
+            # execute
+            else:
+                _, _, failed = pc.run_external_for_file(
+                    None,
+                    rapidtide_comm,
+                    "Running rapidtide",
+                    overwrite=overwrite,
+                    thread=f"{sinfo['id']}_{boldtarget}",
+                    remove=options["log"] == "remove",
+                    task="rapidtide",
+                    logfolder=options["comlogs"],
+                    logtags=[options["logtag"]],
+                    full_test=None,
+                    shell=True,
+                    _log=log,
+                )
+                if failed:
+                    log.step(f"rapidtide processing for bold {boldtarget} failed")
+                    report["failed"].append(boldtarget)
+                else:
+                    log.step(f"rapidtide processing for bold {boldtarget} completed")
+                    report["done"].append(boldtarget)
+
+        # just checking. the mask options are resolved by a run, as their
+        # defaults are made by the flirt step a dry run does not run
         else:
+            log.detail(f"test, not run: {' '.join(rapidtide_comm.split())}", depth=1)
             passed, _, failed = pc.check_run(
                 None, None, "rapidtide " + session, overwrite=overwrite, _log=log
             )

@@ -15,6 +15,7 @@ None of the code is run directly from the terminal interface.
 """
 
 import os
+import shlex
 
 import qx_utilities.general.commands_support as gcs
 import qx_utilities.general.log as gl
@@ -32,6 +33,13 @@ import qx_utilities.general.log as gl
 # each other. The names are `run_qc_t1w`, `run_qc_bold`, `run_qc_dwi`.
 COMLOG_TAGS = ("calculation", "modality")
 
+# The parameters that steer the comlogs of a processing command: whether a
+# comlog is kept, what its name carries and where it is copied. A script's
+# output is kept in a comlog of the run's own (`gl.run_and_log`) and no script
+# reads them, but a script stops on an option it does not know, so they are not
+# handed to one that does not declare them.
+PROCESSING_LOG_PARAMETERS = ("log", "logtag", "comlog_folders")
+
 
 def comlog_name(qx_command, args, session=None):
     """The name this call's comlog is filed under: the command, the parameters
@@ -48,6 +56,62 @@ def session_parameter(qx_command):
     them reads.
     """
     return "session" if "session" in gcs.declared_parameters(qx_command) else "sessions"
+
+
+def command_line(qx_command, args, session=None):
+    """
+    The shell line `run` starts a bash command with: its script and the
+    parameters the script is handed. None, said, when the script is not there.
+
+    Parameters:
+        qx_command: the registry entry of the command.
+        args: the parameters to call it with.
+        session: the session to run it on, which replaces whatever session
+            specification `args` carries, under the name the script reads.
+    """
+
+    # -- resolve script path
+
+    # the registry the command came from says where its `bash` folder is -- the
+    # extension's own folder for an extension command, $QUNEXPATH for a core
+    # one. Resolving against $QUNEXPATH alone sent every extension command to
+    # the core install, where its script is not. The fallback is for a record
+    # built by hand rather than loaded, which only a test does
+    root = getattr(qx_command, 'root', None) or os.environ.get('QUNEXPATH', '')
+    script = os.path.join(root, 'bash', qx_command.path)
+
+    if not os.path.exists(script):
+        print("\n\nERROR: %s failed! Script not found: %s\n" % (qx_command.name, script))
+        return None
+
+    # -- compose command string
+
+    declared = gcs.declared_parameters(qx_command)
+
+    if session:
+        args = {k: v for k, v in args.items() if k not in ["session", "sessions"]}
+        args[session_parameter(qx_command)] = session
+
+    arglist = []
+
+    for key, value in args.items():
+        # the run-level parameters steer how qunex runs the command, not what
+        # the script does. Asked of what the command declares rather than of
+        # its signature: a bash command has no signature, its parameters are
+        # documented ones, so `has_arg` was False for every one of them and a
+        # script was called with none of the parameters it shares with the run
+        if key in gcs.extra_parameters and key not in declared:
+            continue
+        if key in PROCESSING_LOG_PARAMETERS and key not in declared:
+            continue
+        if value is True:
+            arglist.append("--%s" % (key))
+        else:
+            # the line is run through a shell: in single quotes a value is
+            # taken as it is, except for an apostrophe, which would end them
+            arglist.append("--%s='%s'" % (key, str(value).replace("'", "'\\''")))
+
+    return " ".join(["bash", shlex.quote(script)] + arglist)
 
 
 def run(qx_command, args, run=None, session=None):
@@ -68,44 +132,9 @@ def run(qx_command, args, run=None, session=None):
     For internal use only.
     """
 
-    # -- resolve script path
-
-    # the registry the command came from says where its `bash` folder is -- the
-    # extension's own folder for an extension command, $QUNEXPATH for a core
-    # one. Resolving against $QUNEXPATH alone sent every extension command to
-    # the core install, where its script is not. The fallback is for a record
-    # built by hand rather than loaded, which only a test does
-    root = getattr(qx_command, 'root', None) or os.environ.get('QUNEXPATH', '')
-    script = os.path.join(root, 'bash', qx_command.path)
-
-    if not os.path.exists(script):
-        print("\n\nERROR: %s failed! Script not found: %s\n" % (qx_command.name, script))
+    com = command_line(qx_command, args, session)
+    if com is None:
         return 1
-
-    # -- compose command string
-
-    declared = gcs.declared_parameters(qx_command)
-
-    if session:
-        args = {k: v for k, v in args.items() if k not in ["session", "sessions"]}
-        args[session_parameter(qx_command)] = session
-
-    arglist = []
-
-    for key, value in args.items():
-        # the run-level parameters steer how qunex runs the command, not what
-        # the script does. Asked of what the command declares rather than of
-        # its signature: a bash command has no signature, its parameters are
-        # documented ones, so `has_arg` was False for every one of them and a
-        # script was called with none of the parameters it shares with the run
-        if key in gcs.extra_parameters and key not in declared:
-            continue
-        if value is True:
-            arglist.append("--%s" % (key))
-        else:
-            arglist.append("--%s='%s'" % (key, value))
-
-    com = " ".join(["bash", script] + arglist)
 
     # -- run command, keeping the output
 

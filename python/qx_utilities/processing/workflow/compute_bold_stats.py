@@ -37,9 +37,10 @@ from qx_utilities.processing.workflow.dryrun import mcommand
 BOLD_STATS_PURPOSE = """\
 Per frame statistics are computed for each of the specified BOLD files, from
 its movement correction parameter file and an analysis of the image. The
-results are saved as *.bstat and *.bscrub files in the images/movement
-subfolder. Only the images named by --bolds are processed. Note that the NIfTI
-volume image is used even when the target format is CIFTI."""
+results are saved as *.bstats, *.scrub and *.use files in the
+functional/movement subfolder of the images folder. Only the images named by
+--bolds are processed. Note that the NIfTI volume image is used even when the
+target format is CIFTI."""
 
 BOLD_STATS_PARAMETERS = [
     "mov_radius",
@@ -54,9 +55,9 @@ BOLD_STATS_PARAMETERS = [
 
 def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
     """
-    ``compute_bold_stats [... processing options]``
+    ``compute_bold_stats [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
-    Process specified BOLD files and save images/function/movement files.
+    Process specified BOLD files and save images/functional/movement files.
 
     ..  qx_command:
         type: processing.session
@@ -65,9 +66,15 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -80,10 +87,10 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --bolds (str, default 'rest'):
+        --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
-            copy over. It can be a single type (e.g. 'task'), a pipe separated
-            list (e.g. 'WM|Control|rest') or 'all' to copy all.
+            process. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
@@ -142,7 +149,7 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
               intersection).
             - 'udvars'   ... Either fdt or dvarsmt are exceeded (u for union).
             - 'idvarsme' ... Both fdt and dvarsmet are exceeded.
-            - 'udvarsme' ... Either fdt or udvarsmet are exceeded.
+            - 'udvarsme' ... Either fdt or dvarsmet are exceeded.
 
             For more detailed description please see wiki entry on Movement
             scrubbing.
@@ -232,16 +239,16 @@ def compute_bold_stats(sinfo, options, overwrite=False, thread=0):
         Using the defaults::
 
             qunex compute_bold_stats \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all
 
         Specifying additional parameters for identification of bad frames::
 
             qunex compute_bold_stats \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
                 --mov_fd=0.9 \\
@@ -341,7 +348,7 @@ def execute_compute_bold_stats(sinfo, options, overwrite, boldinfo):
     try:
         # --- filenames
 
-        f = pc.get_file_names(sinfo, options)
+        f = pc.get_file_names(sinfo, options, _log=log)
         f.update(pc.get_bold_file_names(sinfo, boldinfo["name"], options))
         d = pc.get_session_folders(sinfo, options)
 

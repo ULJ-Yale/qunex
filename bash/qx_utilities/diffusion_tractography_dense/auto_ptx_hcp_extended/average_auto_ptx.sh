@@ -10,7 +10,12 @@ cat << EOF
 Usage: average_auto_ptx <StudyFolder> <SessionId_list> <OutputFolder>
 
     For each SessionId in the provided list, the autoptx results are summed and averaged and saved in the outputFolder
-    AutoPtx results for each session are assumed saved in $StudyFolder/SessionId/MNINonLinear/Results/autoPtx
+    AutoPtx results for each session are assumed saved in <StudyFolder>/<SessionId>/MNINonLinear/Results/autoPtx,
+    so <StudyFolder> has to hold every listed session, as an HCP study folder does. In QuNex each session's
+    results are in its own <sessionsfolder>/<SessionId>/hcp/<SessionId>: link those into one folder first,
+    e.g. ln -s <sessionsfolder>/<SessionId>/hcp/<SessionId> <StudyFolder>/<SessionId>, and give that folder.
+
+    A session that lacks any of the tracts is left out of the average.
 
 EOF
     exit 1
@@ -31,36 +36,34 @@ TractsPath="MNINonLinear/Results/autoPtx"
 count=0
 for i in $list; do
     echo $i
-    if [ "$count" -eq "0" ]; then    #If first session 
-	error=0
-	for j in $tracts; do
-	   tmp=$StudyFolder/$i/$TractsPath/$j/tracts/tractsNorm.nii.gz
-	   if [ ! -f $tmp ]; then
-	       echo "File $tmp not found!"
-	       error=1
-	   else
-	       imcp $tmp $OutputFolder/$j 
-	   fi
-	done
-	if [ "$error" -eq "0" ]; then
-	    count=$(( $count + 1))  
-	fi
-     else
-	error=0
-	for j in $tracts; do
-	    tmp=$StudyFolder/$i/$TractsPath/$j/tracts/tractsNorm.nii.gz
-	    if [ ! -f $tmp ]; then
-		echo "File $tmp not found!"
-		error=1
-	    else
-		fslmaths $OutputFolder/$j -add $tmp $OutputFolder/$j
-	    fi
-	done
-	if [ "$error" -eq "0" ]; then
-	    count=$(( $count + 1))  
-	fi
+    # a session counts only with all its tracts, so every average has the same sessions
+    error=0
+    for j in $tracts; do
+        tmp=$StudyFolder/$i/$TractsPath/$j/tracts/tractsNorm.nii.gz
+        if [ ! -f $tmp ]; then
+            echo "File $tmp not found!"
+            error=1
+        fi
+    done
+    if [ "$error" -eq "1" ]; then
+        echo "Session $i left out of the average"
+        continue
     fi
+    for j in $tracts; do
+        tmp=$StudyFolder/$i/$TractsPath/$j/tracts/tractsNorm.nii.gz
+        if [ "$count" -eq "0" ]; then
+            imcp $tmp $OutputFolder/$j
+        else
+            fslmaths $OutputFolder/$j -add $tmp $OutputFolder/$j
+        fi
+    done
+    count=$(( $count + 1))
 done
+
+if [ "$count" -eq "0" ]; then
+    echo "ERROR: average_auto_ptx: no session has all the autoPtx tracts."
+    exit 1
+fi
 
 for j in $tracts; do
     fslmaths $OutputFolder/$j -div $count $OutputFolder/$j

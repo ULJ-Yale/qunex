@@ -27,7 +27,9 @@ import re
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
+from qx_utilities.general.parsing import flag
 
 from datetime import datetime
 
@@ -94,14 +96,9 @@ def run_nil_folder(folder=".", pattern=None, overwrite=None, sourcefile=None, _l
         pattern = "OP*"
     if sourcefile is None:
         sourcefile = "session.txt"
-    if overwrite is None:
-        overwrite = False
-    elif overwrite:
-        pass
-    elif overwrite == "yes" or overwrite is True:
-        overwrite = True
-    else:
-        overwrite = False
+    # "no" from the command line is a non-empty string, which the truth test
+    # this replaces read as yes
+    overwrite = flag(overwrite)
 
     subjs = glob.glob(os.path.join(folder, pattern))
 
@@ -198,14 +195,9 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
         folder.
     """
 
-    if overwrite is None:
-        overwrite = False
-    elif overwrite:
-        pass
-    elif overwrite == "yes" or overwrite is True:
-        overwrite = True
-    else:
-        overwrite = False
+    # "no" from the command line is a non-empty string, which the truth test
+    # this replaces read as yes
+    overwrite = flag(overwrite)
     if sourcefile is None:
         sourcefile = "session.txt"
 
@@ -221,6 +213,9 @@ def run_nil(folder=".", overwrite=None, sourcefile=None):
 
     if not info:
         raise ValueError("ERROR: No data in session.txt! [%s]!" % (sourcefile))
+
+    # the folders a session file names are relative to its session folder
+    gf.resolve_session_folders(info[0], folder)
 
     for k, v in info[0].items():
         if k == "raw_data":

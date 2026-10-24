@@ -20,22 +20,24 @@ import pprint
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.filelock as fl
+import qx_utilities.general.folders as gf
 import qx_utilities.qa.core as qa
 import qx_utilities.qa.config as config
 
 
 def run_qa(
     datatype=None,
-    sessionsfolder=".",
+    sessionsfolder=None,
     batchfile=None,
     sessions=None,
     configfile=None,
     tag=None,
-    overwrite="no"
+    overwrite="no",
+    studyfolder=None,
     ):
 
     """
-    ``run_qa [datatype=None] [sessionsfolder=.] [batchfile=None] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
+    ``run_qa [datatype=None] [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [batchfile=None] [sessions=None] [configfile=None] [tag=None] [overwrite=no]``
 
     Run Quality Assurance on a QuNex study, based off data-type and a user-defined config.
 
@@ -46,8 +48,15 @@ def run_qa(
         --datatype (str):
             The type of data to be run through QA. Currently only supports 'raw_data'.
 
-        --sessionsfolder (str):
-            The location of the <study>/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --batchfile (str, default None):
             An optional path to a batch file or a list file to take the sessions
@@ -56,7 +65,7 @@ def run_qa(
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
             will be processed. They are to be specified as a pipe or comma
-            separated list, grob patterns are valid session specifiers. This
+            separated list, glob patterns are valid session specifiers. This
             parameter also accepts session .list files.
 
         --configfile (str, default None):
@@ -75,8 +84,9 @@ def run_qa(
     Notes:
         This command will generate four files. These consist of 2 sessions .list
         files (pass and fail sessions lists), a report .txt file, and a more detailed
-        report .yaml file. List files will go in processing/lists, reports in
-        processing/reports (a new directory for QA reports).
+        report .yaml file. List files will go in the study's processing/lists
+        folder, reports in its processing/reports folder (a new directory for
+        QA reports).
 
         The .list files are QuNex compatible, they can be used as input into any
         datatype using the ``--sessions`` flag, as well as with ``qunex_container``. They
@@ -90,7 +100,7 @@ def run_qa(
 
         The data type:
 
-            ``--dataype=raw_data``
+            ``--datatype=raw_data``
 
             Raw Data QA checks whether found scans are in-line with the scan Protocol,
             defined by the user in the supplied config. Run after the import datatype,
@@ -100,7 +110,7 @@ def run_qa(
             check each session_hcp.txt file for correct mapping, as raw_data will
             identify missing/misordered scans.
 
-            ``--dataype=check_config``
+            ``--datatype=check_config``
 
             Config QA checks if the user-created config can be parsed by run_qa, without
             running QA on any actual data. This can be used to ensure the config is valid
@@ -245,7 +255,10 @@ def run_qa(
 
     """
 
-    out_dir, tag = param_check(datatype, sessionsfolder, configfile, tag, overwrite)
+    sessionsfolder = gf.sessions_folder(studyfolder, sessionsfolder)
+    out_dir, tag = param_check(
+        datatype, sessionsfolder, configfile, tag, overwrite, studyfolder
+    )
 
     pass_out = f"{out_dir}/lists/QA_pass_{datatype}{tag}.list"
     fail_out = f"{out_dir}/lists/QA_fail_{datatype}{tag}.list"
@@ -281,7 +294,7 @@ def run_qa(
     return
 
 
-def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
+def param_check(datatype, sessionsfolder, configfile, tag, overwrite, studyfolder=None):
     """
     Helper function for run_qa. Ensures all input parameters are valid and formats specific parameters.
     """
@@ -302,7 +315,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
         )
 
     if sessionsfolder == '.':
-        print("WARNING: --sessionsfolder left blank or '.', current directory will be treated as sessionsfolder.")
+        print("WARNING: --studyfolder and --sessionsfolder left blank, or --sessionsfolder set to '.', current directory will be treated as sessionsfolder.")
     else:
         if not os.path.exists(sessionsfolder):
             raise ge.CommandError(
@@ -322,7 +335,7 @@ def param_check(datatype, sessionsfolder, configfile, tag, overwrite):
                     f"Specified config file {configfile} does not exist! Please check your inputs."
             )
 
-    out_dir = sessionsfolder + "/../processing"
+    out_dir = gf.processing_folder(gf.study_folder(studyfolder, sessionsfolder))
 
     if not os.path.exists(out_dir):
         raise ge.CommandError(

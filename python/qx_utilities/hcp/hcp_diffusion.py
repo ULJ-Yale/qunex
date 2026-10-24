@@ -18,7 +18,7 @@ import glob
 import os
 import os.path
 
-import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
@@ -32,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_diffusion [... processing options]``
+    ``hcp_diffusion [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the Diffusion step of HCP Pipeline (DiffPreprocPipeline.sh). This
     command uses GPUs by default so CUDA Libraries are required for this to
@@ -46,15 +46,21 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         The code expects the first HCP preprocessing step (hcp_pre_freesurfer)
         to have been run and finished successfully. It expects the DWI data to
         have been acquired in phase encoding reversed pairs, which should be
-        present in the Diffusion folder in the sessions's root hcp folder.
+        present in the Diffusion folder in the session's root hcp folder.
 
     Parameters:
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -218,7 +224,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this command will be present in the Diffusion folder
-        in the sessions's root hcp folder.
+        in the session's root hcp folder.
 
     Notes:
         Gradient Coefficient File Specification:
@@ -227,7 +233,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             use in which case. Each option of the string has to be divided by a
             pipe "|" character and it has to specify, which information to look
             up, a possible value, and a file to use in that case, separated by
-            a colon ":" character. The information too look up needs to be
+            a colon ":" character. The information to look up needs to be
             present in the description of that session. Standard options are
             e.g.::
 
@@ -237,7 +243,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             Where device is formatted as "<manufacturer>|<model>|<serial number>".
 
             If specifying a string it also has to include a "default" option,
-            which will be used in the information was not found. An example
+            which will be used if the information was not found. An example
             could be::
 
                 "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
@@ -260,7 +266,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             QuNex parameter                HCPpipelines parameter
             ============================== =====================================
             ``hcp_dwi_phasepos``           ``posData``, ``negData``, ``PEdir``
-            ``hcp_dwi_echospacing``        ``echospacing``
+            ``hcp_dwi_echospacing``        ``echospacing-seconds``
             ``hcp_dwi_gdcoeffs``           ``gdcoeffs``
             ``hcp_dwi_dof``                ``dof``
             ``hcp_dwi_b0maxbval``          ``b0maxbval``
@@ -274,7 +280,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             ``hcp_dwi_posdata``            ``posData``
             ``hcp_dwi_negdata``            ``negData``
             ``hcp_nogpu``                  ``gpu``
-            ``hcp_longitudinal_template``  ``longitudinal-template``
+            ``hcp_longitudinal_template``  ``longitudinal-session``
             ``longitudinal``               ``is-longitudinal``
             ``hcp_species``                ``species``
             ``hcp_truepatientposition``    ``truepatientposition``
@@ -303,7 +309,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         Example run from the base study folder with test flag::
 
             qunex hcp_diffusion \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="no" \\
                 --test
@@ -311,7 +317,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         Run with scheduler, the compute node also loads the required CUDA module::
 
             qunex hcp_diffusion \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
                 --bash="module load CUDA/11.3.1" \\
@@ -320,7 +326,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
         Run without a scheduler and without GPU support::
 
             qunex hcp_diffusion \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --overwrite="yes" \\
                 --hcp_nogpu
@@ -538,12 +544,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         # longitudinal mode
         if options["longitudinal"]:
-            studyfolder = gc.deduce_folders(options)["basefolder"]
-            if not studyfolder:
-                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                run = False
             # replace path
-            path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+            path = os.path.join(
+                gf.subjects_folder(options["studyfolder"]), sinfo["subject"]
+            )
 
         # --- build the command
         if run:
@@ -658,39 +662,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
             # create dummy bvals and bvecs if demanded
             if options["hcp_dwi_dummy_bval_bvec"]:
-                # iterate over pos_data
-                pos_array = pos_data.split("@")
-                for pos in pos_array:
-                    # bval
-                    bval = pos.replace(".nii.gz", ".bval")
-                    if not os.path.isfile(bval):
-                        log.step(f"Creating dummy bval file for [{pos}].")
-                        with open(bval, "w") as f:
-                            f.write("0\n")
-
-                    # bvec
-                    bvec = pos.replace(".nii.gz", ".bvec")
-                    if not os.path.isfile(bvec):
-                        log.step(f"Creating dummy bvec file for [{pos}].")
-                        with open(bvec, "w") as f:
-                            f.write("0\n0\n0\n")
-
-                # iterate over neg_data
-                neg_array = neg_data.split("@")
-                for neg in neg_array:
-                    # bval
-                    bval = neg.replace(".nii.gz", ".bval")
-                    if not os.path.isfile(bval):
-                        log.step(f"Creating dummy bval file for [{pos}].")
-                        with open(bval, "w") as f:
-                            f.write("0\n")
-
-                    # bvec
-                    bvec = neg.replace(".nii.gz", ".bvec")
-                    if not os.path.isfile(bvec):
-                        log.step(f"Creating dummy bvec file for [{pos}].")
-                        with open(bvec, "w") as f:
-                            f.write("0\n0\n0\n")
+                _create_dummy_bval_bvec(
+                    pos_data.split("@") + neg_data.split("@"), options["run"], log
+                )
 
             # -- Report command
             if run:
@@ -738,11 +712,14 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking. A longitudinal run has no test file, and
+            #    nothing to find done
             else:
-                passed, report, failed = pc.check_run(
-                    tfile, full_test, "HCP Diffusion", overwrite=overwrite, _log=log
-                )
+                passed = None
+                if tfile is not None:
+                    passed, report, failed = pc.check_run(
+                        tfile, full_test, "HCP Diffusion", overwrite=overwrite, _log=log
+                    )
                 if passed is None:
                     log.step("HCP Diffusion can be run")
                     report = "HCP Diffusion can be run"
@@ -763,3 +740,23 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     log.close(pipeline="HCP Diffusion Preprocessing")
 
     return log.result(report, failed)
+
+
+def _create_dummy_bval_bvec(images, run, _log):
+    """
+    Create the bval and bvec files missing next to the given DWI images.
+
+    An `EMPTY` entry stands for a direction without data and names no file. A
+    dry run reports the files it would create and writes none.
+    """
+    for image in images:
+        if image == "EMPTY":
+            continue
+        for extension, content in ((".bval", "0\n"), (".bvec", "0\n0\n0\n")):
+            target = image.replace(".nii.gz", extension)
+            if os.path.isfile(target):
+                continue
+            _log.action("Creating", f"dummy {extension[1:]} file for [{image}].", run)
+            if run == "run":
+                with open(target, "w") as f:
+                    f.write(content)

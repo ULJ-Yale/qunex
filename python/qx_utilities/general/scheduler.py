@@ -19,6 +19,7 @@ import os
 import os.path
 import time
 import re
+import shlex
 
 import qx_utilities.general.exceptions as ge
 from qx_registry import qx_commands
@@ -37,9 +38,10 @@ def schedule(
     bash=None,
     parsessions=1,
     parelements=1,
+    logfolder=None,
 ):
     """
-    ``schedule [command=<command string>] [script=<path to script>] settings=<settings string> [replace=<"key:value|key:value" string>] [workdir=<path to working directory>] [environment=<path to environment setup script>] [output=<string specifying how to process output>]``
+    ``schedule [command=<command string>] [script=<path to script>] settings=<settings string> [replace=<"key:value|key:value" string>] [workdir=<path to working directory>] [environment=<path to environment setup script>] [output=<string specifying how to process output>] [logfolder=<the run's log folder>]``
 
     Schedule the provided command.
 
@@ -71,8 +73,12 @@ def schedule(
             to be imputed into the script or command.
 
         --workdir (str):
-            A path to the working directory in which the command or
-            script is to be executed.
+            The folder the job starts in. A relative path is taken from the
+            folder the submission runs in, which is the study folder once
+            the run has entered it. The job changes into it after the --bash
+            commands and the --environment script, before the command or
+            script; when it can not, it warns and runs in the folder the
+            scheduler started it in.
 
         --environment (str):
             A path to a script to be executed before all other commands
@@ -88,6 +94,13 @@ def schedule(
             compute node before the execution of the QuNex command
             itself. Use a semicolon separated list to chain multiple
             commands.
+
+        --logfolder (str, default '<the run's log folder>'):
+            The run's log folder. With no --output, the job's standard
+            output and error go to its `batchlogs` folder, as
+            `<scheduler>_schedule.<timestamp>.log`, beside the output of
+            every other job QuNex submits. QuNex sets it to the folder the
+            run logs in.
 
     Notes:
 
@@ -109,23 +122,27 @@ def schedule(
         Redirecting output
 
         If no output is specified, the job's standard output and error (stdout,
-        stderr) are left as is and processed by the scheduler, and the result of
-        submitting the job is printed to standard output. Output string can specify
-        four different directives provided by "<key>:<value>" strings separated by
+        stderr) both go to `<scheduler>_schedule.<timestamp>.log` in the
+        `batchlogs` folder of --logfolder; without a log folder they are left
+        as is and processed by the scheduler. The result of submitting the job
+        is printed to standard output. Output string can specify four
+        different directives provided by "<key>:<value>" strings separated by
         pipe:
 
         - stdout  (specifies a path to a log file that should store standard output
           of the submitted job.)
-        - stderr  (specified a path to a log file that should store error output
+        - stderr  (specifies a path to a log file that should store error output
           of the submitted job.)
         - both    (specifies a path to a log file that should store joint standard
           and error outputs of the submitted job.)
-        - return  (specifies whether standard output ('stdout'), error outpout
+        - return  (specifies whether standard output ('stdout'), error output
           ('stderr'), both ('both') or none ('none') should be returned as
           a string from the job submission call.)
 
-        Specify "return" value only when schedule is used as a function called from
-        another python script or function to process the result.
+        A relative log file path is taken from the folder the submission runs
+        in, and its folder has to exist. Specify "return" value only when
+        schedule is used as a function called from another python script or
+        function to process the result.
 
         Examples:
 
@@ -139,7 +156,7 @@ def schedule(
 
         ::
 
-            "both:processing.log|return:true"
+            "both:processing.log|return:both"
 
         Do not specify error and standard outputs both using --output parameter and
         scheduler specific options within settings string.
@@ -262,6 +279,10 @@ def schedule(
                     if "N" not in settings_dict:
                         str_split = s.split("=")
                         settings_dict["N"] = str_split[1].strip()
+                # what QuNex adds itself names the job rather than sets a flag
+                elif s.startswith(("jobnum=", "comname=")):
+                    key, value = s.split("=", 1)
+                    settings_dict[key.strip()] = value.strip()
                 else:
                     str_split = s.split()
                     setting = str_split[0].strip()
@@ -275,6 +296,10 @@ def schedule(
 
         comname = settings_dict.pop("comname", "")
         jobnum = settings_dict.pop("jobnum", "")
+
+        # a GridEngine job of several is named after its number, as the others are
+        if scheduler == "GridEngine" and jobnum != "":
+            settings_dict["N"] = "%s_%s" % (settings_dict.get("N", "qx_schedule"), jobnum)
     except Exception:
         raise ge.CommandError(
             "schedule",
@@ -291,17 +316,27 @@ def schedule(
                 "File not found",
                 "The specified script does not exist! [%s]" % (script),
             )
-        file = open(script, "r")
-        command = file.read()
+        with open(script, "r") as f:
+            command = f.read()
 
     if workdir is not None:
+        # absolute, as a job does not start where it was submitted from on
+        # every scheduler: PBS and GridEngine start it in the home folder
+        workdir = os.path.abspath(workdir)
         if not os.path.exists(workdir):
             raise ge.CommandFailed(
                 "schedule",
                 "Folder does not exist",
                 "The specified working directory does not exist! [%s]" % (workdir),
             )
-        command = "cd %s\n" % (workdir) + command
+        # quoted for the shell in the warning as well, where the double
+        # quotes are closed around it: inside them a `"` in the folder's name
+        # would end the string, and a `$` would be expanded
+        folder = shlex.quote(workdir)
+        command = (
+            'cd %s || echo "WARNING: could not change into "%s", relative paths '
+            'are taken from $(pwd)" >&2\n' % (folder, folder)
+        ) + command
 
     if environment is not None:
         if not os.path.exists(environment):
@@ -310,21 +345,57 @@ def schedule(
                 "File not found",
                 "The specified environment script does not exist! [%s]" % (environment),
             )
-        command = file(environment).read() + "\n" + command
+        with open(environment, "r") as f:
+            command = f.read() + "\n" + command
 
     # --- do search replace
     if replace is not None:
         replace = [e.strip().split(":") for e in replace.split("|")]
 
         for key, value in replace:
-            command.replace("{{%s}}" % (key), value)
+            command = command.replace("{{%s}}" % (key), value)
 
     # --- parse output
     outputs = {"stdout": None, "stderr": None, "both": None, "return": None}
 
+    # a run's job keeps its output beside the run's other logs unless it is
+    # told where to put it: left to the scheduler, it lands in the folder the
+    # job starts in
+    if output is None and logfolder:
+        batchlogs = os.path.join(logfolder, "batchlogs")
+        os.makedirs(batchlogs, exist_ok=True)
+        output = "both:%s" % os.path.join(
+            batchlogs,
+            "%s_schedule.%s.log"
+            % (scheduler, datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")),
+        )
+
     if output is not None:
-        for k, v in [[f.strip() for f in e.split(":")] for e in output.split("|")]:
-            if not os.path.exists(os.path.dirname(v)) and k != "return":
+        for directive in output.split("|"):
+            # split at the first colon only: a path may hold one of its own
+            k, _, v = [f.strip() for f in directive.partition(":")]
+            if k not in outputs or not v:
+                raise ge.CommandError(
+                    "schedule",
+                    "Misspecified parameter",
+                    "Could not read the output directive '%s': it has to be "
+                    "stdout, stderr or both with a log file, or return with "
+                    "stdout, stderr, both or none." % (directive),
+                )
+            if k == "return":
+                if v not in ("stdout", "stderr", "both", "none"):
+                    raise ge.CommandError(
+                        "schedule",
+                        "Misspecified parameter",
+                        "return has to be stdout, stderr, both or none, got: %s"
+                        % (v),
+                    )
+                outputs[k] = None if v == "none" else v
+                continue
+            # absolute, as it is written into the job script: a file named
+            # without a folder is in the current one, which exists
+            v = os.path.abspath(v)
+            if not os.path.exists(os.path.dirname(v)):
                 raise ge.CommandFailed(
                     "schedule",
                     "Folder does not exist",
@@ -390,8 +461,10 @@ def schedule(
     elif scheduler == "SLURM":
         s_command += "#!/bin/bash\n"
         for key, value in settings_dict.items():
-            if key in ("J", "job-name") and jobname == "qx_schedule":
-                jobname = v
+            # the job name is written once, below
+            if key in ("J", "job-name"):
+                if jobname == "qx_schedule":
+                    jobname = value
             elif not value:
                 s_command += "#SBATCH --%s\n" % (key.replace("--", ""))
             else:
@@ -495,12 +568,36 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
     which job ids came back -- is printed and appended to the run's runlog.
     The runlog belongs to the run, not to the scheduler: it already holds the
     header and whatever the caller wrote before submitting, so it is never
-    opened for writing here. The jobs' own output goes to
-    ``<run.logfolder>/batchlogs``.
+    opened for writing here.
+
+    Every job is handed the run's log folder with ``--logfolder``, so its
+    runlog and comlogs sit beside the submission's, and its own output goes
+    to ``<run.logfolder>/batchlogs``, filed under the run's name:
+    ``<scheduler>_<name>[_job<NN>].<timestamp>.log``.
+
+    A job starts in the folder the run was started from
+    (``run.startfolder``), or in ``--scheduler_workdir``, and runs the
+    command line again from there: it decides its study, and where its
+    relative paths are taken from, again, as the run did. `gmri` hands it the
+    study the run settled (``placement.for_jobs``), so a relative study in the
+    batch file header is not read again from another folder.
+
+    A dry run -- ``--test`` or ``--run`` other than ``run`` -- submits
+    nothing and creates no ``batchlogs`` folder: it records each job it would
+    have submitted, with its command.
+
+    A status record the run was asked for (``--logstatus``, as ``run_recipe``
+    asks each step for one) is written here, by the submission: which job each
+    session went to, or that it was not submitted. The jobs are not handed
+    the path -- each would write the same file, and the last to finish would
+    overwrite the others -- so what they did is in their own runlogs.
 
     For internal use only.
     """
     jobs = []
+    # the status record: `(session or command, what was done with it, failed)`;
+    # whether a submitted job fails is not known here
+    stati = []
 
     def record(*parts):
         """Print a line of the submission record and add it to the runlog."""
@@ -520,8 +617,17 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
             "nprocess",
             "bash",
             "parjobs",
+            "logstatus",
         ]:
             nopt.append((k, v))
+
+    # ---- every job logs in the run's folder: it is handed the folder rather
+    #      than deciding one of its own, which spread one run over as many
+    #      folders as it had jobs. The folder already answers for a
+    #      `--logfolder` the run was given, `legacy` and relative ones included
+    if run:
+        nopt = [(k, v) for k, v in nopt if k != "logfolder"]
+        nopt.append(("logfolder", run.logfolder))
 
     record("---> Running scheduler for command %s" % (command))
 
@@ -529,9 +635,17 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
     settings = args["scheduler"]
     settings_list = [e.strip() for e in settings.split(",")]
     scheduler = settings_list.pop(0)
-    workdir = args.get("scheduler_workdir", None)
+    # the job starts where this run was started, on every scheduler -- PBS and
+    # GridEngine would start it in the home folder -- so that its own run
+    # settles its study, and takes its relative paths, as this one did
+    workdir = (
+        args.get("scheduler_workdir")
+        or getattr(run, "startfolder", None)
+        or os.getcwd()
+    )
     environment = args.get("scheduler_environment", None)
-    sleeptime = args.get("scheduler_sleep", 0)
+    # seconds; a number given on the command line arrives as text
+    sleeptime = float(args.get("scheduler_sleep") or 0)
 
     parjobs = args.get("parjobs", None)
     if parjobs is not None:
@@ -541,7 +655,12 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
     if parelements is not None:
         parelements = int(parelements)
 
-    test = args.get("run", "run")
+    # a dry run submits nothing. `--test` arrives here as the flag it was
+    # typed as -- `process.flaglist` turns it into `run=test` only in the
+    # merged options -- so reading `run` alone submitted the jobs of every
+    # `--test` run. A `run` other than `run` is a dry run, as the commands
+    # themselves read it
+    test = "run" if args.get("run", "run") == "run" and not args.get("test") else "test"
 
     # check scheduler
     if scheduler not in ["PBS", "SLURM", "GridEngine"]:
@@ -556,9 +675,13 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
     # ---- setup bash (commands to run inside compute node before the QuNex command)
     bash = args.get("bash", None)
 
-    # --- the jobs' own output goes beside the run's other logs
+    # --- the jobs' own output goes beside the run's other logs, filed under the
+    #     run's name as its folder is. Created only when something is
+    #     submitted: a dry run submits nothing
+    name = run.name if run else command
     logfolder = os.path.join(run.logfolder, "batchlogs") if run else os.path.abspath(".")
-    os.makedirs(logfolder, exist_ok=True)
+    if test == "run":
+        os.makedirs(logfolder, exist_ok=True)
 
     # ---- construct gmri command
     c_base = "\ngmri " + command
@@ -570,13 +693,18 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
 
     # ---- if sessions is None
     if sessions is None:
-        record("\n---> submitting %s" % (command))
+        record(
+            "\n---> %s %s"
+            % ("submitting" if test == "run" else "test, not submitted:", command)
+        )
         record(c_base)
 
-        if test == "run":
+        if test != "run":
+            stati.append((command, "test, not submitted", 0))
+        else:
             exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
             logfile = os.path.join(
-                logfolder, "%s_%s.%s.log" % (scheduler, command, exectime)
+                logfolder, "%s_%s.%s.log" % (scheduler, name, exectime)
             )
             result, jobid = schedule(
                 command=c_base,
@@ -589,6 +717,7 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
                 parelements=parelements,
             )
             jobs.append((jobid, command))
+            stati.append((command, "submitted as job %s" % jobid, None))
 
     # ---- if session list is present
     else:
@@ -713,66 +842,84 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
                     "    Job #%s will run sessions: %s" % ((i + 1), sessionids_array[i])
                 )
 
-        if test == "run":
-            for i in range(parjobs):
-                # ---- set the sessions this job runs; the later value wins over
-                #      the one c_base carries
-                c_str = c_base + ' --sessions="%s"' % sessionids_array[i]
+        for i in range(parjobs):
+            # ---- set the sessions this job runs; the later value wins over
+            #      the one c_base carries
+            c_str = c_base + ' --sessions="%s"' % sessionids_array[i]
+            jobname = "%s_#%02d" % (command, i)
+            job_sessions = [sid for sid in sessionids_array[i].split(",") if sid]
 
-                # ---- set sheduler settings
-                if parjobs > 1:
-                    settings["jobnum"] = str(i)
-                if scheduler != "GridEngine":
-                    s_string = (
-                        scheduler
-                        + ","
-                        + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
-                    )
-                else:
-                    s_string = scheduler
-                    for k, v in settings.items():
-                        if v:
-                            s_string = "%s,%s" % (s_string, k + "=" + v)
-                        else:
-                            s_string = "%s,%s" % (s_string, k)
-
-                exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
-
-                # set different output format for slurm_array
-                if not slurm_array:
-                    logfile = os.path.join(
-                        logfolder,
-                        "%s_%s_job%02d.%s.log" % (scheduler, command, i, exectime),
-                    )
-                else:
-                    logfile = os.path.join(
-                        logfolder,
-                        "%s_%s_job%%a.%s.log" % (scheduler, command, exectime),
-                    )
-
-                jobname = "%s_#%02d" % (command, i)
-
-                record("\n---> submitting %s" % (jobname))
+            # ---- a dry run says what it would have submitted, and submits
+            #      nothing
+            if test != "run":
+                record("\n---> test, not submitted: %s" % (jobname))
                 record(c_str)
+                stati += [
+                    (sid, "test, not submitted (%s)" % jobname, 0)
+                    for sid in job_sessions
+                ]
+                continue
 
-                result, jobid = schedule(
-                    command=c_str,
-                    settings=s_string,
-                    workdir=workdir,
-                    environment=environment,
-                    output="both:%s|return:both" % (logfile),
-                    bash=bash,
-                    parsessions=parsessions,
-                    parelements=parelements,
+            # ---- set scheduler settings
+            if parjobs > 1:
+                settings["jobnum"] = str(i)
+            if scheduler != "GridEngine":
+                s_string = (
+                    scheduler
+                    + ","
+                    + ",".join(["%s=%s" % (k, v) for (k, v) in settings.items()])
                 )
-                jobs.append((jobid, jobname))
+            else:
+                s_string = scheduler
+                for k, v in settings.items():
+                    if v:
+                        s_string = "%s,%s" % (s_string, k + "=" + v)
+                    else:
+                        s_string = "%s,%s" % (s_string, k)
 
-                record("...\n", result)
+            exectime = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
 
-                time.sleep(sleeptime)
+            # set different output format for slurm_array
+            if not slurm_array:
+                logfile = os.path.join(
+                    logfolder,
+                    "%s_%s_job%02d.%s.log" % (scheduler, name, i, exectime),
+                )
+            else:
+                logfile = os.path.join(
+                    logfolder,
+                    "%s_%s_job%%a.%s.log" % (scheduler, name, exectime),
+                )
+
+            record("\n---> submitting %s" % (jobname))
+            record(c_str)
+
+            result, jobid = schedule(
+                command=c_str,
+                settings=s_string,
+                workdir=workdir,
+                environment=environment,
+                output="both:%s|return:both" % (logfile),
+                bash=bash,
+                parsessions=parsessions,
+                parelements=parelements,
+            )
+            jobs.append((jobid, jobname))
+            stati += [
+                (sid, "submitted as job %s (%s)" % (jobid, jobname), None)
+                for sid in job_sessions
+            ]
+
+            record("...\n", result)
+
+            time.sleep(sleeptime)
 
     # --- print report
     if jobs:
         record("\n---> Submitted jobs")
         for jobid, jobname in jobs:
             record("     %s -> %s" % (jobid, jobname))
+
+    # --- the status record a parent asked for, written once, by the submission
+    if run and args.get("logstatus"):
+        run.write_status(stati)

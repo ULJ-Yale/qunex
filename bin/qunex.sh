@@ -23,7 +23,8 @@ TimeStamp=`date +%Y-%m-%d_%H.%M.%S.%6N`
 # to gmri, which is what `gmri -available` reports below; the wrappers for the
 # ones that are also registry commands are kept in this file but are no longer
 # reached. show_version and environment are answered above, before any of this.
-# auto_ptx is not a registry command and has no script of its own.
+# auto_ptx is not a registry command; it runs the autoPtx scripts in
+# bash/qx_utilities/diffusion_tractography_dense/auto_ptx_hcp_extended.
 qunex_commands="auto_ptx"
 
 # version
@@ -58,6 +59,30 @@ cat << EOF
 ======================================
 
   qunex -a
+
+
+ Relative paths and logs
+=========================
+
+  A command that names its study, with --studyfolder or with --sessionsfolder
+  (the study is then the folder the sessions folder is in), on the command
+  line, in the batch file header or in a recipe, runs in the study folder and
+  takes every relative path it is given from there, once the study exists.
+  --studyfolder itself is taken from the current folder, and the batch file,
+  a .list file and the recipe file from the study the command line names.
+  A command that names neither folder, and create_study, manage_study and
+  copy_study, take relative paths from the current folder.
+
+  Each run keeps all its logs in a folder of its own,
+  <studyfolder>/logs/<date>_<time>_<command>, and prints it as
+  "---> Logs: <folder>". A run that names neither folder logs in the study
+  marked by .qunexstudy at or above the current folder; a run outside a study
+  logs in ~/qunex_logs, unless the outside_study setting says otherwise.
+  --logfolder names another folder, a relative one taken as other relative
+  paths are; --logfolder=legacy is <studyfolder>/processing/logs.
+
+  Details: https://qunex.readthedocs.io/en/latest/wiki/Overview-GeneralUse.html
+  and https://qunex.readthedocs.io/en/latest/wiki/Overview-Logging.html
 
 EOF
 
@@ -99,6 +124,20 @@ show_all_qunex_commands() {
 # ---------------------------------------------------------------------------------------------------------------
 
 bash_call_execute() {
+    # -- A command gmri runs is handed over as it is: gmri works out the study,
+    #    the logs and the comlogs itself, and this front end has not parsed a
+    #    study folder for it, so nothing below applies
+    if [[ ${qxutil_command_to_run} ]]; then
+        echo ""
+        echo "--- Full QuNex call for command: ${qxutil_command_to_run}"
+        echo ""
+        echo "qunex ${gmriinput}"
+        echo ""
+        echo "---------------------------------------------------------"
+        eval "gmri ${gmriinput}"
+        return $?
+    fi
+
     # -- Set platform info
     Platform="Platform Information: `uname -a`"
     # -- Check if Matlab command
@@ -122,147 +161,142 @@ bash_call_execute() {
         echo "         Consider re-generating QuNex hierarchy..."; echo ""
     fi
 
-    # -- If logfolder flag not set then set it and set master log
-    if [[ -z ${LogFolder} ]]; then
-        MasterLogFolder="${StudyFolder}/logs/${TimeStamp}_${CommandToRun}"
-    else
-        MasterLogFolder="$LogFolder"
+    # the run's log folder, decided by the rule every QuNex run is placed by,
+    # so that a command this front end runs itself logs where it would through
+    # gmri: the study's logs folder, a --logfolder taken from the study, the
+    # log folder a batch file header names, the legacy layout and the logging
+    # settings all as there
+    if ! MasterLogFolder=$(gmri log_folder --command="${CommandToRun}" --timestamp="${TimeStamp}" \
+            ${StudyFolder:+--studyfolder="${StudyFolder}"} \
+            ${SessionsFolder:+--sessionsfolder="${SessionsFolder}"} \
+            ${BATCH_FILE:+--batchfile="${BATCH_FILE}"} \
+            ${UnsetBatchHeader:+--unset_batch_header_parameters="${UnsetBatchHeader}"} \
+            ${LogFolder:+--logfolder="${LogFolder}"}); then
+        echo "${MasterLogFolder}"
+        echo "ERROR: Could not decide where the logs of ${CommandToRun} go. Check your inputs."
+        return 1
     fi
-    if [[ ! -d ${MasterLogFolder} ]]; then
-        mkdir ${MasterLogFolder} &> /dev/null
-    fi
+    # the folder is the last line, after anything gmri warns about
+    MasterLogFolder=$(echo "${MasterLogFolder}" | tail -n 1)
 
-    # -- Set and generate comlogs folder
+    # the comlogs, and the run scripts with a scheduled job's output beside them
     MasterComlogFolder="${MasterLogFolder}/comlogs"
-    if [[ ! -d ${MasterComlogFolder} ]]; then
-        mkdir ${MasterComlogFolder} &> /dev/null
+    ComRunFolder="${MasterLogFolder}/batchlogs"
+    if ! mkdir -p "${MasterComlogFolder}" "${ComRunFolder}"; then
+        echo "ERROR: Could not create the log folder ${MasterLogFolder}. Check that it can be written to."
+        return 1
     fi
+    echo ""
+    echo "---> Logs: ${MasterLogFolder}"
 
-    # -- Set and generate temp run folder
-    ComRunFolder="${StudyFolder}/processing/scripts/tmp"
-    if [[ ! -d ${ComRunFolder} ]]; then
-        mkdir ${ComRunFolder} &> /dev/null
-    fi
-
-    # -- Specific call for python qx_utilities functions
-    if [[ ${qxutil_command_to_run} ]]; then
-        echo ""
-        echo "--- Full QuNex call for command: ${qxutil_command_to_run}"
-        echo ""
-        echo "qunex ${gmriinput}"
-        echo ""
-        echo "---------------------------------------------------------"
-        eval "gmri ${gmriinput}"
-        return $?
+    # log tag
+    if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
+        logtag="${TimeStamp}_${CommandToRun}_${Calculation}_${CASE}"
+    elif [[ ${CommandToRun} != "run_qc" ]]; then
+        logtag="${TimeStamp}_${CommandToRun}_${CASE}"
     else
-        # log tag
-        if [[ ${CommandToRun} == "compute_bold_fc" ]]; then
-            logtag="${TimeStamp}_${CommandToRun}_${Calculation}_${CASE}"
-        elif [[ ${CommandToRun} != "run_qc" ]]; then
+        if [[ -z ${Modality} ]]; then
             logtag="${TimeStamp}_${CommandToRun}_${CASE}"
         else
-            if [[ -z ${Modality} ]]; then
-                logtag="${TimeStamp}_${CommandToRun}_${CASE}"
-            else
-                modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
+            modality_lower=$(echo "${Modality}" | tr '[:upper:]' '[:lower:]')
 
-                # add bold number if only one BOLD in BOLDLIST
-                if [[ -n ${BOLDLIST} ]]; then
-                    if [[ ! "${BOLDLIST}" =~ [,\ |] ]]; then
-                        modality_lower=${modality_lower}_${BOLDLIST}
-                    fi
+            # add bold number if only one BOLD in BOLDLIST
+            if [[ -n ${BOLDLIST} ]]; then
+                if [[ ! "${BOLDLIST}" =~ [,\ |] ]]; then
+                    modality_lower=${modality_lower}_${BOLDLIST}
                 fi
-
-                logtag="${TimeStamp}_${CommandToRun}_${modality_lower}_${CASE}"
             fi
+
+            logtag="${TimeStamp}_${CommandToRun}_${modality_lower}_${CASE}"
         fi
+    fi
 
-        # runlog
-        Runlog="${MasterLogFolder}/Log-${logtag}.log"
+    # runlog
+    Runlog="${MasterLogFolder}/Log-${logtag}.log"
 
-        # comlog
-        ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
-        ComRun="${ComRunFolder}/Run_${logtag}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
-        ComlogDone="${MasterComlogFolder}/done_${logtag}.log"
-        ComlogError="${MasterComlogFolder}/error_${logtag}.log"
+    # comlog
+    ComlogTmp="${MasterComlogFolder}/tmp_${logtag}.log"; touch ${ComlogTmp}; chmod 777 ${ComlogTmp}
+    ComRun="${ComRunFolder}/Run_${logtag}.sh"; touch ${ComRun}; chmod 777 ${ComRun}
+    ComlogDone="${MasterComlogFolder}/done_${logtag}.log"
+    ComlogError="${MasterComlogFolder}/error_${logtag}.log"
 
-        # -- Batchlog
-        # --   <batch system>_<command name>_job<job number>.<date>_<hour>.<minute>.<microsecond>.log
+    echo ""
+    echo "--- Full QuNex call for command: ${CommandToRun}"
+    echo ""
+    echo "${QuNexCallToRun}"
+    echo ""
+    echo "--------------------------------------------------------------"
+    echo ""
+    echo ""
+
+    # -- Declare commands
+    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${Runlog}
+    echo "#" >> ${Runlog}
+    QuNexCallToRunPrint=$(echo "${QuNexCallToRun}" | sed -E 's/ +--/ \\\n  --/g')
+    echo "${QuNexCallToRunPrint}" >> ${Runlog}
+    echo "#!/bin/bash" >> ${ComRun}
+    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComRun}
+    echo "#" >> ${ComRun}
+    echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
+    echo "${QuNexCallToRun}" >> ${ComRun}
+    chmod 777 ${ComRun}
+
+    # -- Check that $ComRun is set properly
+    echo ""; if [ ! -f "${ComRun}" ]; then echo "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
+    ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
+    echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; echo "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
+
+    # -- Define command to execute
+    echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComlogTmp}
+    echo "#" >> ${ComlogTmp}
+    ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
+
+    # -- Acceptance test: the exit status of the run is tee's, so the
+    #    comlog is what says whether the command succeeded
+    ComAccept="grep -q 'Successful completion' ${ComlogTmp} && ! grep -q 'ERROR' ${ComlogTmp}"
+
+    # -- Garbage collection
+    ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
+    ComGarbageRemove="if [[ -s qunex_garbage0 ]]; then rm 0; rm qunex_garbage0; fi; if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
+    ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
+
+    # -- Run the commands locally
+    if [[ ${Cluster} == 1 ]]; then
+        # -- Command to perform acceptance test
+        ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
+        # -- Combine final string of commands
+        ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
+        echo "--------------------------------------------------------------"
         echo ""
-        echo "--- Full QuNex call for command: ${CommandToRun}"
-        echo ""
-        echo "${QuNexCallToRun}"
+        echo "   Running ${CommandToRun} locally on `hostname`"
+        echo "   Command log:     ${Runlog}  "
+        echo "   Command output: ${ComlogTmp} "
         echo ""
         echo "--------------------------------------------------------------"
         echo ""
+        eval "${ComRunAll}"
+    fi
+
+    # -- Run the commands via scheduler
+    if [[ ${Cluster} == 2 ]]; then
+        # -- Command to perform acceptance test
+        ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
+        # -- Combine final string of commands
+        ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
+        # the job's output is its batchlog, <scheduler>_<log tag>.log in
+        # batchlogs, and gmri logs the submission in the run's folder as well
+        gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}" \
+            output="both:${ComRunFolder}/${Scheduler%%,*}_${logtag}.log" \
+            logfolder="${MasterLogFolder}"
+        echo "--------------------------------------------------------------"
         echo ""
-
-        # -- Declare commands
-        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${Runlog}
-        echo "#" >> ${Runlog}
-        QuNexCallToRunPrint=$(echo "${QuNexCallToRun}" | sed -E 's/ +--/ \\\n  --/g')
-        echo "${QuNexCallToRunPrint}" >> ${Runlog}
-        echo "#!/bin/bash" >> ${ComRun}
-        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComRun}
-        echo "#" >> ${ComRun}
-        echo "export PYTHONUNBUFFERED=1" >> ${ComRun}
-        echo "${QuNexCallToRun}" >> ${ComRun}
-        chmod 777 ${ComRun}
-
-        # -- Check that $ComRun is set properly
-        echo ""; if [ ! -f "${ComRun}" ]; then echo "ERROR: ${ComRun} file not found. Check your inputs"; echo ""; return 1; fi
-        ComRunSize=`wc -c < ${ComRun}` > /dev/null 2>&1
-        echo ""; if [[ "${ComRunSize}" == 0 ]]; then > /dev/null 2>&1; echo "ERROR: ${ComRun} file found but has no content. Check your inputs"; echo ""; return 1; fi
-
-        # -- Define command to execute
-        echo "# Generated by QuNex ${QuNexVer} on ${TimeStamp}" >> ${ComlogTmp}
-        echo "#" >> ${ComlogTmp}
-        ComRunExec=". ${ComRun} 2>&1 | tee -a ${ComlogTmp}"
-
-        # -- Acceptance test: the exit status of the run is tee's, so the
-        #    comlog is what says whether the command succeeded
-        ComAccept="grep -q 'Successful completion' ${ComlogTmp} && ! grep -q 'ERROR' ${ComlogTmp}"
-
-        # -- Garbage collection
-        ComGarbageCollect="if [[ -f 0 && ! -s 0 ]]; then echo 'delete' >> qunex_garbage0; fi; if [[ -s 1 ]]; then cat 1 | grep 'qunex' > qunex_garbage1; fi; if [[ -s 2 ]]; then cat 2 | grep 'FSL_FIX_MCRROOT' >> qunex_garbage2; fi"
-        ComGarbageRemove="if [[ -s qunex_garbage0 ]]; then rm 0; rm qunex_garbage0; fi; if [[ -s qunex_garbage1 ]]; then rm 1; rm qunex_garbage1; fi; if [[ -s qunex_garbage2 ]]; then rm 2; rm qunex_garbage2; fi"
-        ComRunGarbage="${ComGarbageCollect}; ${ComGarbageRemove}"
-
-        # -- Run the commands locally
-        if [[ ${Cluster} == 1 ]]; then
-            # -- Command to perform acceptance test
-            ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; qunex_done; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; qunex_failed; fi"
-            # -- Combine final string of commands
-            ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
-            echo "--------------------------------------------------------------"
-            echo ""
-            echo "   Running ${CommandToRun} locally on `hostname`"
-            echo "   Command log:     ${Runlog}  "
-            echo "   Command output: ${ComlogTmp} "
-            echo ""
-            echo "--------------------------------------------------------------"
-            echo ""
-            eval "${ComRunAll}"
-        fi
-
-        # -- Run the commands via scheduler
-        if [[ ${Cluster} == 2 ]]; then
-            # -- Command to perform acceptance test
-            ComRunCheck="if ${ComAccept}; then mv ${ComlogTmp} ${ComlogDone}; echo ''; echo ' ---> Successful completion of ${CommandToRun}. Check final QuNex log output:'; echo ''; echo '    ${ComlogDone}'; echo ''; echo 'QUNEX PASSED!'; echo ''; else mv ${ComlogTmp} ${ComlogError}; echo ''; echo ' ---> ERROR during ${CommandToRun}. Check final QuNex error log output:'; echo ''; echo '    ${ComlogError}'; echo ''; echo ''; echo 'QUNEX FAILED!'; fi"
-            # -- Combine final string of commands
-            ComRunAll="${ComRunExec}; ${ComRunCheck}; ${ComRunGarbage}"
-            cd ${MasterLogFolder}
-            gmri schedule command="${ComRunAll}" settings="${Scheduler}" bash="${Bash}"
-            echo "--------------------------------------------------------------"
-            echo ""
-            echo "   Data successfully submitted to scheduler"
-            echo "   Scheduler details: ${Scheduler}"
-            echo "   Command log: ${Runlog}"
-            echo "   Command output: ${ComlogTmp} "
-            echo ""
-            echo "--------------------------------------------------------------"
-            echo ""
-        fi
+        echo "   Data successfully submitted to scheduler"
+        echo "   Scheduler details: ${Scheduler}"
+        echo "   Command log: ${Runlog}"
+        echo "   Command output: ${ComlogTmp} "
+        echo ""
+        echo "--------------------------------------------------------------"
+        echo ""
     fi
 }
 
@@ -724,21 +758,33 @@ show_usage_dwi_bedpostx_gpu() {
 auto_ptx() {
     echo "WARNING: auto_ptx is deprecated, you should probably use dwi_xtract instead!"
 
-    # -- Check inputs
-    if [[ -d ${BedPostXFolder} ]]; then
+    # the autoPtx scripts take the folder that holds the session's HCP folder
+    # as their study folder, and the bedpostX folder by its name under T1w
+    HCPFolder="${SessionsFolder}/${CASE}/hcp"
+    BedPostXName="Diffusion.bedpostX"
+    BedPostXFolder="${HCPFolder}/${CASE}/T1w/${BedPostXName}"
+    ResultsFolder="${HCPFolder}/${CASE}/MNINonLinear/Results/autoPtx"
+
+    # -- Check inputs: a session without them is reported and the next one run
+    if [[ ! -d ${BedPostXFolder} ]]; then
         echo "ERROR: Prior BedpostX run not found or incomplete for $CASE. Check work and re-run."
-        exit 1
+        return 1
     fi
+    # the scripts are in this repository; AutoPtxFolder names others
     if [[ -z ${AutoPtxFolder} ]]; then
-        echo "ERROR: AutoPtxFolder environment variable not. Set it correctly and re-run."
+        AutoPtxFolder="${TOOLS}/${QUNEXREPO}/bash/qx_utilities/diffusion_tractography_dense/auto_ptx_hcp_extended"
+    fi
+    if [[ ! -x ${AutoPtxFolder}/auto_ptx ]]; then
+        echo "ERROR: auto_ptx not found in ${AutoPtxFolder}. Set AutoPtxFolder to the auto_ptx_hcp_extended folder of QuNex and re-run."
         exit 1
     fi
     # -- Set commands
-    Com1="${AutoPtxFolder}/autoptx ${SessionsFolder} ${CASE} ${BedPostXFolder}"
-    Com2="${AutoPtxFolder}/prepare_for_display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 1"
-    Com3="${AutoPtxFolder}/prepare_for_display.sh ${StudyFolder}/${CASE}/MNINonLinear/Results/autoptx 0.005 0"
-    # -- Specify command variable
-    QuNexCallToRun="${Com1}; ${Com2}; ${Com3}"
+    Com1="${AutoPtxFolder}/auto_ptx ${HCPFolder} ${CASE} ${BedPostXName}"
+    Com2="${AutoPtxFolder}/prepare_for_display.sh ${ResultsFolder} 0.005 1"
+    Com3="${AutoPtxFolder}/prepare_for_display.sh ${ResultsFolder} 0.005 0"
+    # -- Specify command variable: a step that fails stops the run, which then
+    #    does not report the completion the comlog check looks for
+    QuNexCallToRun="${Com1} && ${Com2} && ${Com3} && echo 'auto_ptx: Successful completion'"
     # -- QuNex bash execute function
     bash_call_execute
 }
@@ -747,7 +793,29 @@ show_usage_auto_ptx() {
     echo ""
     echo "qunex ${usage_input} "
     echo ""
-    echo "This command runs the auto_ptx script in ${AutoPtxFolder}."
+    echo "WARNING: auto_ptx is deprecated, you should probably use dwi_xtract instead!"
+    echo ""
+    echo "This command runs the autoPtx probabilistic tractography of 33 large-scale"
+    echo "fiber bundles on each session, with the scripts in"
+    echo "bash/qx_utilities/diffusion_tractography_dense/auto_ptx_hcp_extended"
+    echo "(or the folder AutoPtxFolder names) and the protocols in"
+    echo "qx_library/etc/auto_ptx."
+    echo ""
+    echo "Parameters:"
+    echo "  --studyfolder     the study folder"
+    echo "  --sessionsfolder  the sessions folder, by default <studyfolder>/sessions"
+    echo "  --sessions        the sessions to run, comma separated"
+    echo "  --batchfile       a batch file that lists the sessions to run"
+    echo "  --scheduler       a scheduler and its settings, to submit the run"
+    echo ""
+    echo "Inputs, in <sessionsfolder>/<session>/hcp/<session>:"
+    echo "  T1w/Diffusion.bedpostX          from hcp_diffusion and dwi_bedpostx_gpu"
+    echo "  MNINonLinear/xfms/standard2acpc_dc and acpc_dc2standard"
+    echo "                                  from the HCP structural pipelines"
+    echo ""
+    echo "Outputs, in <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/Results/autoPtx:"
+    echo "  <structure>/tracts/tractsNorm   the normalised tract density of each structure"
+    echo "  <structure>_bin, <structure>_thr and viewAll_*  the tracts prepared for display"
     echo ""
     echo "For full details on auto_ptx functionality see: https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/AutoPtx"
     echo ""
@@ -889,6 +957,18 @@ get_parameters() {
     done
 }
 
+# -- A file the run is given, absolute, as gmri takes it: a leading ~ is the
+#    home folder, which the shell does not expand in a --key=value argument,
+#    and a relative path is taken from the study when it is known, else from
+#    the current folder
+study_path() {
+    local path="$1"
+    if [[ -z ${path} ]]; then return 0; fi
+    if [[ ${path} == "~" || ${path} == "~/"* ]]; then path="${HOME}${path#\~}"; fi
+    if [[ ${path} != /* ]]; then path="${StudyFolder:-$(pwd)}/${path}"; fi
+    echo "${path}"
+}
+
 # -- Same as above except this works on flags
 get_flags() {
     sopt="$1"
@@ -987,9 +1067,24 @@ fi
 # -- set OMP_NUM_THREADS
 # ------------------------------------------------------------------------------
 
+# -- a dry run (--test, or --run other than run) starts nothing that would
+#    read it, and leaves the environment as it found it, as gmri does
+dry_run=no
+run_mode=`get_parameters "${setflag}run" "$@"`
+if [[ -n ${run_mode} ]] && [[ ${run_mode} != "run" ]]; then
+    dry_run=yes
+fi
+for inputarg in "$@"; do
+    if [[ ${inputarg} == "${setflag}test" ]]; then
+        dry_run=yes
+    fi
+done
+
 # omp threads
 omp_threads=`get_parameters "${setflag}omp_threads" $@`
-if [[ -n ${omp_threads} ]]; then
+if [[ ${dry_run} == "yes" ]]; then
+    :
+elif [[ -n ${omp_threads} ]]; then
     export OMP_NUM_THREADS=${omp_threads}
 elif [[ -z $OMP_NUM_THREADS ]]; then
     PARSESSIONS=`get_parameters "${setflag}parsessions" $@`
@@ -1015,13 +1110,38 @@ fi
 # -- Get list of all supported gmri commands
 gmri_commands=`gmri -available`
 # -- Check if command-line input matches any of the gmri commands
+is_gmri() {
+    is_gmri_command=0
+    for gmri_command in $gmri_commands; do
+        if [[ $gmri_command == $1 ]]; then
+            is_gmri_command=1
+        fi
+    done
+}
 unset qxutil_command_to_run
-is_gmri_command=0
-for gmri_command in $gmri_commands; do
-    if [[ $gmri_command == $1 ]]; then
-        is_gmri_command=1
+is_gmri "$1"
+
+# ------------------------------------------------------------------------------
+# -- Map deprecated commands
+# ------------------------------------------------------------------------------
+
+# -- Use the check_deprecated_commands from niutilities to remap. Before a gmri
+#    command is dispatched: a deprecated name of one was not among them, and,
+#    mapped only after, was refused as no command the front end runs itself
+if [[ $is_gmri_command == 0 ]] && [[ -n $1 ]] && [[ $1 != -* ]]; then
+    # grep the command
+    deprecation=`gmri check_deprecated_commands --command="$1"`
+    # print and set new command if something was deprecated
+    if [[ -n $deprecation ]]; then
+        echo ""
+        echo $deprecation
+        command_name=`echo $deprecation | grep "is now known as" | sed 's/^.*is now known as //g'`
+        if [[ -n $command_name ]]; then
+            set -- ${command_name} "${@:2}"
+            is_gmri "$1"
+        fi
     fi
-done
+fi
 
 if [[ $is_gmri_command == 1 ]]; then
     # -- If yes then set the gmri function variable
@@ -1053,25 +1173,6 @@ if [[ $is_gmri_command == 1 ]]; then
     exit $?
 else
     unset qxutil_command_to_run
-fi
-
-# ------------------------------------------------------------------------------
-# -- Map deprecated commands
-# ------------------------------------------------------------------------------
-
-# -- Use the check_deprecated_commands from niutilities to remap
-if [[ $1 != --* ]]; then
-    # grep the command
-    deprecation=`gmri check_deprecated_commands --command="$1"`
-    # print and set new command if something was deprecated
-    if [[ -n $deprecation ]]; then
-        echo ""
-        echo $deprecation
-        command_name=`echo $deprecation | grep "is now known as" | sed 's/^.*is now known as //g'`
-        if [[ -n $command_name ]]; then
-            set -- ${command_name} "${@:2}"
-        fi
-    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -1179,6 +1280,19 @@ if [[ ${setflag} =~ .*-.* ]]; then
         fi
     fi
 
+    # relative folders are taken as every other QuNex command takes them: the
+    # study from the current folder, a sessions folder named with it from the
+    # study and one named alone from the current folder. A leading ~ is the
+    # home folder, which the shell does not expand in a --key=value argument
+    if [[ ${StudyFolder} == "~" || ${StudyFolder} == "~/"* ]]; then StudyFolder="${HOME}${StudyFolder#\~}"; fi
+    if [[ ${SessionsFolder} == "~" || ${SessionsFolder} == "~/"* ]]; then SessionsFolder="${HOME}${SessionsFolder#\~}"; fi
+    if [[ -n ${StudyFolder} && ${StudyFolder} != /* ]]; then StudyFolder="$(pwd)/${StudyFolder}"; fi
+    if [[ -n ${SessionsFolder} && ${SessionsFolder} != /* ]]; then
+        SessionsFolder="${StudyFolder:-$(pwd)}/${SessionsFolder}"
+    fi
+    StudyFolderPath="${StudyFolder}"
+    STUDY_PATH="${StudyFolder}"
+
     # -- Check StudyFolder and set
     if [[ -z ${StudyFolder} ]] && [[ ! -z ${StudyFolderPath} ]]; then
         StudyFolder="$StudyFolderPath"
@@ -1269,6 +1383,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     fi
 
     BATCH_FILE=`get_parameters "${setflag}batchfile" $@`
+    BATCH_FILE=`study_path "${BATCH_FILE}"`
 
     # -- Get sessions from batchfile?
     if [[ -n ${BATCH_FILE} ]]; then
@@ -1342,7 +1457,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
         #    gmri warns about the legacy spelling on stdout, and this call
         #    captures stdout.
         if [[ -z ${BATCH_FILE} ]] && [[ ${CASES} == *.txt ]]; then
-            BATCH_FILE="${CASES}"
+            BATCH_FILE=`study_path "${CASES}"`
         fi
         if [[ -n ${BATCH_FILE} ]]; then
             SESSION_LABELS=`gmri list_sessions --batchfile="${BATCH_FILE}" --sessions="${SESSIONIDS}"`
@@ -1365,6 +1480,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     Scheduler=`get_parameters "${setflag}scheduler" $@`  # Specify the type of scheduler to use
     Bash=`get_parameters "${setflag}bash" "$@"`          # Specify bash commands to run on the compute node
     LogFolder=`get_parameters "${setflag}logfolder" $@`  # Log location
+    UnsetBatchHeader=`get_parameters "${setflag}unset_batch_header_parameters" "$@"`  # Batch header parameters not to take
     LogSave=`get_parameters "${setflag}log" $@`          # Log save
 
     # -- If log flag set then set it
@@ -1576,7 +1692,7 @@ if [[ ${setflag} =~ .*-.* ]]; then
     # -- Check if session input is a parameter file instead of list of cases
     if [[ ${CASES} == *.txt ]]; then
         if [[ -z ${BATCH_FILE} ]]; then
-            BATCH_FILE="${CASES}"
+            BATCH_FILE=`study_path "${CASES}"`
         fi
         echo ""
         echo "Using $CASES for input."
@@ -1751,7 +1867,6 @@ if [ "$CommandToRun" == "qc_preproc" ] || [ "$CommandToRun" == "run_qc" ]; then
     echo "   Sessions: ${CASES}"
     echo "   QC Modality: ${Modality}"
     echo "   QC Output Path: ${OutPath}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Custom QC requested: ${runQC_Custom}"
     echo "   HCP folder suffix: ${HCPSuffix}"
 
@@ -1880,7 +1995,6 @@ if [ "$CommandToRun" == "dwi_eddy_qc" ]; then
             echo "   StudyFolder: ${StudyFolder}"
             echo "   Sessions Folder: ${SessionsFolder}"
             echo "   Session: ${CASE}"
-            echo "   Study Log Folder: ${LogFolder}"
             echo "   Report Type: ${Report}"
             echo "   Eddy QC Input Path: ${EddyPath}"
             echo "   Eddy QC Output Path: ${OutputDir}"
@@ -1908,7 +2022,6 @@ if [ "$CommandToRun" == "dwi_eddy_qc" ]; then
         echo "--------------------------------------------------------------"
         echo "   Study Folder: ${StudyFolder}"
         echo "   Sessions Folder: ${SessionsFolder}"
-        echo "   Study Log Folder: ${LogFolder}"
         echo "   Report Type: ${Report}"
         echo "   Eddy QC Input Path: ${EddyPath}"
         echo "   Eddy QC Output Path: ${OutputDir}"
@@ -1950,7 +2063,6 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   Parcellated Data Output Name: ${OutName}"
     echo "   Input Data Type: ${InputDataType}"
@@ -2032,7 +2144,6 @@ if [ "$CommandToRun" == "dwi_legacy_gpu" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Using FieldMap: ${UseFieldmap}"
     echo "   Using SE FieldMap: ${UseSEFieldmap}"
     echo "   Echo Spacing: ${EchoSpacing}"
@@ -2080,7 +2191,6 @@ if [ "$CommandToRun" == "parcellate_anat" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   ParcellationFile: ${ParcellationFile}"
     echo "   Parcellated Data Output Name: ${OutName}"
     echo "   Input Data Type: ${InputDataType}"
@@ -2161,7 +2271,6 @@ if [ "$CommandToRun" == "compute_bold_fc" ] || [ "$CommandToRun" == "compute_bol
     echo ""
     echo "Running $CommandToRun with the following parameters:"
     echo "--------------------------------------------------------------"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Output Path: ${OutPathFC}"
     echo "   Extract data in CSV format: ${ExtractData}"
     echo "   Type of fc calculation: ${Calculation}"
@@ -2274,7 +2383,6 @@ if [ "$CommandToRun" == "bold_parcellation" ] || [ "$CommandToRun" == "parcellat
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Input File: ${InputFile}"
     echo "   Input Path: ${InputPath}"
     echo "   Single Input File: ${SingleInputFile}"
@@ -2328,7 +2436,6 @@ if [ "$CommandToRun" == "dwi_parcellate" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   File to use for parcellation: ${ParcellationFile}"
     echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
@@ -2407,7 +2514,6 @@ if [ "$CommandToRun" == "dwi_seed_tractography_dense" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Matrix version used for input: ${MatrixVersion}"
     echo "   Dense dconn seed reduction: ${SeedFile}"
     echo "   Dense DWI Parcellated Connectome Output Name: ${OutName}"
@@ -2435,7 +2541,8 @@ if [ "$CommandToRun" == "auto_ptx" ]; then
         if [[ -z ${Scheduler} ]]; then echo "ERROR: Scheduler specification and options missing."; exit 1; fi
     fi
 
-    if [[ -z ${BedPostXFolder} ]]; then BedPostXFolder=${SessionsFolder}/${CASE}/hcp/${CASE}/T1w/Diffusion.bedpostX; fi
+    # the run works in the study folder, as a run through gmri does
+    cd "${StudyFolder}" || { echo "ERROR: Study folder ${StudyFolder} not found"; exit 1; }
 
     # -- Report parameters
     echo ""
@@ -2444,11 +2551,17 @@ if [ "$CommandToRun" == "auto_ptx" ]; then
     echo "   Study Folder: ${StudyFolder}"
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
-    echo "   Study Log Folder: ${LogFolder}"
-    echo "   BedpostX Folder: ${BedPostXFolder} "
+    echo "   BedpostX Folder: ${SessionsFolder}/<session>/hcp/<session>/T1w/Diffusion.bedpostX "
     echo ""
 
-    for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
+    # a session that can not be run does not stop the others, but fails the run
+    AutoPtxFailed=""
+    for CASE in ${CASES}; do ${CommandToRun} ${CASE} || AutoPtxFailed="${AutoPtxFailed} ${CASE}"; done
+    if [[ -n ${AutoPtxFailed} ]]; then
+        echo ""
+        echo "ERROR: auto_ptx was not run for:${AutoPtxFailed}"
+        exit 1
+    fi
 fi
 
 # ------------------------------------------------------------------------------
@@ -2475,7 +2588,6 @@ if [ "$CommandToRun" == "dwi_pre_tractography" ]; then
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
     echo "   Diffusion Folder: ${DiffusionFolder}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo ""
 
     for CASE in ${CASES}; do ${CommandToRun} ${CASE}; done
@@ -2545,7 +2657,6 @@ if [ "$CommandToRun" == "dwi_probtrackx_dense_gpu" ]; then
     echo "   Sessions Folder: ${SessionsFolder}"
     echo "   Sessions: ${CASES}"
     echo "   Diffusion Folder: ${DiffusionFolder}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Scheduler: ${Scheduler}"
     echo "   probtraxkX GPU scripts Folder: ${ScriptsFolder}"
     echo "   Compute Matrix1: ${MatrixOne}"

@@ -15,16 +15,25 @@ Run recipe framework.
 
 import os
 import os.path
+import re
+import shlex
 import subprocess
+import sys
 from datetime import datetime
 
+import qx_utilities.general.batch_io as bio
 import qx_utilities.general.commands_support as gcs
-import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 import qx_utilities.general.xnat as gx
 import yaml
 from qx_registry import qx_commands
+
+# the parameters that place the recipe's own run. Decided once, for the run, they
+# are not inherited by its steps: every step logs in the run's folder, and
+# reports to the status record the recipe names for it
+RUN_PLACEMENT = ("logfolder", "logstatus")
 
 
 def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfolder=None, eargs=None, log_settings=None):
@@ -53,8 +62,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             be used to run only a subset of commands from the list or as an
             alternative to specifying the recipe file and a recipe name.
 
-        --logfolder (str, default ''):
-            The folder within which to save the log.
+        --logfolder (str, default '<studyfolder>/logs/<date>_<time>_run_recipe_<recipe>'):
+            The folder this run logs in: the run_recipe runlog, the runlog and
+            comlogs of every step and of every recipe run for a set of
+            sessions, and the steps' status records in its `status` folder. A
+            relative path is taken from the study when the run knows its study
+            and that study exists -- holds more than logs -- else from the
+            current folder; `legacy` is `<studyfolder>/processing/logs`. A
+            `logfolder` the recipe file states is used when the command line
+            gives none (see Notes).
 
         --eargs:
             Other arguments that can be passed to the command (see Notes).
@@ -76,7 +92,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             the second one defines the delimiter between the parameter name and
             value (default is "="). For example, if the prefix is set to "-" and
             the delimiter is set to " ", the parameters will be passed in the form
-            of `-<parameter> <value>`.
+            of `-<parameter> <value>`. A relative `path` is found, and the
+            command is run, in the study (see Recipe file and recipes).
 
         Parallelism:
             These parameters allow spreading processing of multiple sessions
@@ -93,15 +110,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                             If provided, each run_recipe invocation will be
                             scheduled to run on a separate cluster node.
 
-            Please take note that if `run_recipe` command is ran using a
-            scheduler, any scheduler specification within the `recipe_file` will
-            be ignored to avoid the attempts to spawn new cluster jobs when
-            `run_recipe` instance is already running on a cluster node.
+            With `--scheduler` the run is submitted as jobs -- one per chunk of
+            `parsessions` sessions, or one for the whole recipe without
+            sessions -- and every job logs in the run's log folder.
 
-            Importantly, if `scheduler` is specified in the `run_recipe` file,
-            do bear in mind, that all the commands in the recipe will be
-            scheduled at the same time, and not in a succession, as `run_recipe`
-            can not track execution of jobs on individual cluster nodes.
+            A `scheduler` stated in the recipe file for a step submits that
+            step to the scheduler: `run_recipe` does not wait for its jobs,
+            goes on to the next step while they run, and says so. To run the
+            steps of a recipe in order on a cluster, schedule the `run_recipe`
+            call itself.
 
             To setup run_recipe parallelism, you can use the traditional
             parsessions and parelements parameters.
@@ -127,10 +144,21 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             Alternatively, you can provide a comma separated list of commands
             with the `steps` parameter.
 
-            The log of the commands ran will be by default stored in
-            `<study>/logs/` stamped with date and time that
-            the log was started. If a study folder is not yet created, please
-            provide a valid folder to save the logs to. If the log can not be
+            All the logs of a `run_recipe` call are kept in one folder: its
+            own runlog, the runlog and comlogs of every step and of every
+            recipe it runs for a set of sessions -- scheduled or not -- and
+            the steps' status records in its `status` folder. By default it is
+            `<studyfolder>/logs/<date>_<time>_run_recipe_<recipe>`
+            (`run_recipe_steps` for `--steps` without a recipe file). The
+            study is the one named on the command line, else in the recipe
+            file, else in the header of the batch file the command line
+            names, else the one marked by `.qunexstudy` at or above the
+            current folder; with none, the logs go where a run outside a
+            study logs (`~/qunex_logs`, unless the `outside_study` setting
+            says otherwise). The folder is created before the first step
+            runs, so a recipe can name a study its own `create_study` step
+            creates; a relative `logfolder` is then taken from the current
+            folder, the study not existing yet. If the folder can not be
             created the `run_recipe` command will exit with a failure.
 
             `run_recipe` is checking for a successful completion of commands
@@ -148,8 +176,28 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             settings that will be used as defaults throughout all recipes and
             individual commands defined in the rest of the recipe file.
 
-            Recpies are defined in the recipes portion of the file where each
-            recipeis defined by its unique name. Each recipe has two sections,
+            The study is best named there once, with `studyfolder`: every QuNex
+            command in the recipe is given it, the commands that work on
+            sessions take them from its `sessions` folder, and the logs go to
+            its `logs` folder, however the recipe is run. Set `sessionsfolder`
+            as well only when the sessions are in another folder.
+
+            Every relative path in the recipe is taken from the study the step
+            it is given to works in -- the one named on the command line, else
+            the step's own, else the recipe's -- once that study exists; a
+            relative `studyfolder` itself is taken from the folder `run_recipe`
+            is started in. `--recipe_file` is taken from the study the command
+            line names (or the folder a `--sessionsfolder` it names is in),
+            else from the current folder, and a relative `--batchfile` or
+            `.list` file given to `--sessions` from that study, else from the
+            recipe's, else from the current folder. An external step is found
+            and run in the study, or -- while the study does not exist yet, as
+            before the recipe's `create_study` step -- in the folder
+            `run_recipe` was started in; a study folder that holds nothing but
+            the recipe's logs counts as one that does not exist yet.
+
+            Recipes are defined in the recipes portion of the file where each
+            recipe is defined by its unique name. Each recipe has two sections,
             the parameters and the commands. The parameters section defines the
             parameters and the values that are specific to that recipe. The
             commands section defines the commands that are specific to that
@@ -217,7 +265,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             ::
 
                 global_parameters:
-                    sessionsfolder    : /data/qx_study/sessions
+                    studyfolder       : /data/qx_study
                     sessions          : OP101,OP102
                     overwrite         : yes
                     batchfile         : /data/qx_study/processing/batch.txt
@@ -231,12 +279,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                                 out_dir: /data/qx_data
                                 external_parameter_prefix: "-"
                                 external_parameter_delimiter: " "
-                            - create_study:
-                                studyfolder: /data/qx_study
+                            - create_study
                             - import_dicom:
-                                masterinbox: /data/qx_data
+                                inbox: /data/qx_data
                                 archive: leave
-                            - create_session_info
+                            - create_session_info:
                                 mapping: /data/qx_specs/hcp_mapping.txt
                             - create_batch:
                                 targetfile: /data/qx_study/processing/batch.txt
@@ -258,7 +305,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                         commands:
                             - hcp_icafix:
                                 hcp_matlab_mode: "{{$MATLAB_MODE}}"
-                            - hcp_msmall
+                            - hcp_msmall:
                                 hcp_matlab_mode: "{{$MATLAB_MODE}}"
 
     Examples:
@@ -294,7 +341,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
         ::
 
             qunex run_recipe \\
-            --sessionsfolder="/data/qx_study/sessions" \\
+            --studyfolder="/data/qx_study" \\
             --batchfile="/data/qx_study/processing/batch.txt" \\
             --steps="hcp_pre_freesurfer,hcp_freesurfer,hcp_post_freesurfer"
 
@@ -302,7 +349,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
         The second call will execute all the steps of the HCP preprocessing
         pipeline via a scheduler. It will execute two sessions in parallel
-        within the run. in sequence.
+        within the run, and the steps in sequence.
 
         The third call will execute the hcp_denoise list where the
         hcp_matlab_mode parameter will be set to "interpreted" this value will
@@ -321,6 +368,25 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     flags = ["test"]
 
+    # a parameter given on the command line without a value arrives as True,
+    # as does one whose value was split off by a space instead of `=`. As a
+    # recipe file, True is opened as the file descriptor 1: the recipe read
+    # its own standard output and closed it
+    for name, value in (
+        ("recipe_file", recipe_file),
+        ("recipe", recipe),
+        ("steps", steps),
+        ("startwith", startwith),
+        ("logfolder", logfolder),
+    ):
+        if isinstance(value, bool):
+            raise ge.CommandError(
+                "run_recipe",
+                "Invalid parameter value!",
+                f"--{name} was given without a value.",
+                f"Please give it as --{name}=<value>!",
+            )
+
     if recipe_file is None and steps is None:
         raise ge.CommandError(
             "run_recipe",
@@ -337,11 +403,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             "Please provide the recipe name!",
         )
 
-    if recipe_file is not None and not os.path.exists(recipe_file):
+    if recipe_file is not None and not os.path.isfile(recipe_file):
         raise ge.CommandFailed(
             "run_recipe",
-            "recipe file file does not exist",
-            f"Recipe file file not found [{recipe_file}]",
+            "recipe file does not exist",
+            f"Recipe file not found [{recipe_file}]",
             "Please check your paths!",
         )
 
@@ -358,7 +424,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     recipe_unset = []
     commands = []
 
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H.%M.%S.%f")
+    timestamp = datetime.now().strftime(gf.TIMESTAMP)
 
     # open the recipe file
     if recipe_file:
@@ -369,40 +435,43 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 raise ge.CommandFailed("run_recipe", "Cannot parse the recipe file")
 
         # get the recipe
-        if "recipes" not in recipe_data:
+        recipes = recipe_data.get("recipes") if isinstance(recipe_data, dict) else None
+        if not isinstance(recipes, dict):
             raise ge.CommandFailed("run_recipe", "Recipes not found in the recipe file")
-
-        recipes = recipe_data["recipes"]
 
         if recipe not in recipes:
             raise ge.CommandFailed(
                 "run_recipe", f"Recipe {recipe} not found in the recipe file"
             )
 
+        # a recipe with nothing written under it states nothing, and is
+        # reported below as one without commands
         recipe_dict = recipes[recipe]
+        if not isinstance(recipe_dict, dict):
+            recipe_dict = {}
 
         # global parameters
-        if "global_parameters" in recipe_data:
-            global_parameters = dict(recipe_data["global_parameters"])
-            if _states_an_unset(global_parameters):
-                raise ge.CommandError(
-                    "run_recipe",
-                    "Parameters cannot be unset globally",
-                    "global_parameters unsets a parameter, which can only be a mistake:",
-                    "a parameter stated for no command at all is one not written.",
-                    "Move the unset to the recipe, or to the step that is not to inherit it.",
-                )
-            parameters.update(global_parameters)
+        global_parameters = _section(
+            recipe_data, "global_parameters", "the recipe file"
+        )
+        if _states_an_unset(global_parameters):
+            raise ge.CommandError(
+                "run_recipe",
+                "Parameters cannot be unset globally",
+                "global_parameters unsets a parameter, which can only be a mistake:",
+                "a parameter stated for no command at all is one not written.",
+                "Move the unset to the recipe, or to the step that is not to inherit it.",
+            )
+        parameters.update(global_parameters)
 
         # recipe parameters
-        if "parameters" in recipe_dict:
-            recipe_parameters = dict(recipe_dict["parameters"])
-            recipe_unset = _unset_names(recipe_parameters, f"recipe {recipe}")
-            parameters.update(recipe_parameters)
+        recipe_parameters = _section(recipe_dict, "parameters", f"recipe {recipe}")
+        recipe_unset = _unset_names(recipe_parameters, f"recipe {recipe}")
+        parameters.update(recipe_parameters)
 
-            # what the recipe unsets, no step of it inherits
-            for name in recipe_unset:
-                parameters.pop(name, None)
+        # what the recipe unsets, no step of it inherits
+        for name in recipe_unset:
+            parameters.pop(name, None)
     else:
         # define recipe name
         recipe = "steps"
@@ -413,52 +482,57 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     # log location
     #
-    # The recipe file can name a study the command line never saw, so its
-    # parameters are folder hints in their own right, and they outrank the
-    # ones passed in. Everything past that -- the layout, the timestamped
-    # folder, whether a runlog is written at all -- is `RunContext`'s, the
-    # same as for any other run. This is why `run_recipe` takes the resolved
-    # settings rather than the caller's context: `gp.run`'s precedent.
-    hints = {**(eargs or {}), **parameters}
-    if logfolder is not None and "logfolder" not in parameters:
-        hints["logfolder"] = logfolder
-
-    # Injected here, before anything is deduced from them, and not only into
-    # `logfolder`: these are the values this run resolves its own study, log
-    # folder and status paths from, and a `{{$VAR}}` left in any of them is a
-    # folder of that name. Every path the recipe derives and every path it
-    # hands a step then come from the same resolved text.
-    hints = {key: _inject_labels(value) for key, value in hints.items()}
-
-    run_command = f"run_recipe_{recipe}"
-    folders = gc.deduce_folders(hints, run_command, timestamp)
-
-    # The study the recipe file names is a study the caller never saw, so its
-    # `qunex_settings.yaml` was not read when these settings were resolved.
-    # Only that one tier is layered on now; `--logging` is re-applied over it,
-    # so the command line still wins.
+    # The run's folder, by the rule every entry point follows
+    # (`general.folders.run_folders`). Called through `gmri` it is handed the
+    # folder `gmri` decided -- the recipe file is a tier `gmri` reads before
+    # anything is logged -- as `logfolder`, and uses it as it is. Called on its
+    # own it decides it here the same way: the call (`eargs`, `logfolder`) over
+    # the recipe's run wide parameters, over the header of the batch file the
+    # call names.
     #
-    # ponytail: the study tier is read twice per invocation, which is the
-    # price of the recipe file being parsed after the settings are. The merged
-    # options are not the fix -- they landed for the batch tier and this stayed
-    # -- because what closes the seam is an ordering: a batch file is named on
-    # the command line and `gmri.runCommand` reads it before it resolves any
-    # logging, while a recipe names its study inside the recipe file, which
-    # only this function opens. Closing it means the recipe file becoming a
-    # tier the front door resolves, the way `--batchfile` now is.
-    log_settings = gl.apply_study_settings(
-        log_settings or gl.LogSettings(), folders["basefolder"], hints
+    # Labels are injected first, and not only into `logfolder`: these are the
+    # values this run resolves its own study, log folder and status paths
+    # from, and a `{{$VAR}}` left in any of them is a folder of that name.
+    # Every path the recipe derives and every path it hands a step then come
+    # from the same resolved text.
+    called = dict(eargs or {})
+    if logfolder:
+        called["logfolder"] = logfolder
+    called = {key: _inject_labels(value) for key, value in called.items()}
+    stated = {key: _inject_labels(value) for key, value in parameters.items()}
+
+    # what the run states, the call winning over the recipe file, with the
+    # folders it names settled as a run settles them: the study from the
+    # current folder, a sessions folder from that study
+    hints = _settle_folders({**stated, **called})
+
+    placement = gf.run_folders(
+        gf.run_name("run_recipe", {"recipe_file": recipe_file, "recipe": recipe}),
+        [called, stated, _call_header(called, stated) if not logfolder else {}],
+        timestamp,
+        settings=lambda study: (
+            log_settings or gl.resolve_logging("run_recipe", hints, studyfolder=study)
+        ),
     )
+
+    # the study the run is in, which the batch file a step writes by default
+    # is predicted in when no study is named for it
+    folders = {"basefolder": placement.studyfolder}
 
     run = gl.RunContext(
-        run_command, hints, log_settings, folders, timestamp=timestamp
+        "run_recipe",
+        hints,
+        placement.settings,
+        timestamp=timestamp,
+        name=placement.name,
+        logfolder=placement.logfolder,
     )
 
-    # the recipe's study may have restated them, so the deep helpers have to be
-    # told again what this run resolved to
-    gl.set_active(log_settings)
+    # the settings this run is logged by, for the deep helpers
+    gl.set_active(placement.settings)
 
-    print(f"\n---> Saving the run_recipe runlog to: {run.logfolder}")
+    if run.settings.enabled:
+        print(f"\n---> Logs: {run.logfolder}")
 
     # a recipe that cannot log is a recipe that fails, as documented above --
     # unless it was told not to log at all
@@ -473,6 +547,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             "Please check the paths!",
         )
 
+    # the study the steps work in, and so the one an external step is found
+    # and run in: the one the command line names, as it wins for every step,
+    # else the recipe's own. The study this run is placed in, when it knows it
+    base = _recipe_study(parameters, eargs)
+
     # run
     summary = "\n----==== RECIPE EXECUTION SUMMARY ====----"
 
@@ -486,8 +565,8 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     print(f"---> Running commands from recipe: {recipe}")
     run.write(f"---> Running commands from recipe: {recipe}\n\n")
 
-    # commands
-    if "commands" not in recipe_dict:
+    # commands: a list of steps, which `commands:` with nothing under it is not
+    if not isinstance(recipe_dict.get("commands"), list):
         raise ge.CommandFailed(
             "run_recipe", f"Recipe {recipe} missing commands specification"
         )
@@ -564,7 +643,7 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
     # what a run wide parameter names that this recipe writes itself
     withheld = _withheld_by_production(
-        commands, parameters, recipe_unset, hints, folders, run
+        commands, parameters, recipe_unset, hints, folders, run, eargs
     )
 
     # XNAT initial setup
@@ -582,6 +661,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             run.write(find_summary + "\n")
             load_summary = gx.xnat_load_checkpoint(file_path)
             run.write(load_summary + "\n")
+
+    # a dry run: --test on the call, or stated for the whole recipe. A step
+    # that does not read it -- an external one, a utility -- is named rather
+    # than run; the steps that do are handed it
+    dry = "test" in (eargs or {}) or "test" in parameters
 
     for step, com in enumerate(commands, start=1):
         if isinstance(com, dict):
@@ -615,27 +699,52 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             run.write(
                 f"\n--------------------------------------------\n---> Running external: {external_path}\n"
             )
-            if not os.path.exists(external_path):
+
+            # found in, and run in, the study the steps work in, so that a
+            # relative path it is given means what it means to every QuNex
+            # step. Asked when the step is reached: a step before the one that
+            # creates the study is found and run where the recipe was started.
+            # A folder holding nothing but logs is a study that does not exist
+            # yet -- this run's own log folder may be the one thing in it
+            workdir = base if base and gf.study_exists(base) else os.getcwd()
+            if base and workdir != base:
+                note = (
+                    f"WARNING: the study folder [{base}] does not exist yet (or "
+                    f"holds nothing but logs), {external_path} is found and run "
+                    f"in the current folder [{workdir}]"
+                )
+                print(note)
+                run.write(note + "\n")
+            external_file = bio.run_path(external_path, workdir)
+
+            if not os.path.exists(external_file):
                 summary += f"\n - external {external_path} ... FAILED"
-                _print_end_summary(summary, run, f"{external_path} does not exist!")
+                _print_end_summary(summary, run, f"{external_file} does not exist!")
 
                 raise ge.CommandFailed(
                     "run_recipe",
                     "External command not found",
-                    f"External command not found [{external_path}]",
+                    f"External command not found [{external_file}]",
                     "Please check the external command path!",
                 )
 
             external_name = os.path.basename(external_path)
 
-            # prep command
-            if external_path.endswith(".sh") or "." not in external_path:
-                command = ["bash", external_path]
-            elif external_path.endswith(".py"):
-                command = ["python", external_path]
-            elif external_path.endswith(".R"):
-                command = ["Rscript", external_path]
+            # prep command: the type is the file's own extension -- a dot in a
+            # folder name says nothing about it
+            if external_name.endswith(".sh") or "." not in external_name:
+                command = ["bash", external_file]
+            elif external_name.endswith(".py"):
+                command = ["python", external_file]
+            elif external_name.endswith(".R"):
+                command = ["Rscript", external_file]
             else:
+                # ended as every other failing step ends, so the runlog says so
+                summary += f"\n - external {external_path} ... FAILED"
+                _print_end_summary(
+                    summary, run, f"{external_path} is not of a type run_recipe runs!"
+                )
+
                 raise ge.CommandFailed(
                     "run_recipe",
                     "External command type not supported",
@@ -651,36 +760,43 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 "external_parameter_delimiter", "="
             )
 
-            # add parameters to the command
+            # add parameters to the command, with the labels the recipe author
+            # wrote against this step injected, as for a QuNex step
             for param, value in command_parameters.items():
-                # inject mustache marked values
-                if (
-                    isinstance(value, str)
-                    and len(value) > 0
-                    and "{{" in value
-                    and "}}" in value
-                ):
-                    labels = _find_enclosed_substrings(value)
-                    for label in labels:
-                        cleaned_label = label.replace("{", "").replace("}", "")
-                        os_label = cleaned_label[1:]
-                        if cleaned_label[0] == "$" and os_label in os.environ:
-                            value = value.replace(label, os.environ[os_label])
-                        else:
-                            raise ge.CommandFailed(
-                                "run_recipe",
-                                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-                            )
+                try:
+                    value = _inject_labels(value)
+                except ge.CommandFailed:
+                    summary += f"\n - external {external_path} ... FAILED"
+                    _print_end_summary(
+                        summary,
+                        run,
+                        f"Failed running external {external_path}! Cannot inject values marked with double curly braces in the recipe.",
+                    )
+                    raise
 
                 command.append(
                     f"{external_parameter_prefix}{param}{external_parameter_delimiter}{value}"
                 )
 
+            if dry:
+                note = f"    ... test, not run: {shlex.join(command)} (in {workdir})"
+                print(note)
+                run.write(note + "\n")
+                summary += f"\n - external {external_path} ... test, not run"
+                continue
+
             # the external command's output is this step's comlog: opened as
-            # `tmp_`, renamed by the exit status when it closes
-            comlog = run.comlog(external_name, command_name).open()
+            # `tmp_`, renamed by the exit status when it closes -- in the
+            # step's own folder under `layout: nested`, as a command's is
+            comlog = gl.ComContext(
+                _step_folder(run, step, external_name, "comlogs"),
+                external_name,
+                command_name,
+                enabled=run.settings.enabled and run.settings.comlog,
+            ).open()
+
             process = subprocess.Popen(
-                command, stdout=comlog.file, stderr=subprocess.STDOUT
+                command, stdout=comlog.file, stderr=subprocess.STDOUT, cwd=workdir
             )
             process.communicate()
 
@@ -721,9 +837,12 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             sources = dict.fromkeys(command_parameters, "recipe")
 
             # override params with those from eargs (passed because of parallelization on a higher level)
+            #
+            # but for the ones that placed this run: the step is told below
+            # where to log and where to report
             if eargs is not None:
                 for k in eargs:
-                    if k in unset:
+                    if k in unset or k in RUN_PLACEMENT:
                         continue
                     if k in ["parsessions", "parelements"]:
                         if k in command_parameters:
@@ -739,9 +858,11 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             # A parameter naming something a later step of this recipe writes
             # is withheld until it has been written -- see `withheld` above. A
             # value written against the step itself is untouched: that one was
-            # meant, and a file missing under it is still an error.
+            # meant, and a file missing under it is still an error. Nor is what
+            # placed the recipe's own run inherited: a `logfolder` stated for
+            # the whole run is the run's folder, which the step is given below
             for parameter, value in parameters.items():
-                if parameter in unset:
+                if parameter in unset or parameter in RUN_PLACEMENT:
                     continue
                 if step <= withheld.get(parameter, 0):
                     continue
@@ -765,7 +886,21 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
             # mistake in the recipe, and was dropped without a word
             qx_command = qx_commands.get(command_name)
 
-            if qx_command.type == "utility" and qx_command.language == "python":
+            # a python command other than a processing one runs whatever --test
+            # says unless it declares it: in a dry run it is named, not run
+            not_run = (
+                "test" in command_parameters
+                and qx_command.language == "python"
+                and not qx_command.type.startswith("processing")
+                and "test" not in gcs.declared_parameters(qx_command)
+            )
+
+            # every python command but a processing one, as `gmri` rejects
+            # what such a command does not take: `run_qa` (type `qa`) as well
+            # as the utilities
+            if qx_command.language == "python" and not qx_command.type.startswith(
+                "processing"
+            ):
                 kept, dropped = gcs.select_parameters(
                     command_parameters, sources, qx_command
                 )
@@ -775,12 +910,15 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                 # over sessions; a command that cannot has no use for them
                 passthrough = set(gcs.extra_parameters)
                 if not any(qx_command.has_arg(e) for e in ["sourcefolder", "folder"]):
-                    passthrough = {"logfolder"}
+                    # the study folder goes on as well: `gmri` derives the
+                    # sessions folder from it, and files the logs under it
+                    passthrough = {"logfolder", "studyfolder"}
 
                     # except that a command taking a batch file is handed its
                     # header whether or not it runs over sessions, so what the
                     # recipe said not to take from it has to travel with it.
-                    # All nine utilities that take one are narrowed here
+                    # The nine utilities that take one, and `run_qa`, are
+                    # narrowed here
                     if qx_command.has_arg("batchfile"):
                         passthrough |= {gcs.UNSET_BATCH_HEADER, gcs.UNSET_BATCH_SESSION}
 
@@ -797,6 +935,30 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                     )
                     print(warning)
                     run.write(warning)
+
+            # a bash script is handed what it declares and what the step states
+            # for it. A recipe wide parameter it does not declare was meant for
+            # another step, and the scripts stop on an option they do not know;
+            # the run level ones go on, `gmri` runs a script over the sessions,
+            # and so does --test, which `gmri` honours by not running it. So
+            # does one the script reads under a name its usage text does not
+            # document: run_qc takes `--bolds` for its `--bolddata`
+            elif qx_command.language == "bash":
+                declared = gcs.declared_parameters(qx_command)
+                undeclared = {
+                    key
+                    for key in command_parameters
+                    if key not in declared
+                    and key != "test"
+                    and key not in gcs.extra_parameters
+                    and sources.get(key) in gcs.RUN_WIDE_SOURCES
+                }
+                undeclared -= _read_by_script(qx_command, undeclared)
+                command_parameters = {
+                    key: value
+                    for key, value in command_parameters.items()
+                    if key not in undeclared
+                }
 
             # XNAT individual command prep, creates _in checkpoint
             if os.environ.get("XNAT", "") == "yes":
@@ -841,21 +1003,22 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
 
             # where the step logs, and where it reports back
             #
-            # Under `layout: nested` each step gets its own folder inside the
-            # recipe's, numbered so the listing reads in execution order; flat
-            # is the default and puts every step's runlog beside the recipe's.
+            # In the recipe's own folder: the run's logs are kept together.
+            # Under `layout: nested` each step gets a folder of its own inside
+            # it, numbered so the listing reads in execution order. Only a
+            # `logfolder` stated against the step itself sends it elsewhere.
             # Either way the step is told where to write its status record --
-            # the parent names the path, so there is nothing to glob for and
-            # no ambiguity when recipes run in parallel.
+            # the parent names the path, so there is nothing to glob for --
+            # and the path carries this recipe's stamp, so that the recipes a
+            # run starts for its sessions, which share the folder, do not
+            # overwrite each other's records.
             if "logfolder" not in command_parameters:
-                command_parameters["logfolder"] = (
-                    os.path.join(run.logfolder, f"{step:02d}_{command_name}")
-                    if run.settings.layout == "nested"
-                    else run.logfolder
-                )
+                command_parameters["logfolder"] = _step_folder(run, step, command_name)
 
             status_path = os.path.join(
-                run.logfolder, "status", f"{step:02d}_{command_name}.yaml"
+                run.logfolder,
+                "status",
+                f"{step:02d}_{command_name}-{run.timestamp}.yaml",
             )
             command_parameters["logstatus"] = status_path
 
@@ -880,11 +1043,26 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
                     command.append(f"--{param}={value}")
                     commandr += f" \\\n          --{param}='{value}'"
 
-            # warn if scheduler was used in the recipe file
+            if not_run:
+                commandr = commandr.replace("---> Running command:", "---> test, not run:", 1)
+                print(commandr)
+                run.write(commandr + "\n")
+                summary += f"\n - command {command_name} ... test, not run"
+                continue
+
+            # a scheduler stated in the recipe file submits the step: its
+            # `gmri` schedules the jobs and returns, so the recipe goes on to
+            # the next step without waiting for them
             if "scheduler" in command_parameters:
-                print(
-                    "\nWARNING: the scheduler parameter defined in the recipe file will be ignored. Scheduling needs to be defined at the command call level."
+                warning = (
+                    f"\nWARNING: the scheduler parameter stated for {command_name} in "
+                    "the recipe file submits this step to the scheduler: run_recipe "
+                    "does not wait for its jobs before it runs the next step. To run "
+                    "the steps in order on a cluster, schedule the run_recipe call "
+                    "itself.\n"
                 )
+                print(warning)
+                run.write(warning)
 
             print(commandr)
             run.write(commandr + "\n")
@@ -971,6 +1149,18 @@ def run_recipe(recipe_file=None, recipe=None, steps=None, startwith=None, logfol
     _print_end_summary(summary, run, None)
 
 
+def _step_folder(run: gl.RunContext, step: int, name: str, *subfolders: str) -> str:
+    """
+    The folder step `step` of the recipe logs in: the recipe's own, or under
+    `layout: nested` a numbered one of its own inside it -- for an external
+    step as for a QuNex one -- and `subfolders` within that.
+    """
+    folder = run.logfolder
+    if run.settings.layout == "nested":
+        folder = os.path.join(folder, f"{step:02d}_{name}")
+    return os.path.join(folder, *subfolders)
+
+
 def _step_report(command_name, status_path, exit_code):
     """
     The step's own report, for the recipe log.
@@ -1055,6 +1245,32 @@ def _step_parameters(command_spec):
     return stated or {}
 
 
+def _read_by_script(qx_command, names):
+    """
+    The names among `names` a bash script reads although its usage text does
+    not document them. The registry knows a script by its usage text alone,
+    so the script is asked: a name it reads is one it matches as a case branch
+    (`--name=*)`) or looks up quoted (`opts_GetOpt "--name"`). A script that
+    can not be read is taken to read nothing more.
+    """
+    if not names:
+        return set()
+
+    # resolved as `run_bash` resolves it, so an extension's script is the one read
+    root = getattr(qx_command, "root", None) or os.environ.get("QUNEXPATH", "")
+    try:
+        with open(os.path.join(root, "bash", qx_command.path), encoding="UTF-8") as f:
+            script = f.read()
+    except (OSError, UnicodeDecodeError):
+        return set()
+
+    return {
+        name
+        for name in names
+        if re.search(r"--%s(?:=\*|\")" % re.escape(name), script)
+    }
+
+
 def _step_keeps_out(command_spec, name):
     """
     Whether a step would be left without the run wide value of `name` -- it
@@ -1073,38 +1289,183 @@ def _step_keeps_out(command_spec, name):
     return name in [str(one).strip() for one in unset]
 
 
-def _produced_path(command_spec, produces, hints, folders):
+def recipe_folders(
+    recipe_file: str | None, recipe: str | None, environ: dict | None = None
+) -> dict:
+    """
+    ``recipe_folders(recipe_file, recipe, environ=None)``
+
+    The recipe file's tier of the parameters that place a `run_recipe` run:
+    what the recipe states for every step -- its global parameters,
+    overridden by its own, less what it unsets -- that places a run
+    (`general.folders.recipe_placement`), under the names the parameters have
+    now and with its labels injected. The study and the sessions folder are
+    settled as a run settles them (`_settle_folders`); the others -- the log
+    folder and the folders a study is found from -- are left as written.
+
+    `gmri` reads it once per `run_recipe` call, before anything else, so that
+    the study the recipe names is the one its batch file, its list of
+    sessions and its sessions are found in, and the one it logs in. Labels
+    are injected from `environ`, the environment unless another is given --
+    for a scheduled run, with what its `--bash` exports
+    (`placement.run_environment`). A parameter with a label it does not hold
+    is left out, with a warning: `run_recipe` stops on it when it runs,
+    unless the variable is set there.
+
+    Returns:
+        the parameters, or an empty dict without a recipe file or a recipe,
+        or when the file is missing or can not be parsed: `run_recipe`
+        reports a recipe it can not use itself.
+    """
+    if (
+        not isinstance(recipe_file, str)
+        or not recipe
+        or not os.path.isfile(recipe_file)
+    ):
+        return {}
+
+    try:
+        with open(recipe_file, "r", encoding="UTF-8") as file:
+            data = yaml.load(file, Loader=yaml.FullLoader)
+    except Exception:
+        return {}
+
+    named, unresolved = gf.recipe_placement(data, recipe, environ)
+    for key, message in unresolved:
+        print(
+            f"WARNING: {message} The recipe's {key} does not place this run; "
+            "run_recipe stops on the label when it runs unless the variable is "
+            "set there. Set the variable before the run starts, export it in "
+            "--bash (export NAME=value) for a scheduled run, or name "
+            "--studyfolder or --logfolder on the command line.",
+            file=sys.stderr,
+        )
+
+    return _settle_folders(named)
+
+
+def _call_header(called: dict, stated: dict) -> dict:
+    """
+    The header of the batch file the call names, less what the call unsets
+    from it: the third tier a run is placed by, read as `gmri` reads it for its
+    own command line -- the batch file taken from the study the call names,
+    else from the one the recipe names, else from the current folder. Empty
+    when the call names no batch file, or one that can not be read, which the
+    steps that read it report.
+    """
+    batchfile = called.get("batchfile")
+    if not isinstance(batchfile, str) or not batchfile.strip():
+        return {}
+
+    named = _settle_folders(
+        {key: stated.get(key) for key in ("studyfolder", "sessionsfolder")}
+    )
+    study = gf.study_folder(named["studyfolder"], named["sessionsfolder"])
+    anchored, _ = bio.anchor_command_line(
+        {
+            key: called[key]
+            for key in ("studyfolder", "sessionsfolder", "batchfile")
+            if key in called
+        },
+        "run_recipe",
+        study=study,
+    )
+    try:
+        _, header = bio.resolve(batchfile=anchored["batchfile"])
+    except (bio.BatchError, OSError):
+        return {}
+    header, _ = gcs.header_without_unset(header, called, "run_recipe")
+    return header
+
+
+def _settle_folders(named: dict) -> dict:
+    """
+    Makes the study and the sessions folder `named` states absolute, in place:
+    the study from the current folder, a sessions folder from that study, or
+    from the current folder when there is none. Returns `named`.
+    """
+    study = named.get("studyfolder")
+    if isinstance(study, str) and study.strip():
+        study = named["studyfolder"] = bio.run_path(study)
+    else:
+        study = None
+
+    sessions = named.get("sessionsfolder")
+    if isinstance(sessions, str) and sessions.strip():
+        named["sessionsfolder"] = bio.run_path(sessions, study)
+    return named
+
+
+def _step_study(
+    command_spec: dict | str | None, parameters: dict | None, eargs: dict | None
+) -> str | None:
+    """
+    The study a step works in, as its own `gmri` settles it from what the step
+    loop of `run_recipe` hands it: of the study folder and the sessions
+    folder, the command line's, else the step's own, else the recipe's --
+    each under the name it has now, as `gmri` remaps a deprecated one. The
+    study is the study folder, else the folder the sessions folder is in --
+    absolute, taken from the current folder -- or None when neither is named:
+    the rule `general.folders.run_folders` places a run by, so the study of
+    the recipe as a whole (`command_spec` None) is the one its run is placed
+    in. Not checked for existence: a recipe may create its study in an
+    earlier step.
+    """
+    stated = _step_parameters(command_spec) if command_spec is not None else {}
+
+    # labels injected into the two folders alone: a step's other values are
+    # injected when it is reached
+    tiers = [
+        {
+            key: _inject_labels(value)
+            for key, value in (tier or {}).items()
+            if gf.FOLDER_ALIASES.get(key, key) in ("studyfolder", "sessionsfolder")
+        }
+        for tier in (eargs, stated, parameters)
+    ]
+
+    study, known = gf.run_study(gf.placement_parameters(*tiers))
+    return study if known else None
+
+
+def _recipe_study(parameters: dict | None, eargs: dict | None) -> str | None:
+    """The study the steps of a recipe work in, unless one names its own."""
+    return _step_study(None, parameters, eargs)
+
+
+def _produced_path(command_spec, produces, hints, folders, parameters=None, eargs=None):
     """
     The path a producing step writes, resolved the way the command resolves
-    it: what the step states, else what the run states, else `create_batch`'s
-    own default of `<study>/processing/batch.txt`. The sessions folder that
-    default is derived from is the run's own resolved one, so a recipe that
-    states only a study folder is answered as well as one that spells it out.
+    it: what the call that started the recipe states, else what the step
+    states, else what the recipe states for every step, else `create_batch`'s
+    own default of `<study>/processing/batch.txt`. A relative one is taken
+    from the study the step works in (`_step_study`), else from the current
+    folder; the default is in that study, else in the run's resolved one.
     """
     stated = _step_parameters(command_spec)
+    study = _step_study(command_spec, parameters, eargs)
 
-    target = stated.get(produces, hints.get(produces))
+    # in the order the step loop of `run_recipe` gives it the value: the call
+    # wins over the step, and `hints` holds the call over the recipe
+    if produces in (eargs or {}):
+        target = eargs[produces]
+    else:
+        target = stated.get(produces, hints.get(produces))
 
     if target is None:
-        # `create_batch` defaults to `dirname(sessionsfolder)/processing`,
-        # which is the study; `deduce_folders` leaves `sessionsfolder` unset
-        # when the run states only a study folder, so take that when it does
-        sessionsfolder = stated.get("sessionsfolder") or folders.get("sessionsfolder")
-        study = (
-            os.path.dirname(_inject_labels(sessionsfolder))
-            if sessionsfolder
-            else folders.get("basefolder")
-        )
-        if study is None:
+        default = study or folders.get("basefolder")
+        if default is None:
             return None
-        target = os.path.join(study, "processing", "batch.txt")
+        target = os.path.join(gf.processing_folder(default), "batch.txt")
 
-    return os.path.abspath(_inject_labels(target))
+    return bio.run_path(_inject_labels(target), study)
 
 
-def _withheld_by_production(commands, parameters, recipe_unset, hints, folders, run):
+def _withheld_by_production(
+    commands, parameters, recipe_unset, hints, folders, run, eargs=None
+):
     """
-    ``_withheld_by_production(commands, parameters, recipe_unset, hints, folders, run)``
+    ``_withheld_by_production(commands, parameters, recipe_unset, hints, folders, run, eargs=None)``
 
     Which run wide parameters this recipe writes itself, and up to which step
     they are therefore not to be handed to anybody.
@@ -1139,33 +1500,26 @@ def _withheld_by_production(commands, parameters, recipe_unset, hints, folders, 
         if consumed_as not in parameters or consumed_as in recipe_unset:
             continue
 
-        value = os.path.abspath(_inject_labels(parameters[consumed_as]))
+        # taken from the study the steps work in, as each step takes it
+        value = bio.run_path(
+            _inject_labels(parameters[consumed_as]), _recipe_study(parameters, eargs)
+        )
         exists = os.path.exists(value)
 
         writers = [
             (step, _get_command_name(com))
             for step, com in enumerate(commands, start=1)
             if _get_command_name(com) in PRODUCERS
-            and _produced_path(com, produces, hints, folders) == value
+            and _produced_path(com, produces, hints, folders, parameters, eargs)
+            == value
         ]
 
         if not writers:
             if exists:
                 continue
 
-            # only a step that would have been given it could have failed on
-            # it: one that declares the parameter, and neither states its own
-            # value nor unsets it
-            wanted = sorted(
-                {
-                    _get_command_name(com)
-                    for com in commands
-                    if qx_commands.get(_get_command_name(com)) is not None
-                    and consumed_as
-                    in gcs.declared_parameters(qx_commands.get(_get_command_name(com)))
-                    and not _step_keeps_out(com, consumed_as)
-                }
-            )
+            # only a step that would have been given it could have failed on it
+            wanted = _steps_given(commands, consumed_as)
             if not wanted:
                 continue
 
@@ -1200,6 +1554,45 @@ def _withheld_by_production(commands, parameters, recipe_unset, hints, folders, 
         run.write(note)
 
     return withheld
+
+
+def _steps_given(commands: list, name: str) -> list:
+    """
+    The commands of `commands` that would be given the run wide value of
+    `name`: those that declare the parameter, and neither state a value of
+    their own nor unset it (`_step_keeps_out`).
+    """
+    return sorted(
+        {
+            _get_command_name(com)
+            for com in commands
+            if qx_commands.get(_get_command_name(com)) is not None
+            and name in gcs.declared_parameters(qx_commands.get(_get_command_name(com)))
+            and not _step_keeps_out(com, name)
+        }
+    )
+
+
+def _section(data: dict, key: str, where: str) -> dict:
+    """
+    The parameters a section of the recipe file states, as a dict: empty when
+    nothing is written under it.
+
+    Raises:
+        ge.CommandFailed: on a section that is not `<parameter>: <value>`
+            pairs.
+    """
+    section = data.get(key)
+    if section is None:
+        return {}
+    if not isinstance(section, dict):
+        raise ge.CommandFailed(
+            "run_recipe",
+            f"Invalid {key} in the recipe file",
+            f"The {key} of {where} must be `<parameter>: <value>` pairs, got: {section!r}",
+            "Please check the recipe file!",
+        )
+    return dict(section)
 
 
 def _states_an_unset(params):
@@ -1281,13 +1674,15 @@ def _inject_labels(value):
     """
     Replace every ``{{$VAR}}`` in `value` with what the environment says.
 
-    The recipe's one substitution rule, in one place. It used to be spelled
-    three times -- for the log folder, for an external step's path and for
-    each command parameter -- and the copies did not run at the same point:
-    a value the recipe resolved its **own** folders from was still uninjected
-    when it did so, while the copy of it handed to a step was injected on the
-    way out. That is how a recipe could log to a folder literally named
-    `{{$STUDY_FOLDER}}` while every step it ran logged to the study.
+    The recipe's one substitution rule, `general.folders.inject_labels`, which
+    the container launcher applies as well when it reads a recipe file to
+    place a run's logs. It used to be spelled three times -- for the log
+    folder, for an external step's path and for each command parameter --
+    and the copies did not run at the same point: a value the recipe resolved
+    its **own** folders from was still uninjected when it did so, while the
+    copy of it handed to a step was injected on the way out. That is how a
+    recipe could log to a folder literally named `{{$STUDY_FOLDER}}` while
+    every step it ran logged to the study.
 
     Parameters:
         value: the value to inject into. Anything that is not a string
@@ -1301,26 +1696,19 @@ def _inject_labels(value):
         ge.CommandFailed: when a label names something the environment does
             not hold. A recipe cannot be run half resolved.
     """
-    if not isinstance(value, str) or "{{" not in value or "}}" not in value:
-        return value
-
-    for label in _find_enclosed_substrings(value):
-        cleaned_label = label.replace("{", "").replace("}", "")
-        os_label = cleaned_label[1:]
-        if cleaned_label[0] == "$" and os_label in os.environ:
-            value = value.replace(label, os.environ[os_label])
-        else:
-            raise ge.CommandFailed(
-                "run_recipe",
-                f"Cannot inject values marked with double curly braces in the recipe. Label [{label}] not found in system environment variables.",
-            )
-
-    return value
+    try:
+        return gf.inject_labels(value)
+    except gf.PlacementError as e:
+        raise ge.CommandFailed("run_recipe", str(e))
 
 
 def _find_enclosed_substrings(input_string, start_delimiter="{{", end_delimiter="}}"):
     """
     Find all substrings enclosed by start and end delimiters in a string.
+
+    How `run_recipe` found its labels before `general.folders.inject_labels`
+    took them over; kept as the reference `tests/test_log_placement.py` holds
+    that function's pattern to.
     """
     substrings = []
     start_index = 0

@@ -37,15 +37,15 @@ from qx_utilities.processing.workflow.dryrun import mcommand
 # with one interpolation each, so it cannot drift from `options`.
 
 # the only one of the four that names the files it writes, so it is a template.
-# Wrapped here for review and re-wrapped after substitution -- `nifti_tail` and
-# `img_suffix` are empty as often as not, and a paragraph laid out around their
-# widest form comes out ragged when they are short
+# Wrapped here for review and re-wrapped after substitution -- `nifti_tail`,
+# `img_suffix` and `bold_variant` are empty as often as not, and a paragraph
+# laid out around their widest form comes out ragged when they are short
 NUISANCE_PURPOSE = """\
 Nuisance signal is extracted from each of the specified BOLD files. The results
 are saved as {boldname}[N]{nifti_tail}.nuisance files in the
-images{img_suffix}/movement subfolder. Only the images named by --bolds are
-processed. Note that the NIfTI volume image is used even when the target format
-is CIFTI."""
+images{img_suffix}/functional{bold_variant}/movement subfolder. Only the images
+named by --bolds are processed. Note that the NIfTI volume image is used even
+when the target format is CIFTI."""
 
 NUISANCE_PARAMETERS = ["wbmask", "sessionroi", "nroi", "shrinknsroi"]
 
@@ -58,7 +58,7 @@ PURPOSE_WIDTH = 79
 #         type="processing.session")
 def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
     """
-    ``extract_nuisance_signal [... processing options]``
+    ``extract_nuisance_signal [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Extract nuisance signal from volume BOLD files.
 
@@ -69,9 +69,15 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -84,10 +90,10 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --bolds (str, default 'rest'):
+        --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
-            copy over. It can be a single type (e.g. 'task'), a pipe separated
-            list (e.g. 'WM|Control|rest') or 'all' to copy all.
+            process. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
@@ -146,7 +152,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             FreeSurfer segmentation. Each region is "trimmed" before use, so
             that there is at least one voxel buffer between each nuisance
             region mask. The image is stored in
-            images<img_suffix>/ROI/nuisance<bold_variant>`.
+            `images<img_suffix>/ROI/nuisance<bold_variant>`.
 
         - `bold[N]<nifti_tail>_nuisance.<image format>`
             An image file of the relevant image format that holds the same
@@ -212,8 +218,8 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex extract_nuisance_signal \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
                 --parsessions=10
@@ -237,6 +243,7 @@ def extract_nuisance_signal(sinfo, options, overwrite=False, thread=0):
             boldname=options["boldname"],
             nifti_tail=options["nifti_tail"],
             img_suffix=options["img_suffix"],
+            bold_variant=options["bold_variant"],
         ),
         PURPOSE_WIDTH,
     ))
@@ -315,7 +322,7 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
 
     try:
         # --- filenames
-        f = pc.get_file_names(sinfo, options)
+        f = pc.get_file_names(sinfo, options, _log=log)
         f.update(pc.get_bold_file_names(sinfo, boldinfo["name"], options))
         d = pc.get_session_folders(sinfo, options)
 
@@ -332,23 +339,19 @@ def execute_extract_nuisance_signal(sinfo, options, overwrite, boldinfo):
             _log=log,
         )
 
-        # --- aseg
-        astat = pc.check_for_file(f["fs_aseg_bold"],
-            "freesurfer aseg present",
-            f"freesurfer aseg missing [{f['fs_aseg_bold']}]",
-            status=True,
-            _log=log,
-        )
-        if not astat:
-            astat = pc.check_for_file(f["fs_aparc_bold"],
-                "freesurfer aparc present",
-                f"freesurfer aparc missing [{f['fs_aparc_bold']}]",
-                status=True,
-                _log=log,
-            )
-            segfile = f["fs_aparc_bold"]
-        else:
+        # --- aseg, or the legacy image a dry run did not link it from
+        astat = pc.present(f, "fs_aseg_bold", options)
+        if astat:
+            log.detail("freesurfer aseg present")
             segfile = f["fs_aseg_bold"]
+        else:
+            log.detail(f"freesurfer aseg missing [{f['fs_aseg_bold']}]")
+            astat = pc.present(f, "fs_aparc_bold", options)
+            if astat:
+                log.detail("freesurfer aparc present")
+            else:
+                log.detail(f"freesurfer aparc missing [{f['fs_aparc_bold']}]")
+            segfile = f["fs_aparc_bold"]
 
         status = status and astat
 

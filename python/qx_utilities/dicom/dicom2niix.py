@@ -49,7 +49,7 @@ def dicom2niix(
     """
     ``dicom2niix [folder=.] [clean=no] [unzip=yes] [gzip=folder] [sessionid=None] [verbose=True] [parelements=1] [tool='auto'] [add_image_type=0] [add_json_info=""]``
 
-    Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
+    Process session's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
 
     ..  qx_command:
         type: utility
@@ -113,7 +113,8 @@ def dicom2niix(
             The session.txt will be placed in the session base folder. It
             will contain the information about the session id, subject id,
             location of folders and a list of created NIfTI images with
-            their description.
+            their description. The folders are recorded relative to the
+            session folder, which has to be named after the session id.
 
             Subject id will be extracted from the session id assuming the
             session id formula: `<subject id>_<session id>`. If there is no
@@ -124,10 +125,10 @@ def dicom2niix(
 
                 id: OP169_baseline
                 subject: OP169
-                dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
-                raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
-                data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
-                hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
+                dicom: dicom
+                raw_data: nii
+                data: 4dfp
+                hcp: hcp
                 01: Survey
                 02: T1w 0.7mm N1
                 03: T2w 0.7mm N1
@@ -182,7 +183,7 @@ def dicom2niix(
 
     Notes:
         The command is used to convert MR images from DICOM and PAR/REC
-        files to NIfTI format. It searches for images within the a dicom
+        files to NIfTI format. It searches for images within the dicom
         subfolder within the provided session folder (folder). It expects
         to find each image within a separate subfolder. It then converts
         the found images to NIfTI format and places them in the nii folder
@@ -194,14 +195,14 @@ def dicom2niix(
         dcm2niix, and for PAR/REC files, dicm2nii is used if QuNex is set
         to use Matlab, otherwise also PAR/REC files are converted using
         dcm2niix. If set explicitly, the command will try to use the tool
-        specified. To speed the process up, the command can run it can run
-        multiple conversion processes in parallel. The number of processes
-        to run in parallel is specified using the parelements parameter.
+        specified. To speed the process up, the command can run multiple
+        conversion processes in parallel. The number of processes to run
+        in parallel is specified using the parelements parameter.
 
-        Before running, the command check for presence of existing NIfTI
+        Before running, the command checks for presence of existing NIfTI
         files. The behavior when finding them is defined by clean
         parameter. If set to 'yes' it will remove any existing files and
-        proceede. If set to 'no' it will leave them and abort.
+        proceed. If set to 'no' it will leave them and abort.
 
         Before running, the command also checks whether DICOM or .REC files
         might be gzipped. If that is the case, the response depends on the
@@ -211,23 +212,25 @@ def dicom2niix(
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parelements`
-            parameters. In this case the command will be run for each of
-            the specified sessions in the sessionsfolder (current directory
-            by default). `sessions` limits the run to the specified id
-            codes, and an optional `filter` parameter selects the sessions
-            whose batch file entry matches a key. (for more information see
-            online documentation).
-            `sfolder` will be filled in automatically as each sessions's
-            folder. Commands will run in parallel by utilizing the
-            specified number of parelements (1 by default).
+            `sessions` and optionally `studyfolder` (or `sessionsfolder`)
+            and `parsessions` parameters. In this case the command will be
+            run for each of the specified sessions in the sessions folder
+            (`<studyfolder>/sessions` unless `sessionsfolder` names another
+            one, the current directory when neither is given). `sessions`
+            limits the run to the specified id codes, and an optional
+            `filter` parameter selects the sessions whose batch file entry
+            matches a key. (for more information see online documentation).
+            `folder` will be filled in automatically as each session's
+            folder. Commands will run in parallel, where the degree of
+            parallelism is determined by `parsessions` (1 by default), and
+            each session runs `parelements` conversions in parallel.
 
             If `scheduler` parameter is set, the command will be run using
             the specified scheduler settings (see `qunex schedule --help`
             for more information). If set in combination with `sessions`
             parameter, sessions will be processed over multiple nodes,
-            `core` parameter specifying how many sessions to run per node.
-            Optional `scheduler_environment`, `scheduler_workdir`,
+            `parsessions` parameter specifying how many sessions to run per
+            node. Optional `scheduler_environment`, `scheduler_workdir`,
             `scheduler_sleep`, and `nprocess` parameters can be set.
 
             Set optional `logfolder` parameter to specify where the
@@ -247,7 +250,7 @@ def dicom2niix(
         Multiple sessions example::
 
             qunex dicom2niix \\
-                --sessionsfolder="/data/my_study/sessions" \\
+                --studyfolder="/data/my_study" \\
                 --sessions="OP*" \\
                 --clean=yes \\
                 --unzip=yes \\
@@ -262,7 +265,6 @@ def dicom2niix(
     if sessionid and sessionid.lower() == "none":
         sessionid = None
 
-    base = folder
     null = open(os.devnull, "w")
     dmcf = os.path.join(folder, "dicom")
     imgf = os.path.join(folder, "nii")
@@ -351,8 +353,10 @@ def dicom2niix(
 
     # --- open report files
 
+    # named here, as the loop below rebinds `folder` to each dicom subfolder
+    stxt_file = os.path.join(folder, "session.txt")
     r = open(os.path.join(dmcf, "DICOM-Report.txt"), "w")
-    stxt = open(os.path.join(folder, "session.txt"), "w")
+    stxt = open(stxt_file, "w")
 
     # --- Print header
 
@@ -452,10 +456,11 @@ def dicom2niix(
 
             print("id:", sessionid, file=stxt)
             print("subject:", subjectid, file=stxt)
-            print("dicom:", os.path.abspath(os.path.join(base, "dicom")), file=stxt)
-            print("raw_data:", os.path.abspath(os.path.join(base, "nii")), file=stxt)
-            print("data:", os.path.abspath(os.path.join(base, "4dfp")), file=stxt)
-            print("hcp:", os.path.abspath(os.path.join(base, "hcp")), file=stxt)
+            # the session's folders, relative to the session folder
+            print("dicom: dicom", file=stxt)
+            print("raw_data: nii", file=stxt)
+            print("data: 4dfp", file=stxt)
+            print("hcp: hcp", file=stxt)
             print("", file=stxt)
 
             if "institution" in info:
@@ -640,7 +645,7 @@ def dicom2niix(
         stxt.close()
         for clean_file in [
             os.path.join(dmcf, "DICOM-Report.txt"),
-            os.path.join(folder, "session.txt"),
+            stxt_file,
         ]:
             if os.path.exists(clean_file):
                 os.remove(clean_file)
@@ -911,5 +916,5 @@ def dicom2niix(
                     exceptions.append(r["exception"])
             if len(exceptions) > 0:
                 raise ge.CommandError(
-                    "dicom2nii", "Unable to archive one or more acquisitions"
+                    "dicom2niix", "Unable to archive one or more acquisitions"
                 )

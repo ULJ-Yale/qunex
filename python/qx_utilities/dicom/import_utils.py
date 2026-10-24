@@ -26,6 +26,9 @@ import qx_utilities.general.log as gl
 from qx_utilities.dicom.dicom_archive import _RE_TAR, _RE_ZIP
 from qx_utilities.dicom.dicom_utils import _safe_rmtree, match_all
 
+# the folders a study keeps in its sessions folder that are not sessions
+_NOT_SESSIONS = ("inbox", "archive", "specs", "QC")
+
 
 def _import_parse_logfile(logfile, _log=None):
     """Parse the ``logfile`` specification into a packet_name -> session map."""
@@ -102,41 +105,46 @@ def _import_extract_session(pname, getid, empty):
     return session
 
 
-def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, nameformat, sessions_info, _log=None):
+def _compile_nameformat(nameformat):
+    """The compiled `nameformat` expression, or a CommandFailed naming it."""
+    try:
+        return re.compile(nameformat)
+    except Exception:
+        raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Could not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+
+
+def _import_discover(sessionsfolder, sessions_list, inbox, pattern, nameformat, sessions_info, _log=None):
     """Identify packets/session folders to process and bucket them for reporting."""
     log = gl.log_or_console(_log)
 
     packets = {"ok": [], "nolog": [], "bad": [], "exist": [], "skip": [], "invalid": []}
     empty = {"subjectid": None, "sessionname": None, "sessionid": None, "packetname": None}
 
-    if masterinbox:
+    if inbox:
         # the "---> " each of these carried is the record's own prefix now
         report_set = [
             ("ok", "Found the following packets to process:"),
             ("nolog", "These packets do not match with the log and they won't be processed"),
             ("bad", "For these packets a packet name could not be identified and they won't be processed:"),
-            ("invalid", "For these packets the packet name could not parsed and they won't be processed:"),
+            ("invalid", "For these packets the packet name could not be parsed and they won't be processed:"),
             ("exist", "The session folder for these packages already has results:"),
             ("skip", "These packages do not match list of sessions and will be skipped:"),
         ]
-        if not os.path.exists(masterinbox):
-            raise ge.CommandFailed("import_dicom", "Master inbox does not exist", f"A folder {masterinbox} does not exist.", "Please check your path!")
-        if not os.path.isdir(masterinbox):
-            raise ge.CommandFailed("import_dicom", "Master inbox is not a folder", f"{masterinbox} is not a folder.", "Please check your path!")
+        if not os.path.exists(inbox):
+            raise ge.CommandFailed("import_dicom", "Inbox does not exist", f"A folder {inbox} does not exist.", "Please check your path!")
+        if not os.path.isdir(inbox):
+            raise ge.CommandFailed("import_dicom", "Inbox is not a folder", f"{inbox} is not a folder.", "Please check your path!")
 
-        log.step(f"Checking for packets in {os.path.abspath(masterinbox)}")
+        log.step(f"Checking for packets in {os.path.abspath(inbox)}")
         log.detail(f"using regular expression '{pattern}'")
         log.detail(f"extracting subject id using regular expression '{nameformat}'")
         try:
             getop = re.compile(pattern)
         except Exception:
-            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Coud not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
-        try:
-            getid = re.compile(nameformat)
-        except Exception:
-            raise ge.CommandFailed("import_dicom", "Invalid nameformat", "Coud not parse the provided regular expression pattern: '%s'" % (nameformat), "Please check and correct it!")
+            raise ge.CommandFailed("import_dicom", "Invalid pattern", "Could not parse the provided regular expression pattern: '%s'" % (pattern), "Please check and correct it!")
+        getid = _compile_nameformat(nameformat)
 
-        for afile in glob.glob(os.path.join(masterinbox, "*")):
+        for afile in glob.glob(os.path.join(inbox, "*")):
             m = getop.search(os.path.basename(afile))
             if not m:
                 continue
@@ -171,15 +179,17 @@ def _import_discover(sessionsfolder, sessions_list, masterinbox, pattern, namefo
     else:
         report_set = [
             ("ok", "Found the following folders to process:"),
-            ("invalid", "For these folders the folder name could not parsed and they won't be processed:"),
+            ("invalid", "For these folders the folder name could not be parsed and they won't be processed:"),
             ("exist", "These folders have existing results:"),
         ]
         log.step(f"Checking for folders to process in '{os.path.abspath(sessionsfolder)}'")
-        getid = re.compile(nameformat)
+        getid = _compile_nameformat(nameformat)
 
         sfolders = []
         for sessionid in sessions_list or []:
             sfolders += glob.glob(os.path.join(sessionsfolder, sessionid))
+        # a glob also matches files, and the folders the study keeps next to its sessions
+        sfolders = [f for f in sfolders if os.path.isdir(f) and os.path.basename(f) not in _NOT_SESSIONS]
         for sfolder in sorted(set(sfolders)):
             pname = os.path.basename(sfolder)
             session = _import_extract_session(pname, getid, empty)
@@ -229,7 +239,7 @@ def _import_report_packets(packets, report_set, overwrite, _log=None):
                     log.detail("To process them, remove or rename the existing subject folders or set `overwrite` to 'yes'")
 
 
-def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overwrite, test, _log=None):
+def _import_select_to_process(packets, inbox, sessionsfolder, check, overwrite, test, _log=None):
     """Apply the check/test/overwrite rules and return the packets to process.
 
     Returns None when the command should stop without processing (test mode).
@@ -244,8 +254,8 @@ def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overw
         return None
 
     if not n_to_process:
-        where = ("master inbox [%s]" % os.path.abspath(masterinbox)) if masterinbox else ("session folder [%s]" % os.path.abspath(sessionsfolder))
-        what = "packets" if masterinbox else "sessions"
+        where = ("inbox [%s]" % os.path.abspath(inbox)) if inbox else ("session folder [%s]" % os.path.abspath(sessionsfolder))
+        what = "packets" if inbox else "sessions"
         if check.lower() == "any":
             raise ge.CommandFailed("import_dicom", "No %s found to process" % what, "No %s were found to be processed in the %s!" % (what, where), "Please check your data!")
         raise ge.CommandNull("import_dicom", "No %s found to process" % what, "No %s were found to be processed in the %s!" % (what, where))
@@ -264,16 +274,16 @@ def _import_select_to_process(packets, masterinbox, sessionsfolder, check, overw
     return packets["ok"]
 
 
-def _resolve_packet_sources(afile, session, masterinbox, sfolder):
+def _resolve_packet_sources(afile, session, inbox, sfolder):
     """Return the source path(s) the engine should read for a packet."""
-    if masterinbox:
+    if inbox:
         return [afile]
     if session.get("archives"):
         return list(session["archives"])
     return [os.path.join(sfolder, "inbox")]
 
 
-def _archive_packet(sources, afolder, archive, masterinbox, verbose, _log=None):
+def _archive_packet(sources, afolder, archive, inbox, verbose, _log=None):
     """Move/copy/delete processed packages per the ``archive`` setting."""
     log = gl.log_or_console(_log)
 
@@ -283,7 +293,7 @@ def _archive_packet(sources, afolder, archive, masterinbox, verbose, _log=None):
 
     for p in sources:
         is_archive = bool(_RE_ZIP.search(p) or _RE_TAR.search(p))
-        if not (masterinbox or is_archive):
+        if not (inbox or is_archive):
             continue
         ptype = "folder" if os.path.isdir(p) else "archive"
         target = os.path.join(afolder, os.path.basename(p))
@@ -314,22 +324,24 @@ def _archive_packet(sources, afolder, archive, masterinbox, verbose, _log=None):
     return notes
 
 
-def _import_normalize_args(sessionsfolder, sessions, masterinbox, pattern, nameformat, tool, add_image_type, verbose, overwrite):
-    """Validate and normalise import_dicom arguments; returns a normalised tuple."""
+def _import_normalize_args(sessionsfolder, sessions, inbox, pattern, nameformat, tool, add_image_type, verbose, overwrite):
+    """Validate and normalise import_dicom arguments; returns a normalised tuple.
+
+    ``sessionsfolder`` is the sessions folder the command works on, already
+    resolved by the caller; the default inbox is the one in it.
+    """
     if tool not in ["auto", "dcm2niix", "dcm2nii", "dicm2nii"]:
         raise ge.CommandError("import_dicom", "Incorrect tool specified", "The tool specified for conversion to nifti (%s) is not valid!" % (tool), "Please use one of dcm2niix, dcm2nii, dicm2nii or auto!")
 
     verbose_b = verbose.lower() == "yes" if isinstance(verbose, str) else bool(verbose)
     overwrite_b = overwrite if isinstance(overwrite, bool) else overwrite.lower() == "yes"
 
-    if sessionsfolder is None:
-        sessionsfolder = "."
-    if masterinbox is None:
-        masterinbox = os.path.join(sessionsfolder, "inbox", "MR")
-    if isinstance(masterinbox, str) and masterinbox.lower() == "none":
-        masterinbox = None
+    if inbox is None:
+        inbox = os.path.join(sessionsfolder, "inbox", "MR")
+    if isinstance(inbox, str) and inbox.lower() == "none":
+        inbox = None
         if not sessions:
-            raise ge.CommandError("import_dicom", "Sessions parameter not specified", "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
+            raise ge.CommandError("import_dicom", "Sessions parameter not specified", "If `inbox` is set to 'none' the `sessions` has to list sessions to process!", "Please check your command!")
 
     if pattern is None:
         pattern = r"(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"
@@ -342,7 +354,7 @@ def _import_normalize_args(sessionsfolder, sessions, masterinbox, pattern, namef
         raise ge.CommandError("import_dicom", "Misspecified add_image_type", "The add_image_type argument value could not be converted to integer! [%s]" % (add_image_type), "Please check command instructions!")
 
     sessions_list = re.split(r", *", sessions) if sessions else None
-    return sessionsfolder, masterinbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b
+    return sessionsfolder, inbox, pattern, nameformat, add_image_type, sessions_list, verbose_b, overwrite_b
 
 
 def _import_final_report(report, _log=None):

@@ -21,8 +21,8 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog, ReportLog
@@ -35,7 +35,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
-    ``hcp_reapply_fix [... processing options]``
+    ``hcp_reapply_fix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the ReApplyFix step of HCP Pipeline
     (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
@@ -57,9 +57,15 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -170,15 +176,15 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         ::
 
             qunex hcp_reapply_fix \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_matlab_mode="interpreted"
 
         ::
 
             qunex hcp_reapply_fix \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_matlab_mode="interpreted"
     """
@@ -350,8 +356,11 @@ def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
                     log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
                     boldok = False
 
+            # ReApplyFixPipeline.sh reads FSL_FIX_MATLAB_MODE through FIX's
+            # settings.sh to find the MCR in compiled mode, so the mode is
+            # also set for this call alone
             comm = (
-                '%(script)s \
+                'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
                 --path="%(path)s" \
                 --subject="%(subject)s" \
                 --fmri-name="%(boldtarget)s" \
@@ -579,12 +588,11 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
 
             # longitudinal
             if options["longitudinal"]:
-                studyfolder = gc.deduce_folders(options)["basefolder"]
-                if not studyfolder:
-                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                    groupok = False
                 # replace path
-                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+                path = os.path.join(
+                    gf.subjects_folder(options["studyfolder"]), sinfo["subject"]
+                )
+                long_session = f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
 
             comm = (
                 '%(script)s \
@@ -647,10 +655,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             # -- Longitudinal parameters
             if options["longitudinal"]:
                 comm += "                --is-longitudinal=1"
-                comm += (
-                    "                --longitudinal-session="
-                    + f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
-                )
+                comm += "                --longitudinal-session=" + long_session
 
             # -- Report command
             if groupok:
@@ -678,6 +683,11 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 )
 
             tfile = os.path.join(hcp["hcp_nonlin"], "Results", groupname, postfix)
+            # the longitudinal results are in the subject's longitudinal session
+            if options["longitudinal"]:
+                tfile = os.path.join(
+                    path, long_session, "MNINonLinear", "Results", groupname, postfix
+                )
             full_test = None
 
             # -- Run
@@ -728,7 +738,8 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 log.raw("\n\n")
 
         else:
-            log.error(f"Hand reclassification failed for bold: {printbold}!")
+            log.error(f"Hand reclassification failed for group: {groupname}!")
+            report["failed"].append(groupname)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")

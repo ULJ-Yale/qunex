@@ -24,7 +24,7 @@ from qx_utilities.hcp.hcp_utils import do_hcp_options_check
 
 def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_cortical_thickness [... processing options]``
+    ``hcp_cortical_thickness [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the curvature-corrected (folding-compensated) cortical thickness step
     of HCP Pipeline (CorrThick.sh). Computes and saves curvature-corrected
@@ -45,9 +45,15 @@ def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -113,8 +119,8 @@ def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_cortical_thickness \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_corrthick_hemi="B" \\
                 --hcp_corrthick_surf="midthickness"
     """
@@ -208,15 +214,12 @@ def hcp_cortical_thickness(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP CorrThick", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP CorrThick can be run")
-                    report = "HCP CorrThick can be run"
-                    failed = 0
+                log.step("HCP CorrThick can be run")
+                report = "HCP CorrThick can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

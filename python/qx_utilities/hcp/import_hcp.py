@@ -28,6 +28,7 @@ import re
 import shutil
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 import zipfile
 import tarfile
@@ -102,6 +103,11 @@ def map_to_qunex_cpls(
 
     tfile = os.path.join(tfolder, os.sep.join(data))
 
+    # the log map_hcpls2nii writes into the hcpls folder once it has mapped it,
+    # which is what tells a completed import from an interrupted one
+    mapping_log = os.path.join(tfolder, "hcpls2nii.log")
+
+    # the lists name a session by its id, the name of its folder
     if sessionid in sessions["skip"]:
         return False
     elif sessionid not in sessions["list"]:
@@ -113,39 +119,35 @@ def map_to_qunex_cpls(
                 )
                 shutil.rmtree(tfolder)
                 sessions["clean"].append(sessionid)
-            elif not os.path.exists(os.path.join(tfolder, "hcpfs2nii.log")):
+            elif not os.path.exists(mapping_log):
                 log.step(
-                    f"incomplete hcpls for session {session} already exists: cleaning session"
+                    f"incomplete hcpls for session {sessionid} already exists: cleaning session"
                 )
                 shutil.rmtree(tfolder)
-                sessions["clean"].append(session)
+                sessions["clean"].append(sessionid)
             else:
-                sessions["skip"].append(session)
+                sessions["skip"].append(sessionid)
                 with log.section(
-                    "hcpls for session %s already exists: skipping session" % (session)
+                    "hcpls for session %s already exists: skipping session"
+                    % (sessionid)
                 ):
                     log.step("files previously mapped:")
-                    with open(os.path.join(tfolder, "hcpfs2nii.log")) as hcpls_log:
+                    with open(mapping_log) as hcpls_log:
                         for logline in hcpls_log:
-                            if "HCPFS to nii mapping report" in logline:
+                            if "HCPLS to nii mapping report" in logline:
                                 continue
                             elif "=>" in logline:
                                 mapped_file = logline.split("=>")[0].strip()
                                 log.detail(os.path.basename(mapped_file))
+                return False
         else:
-            log.step(f"creating hcpl session {sessionid}")
+            log.step(f"creating hcpls session {sessionid}")
             sessions["map"].append(sessionid)
 
     if os.path.exists(tfile):
-        if sessionid in sessions["skip"]:
-            return False
-        else:
-            os.remove(tfile)
+        os.remove(tfile)
     elif not os.path.exists(os.path.dirname(tfile)):
         os.makedirs(os.path.dirname(tfile))
-
-    if session in sessions["skip"]:
-        return False
 
     return tfile
 
@@ -162,10 +164,11 @@ def import_hcp(
     filesort=None,
     processed_data=None,
     hcp_dataset=None,
+    studyfolder=None,
     _log=None,
 ):
     """
-    ``import_hcp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>] [hcp_dataset=<HCP dataset name>]``
+    ``import_hcp [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [inbox=<sessionsfolder>/inbox/HCPLS] [sessions=""] [action=link] [overwrite=no] [archive=leave] [hcplsname=<inbox folder name>] [nameformat='(?P<subject_id>[^/]+?)_(?P<session_name>[^/]+?)/unprocessed/(?P<data>.*)'] [filesort=<file sorting option>] [processed_data=<path to hcp processed data>] [hcp_dataset=<HCP dataset name>]``
 
     Map HCPLS data to the QuNex Suite file structure.
 
@@ -173,9 +176,15 @@ def import_hcp(
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The sessions folder where all the sessions are to be mapped to. It
-            should be a folder within the <study folder>.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The imported sessions are mapped into it.
 
         --inbox (str, default <sessionsfolder>/inbox/HCPLS):
             The location of the HCPLS dataset. It can be any of the following:
@@ -197,7 +206,7 @@ def import_hcp(
             `inbox` is a valid HCPLS datastructure folder, then the sessions
             will be matched against the `<subject id>[_<session name>]`. Note:
             the session will match if the string is found within the package
-            name or the session id. So 'HCPA' with match any zip file that
+            name or the session id. So 'HCPA' will match any zip file that
             contains string 'HCPA' or any session id that contains 'HCPA'!
 
         --action (str, default 'link'):
@@ -213,18 +222,20 @@ def import_hcp(
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no). Note that
             previous data is deleted before the run, so in the case of a failed
-            command run, previous results are lost.
+            command run, previous results are lost. With 'no', a session that
+            was imported before is skipped, and one whose import did not
+            complete is imported again.
 
-        --archive (str, default 'move'):
+        --archive (str, default 'leave'):
             What to do with the files after they were mapped.
 
             Options are:
 
             - 'leave' ... leave the specified archive where it is
             - 'move'  ... move the specified archive to
-              `<sessionsfolder>/archive/HCPLS`)
+              `<sessionsfolder>/archive/HCPLS`
             - 'copy'  ... copy the specified archive to
-              `<sessionsfolder>/archive/HCPLS`)
+              `<sessionsfolder>/archive/HCPLS`
             - 'delete' ... delete the archive after processing if no errors were
               identified.
 
@@ -294,7 +305,7 @@ def import_hcp(
         onboarding preprocessed data, only HCP folders with preprocessed data
         will be created.
 
-        - The original HCPL session-level data is stored in::
+        - The original HCPLS session-level data is stored in::
 
             <sessionsfolder>/<session>/hcpls
 
@@ -321,7 +332,7 @@ def import_hcp(
             The path can point to a folder with extracted HCPLS dataset, a
             `.zip` or `.tar.gz` archive or a folder containing one or more
             `.zip` or `.tar.gz` archives. In the initial step, each file
-            found will be assigned either to a specific session.
+            found will be assigned to a specific session.
 
             <hcpls_dataset_name> can be provided as a `hcplsname` parameter
             to the command call. If `hcplsname` is not provided, the name
@@ -365,14 +376,14 @@ def import_hcp(
             matched against the `<subject id>[_<session name>]`.
 
             **Note**: the session will match if the string is found within the
-            package name or the session id. So 'HCPA' with match any zip file
+            package name or the session id. So 'HCPA' will match any zip file
             that contains string 'HCPA' or any session id that contains 'HCPA'!
 
     Examples:
         ::
 
            qunex import_hcp \\
-              --sessionsfolder="<absolute path to study folder>/sessions" \\
+              --studyfolder="<absolute path to study folder>" \\
               --inbox="<absolute path to folder with HCP dataset>" \\
               --archive=move \\
               --overwrite=yes
@@ -388,7 +399,7 @@ def import_hcp(
         ::
 
            qunex import_hcp \\
-              --sessionsfolder="<absolute path to study folder>/sessions" \\
+              --studyfolder="<absolute path to study folder>" \\
               --inbox="<absolute path to folder with HCP dataset>" \\
               --action='copy' \\
               --archive='leave' \\
@@ -405,7 +416,7 @@ def import_hcp(
         ::
 
            qunex import_hcp \\
-              --sessionsfolder="<absolute path to study folder>/sessions" \\
+              --studyfolder="<absolute path to study folder>" \\
               --sessions="HCA6086369_V1_MR,HCA6166973_V1_MR,HCD00" \\
               --inbox="<absolute path to folder with HCP dataset>" \\
               --action='copy' \\
@@ -419,7 +430,7 @@ def import_hcp(
         ::
 
             qunex import_hcp \\
-                --sessionsfolder=myStudy/sessions \\
+                --studyfolder=myStudy \\
                 --inbox=HCPLS \\
                 --overwrite=yes \\
                 --hcplsname=hcpls
@@ -444,7 +455,7 @@ def import_hcp(
             "import_hcp",
             "Invalid dataset archive option",
             "%s is not a valid option for dataset archive option!" % (archive),
-            "Please specify one of: move, copy, delete!",
+            "Please specify one of: leave, move, copy, delete!",
         )
 
     if not filesort:
@@ -468,8 +479,19 @@ def import_hcp(
                 "Please use one of: HCA, HCD, HCYA!",
             )
 
-    if sessionsfolder is None:
-        sessionsfolder = os.path.abspath(".")
+    # onboarding preprocessed data only, which needs to know what and from where
+    if inbox == "NONE" and not (processed_data and hcp_dataset):
+        raise ge.CommandError(
+            "import_hcp",
+            "Missing parameters for onboarding preprocessed data",
+            "With inbox set to NONE only preprocessed data is onboarded, which "
+            "requires both processed_data and hcp_dataset!",
+            "Please set --processed_data and --hcp_dataset!",
+        )
+
+    sessionsfolder = gf.sessions_folder(
+        studyfolder, sessionsfolder, default=os.path.abspath(".")
+    )
 
     if inbox is None:
         inbox = os.path.join(sessionsfolder, "inbox", "HCPLS")
@@ -611,7 +633,7 @@ def import_hcp(
                         )
                     elif archive == "copy":
                         log.step("copying dataset to archive")
-                        shutil.copy2(
+                        _copy_to_archive(
                             inbox, os.path.join(sessionsfolder, "archive", "HCPLS")
                         )
                     elif archive == "delete":
@@ -633,7 +655,7 @@ def import_hcp(
                             )
                         elif archive == "copy":
                             log.step("copying dataset to archive")
-                            shutil.copy2(
+                            _copy_to_archive(
                                 file, os.path.join(sessionsfolder, "archive", "HCPLS")
                             )
                         elif archive == "delete":
@@ -719,7 +741,11 @@ def import_hcp(
                             log.detail(
                                 f"copying processed {m} data to QuNex session folder"
                             )
-                            shutil.copytree(modality_path, os.path.join(tfolder, m))
+                            shutil.copytree(
+                                modality_path,
+                                os.path.join(tfolder, m),
+                                dirs_exist_ok=True,
+                            )
 
     # processed data only
     else:
@@ -738,8 +764,11 @@ def import_hcp(
         source_files = _get_source_files(processed_data, sessions, nameformat, True)
 
         for sf in source_files:
-            # session id
+            # session id: the name of the folder, or of the zip package without
+            # its extension, as it names the session's folder
             session = os.path.basename(sf)
+            if session.endswith(".zip"):
+                session = session[: -len(".zip")]
             log.step(f"onboarding {session}")
             subject = session.split("_")[0]
 
@@ -781,13 +810,25 @@ def import_hcp(
                         os.path.join(sessionsfolder, "archive", "HCPLS")
                     ):
                         os.makedirs(os.path.join(sessionsfolder, "archive", "HCPLS"))
+                    # into the archive under its own name, as a file is
+                    # copied: the archive folder itself exists already
                     if os.path.isdir(sf):
                         shutil.copytree(
-                            sf, os.path.join(sessionsfolder, "archive", "HCPLS")
+                            sf,
+                            os.path.join(
+                                sessionsfolder,
+                                "archive",
+                                "HCPLS",
+                                os.path.basename(sf),
+                            ),
+                            dirs_exist_ok=True,
                         )
             elif archive == "delete":
                 log.detail(f"deleting {sf}")
-                shutil.rmtree(sf)
+                if is_file:
+                    os.remove(sf)
+                else:
+                    shutil.rmtree(sf)
 
             # create session_hcp.txt
             session_hcp_file = os.path.join(session_folder, "session_hcp.txt")
@@ -798,7 +839,7 @@ def import_hcp(
                 f.write("#\n")
                 f.write(f"session: {session}\n")
                 f.write(f"subject: {subject}\n")
-                f.write(f"hcp: {hcp_folder_no_session}\n")
+                f.write("hcp: hcp\n")
                 f.write("hcpready: true\n\n")
 
                 # anat
@@ -855,6 +896,19 @@ def import_hcp(
         raise ge.CommandFailed(
             "import_hcp", "Some actions failed", "Please check report!"
         )
+
+
+def _copy_to_archive(source: str, archive_folder: str) -> None:
+    """Copy a package file or a dataset folder into the archive folder."""
+    if os.path.isdir(source):
+        # a folder goes in under its own name, as a file does
+        shutil.copytree(
+            source,
+            os.path.join(archive_folder, os.path.basename(os.path.normpath(source))),
+            dirs_exist_ok=True,
+        )
+    else:
+        shutil.copy2(source, archive_folder)
 
 
 def _get_source_files(archive_folder, sessions, nameformat, processed=False):
@@ -969,8 +1023,8 @@ def process_hcpls(sessionfolder, filesort, _log=None):
             "Please check your QuNex installation",
         )
 
-    hcpls_file = open(hcpls_structure)
-    content = hcpls_file.read()
+    with open(hcpls_structure) as hcpls_file:
+        content = hcpls_file.read()
     hcpls = ast.literal_eval(content)
 
     # --- get a list of folders and process them
@@ -1172,7 +1226,7 @@ def map_hcpls2nii(
     sourcefolder=".", overwrite="no", report=None, filesort=None, _log=None
 ):
     """
-    ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=<study>/info/hcpls/parameters.txt] [filesort=<file sorting option>]``
+    ``map_hcpls2nii [sourcefolder='.'] [overwrite='no'] [report=None] [filesort=<file sorting option>]``
 
     Map HCPLS organized data to `nii` folder structure.
 
@@ -1191,8 +1245,8 @@ def map_hcpls2nii(
 
     Parameters:
         --sourcefolder (str, default '.'):
-            The base session folder in which bids folder with data and files for
-            the session are present.
+            The base session folder in which the hcpls folder with data and
+            files for the session is present.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no). Note that
@@ -1227,23 +1281,28 @@ def map_hcpls2nii(
 
     Output files:
         After running the mapped nifti files will be in the `nii` subfolder,
-        named with sequential image number. `session.txt` will be in the
-        base session folder and `hcpls2nii.log` will be in the `hcpls`
-        folder.
+        named with sequential image number. `session.txt` and
+        `session_hcp.txt` will be in the base session folder and
+        `hcpls2nii.log` will be in the `hcpls` folder.
 
-        session.txt file:
-            The session.txt will be placed in the session base folder. It
-            will contain the information about the session id, subject id
-            location of folders and a list of created NIfTI images with
-            their description.
+        session.txt and session_hcp.txt files:
+            The session.txt and session_hcp.txt files will be placed in the
+            session base folder. They will contain the information about the
+            session id, subject id, location of folders and a list of created
+            NIfTI images with their description. The folders are recorded
+            relative to the session folder. session_hcp.txt also records the
+            `hcpls` folder and marks the session as ready for the HCP
+            pipelines.
 
-            An example session.txt file would be::
+            An example session_hcp.txt file would be::
 
-                id: 06_retest
+                session: 06_retest
                 subject: 06
-                hcpls: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcpls
-                raw_data: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/nii
-                hcp: /Volumes/tigr/MBLab/fMRI/bidsTest/sessions/06_retest/hcp
+                hcpls: hcpls
+                raw_data: nii
+                hcp: hcp
+
+                hcpready: true
 
                 01: T1w
                 02: bold1:rest1
@@ -1257,10 +1316,10 @@ def map_hcpls2nii(
 
             For each of the listed images there will be a corresponding
             NIfTI file in the nii subfolder (e.g. 04.nii.gz for resting
-            state 2 PA). The generated session.txt files form the basis for
-            the following HCP and other processing steps. `id` field will
-            be set to the full session name, `subject` will be set to the
-            text preceeding the first underscore (`_`) character.
+            state 2 PA). The generated session files form the basis for
+            the following HCP and other processing steps. `session` field
+            will be set to the full session name, `subject` will be set to
+            the text preceding the first underscore (`_`) character.
 
         hcpls2nii.log file:
             The `hcpls2nii.log` provides the information about the date and
@@ -1291,15 +1350,16 @@ def map_hcpls2nii(
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parsessions`
-            parameters. In this case the command will be run for each of
-            the specified sessions in the sessionsfolder (current directory
-            by default). `sessions` limits the run to the specified id
-            codes, and an optional `filter` parameter selects the sessions
-            whose batch file entry matches a key. (for more information see
+            `sessions` and optionally `studyfolder` (or `sessionsfolder`)
+            and `parsessions` parameters. In this case the command will be
+            run for each of the specified sessions in the sessions folder
+            (`<studyfolder>/sessions`, or the current directory when neither
+            is given). `sessions` limits the run to the specified id codes,
+            and an optional `filter` parameter selects the sessions whose
+            batch file entry matches a key. (for more information see
             online documentation).
             `sourcefolder` will be filled in automatically as each
-            sessions's folder. Commands will run in parallel, where the
+            session's folder. Commands will run in parallel, where the
             degree of parallelism is determined by `parsessions` (1 by
             default).
 
@@ -1323,13 +1383,13 @@ def map_hcpls2nii(
         ::
 
             qunex map_hcpls2nii \\
-                --folder=. \\
+                --sourcefolder=. \\
                 --overwrite=yes
 
         ::
 
             qunex map_hcpls2nii \\
-                --sessionsfolder="/data/my_study/sessions" \\
+                --studyfolder="/data/my_study" \\
                 --sessions="AP*" \\
                 --overwrite=yes
     """
@@ -1347,9 +1407,11 @@ def map_hcpls2nii(
             "Please only use keys: name, type, se!",
         )
 
+    # absolute, because `process_hcpls` reads the session id off the path:
+    # from a relative `./hcpls` it would read `.`
     sfolder = os.path.abspath(sourcefolder)
-    hfolder = os.path.join(sourcefolder, "hcpls")
-    nfolder = os.path.join(sourcefolder, "nii")
+    hfolder = os.path.join(sfolder, "hcpls")
+    nfolder = os.path.join(sfolder, "nii")
 
     # --- report file
     if report is None:
@@ -1431,13 +1493,13 @@ def map_hcpls2nii(
     print("#", file=sout_hcp)
     print("session:", session, file=sout_hcp)
     print("subject:", subjectid, file=sout_hcp)
-    print("hcpfs:", hfolder, file=sout_hcp)
-    print("raw_data:", nfolder, file=sout_hcp)
-    print("hcp:", os.path.join(sfolder, "hcp"), file=sout_hcp)
+    print("hcpls: hcpls", file=sout_hcp)
+    print("raw_data: nii", file=sout_hcp)
+    print("hcp: hcp", file=sout_hcp)
     print(file=sout_hcp)
     print("hcpready: true", file=sout_hcp)
 
-    # --- open hcpfs2nii log file
+    # open the hcpls2nii log file
     if overwrite == "yes" or overwrite is True:
         mode = "w"
     else:
@@ -1992,6 +2054,7 @@ def map_hcpls2nii(
     sout.close()
     sout_hcp.close()
     bout.close()
+    rout.close()
 
     if not all_ok:
         raise ge.CommandFailed(

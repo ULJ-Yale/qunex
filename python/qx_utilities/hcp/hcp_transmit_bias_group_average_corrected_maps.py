@@ -31,7 +31,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=True, thread=0):
     """
-    ``hcp_transmit_bias_group_average_corrected_maps [... processing options]``
+    ``hcp_transmit_bias_group_average_corrected_maps [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the HCP Transmit Bias Pipeline Phase 4, Group Average Corrected Maps.
 
@@ -42,9 +42,15 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -87,11 +93,13 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             CIFTI file of group average uncorrected myelin.
 
         --hcp_outgroupname (str, default ''):
-            Output folder inside studyfolder
+            The name of the group folder, in `<sessionsfolder>/transmit_bias`,
+            that the group results are written to.
 
         --hcp_voltages (str, default ''):
-            Text file of scanner calibrated transmit voltages for each subject. If the file does not exist, QuNex will attempt to create it by extracting TxrefAmp from 
-            each session's JSON metadata file. 
+            Text file of scanner calibrated transmit voltages for each subject.
+            If the file does not exist, QuNex will attempt to create it by
+            extracting TxRefAmp from each session's JSON metadata file.
 
         --hcp_afi_tr_one (str, default ''):
             TR of first AFI frame.
@@ -111,12 +119,15 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             'interpreted' is the default.
 
     Notes:
+        The HCP Pipelines ``study-folder`` is ``<sessionsfolder>/transmit_bias``,
+        into which QuNex links the HCP folder of every session; the group
+        results are written to its ``<hcp_outgroupname>`` folder.
+
         hcp_transmit_bias_group_average_corrected_maps parameter mapping:
 
             ================================== ============================
             QuNex parameter                    HCPpipelines parameter
             ================================== ============================
-            ``sessionsfolder``                 ``study-folder``
             ``sessions`` / session list        ``subject-list``
             ``hcp_regname``                    ``reg-name``
             ``hcp_transmit_mode``              ``mode``
@@ -135,7 +146,7 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
         Example run::
 
             qunex hcp_transmit_bias_group_average_corrected_maps \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
@@ -145,6 +156,9 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
 
     run = True
     report = "Error"
+    # the HCP study folder of the group run, into which the HCP folder of
+    # every session is linked
+    study_dir = os.path.join(options["sessionsfolder"], "transmit_bias")
 
     try:
         do_hcp_options_check(options, "hcp_transmit_bias_group_average_corrected_maps")
@@ -177,12 +191,11 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
             run = False
 
         # multi session
+        elif options["run"] == "run":
+            if not handle_hcp_links(study_dir, sessions, options, False, _log=log):
+                run = False
         else:
-            # set study dir
-            study_dir = os.path.join(
-                options["sessionsfolder"], "transmit_bias"
-            )
-            handle_hcp_links(study_dir, sessions, options, False)
+            log.step(f"test, not linked: the HCP folder of each session into {study_dir}")
 
         if options["hcp_transmit_mode"] is None:
             log.error("the hcp_transmit_mode parameter is mandatory!")
@@ -199,11 +212,15 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
 
             if os.path.exists(voltages_file):
                 log.step(f"Using existing hcp_voltages file: {voltages_file}")
-            else:
+            elif options["run"] == "run":
                 log.step(f"hcp_voltages file does not exist. Creating it: {voltages_file}")
-                run = write_transmit_bias_voltages(
+                # a failure stops the run, a success does not clear an earlier error
+                if not write_transmit_bias_voltages(
                     sessions, options, voltages_file, log
-                )
+                ):
+                    run = False
+            else:
+                log.step(f"hcp_voltages file does not exist, test, not created: {voltages_file}")
 
         # build the command
         if run:
@@ -287,8 +304,11 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                 else:
                     log.error("the hcp_average_myelin parameter is not provided!")
                     run = False
-            else:
+
+            # B1Tx needs only the transmit group name, checked above
+            elif options["hcp_transmit_mode"] != "B1Tx":
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
     
 
             # optional general parameters
@@ -324,19 +344,12 @@ def hcp_transmit_bias_group_average_corrected_maps(sessions, options, overwrite=
                 # #Remove soft links
                 # handle_hcp_links(study_dir, sessions, options, True)
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a group whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None,
-                    None,
-                    "HCP Transmit Bias Phase 4, Group Average Corrected Maps",
-                    overwrite=overwrite,
-                    _log=log,
-                )
-                if passed is None:
-                    log.step("HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run")
-                    report = "HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run"
-                    failed = 0
+                log.step("HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run")
+                report = "HCP Transmit Bias Phase 4, Group Average Corrected Maps can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

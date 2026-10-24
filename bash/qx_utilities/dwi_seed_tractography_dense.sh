@@ -13,25 +13,31 @@ usage() {
 This function implements reduction on the DWI dense connectomes using a given
 'seed' structure (e.g. thalamus).
 
-It explicitly assumes the the Human Connectome Project folder structure for
+It explicitly assumes the Human Connectome Project folder structure for
 preprocessing. Dense Connectome DWI data needs to be in the following folder::
 
-    <folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
+    <sessionsfolder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/
 
 It produces the following outputs:
 
 - Dense connectivity seed tractography file:
-  ``<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>.dconn.nii``
+  ``<sessionsfolder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>.dconn.nii``
 - Dense scalar seed tractography file:
-  ``<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii``
+  ``<sessionsfolder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/<session>_Conn<matrixversion>_<outname>_Avg.dscalar.nii``
 
 ..  qx_command:
     type: processing.session
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
@@ -40,9 +46,9 @@ Parameters:
         Matrix solution version to run parcellation on; e.g. 1 or 3.
 
     --seedfile (str):
-        Specify the absolute path of the seed file you want to use as a seed for
-        dconn reduction (e.g.
-        <study_folder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz).
+        Specify the seed file you want to use as a seed for dconn reduction: an
+        absolute path, or one relative to the study folder (e.g.
+        <sessionsfolder>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz).
         Note: If you specify --seedfile='gbc' then the function computes an
         average across all streamlines from every greyordinate to all other
         greyordinates.
@@ -94,10 +100,10 @@ Examples:
     ::
 
         qunex dwi_seed_tractography_dense \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --session='<case_id>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<case_id>' \\
             --matrixversion='3' \\
-            --seedfile='<folder_with_sessions>/<case>/hcp/<case>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\
+            --seedfile='<path_to_study_folder>/sessions/<case_id>/hcp/<case_id>/MNINonLinear/Results/Tractography/CIFTI_STRUCTURE_THALAMUS_RIGHT.nii.gz' \\
             --overwrite='no' \\
             --outname='THALAMUS'
 
@@ -122,6 +128,7 @@ fi
 # DWI Data and T1w data needed in HCP-style format and dense DWI probtrackX should be completed
 # The data should be in $DiffFolder="$SessionsFolder"/"$CASE"/hcp/"$CASE"/MNINonLinear/Results/Tractography
 # Mandatory input parameters:
+    # StudyFolder # e.g. /data/qx_study
     # SessionsFolder # e.g. /data/qx_study/sessions
     # Session      # e.g. 100307
     # MatrixVersion # e.g. 1 or 3
@@ -141,6 +148,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
+unset StudyFolder
 unset SessionsFolder
 unset Sessions
 unset MatrixVersion
@@ -169,6 +177,10 @@ while [ ${index} -lt ${numArgs} ]; do
         --version)
             version_show $@
             exit 1
+            ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
             ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
@@ -199,7 +211,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;
         *)
-            usage
             echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
@@ -207,44 +218,42 @@ while [ ${index} -lt ${numArgs} ]; do
     esac
 done
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check required parameters
-if [ -z ${SessionsFolder} ]; then
-    usage
-    echo "ERROR: <sessions-folder-path> not specified>"
+if [ -z "${SessionsFolder}" ]; then
+    echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
-    usage
-    echo "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${MatrixVersion} ]; then
-    usage
     echo "ERROR: <matrix_version_value> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${WayTotal} ]; then
     echo "No <use_waytotal_normalized_data> specified. Assuming default [none]"
+    WayTotal=none
     echo ""
 fi
 if [ -z ${SeedFile} ]; then
-    usage
     echo "ERROR: <structure_for_seeding> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${OutName} ]; then
-    usage
     echo "ERROR: <name_of_output_dscalar_file> not specified"
     exit 1
 fi
-
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""

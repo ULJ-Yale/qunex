@@ -51,7 +51,7 @@ STATS_REPORT_PARAMETERS = [
 
 def create_stats_report(sinfo, options, overwrite=False, thread=0):
     """
-    ``create_stats_report [... processing options]``
+    ``create_stats_report [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Process movement correction parameters and computed BOLD statistics to
     create per session plots and fidl snippets and group reports.
@@ -63,9 +63,15 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -75,10 +81,10 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
             previous data is deleted before the run, so in the case of a failed
             command run, previous results are lost.
 
-        --bolds (str, default 'rest'):
+        --bolds (str, default 'all'):
             Which bold images (as they are specified in the batch.txt file) to
-            copy over. It can be a single type (e.g. 'task'), a pipe separated
-            list (e.g. 'WM|Control|rest') or 'all' to copy all.
+            process. It can be a single type (e.g. 'task'), a pipe separated
+            list (e.g. 'WM|Control|rest') or 'all' to process all.
 
         --boldname (str, default 'bold'):
             The default name of the bold files in the images folder.
@@ -159,7 +165,7 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
               intersection).
             - 'idvarsme'  ... Both fdt and dvarsmet are exceeded.
             - 'udvars'    ... Either fdt or dvarsmt are exceeded (u for union).
-            - 'udvarsme'  ... Either fdt or udvarsmet are exceeded (default).
+            - 'udvarsme'  ... Either fdt or dvarsmet are exceeded (default).
             - 'none'.
 
             For more detailed description please see wiki entry on Movement
@@ -179,15 +185,15 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
               intersection).
             - 'idvarsme'  ... Both fdt and dvarsmet are exceeded.
             - 'udvars'    ... Either fdt or dvarsmt are exceeded (u for union).
-            - 'udvarsme'  ... Either fdt or udvarsmet are exceeded (default).
+            - 'udvarsme'  ... Either fdt or dvarsmet are exceeded (default).
             - 'none'      ... Set to 'none' to not generate them.
 
             For more detailed description please see wiki entry on Movement
             scrubbing.
 
         --mov_pdf (str, default 'movement_plots'):
-            The name of the folder in sessions/QC/movement in which to copy
-            the individuals' movement plots.
+            The name of the folder in `<sessionsfolder>/QC/movement` in which
+            to copy the individuals' movement plots.
 
     Notes:
         Use:
@@ -254,8 +260,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
                 --parsessions=1
@@ -263,8 +269,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
                 --parsessions=10
@@ -272,8 +278,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex create_stats_report \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --bolds=all \\
                 --nifti_tail=_hp2000_clean \\
@@ -349,7 +355,8 @@ def create_stats_report(sinfo, options, overwrite=False, thread=0):
 
             try:
                 # --- filenames
-                f = pc.get_file_names(sinfo, options)
+                # the links a dry run did not make are noted once, not per bold
+                f = pc.get_file_names(sinfo, options, _log=log if boldinfo is bolds[0] else None)
                 f.update(pc.get_bold_file_names(sinfo, boldinfo["name"], options))
 
                 # --- check for data availability

@@ -22,12 +22,12 @@ import qx_utilities.processing.core as pc
 
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
-from qx_utilities.hcp.hcp_utils import do_hcp_options_check
+from qx_utilities.hcp.hcp_utils import check_gdc_coeff_file, do_hcp_options_check
 
 
 def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_transmit_bias_individual_align [... processing options]``
+    ``hcp_transmit_bias_individual_align [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the HCP Transmit Bias Pipeline Phase 1, Individual Align.
 
@@ -38,9 +38,15 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -66,16 +72,15 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
             inputs are:
 
             a) AFI: actual flip angle sequence with two different echo times,
-            requires the following parameters: afi-image, afi-tr-one,afi-tr-two, 
-            and group-corrected-myelin.
+            requires the following parameters: afi-image, afi-tr-one,
+            afi-tr-two.
 
             b) B1Tx: b1 transmit sequence magnitude/phase pair, requires the
-            following parameters: b1tx-magnitude, b1tx-phase, group-corrected-myelin.
+            following parameters: b1tx-magnitude, b1tx-phase.
 
             c) PseudoTransmit: use spin echo fieldmaps, SBRef, and a
             template transmit-corrected myelin map to derive empirical
-            correction, requires the following parameters: pt-fmri-names,
-            myelin-template, group-uncorrected-myelin, reference-value.
+            correction, requires the following parameters: pt-fmri-names.
 
         --hcp_group_corrected_myelin (str, default ''):
             The group-corrected myelin file from AFI or B1Tx.
@@ -97,6 +102,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
 
         --hcp_b1tx_phase_divisor (str, default '800'):
             What to divide the phase map by to obtain proportion of intended
+            flip angle.
 
         --hcp_pt_fmri_names (str, default <list of all BOLDs>):
             A comma separated list of fMRI runs to use SE/SBRef files from. Set
@@ -119,7 +125,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
 
         --hcp_receive_bias_body_coil (str, default ''):
             Image acquired with body coil receive, to be used with
-            --hcp_receive_head_body_coil.
+            --hcp_receive_bias_head_coil.
 
         --hcp_receive_bias_head_coil (str, default ''):
             Matched image acquired with head coil receive.
@@ -148,9 +154,6 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
         --hcp_gdcoeffs (str, default ''):
             Path to a file containing gradient distortion coefficients.
 
-        --hcp_regname (str, default 'MSMSulc'):
-            The name of the registration used.
-
         --hcp_lowresmesh (int, default 32):
             Mesh resolution.
 
@@ -159,7 +162,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
             grayordinate space in mm.
 
     Notes:
-        hcp_transmit_bias_individual parameter mapping:
+        hcp_transmit_bias_individual_align parameter mapping:
 
             ================================== ============================
             QuNex parameter                    HCPpipelines parameter
@@ -184,7 +187,6 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
             ``hcp_myelin_mapping_fwhm``        ``myelin-mapping-fwhm``
             ``hcp_old_myelin_mapping``         ``old-myelin-mapping``
             ``hcp_gdcoeffs``                   ``scanner-grad-coeffs``
-            ``hcp_regname``                    ``reg-name``
             ``hcp_lowresmesh``                 ``low-res-mesh``
             ``hcp_grayordinatesres``           ``grayordinates-res``
             ================================== ============================
@@ -193,7 +195,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
         Example run::
 
             qunex hcp_transmit_bias_individual_align \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
     """
@@ -325,6 +327,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
 
             else:
                 log.error("Unknown mode for hcp_transmit_mode, use AFI, B1Tx or PseudoTransmit!")
+                run = False
 
             # optional general parameters
             if options["hcp_unproc_t1w_list"] is not None:
@@ -390,7 +393,7 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
 
             if options["hcp_gdcoeffs"]:
                 # lookup gdcoeffs file
-                gdcfile, run = log.check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp, sinfo, run)
+                gdcfile, run = check_gdc_coeff_file(options["hcp_gdcoeffs"], hcp, sinfo, log, run)
                 if gdcfile != "NONE":
                     comm += f"                --scanner-grad-coeffs={gdcfile}"
 
@@ -425,19 +428,12 @@ def hcp_transmit_bias_individual_align(sinfo, options, overwrite=False, thread=0
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None,
-                    None,
-                    "HCP Transmit Bias Phase 1, Individual Align",
-                    overwrite=overwrite,
-                    _log=log,
-                )
-                if passed is None:
-                    log.step("HCP Transmit Bias Phase 1, Individual Align can be run")
-                    report = "HCP Transmit Bias Phase 1, Individual Align can be run"
-                    failed = 0
+                log.step("HCP Transmit Bias Phase 1, Individual Align can be run")
+                report = "HCP Transmit Bias Phase 1, Individual Align can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

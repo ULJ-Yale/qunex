@@ -48,9 +48,9 @@ def dicom2nii(
     debug=False,
 ):
     """
-    ``dicom2nii [folder=.] [clean=no] [unzip=ask] [gzip=folder] [verbose=True] [parelements=1]``
+    ``dicom2nii [folder=.] [clean=no] [unzip=yes] [gzip=folder] [verbose=True] [parelements=1]``
 
-    Process sessions's DICOM or PAR/REC files and generate NIfTI files using dcm2niix.
+    Process session's DICOM files and generate NIfTI files using dcm2nii.
 
     ..  qx_command:
         type: utility
@@ -92,16 +92,17 @@ def dicom2nii(
             The session.txt will be placed in the session base folder. It
             will contain the information about the session id, subject id,
             location of folders and a list of created NIfTI images with
-            their description.
+            their description. The folders are recorded relative to the
+            session folder, which has to be named after the session id.
 
             An example session.txt file would be::
 
                 id: OP169
                 subject: OP169
-                dicom: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/dicom
-                raw_data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/nii
-                data: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/4dfp
-                hcp: /Volumes/pooh/MBLab/fMRI/SWM-D-v1/sessions/OP169/hcp
+                dicom: dicom
+                raw_data: nii
+                data: 4dfp
+                hcp: hcp
                 01: Survey
                 02: T1w 0.7mm N1
                 03: T2w 0.7mm N1
@@ -126,7 +127,7 @@ def dicom2nii(
 
         DICOM-Report.txt file:
             The DICOM-Report.txt file will be created and placed in the
-            sessions' dicom subfolder. The file will list the images it
+            session's dicom subfolder. The file will list the images it
             found, the information about their original sequence number and
             the resulting NIfTI file number, the name of the sequence, the
             number of frames, TR and TE values, subject id, time of
@@ -152,7 +153,7 @@ def dicom2nii(
         speed the process up, it can run multiple dcm2nii processes in
         parallel (parelements).
 
-        Before running, the command check for presence of existing NIfTI
+        Before running, the command checks for presence of existing NIfTI
         files. The behavior when finding them is defined by clean parameter.
         If set to 'yes' it will remove any existing files and proceed. If set to
         'no' it will leave them and abort.
@@ -164,22 +165,24 @@ def dicom2nii(
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parelements`
-            parameters. In this case the command will be run for each of the
-            specified sessions in the sessionsfolder (current directory by
-            default). `sessions` limits the run to the specified id codes,
-            and an optional `filter` parameter selects the sessions whose
-            batch file entry matches a key. (for more information see
-            online documentation).
-            `sessionsfolder` will be filled in automatically as each
-            sessions's folder. Commands will run in parallel by utilizing
-            the specified number of parelements (1 by default).
+            `sessions` and optionally `studyfolder` (or `sessionsfolder`)
+            and `parsessions` parameters. In this case the command will be
+            run for each of the specified sessions in the sessions folder
+            (`<studyfolder>/sessions` unless `sessionsfolder` names another
+            one, the current directory when neither is given). `sessions`
+            limits the run to the specified id codes, and an optional
+            `filter` parameter selects the sessions whose batch file entry
+            matches a key. (for more information see online documentation).
+            `folder` will be filled in automatically as each session's
+            folder. Commands will run in parallel, where the degree of
+            parallelism is determined by `parsessions` (1 by default), and
+            each session runs `parelements` conversions in parallel.
 
             If `scheduler` parameter is set, the command will be run using
             the specified scheduler settings (see `qunex schedule --help`
             for more information). If set in combination with `sessions` parameter,
-            sessions will be processed over multiple nodes, `core` parameter
-            specifying how many sessions to run per node. Optional
+            sessions will be processed over multiple nodes, `parsessions`
+            parameter specifying how many sessions to run per node. Optional
             `scheduler_environment`, `scheduler_workdir`, `scheduler_sleep`,
             and `nprocess` parameters can be set.
 
@@ -200,7 +203,7 @@ def dicom2nii(
         Multiple sessions example::
 
             qunex dicom2nii \\
-                --sessionsfolder="/data/my_study/sessions" \\
+                --studyfolder="/data/my_study" \\
                 --sessions="OP*" \\
                 --clean=yes \\
                 --unzip=yes \\
@@ -211,7 +214,6 @@ def dicom2nii(
     print("Running dicom2nii\n=================")
 
     # debug = True
-    base = folder
     null = open(os.devnull, "w")
     dmcf = os.path.join(folder, "dicom")
     imgf = os.path.join(folder, "nii")
@@ -326,10 +328,11 @@ def dicom2nii(
 
             print("id:", get_id(d), file=stxt)
             print("subject:", get_id(d), file=stxt)
-            print("dicom:", os.path.abspath(os.path.join(base, "dicom")), file=stxt)
-            print("raw_data:", os.path.abspath(os.path.join(base, "nii")), file=stxt)
-            print("data:", os.path.abspath(os.path.join(base, "4dfp")), file=stxt)
-            print("hcp:", os.path.abspath(os.path.join(base, "hcp")), file=stxt)
+            # the session's folders, relative to the session folder
+            print("dicom: dicom", file=stxt)
+            print("raw_data: nii", file=stxt)
+            print("data: 4dfp", file=stxt)
+            print("hcp: hcp", file=stxt)
             print("", file=stxt)
 
             # ---> institution name

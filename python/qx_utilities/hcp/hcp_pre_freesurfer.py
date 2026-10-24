@@ -35,7 +35,7 @@ from qx_utilities.hcp.hcp_utils import _nhp_template_paths
 
 def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     r"""
-    ``hcp_pre_freesurfer [... processing options]``
+    ``hcp_pre_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the pre-FS step of the HCP Pipeline (PreFreeSurferPipeline.sh).
 
@@ -79,9 +79,15 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -174,7 +180,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             not used.
 
         --hcp_seechospacing (str, default ''):
-            Echo Spacing or of Spin Echo Field Maps in seconds or "NONE" if not
+            Echo Spacing of Spin Echo Field Maps in seconds or "NONE" if not
             used.
 
         --hcp_sephasepos (str, default ''):
@@ -202,7 +208,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             If a mask is to be used (MASK) then a
             `"custom_acpc_dc_restore_mask.nii.gz"` image needs to be placed in
             the `<session>/T1w` folder. If a custom brain is to be used
-            (BRAIN), then the following images in `<session>/T1w` folder need
+            (CUSTOM), then the following images in `<session>/T1w` folder need
             to be adjusted:
 
             - `T1w_acpc_dc_restore_brain.nii.gz`
@@ -347,7 +353,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
     Output files:
         The results of this step will be present in the above mentioned T1w
         and T2w folders as well as MNINonLinear folder generated and
-        populated in the same sessions's root hcp folder.
+        populated in the same session's root hcp folder.
 
     Notes:
         Gradient coefficient file specification:
@@ -356,7 +362,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             use in which case. Each option of the string has to be divided by a
             pipe '|' character and it has to specify, which information to look
             up, a possible value, and a file to use in that case, separated by
-            a colon ':' character. The information too look up needs to be
+            a colon ':' character. The information to look up needs to be
             present in the description of that session. Standard options are
             e.g.::
 
@@ -366,7 +372,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
             Where device is formatted as <manufacturer>|<model>|<serial number>.
 
             If specifying a string it also has to include a `default` option,
-            which will be used in the information was not found. An example
+            which will be used if the information was not found. An example
             could be::
 
                 "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
@@ -419,28 +425,28 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
 
         Use:
             Runs the PreFreeSurfer step of the HCP Pipeline. It looks for T1w
-            and T2w images in sessions's T1w and T2w folder, averages them (if
+            and T2w images in session's T1w and T2w folder, averages them (if
             multiple present) and linearly and nonlinearly aligns them to the
             MNI atlas. It uses the adjusted version of the HCP that enables the
-            preprocessing to run with of without T2w image(s).
+            preprocessing to run with or without T2w image(s).
 
     Examples:
         ::
 
-            qunex hcp_pre_freesurfer \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
+            qunex hcp_pre_freesurfer \
+                --studyfolder=. \
+                --batchfile=fcMRI/sessions_hcp.txt \
+                --overwrite=no \
+                --parsessions=10 \
                 --hcp_brainsize=170
 
         ::
 
-            qunex hcp_pre_freesurfer \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
+            qunex hcp_pre_freesurfer \
+                --studyfolder=. \
+                --batchfile=fcMRI/sessions_hcp.txt \
+                --overwrite=no \
+                --parsessions=10 \
                 --hcp_t2=NONE
     """
 

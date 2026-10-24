@@ -11,10 +11,8 @@
 Utility functions for parsing input strings.
 """
 
-"""
-Created by Grega Repovs on 2026-02-01.
-Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
-"""
+# Created by Grega Repovs on 2026-02-01.
+# Copyright (c) Grega Repovs and Jure Demsar. All rights reserved.
 
 
 # the spellings a boolean may be written as, compared case-insensitively

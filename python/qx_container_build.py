@@ -5,21 +5,28 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-Build-time splice of general/batch_io.py into bin/qunex_container, the same
-generated-and-committed arrangement qx_registry_build.py has with
-qx_commands.yaml.
+Build-time splice of general/batch_io.py and general/folders.py into
+bin/qunex_container, the same generated-and-committed arrangement
+qx_registry_build.py has with qx_commands.yaml.
 
 qunex_container runs outside the container, on a login node, in whatever python
-the host provides — it can not import QuNex, so it carries a copy of the parser
-instead of a second implementation of it. tests/test_container_drift.py fails if
-the copy and the source drift apart.
+the host provides — it can not import QuNex, so it carries a copy of the code it
+shares with QuNex instead of a second implementation of it: the batch file
+parser, and the study layout with the rule for where a run logs.
+tests/test_container_drift.py fails if the copy and the source drift apart.
 
 The splice writes three things into the container: the version line in its
-header, taken from VERSION.md; the imports batch_io needs, merged into the
-container's own import block so the file stays free of E402/F811; and the module
-body, between the generated markers. Only the body region is off limits by hand
-— the import block is ordinary code that this command adds to, never prunes, so
-an import that stops being needed is removed by deleting it there.
+header, taken from VERSION.md; the imports the modules need, merged into the
+container's own import block so the file stays free of E402/F811; and the
+modules' bodies, one after the other in one region between the generated
+markers. Only that region is off limits by hand — the import block is ordinary
+code that this command adds to, never prunes, so an import that stops being
+needed is removed by deleting it there.
+
+The spliced modules and the launcher's own code share one namespace. So each
+module imports nothing but the standard library, neither imports the other, and
+neither defines a name the other module or the launcher defines;
+tests/test_container_drift.py holds them to all three.
 """
 
 from __future__ import annotations
@@ -30,25 +37,34 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parents[1]
 CONTAINER = REPO_ROOT / "bin" / "qunex_container"
 BATCH_IO = REPO_ROOT / "python" / "qx_utilities" / "general" / "batch_io.py"
+FOLDERS = REPO_ROOT / "python" / "qx_utilities" / "general" / "folders.py"
 VERSION_FILE = REPO_ROOT / "VERSION.md"
+
+# the modules the container carries, in the order their bodies are spliced
+MODULES = (BATCH_IO, FOLDERS)
 
 # the container release line, as it reads in VERSION.md and the changelog
 CODENAME = "QIO"
 
 BEGIN = (
-    "# --- BEGIN GENERATED from general/batch_io.py "
+    "# --- BEGIN GENERATED from general/batch_io.py and general/folders.py "
     "— do not edit; run `qunex build_qx_container` ---"
 )
 END = "# --- END GENERATED ---"
 
 NOTE = (
     "# the container runs on a login node with no QuNex on the path, so it "
-    "carries a\n# copy of the one parser rather than importing it. what this "
-    "needs is imported\n# at the top of the file, with the container's own "
-    "imports"
+    "carries a\n# copy of the code it shares with QuNex rather than importing "
+    "it: the batch file\n# parser, and the study layout with the rule for "
+    "where a run logs. what these\n# need is imported at the top of the file, "
+    "with the container's own imports"
 )
 
-_REGION_RE = re.compile(re.escape(BEGIN) + r".*?" + re.escape(END) + r"\n", re.S)
+# the region, from any `BEGIN GENERATED from` line: one that names other
+# modules, as an earlier build wrote it, is found and rewritten as well
+_REGION_RE = re.compile(
+    r"# --- BEGIN GENERATED from [^\n]*\n.*?" + re.escape(END) + r"\n", re.S
+)
 
 # the version line in the container header, stamped from VERSION.md
 _VERSION_RE = re.compile(r"^# Version .*$", re.M)
@@ -118,8 +134,12 @@ def merge_imports(container_text: str, imports: list[str]) -> str:
     return container_text[: block.start()] + merged + container_text[block.end() :]
 
 
-def render(container_text: str, module_text: str, version: str) -> str:
-    """Returns container_text with its version, imports and body regenerated."""
+def render(container_text: str, module_texts: str | list[str], version: str) -> str:
+    """
+    Returns container_text with its version, imports and generated region
+    regenerated from module_texts: the text of one module, or a list of them,
+    whose bodies follow each other in the region in the order given.
+    """
 
     if not _REGION_RE.search(container_text):
         raise ValueError(
@@ -127,11 +147,19 @@ def render(container_text: str, module_text: str, version: str) -> str:
             f"{END!r} pair"
         )
 
-    imports, body = split_module(module_text)
+    if isinstance(module_texts, str):
+        module_texts = [module_texts]
 
-    # two blank lines inside each marker, so the region reads as the top level
-    # code it is rather than as a tail of the function on either side of it
-    region = f"{BEGIN}\n{NOTE}\n\n\n{body}\n\n\n{END}\n"
+    imports, bodies = [], []
+    for module_text in module_texts:
+        module_imports, body = split_module(module_text)
+        imports += module_imports
+        bodies.append(body)
+
+    # two blank lines inside each marker and between the modules, so the
+    # region reads as the top level code it is rather than as a tail of the
+    # function on either side of it
+    region = f"{BEGIN}\n{NOTE}\n\n\n" + "\n\n\n".join(bodies) + f"\n\n\n{END}\n"
 
     container_text = stamp_version(container_text, version)
     container_text = merge_imports(container_text, imports)
@@ -139,15 +167,22 @@ def render(container_text: str, module_text: str, version: str) -> str:
     return _REGION_RE.sub(lambda _: region, container_text, count=1)
 
 
+def spliced_modules() -> list[str]:
+    """Returns the text of every module the container carries, in splice order."""
+
+    return [module.read_text() for module in MODULES]
+
+
 def build_qx_container():
     """
     ``build_qx_container()``
 
-    Splice `general/batch_io.py` into the generated region of
-    `bin/qunex_container` and stamp the container's version line from
+    Splice `general/batch_io.py` and `general/folders.py` into the generated
+    region of `bin/qunex_container` and stamp the container's version line from
     `VERSION.md`. The container can not import QuNex — it runs on the login
-    node, outside the container — so it carries a copy of the batch file parser,
-    and this command is what keeps that copy current. Commit the result, as with
+    node, outside the container — so it carries a copy of the batch file parser
+    and of the study layout, with the rule for where a run logs, and this
+    command is what keeps that copy current. Commit the result, as with
     `qx_commands.yaml`.
 
     ..  qx_command:
@@ -160,8 +195,9 @@ def build_qx_container():
 
     version = read_version()
 
-    CONTAINER.write_text(render(CONTAINER.read_text(), BATCH_IO.read_text(), version))
+    CONTAINER.write_text(render(CONTAINER.read_text(), spliced_modules(), version))
 
-    print(f"--> Spliced {BATCH_IO} into {CONTAINER} (version {version})")
+    spliced = " and ".join(str(module) for module in MODULES)
+    print(f"--> Spliced {spliced} into {CONTAINER} (version {version})")
 
     return str(CONTAINER)

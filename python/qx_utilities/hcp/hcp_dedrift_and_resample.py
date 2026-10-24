@@ -35,7 +35,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
     """
-    ``hcp_dedrift_and_resample [... processing options]``
+    ``hcp_dedrift_and_resample [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the DeDriftAndResample step of the HCP Pipeline.
 
@@ -57,12 +57,24 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
+
+        --parelements (int, default 1):
+            How many groups to run in parallel. Every group writes the same
+            dedrifted registration and resampled maps, so groups run in
+            parallel write these files at the same time: keep it at 1 when
+            hcp_icafix_bolds names two or more groups.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -76,18 +88,42 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
             used in the ICAFix run. If multi-run ICAFix was run with two or
-            more groups then HCP MSMAll will be executed over the first
-            specified group (and the scans listed for hcp_msmall_bolds must
-            be limited to scans in the first concatenation group as well).
-            If not provided MSMAll will assume multi-run ICAFix was executed
-            with all bolds bundled together in a single concatenation called
-            fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
+            more groups then HCP DeDriftAndResample is executed for every
+            group, in the order listed, and each of these runs applies the
+            same MSMAll registration (hcp_resample_regname) to the bolds of
+            its group. If not provided DeDriftAndResample will assume
+            multi-run ICAFix was executed with all bolds bundled together in
+            a single concatenation called fMRI_CONCAT_ALL (i.e., same
+            default behavior as in ICAFix).
 
         --hcp_resample_concatregname (str, default 'MSMAll'):
             Output name of the dedrifted registration.
 
-        --hcp_resample_regname (str, default '<hcp_msmall_outregname>_2_d40_WRN'):
-            Registration sphere name.
+        --hcp_resample_regname (str, default detailed below):
+            Registration sphere name: the MSMAll registration to apply. By
+            default the name MSMAll gives the registration it computes,
+            <hcp_msmall_outregname>_<number of iteration modes>_d<hcp_msmall_ica_dim>_<hcp_msmall_method>,
+            from the same parameters hcp_msmall was run with (the number of
+            iteration modes is the number of "_"-separated modes in
+            hcp_msmall_iteration_modes), so 'MSMAll_InitialReg_2_d40_WRN'
+            with the default settings. Set it only to apply another
+            registration.
+
+        --hcp_msmall_outregname (str, default 'MSMAll_InitialReg'):
+            The output registration name hcp_msmall was run with. Used only
+            to name the MSMAll registration to apply (hcp_resample_regname).
+
+        --hcp_msmall_iteration_modes (str, default 'CA_CAT'):
+            The iteration modes hcp_msmall was run with. Used only to name
+            the MSMAll registration to apply (hcp_resample_regname).
+
+        --hcp_msmall_ica_dim (int, default 40):
+            The ICA dimensionality hcp_msmall was run with. Used only to name
+            the MSMAll registration to apply (hcp_resample_regname).
+
+        --hcp_msmall_method (str, default 'WRN'):
+            The method hcp_msmall was run with. Used only to name the MSMAll
+            registration to apply (hcp_resample_regname).
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -105,11 +141,10 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             Comma separated paths to the spheres output from the
             MSMRemoveGroupDrift pipeline [<HCPPIPEDIR>/global/templates/MSMAll/<file1>,
             <HCPPIPEDIR>/global/templates/MSMAll/<file2>].
-            Where <file1> is equal to:
-            DeDriftingGroup.L.sphere.DeDriftMSMAll.
-            164k_fs_LR.surf.gii and <file2> is equal
-            to DeDriftingGroup.R.sphere.DeDriftMSMAll.
-            164k_fs_LR.surf.gii
+            Where <file1> is equal to
+            DeDriftingGroup.L.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii and
+            <file2> is equal to
+            DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii
 
         --hcp_resample_maps (str, default 'sulc,curvature,corrThickness,thickness'):
             Comma separated paths to maps that will have the MSMAll registration
@@ -148,7 +183,8 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             List of bolds and concat names provided in the same format as the
             hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
             to enable extraction of a subset of the runs in a multi-run HCP
-            ICAFix group into a new concatenated series.
+            ICAFix group into a new concatenated series. Extraction works
+            only when there is a single multi-run ICAFix group.
 
         --hcp_resample_extractextraregnames (str, default 'NONE'):
             Extract multi-run HCP ICAFix runs for additional surface
@@ -205,16 +241,16 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         HCP DeDriftAndResample after application of single-run ICAFix::
 
             qunex hcp_dedrift_and_resample \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
 
         HCP DeDriftAndResample after application of multi-run ICAFix::
 
             qunex hcp_dedrift_and_resample \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
     """

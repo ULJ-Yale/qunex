@@ -17,9 +17,14 @@ The HCP temporal ICA pipeline.
 import os
 import os.path
 
-import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
+import qx_utilities.hcp.tica_folders as tf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
+from qx_utilities.hcp.hcp_make_average_dataset import (
+    average_dataset_folder,
+    average_dataset_study,
+)
 from qx_utilities.hcp.hcp_utils import (
     do_hcp_options_check,
 )
@@ -27,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
     """
-    ``hcp_temporal_ica [... processing options]``
+    ``hcp_temporal_ica [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP temporal ICA pipeline (tICAPipeline.sh).
 
@@ -43,9 +48,15 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -73,7 +84,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
 
-        --hcp_tica_procstring (str, default '<hcp_cifti_tail>_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean'):
+        --hcp_tica_procstring (str, default '_Atlas_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean'):
             File name component representing the preprocessing already done,
             e.g. '_Atlas_MSMAll_hp0_clean'.
 
@@ -112,7 +123,10 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
 
         --hcp_tica_precomputed_clean_folder (str, default ''):
             Group folder containing an existing tICA cleanup to make use
-            of for REUSE or INITIALIZE modes.
+            of for REUSE or INITIALIZE modes. It cannot be the group folder
+            of the run itself, which the results are written into, when a
+            step of the run writes into it (in REUSE_TICA mode indProjSICA,
+            ConcatGroupSICA and ComputeGroupTICA do).
 
         --hcp_tica_precomputed_fmri_name (str, default ''):
             The output fMRI name used in the previously computed tICA.
@@ -169,7 +183,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             --hcp_tica_icamode=REUSE_TICA or
             --hcp_tica_starting_step=CleanData.
 
-        --hcp_tica_fix_legacy_bias (str, default 'YES'):
+        --hcp_tica_fix_legacy_bias (str, default 'NO'):
             Whether the input data used the legacy bias correction, YES or NO.
 
         --hcp_parallel_limit (str, default ''):
@@ -182,10 +196,17 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             cleaning. Not set by default.
 
         --hcp_tica_average_dataset (str, default ''):
-            Location of the average dataset, the output from
-            hcp_make_average_dataset command. Set this if using the average set
-            from another study, this is usually used in combination with
-            REUSE_TICA mode.
+            An average dataset to use in place of the study's own: the folder
+            that holds its MNINonLinear, made with the same --hcp_outgroupname
+            (hcp_make_average_dataset makes it in
+            <sessionsfolder>/average_dataset/<hcp_outgroupname>/<hcp_outgroupname>).
+            It is linked in as the group folder, so the results are written
+            into it. When a step of the run reads it (ComputeTICAFeatures,
+            which REUSE_TICA skips), it has to hold
+            MNINonLinear/<hcp_outgroupname>_Averagewmparc.nii.gz. A
+            multi-session run without it uses the average dataset already in
+            its group folder, else the study's own (see Output files); set it
+            to use the average dataset of another study.
 
         --hcp_tica_extract_fmri_name_list (str, default ''):
             A comma separated list of list of fMRI run names to concatenate into
@@ -212,12 +233,30 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
             matching the one from hcp_tica_mrfix_concat_name.
 
     Output files:
-        If ran on a single session the results of this step can be found in
-        the same sessions's root hcp folder. If ran on multiple sessions
-        then a group folder is created inside the QuNex's session folder.
+        The results of each session are written into the session's own
+        folder, and those of the group into the group folder:
+
+        - a single session: <hcp_outgroupname> in the session's hcp folder,
+        - several sessions:
+          <sessionsfolder>/<hcp_outgroupname>/<hcp_outgroupname>, in the
+          folder the sessions are linked into. It is a link to the average
+          dataset hcp_make_average_dataset made,
+          <sessionsfolder>/average_dataset/<hcp_outgroupname>/<hcp_outgroupname>,
+          unless --hcp_tica_average_dataset names another, or the group
+          folder already holds an average dataset: a link an earlier run
+          made to a named dataset, or a folder from an older QuNex layout,
+          is used as it is. To use the study's own average dataset again,
+          remove that link or name the dataset with
+          --hcp_tica_average_dataset. A run none of whose steps reads an
+          average dataset needs none, and without one its group folder is
+          its own,
+        - longitudinal:
+          <studyfolder>/subjects/<hcp_longitudinal_subject>/<hcp_outgroupname>.
+          The link to <sessionsfolder>/average_dataset/<hcp_outgroupname>
+          that earlier versions made there is replaced by this folder.
 
     Notes:
-        the HCP Temporal ICA Pipeline needs to be executed in two steps, the
+        The HCP Temporal ICA Pipeline needs to be executed in two steps, the
         first step runs the following steps:
 
         -  ``MIGP``,
@@ -228,7 +267,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         -  ``indProjTICA``,
         -  ``ComputeTICAFeatures``.
 
-        Since automatic classification is not yet supported. Users need to
+        Since automatic classification is not yet supported, users need to
         classify the components manually and then rerun temporal ICA from
         CleanData step onwards. This is the reason that the
         ``hcp_tica_stop_after_step`` is by default set to
@@ -237,7 +276,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         set to ``CleanData``.
 
         In practice this means that after the HCP Temporal ICA Pipeline
-        requirements have been satisified (you need to run the HCP Minimnal
+        requirements have been satisfied (you need to run the HCP Minimal
         Preprocessing Pipeline,
         ```hcp_icafix`` <../../api/gmri/hcp_icafix.rst>`__,
         ```hcp_msmall`` <../../api/gmri/hcp_msmall.rst>`__ and
@@ -247,7 +286,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         .. code:: bash
 
            qunex hcp_temporal_ica \\
-               --sessionsfolder="<path_to_study_folder>/sessions" \\
+               --studyfolder="<path_to_study_folder>" \\
                --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                --hcp_tica_bolds="fMRI_CONCAT_ALL" \\
                --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \\
@@ -262,11 +301,11 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         The ``hcp_tica_timepoints`` parameter value can be found inside the
         ``hcp post_fix`` logs under the label ``NumTimePoints``. If your study
         has many sessions you also need to set the ``hcp_parallel_limit`` to
-        prevent too many sessions from processing and parallel. If you do not
+        prevent too many sessions from processing in parallel. If you do not
         limit this, your system will most likely run out of memory. Once this
         part is done (note that this can take a couple of days with larger
         studies), the command will store the components in
-        ``<sessionfolderpath>/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>``
+        ``<path_to_study_folder>/sessions/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>``
         where ``<N>`` denotes the number of temporal ICA components. To inspect
         the components you can create a ``wb_command`` scene file:
 
@@ -274,7 +313,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
 
            GroupAverageName='hcp_group'
            tICADim=<N>
-           TemplateFolder="/gpfs/gibbs/pi/n3/software/HCP/HCPpipelines/global/templates/tICA"
+           TemplateFolder="${HCPPIPEDIR}/global/templates/tICA"
            ResultsFolder="<path_to_study_folder>/sessions/hcp_group/hcp_group/MNINonLinear/Results/fMRI_CONCAT_ALL/tICA_d<N>"
            TemplateComponentScene="${TemplateFolder}/tICA.scene"
            ResultComponentSceneFile="${ResultsFolder}/tICA_hcp_group.scene"
@@ -354,7 +393,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         Example run::
 
             qunex hcp_temporal_ica \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_tica_bolds="fMRI_CONCAT_ALL" \\
                 --hcp_tica_outfmriname="fMRI_CONCAT_ALL" \\
@@ -376,10 +415,12 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
     try:
         # if longitudinal is set, session list needs to be provided
         if options["longitudinal"]:
+            session_list = ""
             if not options["hcp_longitudinal_sessions"]:
                 log.error("hcp_longitudinal_sessions is not provided!")
                 run = False
-            session_list = options["hcp_longitudinal_sessions"].replace(",", "@")
+            else:
+                session_list = options["hcp_longitudinal_sessions"].replace(",", "@")
 
         # if sessions is not a batch file skip batch file validity checks
         elif ("sessions" in options and os.path.exists(options["sessions"])) or (
@@ -480,13 +521,17 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         else:
             timepoints = options["hcp_tica_timepoints"]
 
-        # hcp_tica_timepoints
+        # hcp_tica_num_wishart
         num_wishart = ""
         if options["hcp_tica_num_wishart"] is None:
             log.error("hcp_tica_num_wishart is not provided!")
             run = False
         else:
             num_wishart = options["hcp_tica_num_wishart"]
+
+        # the average dataset linked in as the group folder: the one named,
+        # else in a multi-session run the one hcp_make_average_dataset made
+        average_dataset = options["hcp_tica_average_dataset"]
 
         # if using a manual study_dir bypass all validity checks and preparation
         if options["hcp_tica_studyfolder"]:
@@ -496,37 +541,48 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
 
             # longitudinal
             if options["longitudinal"]:
-                studyfolder = gc.deduce_folders(options)["basefolder"]
-                if not studyfolder:
-                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                    run = False
-
                 if not options["hcp_longitudinal_subject"]:
                     log.error("hcp_longitudinal_subject is a mandatory parameter for the longitudinal mode of temporal ICA!")
                     run = False
+                else:
+                    # set study dir
+                    study_dir = os.path.join(
+                        gf.subjects_folder(options["studyfolder"]),
+                        options["hcp_longitudinal_subject"],
+                    )
 
-                # set study dir
-                study_dir = os.path.join(
-                    studyfolder, "subjects", options["hcp_longitudinal_subject"]
-                )
+                    # create folder
+                    tf.make_folder(log, options, study_dir)
 
-                # create folder
-                if not os.path.exists(study_dir):
-                    os.makedirs(study_dir)
+                    # the subject's own group folder: a longitudinal run is
+                    # REUSE_TICA, which reads no average dataset. Earlier
+                    # versions linked the average dataset's study folder, which
+                    # every subject shares, in its place
+                    earlier = [
+                        average_dataset_study(folder, outgroupname)
+                        for folder in (
+                            options["sessionsfolder"],
+                            os.path.join(options["studyfolder"], "sessions"),
+                        )
+                    ]
+                    if not tf.make_group_folder(log, options, study_dir, outgroupname, average_dataset, earlier):
+                        run = False
 
             # single session
             elif len(sessions) == 1:
                 # get session info
                 study_dir = sessions[0]["hcp"]
+                if not tf.make_group_folder(log, options, study_dir, outgroupname, average_dataset):
+                    run = False
 
-            # multi session
-            else:
+            # multi session, in a group folder named by hcp_outgroupname: without
+            # one the sessions would be linked onto the session folders
+            elif outgroupname:
                 # set study dir
                 study_dir = os.path.join(options["sessionsfolder"], outgroupname)
 
                 # create folder
-                if not os.path.exists(study_dir):
-                    os.makedirs(study_dir)
+                tf.make_folder(log, options, study_dir)
 
                 # link sessions
                 for session in sessions:
@@ -536,42 +592,58 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     target_dir = os.path.join(study_dir, session_name)
 
                     # link
-                    gc.link_or_copy(source_dir, target_dir, symlink=True)
+                    if not tf.link_folder(log, options, source_dir, target_dir):
+                        run = False
 
-                # check for make average dataset outputs
-                mad_file = os.path.join(
-                    options["sessionsfolder"],
-                    "average_dataset",
-                    outgroupname,
-                    "MNINonLinear",
-                    "fsaverage_LR32k",
-                    outgroupname + ".midthickness_MSMAll_va.32k_fs_LR.dscalar.nii",
-                )
-                if not os.path.exists(mad_file):
-                    log.error(f"{mad_file} does not exist!")
-                    log.error("You need to run hcp_make_average_dataset before running hcp_temporal_ica!")
-                    run = False
+                # the group folder is the average dataset tICAPipeline.sh
+                # reads: one already in place is used as it is, else the one
+                # hcp_make_average_dataset made is linked in. A run none of
+                # whose steps reads it needs none, its group folder is its own
+                if average_dataset is None:
+                    group_dir = os.path.join(study_dir, outgroupname)
+                    made = average_dataset_folder(options["sessionsfolder"], outgroupname)
+                    if os.path.exists(tf.average_wmparc(group_dir, outgroupname)):
+                        if os.path.realpath(group_dir) != os.path.realpath(made):
+                            log.detail(f"{group_dir} holds an average dataset, used as it is")
+                            if os.path.islink(group_dir):
+                                log.detail(
+                                    f"to use {made} instead, remove the link "
+                                    "or name it with --hcp_tica_average_dataset"
+                                )
+                    elif os.path.exists(tf.average_wmparc(made, outgroupname)):
+                        average_dataset = made
+                    elif not tf.reads_average_wmparc(options):
+                        if not tf.make_group_folder(log, options, study_dir, outgroupname, None):
+                            run = False
+                    else:
+                        log.error(f"{tf.average_wmparc(made, outgroupname)} does not exist!")
+                        log.error(
+                            "You need to run hcp_make_average_dataset with "
+                            f"--hcp_outgroupname={outgroupname} before running "
+                            "hcp_temporal_ica, or name an average dataset with "
+                            "--hcp_tica_average_dataset!"
+                        )
+                        run = False
 
-                # create folder if it does not exist
-                out_dir = os.path.join(study_dir, outgroupname, "MNINonLinear")
-                if not os.path.exists(out_dir):
-                    os.makedirs(out_dir)
-
-        # if hcp_tica_average_dataset is provided copy or link it into the outgroupname
-        mad_dir = os.path.join(study_dir, outgroupname)
-        if options["hcp_tica_average_dataset"] is not None:
-            gc.link_or_copy(options["hcp_tica_average_dataset"], mad_dir, symlink=True)
-        elif options["longitudinal"]:
-            # if longitudinal, check if we have to copy from sessions to subjects
-            studyfolder = gc.deduce_folders(options)["basefolder"]
-            if not studyfolder:
-                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
+            # a named average dataset is linked in as the group folder
+            named = options["hcp_tica_average_dataset"]
+            if named is not None and outgroupname and not tf.is_average_dataset(log, options, named, outgroupname):
                 run = False
-            sessions_mad_dir = os.path.join(
-                studyfolder, "sessions", "average_dataset", outgroupname
-            )
-            if os.path.exists(sessions_mad_dir):
-                gc.link_or_copy(sessions_mad_dir, mad_dir, symlink=True)
+
+        # the group folder cannot be the precomputed tICA: a REUSE or
+        # INITIALIZE mode reads that one and writes into the group folder, and
+        # the average dataset of a group is also the folder of its results.
+        # The group folder is compared by its path too, as the link that
+        # makes it the average dataset may not be there yet. A run none of
+        # whose steps writes into the group folder is not refused
+        precomputed = options["hcp_tica_precomputed_clean_folder"]
+        if study_dir and outgroupname and precomputed is not None and tf.writes_group_folder(options):
+            group_dir = os.path.join(study_dir, outgroupname)
+            written = os.path.realpath(average_dataset or group_dir)
+            if os.path.realpath(precomputed) == written or os.path.abspath(precomputed) == os.path.abspath(group_dir):
+                log.error(f"The group folder {group_dir} is the precomputed tICA {precomputed}, the run would write over it!")
+                log.error("Use another --hcp_outgroupname, or another average dataset with --hcp_tica_average_dataset!")
+                run = False
 
         # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = None
@@ -784,6 +856,14 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     log.error("Longitudinal processing is set, but hcp_tica_icamode is not set to REUSE_TICA, this will not work!")
                     run = False
 
+            # the average dataset is linked in as the group folder, which takes
+            # a study dir and a group name, only once every check has passed:
+            # a later run uses a group folder in place as it is
+            if run and study_dir and outgroupname and average_dataset is not None:
+                group_dir = os.path.join(study_dir, outgroupname)
+                if not tf.link_folder(log, options, average_dataset, group_dir):
+                    run = False
+
             # -- Report command
             if run:
                 log.rule(before=1, after=1)
@@ -813,15 +893,11 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # just checking, there is no test file to check against
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP temporal ICA", overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP temporal ICA can be run")
-                    report = "HCP temporal ICA can be run"
-                    failed = 0
+                log.step("HCP temporal ICA can be run")
+                report = "HCP temporal ICA can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

@@ -12,6 +12,7 @@ import re
 import shutil
 from typing import List, Tuple, Dict, Set
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 # A sequence line starts with its number and a colon. QuNex's writers pad the
@@ -27,10 +28,11 @@ def merge_session(
     overwrite: str = "no",
     raw_data: str = "copy",
     original_sessions: str = "leave",
+    sessionsfolder: str = None,
     _log=None,
 ) -> bool:
     r"""
-    ``merge_session --studyfolder=<path> --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
+    ``merge_session --studyfolder=<path to study folder> [--sessionsfolder=<studyfolder>/sessions] --source=<sessions> --target=<session> [--overwrite=<mode>] [--raw_data=<mode>] [--original_sessions=<action>]``
 
     Join multiple sessions into a single session.
 
@@ -55,9 +57,9 @@ def merge_session(
         - collects the additional metadata (e.g. `institution`, `device`).
 
         The target `session.txt` and `session_hcp.txt` are then written with
-        the target session and subject IDs and with paths pointing into the
-        target session folder. Finally, the source sessions are left, removed
-        or moved, as set by `--original_sessions`.
+        the target session and subject IDs and with the session's folders
+        recorded relative to the target session folder. Finally, the source
+        sessions are left, removed or moved, as set by `--original_sessions`.
 
         Only raw data and session information files are merged. Derivatives
         (`images/`, `hcp/`) are not, and the processing steps that produce them
@@ -68,10 +70,15 @@ def merge_session(
 
     Parameters:
         --studyfolder (str):
-            Path to the study folder. Session IDs given in `--source` and
-            `--target` are looked for in `<studyfolder>/sessions/`, relative
-            paths are resolved against the study folder, and so is a relative
-            `move:<path>` in `--original_sessions`.
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one. Session IDs
+            given in `--source` and `--target` are looked for in the sessions
+            folder, while relative paths, and a relative `move:<path>` in
+            `--original_sessions`, are resolved against the study folder.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study.
 
         --source (str):
             A comma-separated list of the sessions to join, each given as a
@@ -80,7 +87,7 @@ def merge_session(
             Each is resolved as follows:
 
             - a session ID (e.g. 'session1'), resolved as
-              `<studyfolder>/sessions/<id>`,
+              `<sessionsfolder>/<id>`,
             - a relative path (e.g. 'other/session1'), resolved against the
               study folder,
             - an absolute path (e.g. '/data/study/sessions/session1').
@@ -214,9 +221,13 @@ def merge_session(
             have only `session.txt`, run `create_session_info` on the merged
             session to create `session_hcp.txt`.
 
-            Metadata lines other than the IDs and paths (e.g. `institution`,
-            `device`) are collected from all source sessions. When sources
-            disagree on a value, both values are kept and a warning is reported.
+            The folders are recorded relative to the target session folder:
+            `dicom: dicom`, `raw_data: nii`, `data: 4dfp` and `hcp: hcp`, and
+            `bids: bids` and `hcpls: hcpls` when the merged session has those
+            folders. The folders the source sessions record are not carried
+            over. Other metadata lines (e.g. `institution`, `device`) are
+            collected from all source sessions. When sources disagree on a
+            value, both values are kept and a warning is reported.
 
             When raw data is copied or moved, a `session_<N>: <subfolder>` line
             is added for each merged session, recording which raw data
@@ -318,6 +329,16 @@ def merge_session(
             f"original_sessions must be 'leave', 'remove', or 'move:<path>', got '{original_sessions}'",
         )
 
+    # validate the study folder first, as relative paths are resolved against it
+    if not studyfolder:
+        raise ge.CommandError("merge_session", "studyfolder parameter is required")
+
+    study_folder = os.path.abspath(studyfolder)
+    if not os.path.exists(study_folder):
+        raise ge.CommandFailed(
+            "merge_session", f"Study folder does not exist: {study_folder}"
+        )
+
     # Parse move destination if specified
     move_destination = None
     if original_sessions.startswith("move:"):
@@ -328,19 +349,9 @@ def merge_session(
             )
         # Convert to absolute path if relative
         if not os.path.isabs(move_destination):
-            move_destination = os.path.join(studyfolder, move_destination)
+            move_destination = os.path.join(study_folder, move_destination)
 
-    # Validate study folder
-    if not studyfolder:
-        raise ge.CommandError("merge_session", "studyfolder parameter is required")
-
-    study_folder = os.path.abspath(studyfolder)
-    if not os.path.exists(study_folder):
-        raise ge.CommandFailed(
-            "merge_session", f"Study folder does not exist: {study_folder}"
-        )
-
-    sessions_folder = os.path.join(study_folder, "sessions")
+    sessions_folder = os.path.abspath(gf.sessions_folder(study_folder, sessionsfolder))
 
     # Parse source sessions
     source_session_specs = [s.strip() for s in source.split(",")]
@@ -901,9 +912,9 @@ def merge_sessions_list(
     Parameters:
         --studyfolder (str):
             Path to the study folder. The source and target sessions are given
-            by the folders below, so the study folder is used only to resolve
-            a relative `move:<path>` in `--original_sessions` and to report the
-            target paths.
+            by the folders below; the study folder is used to resolve them when
+            they are relative, to resolve a relative `move:<path>` in
+            `--original_sessions`, and to report the target paths.
 
         --session_list (str):
             Path to a text file listing the merges, one per line, in the
@@ -919,14 +930,16 @@ def merge_sessions_list(
             no valid line remains, a warning is reported and nothing is done.
 
         --source_folder (str):
-            Path to the folder containing the source sessions. Each
-            `<source_id>` is resolved as `<source_folder>/<source_id>`. The
-            folder must exist.
+            Path to the folder containing the source sessions, e.g. the study's
+            `sessions` folder. Each `<source_id>` is resolved as
+            `<source_folder>/<source_id>`. A relative path is resolved against
+            the study folder. The folder must exist.
 
         --target_folder (str):
             Path to the folder in which the target sessions are created. Each
-            `<target_id>` is resolved as `<target_folder>/<target_id>`. The
-            folder is created if it does not exist.
+            `<target_id>` is resolved as `<target_folder>/<target_id>`. A
+            relative path is resolved against the study folder. The folder is
+            created if it does not exist.
 
         --overwrite (str, default 'no'):
             What to do when a target session already exists and is not empty:
@@ -1013,6 +1026,12 @@ def merge_sessions_list(
             "merge_sessions_list", f"Study folder does not exist: {studyfolder}"
         )
 
+    # relative folders are resolved against the study folder, the way
+    # `merge_session` resolves the session paths it is handed
+    study_folder = os.path.abspath(studyfolder)
+    source_folder = os.path.normpath(os.path.join(study_folder, source_folder))
+    target_folder = os.path.normpath(os.path.join(study_folder, target_folder))
+
     if not os.path.exists(source_folder):
         raise ge.CommandFailed(
             "merge_sessions_list", f"Source folder does not exist: {source_folder}"
@@ -1092,7 +1111,7 @@ def merge_sessions_list(
         target_path = os.path.join(target_folder, target_id)
 
         # Compute relative target path
-        target_rel = os.path.relpath(target_path, studyfolder)
+        target_rel = os.path.relpath(target_path, study_folder)
         log.blank()
         # the nesting is what `merge_session`'s `_indent` used to spell
         with log.section(f"Joining to {target_rel}"):
@@ -1208,7 +1227,8 @@ def _parse_session_metadata(filepath: str) -> Dict:
         'session': session id (or None)
         'id': session id for session.txt files (or None)
         'subject': subject id
-        'paths': dict of path metadata (dicom, raw_data, data, hcp)
+        'paths': dict of the session's folders (dicom, raw_data, data, hcp,
+            bids, hcpls, nhp, and the older hcpfs)
         'additional': list of tuples (key, value) preserving order
         'original_lines': original metadata lines preserving formatting
         'is_hcp': True if this is from session_hcp.txt
@@ -1223,7 +1243,10 @@ def _parse_session_metadata(filepath: str) -> Dict:
         "is_hcp": "session_hcp.txt" in filepath,
     }
 
-    path_keys = {"dicom", "raw_data", "data", "hcp"}
+    # the session's folders, and `hcpfs`, which onboarding once wrote for
+    # `hcpls`: they name the source session's folders, and the merged session
+    # records its own
+    path_keys = set(gf.SESSION_FOLDER_FIELDS) | {"hcpfs"}
     id_keys = {"session", "subject", "id"}
 
     with open(filepath, "r") as f:
@@ -1627,11 +1650,18 @@ def _write_session_files(
         hcp_metadata["additional"].append((key, value))
         txt_metadata["additional"].append((key, value))
 
-    # Prepare paths
-    dicom_path = os.path.join(target_path, "dicom")
-    nii_path = os.path.join(target_path, "nii")
-    data_path = os.path.join(target_path, "4dfp")
-    hcp_path = os.path.join(target_path, "hcp")
+    # prepare paths, relative to the target session folder: the folders a
+    # session file names are read back against it
+    dicom_path = "dicom"
+    nii_path = "nii"
+    data_path = "4dfp"
+    hcp_path = "hcp"
+
+    # and the raw data folders the merge left in it
+    raw_paths = [
+        (key, key) for key in ["bids", "hcpls"]
+        if os.path.isdir(os.path.join(target_path, key))
+    ]
 
     # Calculate maximum key width for proper alignment
     def calculate_max_key_width(metadata: Dict, standard_keys: List[str]) -> int:
@@ -1643,12 +1673,13 @@ def _write_session_files(
         return max_width
 
     # Calculate key width for HCP file
+    raw_keys = [key for key, _ in raw_paths]
     hcp_standard_keys = ["session", "subject", "dicom", "raw_data", "data", "hcp"]
-    hcp_key_width = calculate_max_key_width(hcp_metadata, hcp_standard_keys)
+    hcp_key_width = calculate_max_key_width(hcp_metadata, hcp_standard_keys + raw_keys)
 
     # Calculate key width for TXT file
     txt_standard_keys = ["id", "subject", "dicom", "raw_data", "data", "hcp"]
-    txt_key_width = calculate_max_key_width(txt_metadata, txt_standard_keys)
+    txt_key_width = calculate_max_key_width(txt_metadata, txt_standard_keys + raw_keys)
 
     # Helper to format metadata with proper alignment
     def format_metadata_line(key: str, value: str, key_width: int) -> str:
@@ -1672,7 +1703,7 @@ def _write_session_files(
         format_metadata_line("raw_data", nii_path, hcp_key_width),
         format_metadata_line("data", data_path, hcp_key_width),
         format_metadata_line("hcp", hcp_path, hcp_key_width),
-    ]
+    ] + [format_metadata_line(key, path, hcp_key_width) for key, path in raw_paths]
 
     # Section 2 for TXT: Paths
     section2_txt = [
@@ -1680,7 +1711,7 @@ def _write_session_files(
         format_metadata_line("raw_data", nii_path, txt_key_width),
         format_metadata_line("data", data_path, txt_key_width),
         format_metadata_line("hcp", hcp_path, txt_key_width),
-    ]
+    ] + [format_metadata_line(key, path, txt_key_width) for key, path in raw_paths]
 
     if write_hcp:
         # Section 3: Additional metadata for HCP file (preserve order)

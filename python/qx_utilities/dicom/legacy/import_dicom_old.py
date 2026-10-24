@@ -28,6 +28,7 @@ import zipfile
 import gzip as gz
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 from qx_utilities.dicom.dicom2niix import dicom2niix
 from qx_utilities.dicom.dicom_utils import _safe_rmtree, match_all
 from qx_utilities.dicom.legacy.sort_clean_legacy import (
@@ -40,7 +41,7 @@ from qx_utilities.general.parsing import true_or_false
 def import_dicom_old(
     sessionsfolder=None,
     sessions=None,
-    masterinbox=None,
+    inbox=None,
     check="any",
     pattern=None,
     nameformat=None,
@@ -57,11 +58,13 @@ def import_dicom_old(
     existing_structure=False,
     clean_dicom_folders=False,
     test=False,
+    studyfolder=None,
+    masterinbox=None,
 ):
     r"""
-    ``import_dicom_old [sessionsfolder=.] [sessions=""] [masterinbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=""] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
+    ``import_dicom_old [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [sessions=""] [inbox=<sessionsfolder>/inbox/MR] [check=any] [pattern="(?P<packet_name>.*?)(?:\.zip$|\.tar$|\.tgz$|\.tar\..*$|$)"] [nameformat='(?P<subject_id>.*)'] [tool=auto] [parelements=1] [logfile=""] [archive=leave] [add_image_type=0] [add_json_info=all] [unzip="yes"] [gzip="folder"] [verbose=yes] [overwrite="no"] [existing_structure=False] [clean_dicom_folders=False]``
 
-    Deprecated. Process sessions's DICOM or PAR/REC files and generate NIfTI
+    Deprecated. Process sessions' DICOM or PAR/REC files and generate NIfTI
     files using the pre-1.5.0 two-pass implementation.
 
     ..  qx_command:
@@ -79,27 +82,34 @@ def import_dicom_old(
         (https://forum.qunex.yale.edu) so that the new importer can be fixed.
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The base study sessions folder (e.g. WM44/sessions) where the inbox
-            and individual session folders are. If not specified, the current
-            working folder will be taken as the location of the sessionsfolder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. It holds the individual session folders, the
+            default inbox (`inbox/MR`) and the archive of processed
+            packages (`archive/MR`).
 
         --sessions (str, default ''):
             A comma delimited string that lists the sessions to process. If
-            master inbox folder is used, the parameter is optional and it can
+            inbox folder is used, the parameter is optional and it can
             include regex patterns. In this case only those sessions identified
             by the pattern that also match with any of the patterns in the
-            sessions list will be processed. If `masterinbox` is set to none,
+            sessions list will be processed. If `inbox` is set to none,
             the list specifies the session folders to process, and it can
             include glob patterns.
 
-        --masterinbox (str, default '<sessionsfolder>/inbox/MR'):
-            The master inbox folder with packages to process. By default
-            masterinbox is in sessions folder: <sessionsfolder>/inbox/MR. If
+        --inbox (str, default '<sessionsfolder>/inbox/MR'):
+            The inbox folder with packages to process. By default,
+            the inbox is <sessionsfolder>/inbox/MR. If
             the packages are elsewhere, the location can be specified here. If
             set to "none", the data is assumed to already exist in the
             individual sessions' inbox folder:
-            <studyfolder>/<sessionsfolder>/<session id>/inbox.
+            <sessionsfolder>/<session id>/inbox.
 
         --check (str, default 'any'):
             The type of check to perform when packages or session folders are
@@ -109,9 +119,9 @@ def import_dicom_old(
             - 'no'  ... report and continue w/o additional checks
             - 'any' ... continue if any packages are ready to process report error otherwise.
 
-        --pattern (str, default '(?P<session_id>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)'):
+        --pattern (str, default '(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)'):
             The regex pattern to use to find the packages and to extract the
-            session id.
+            packet name.
 
         --nameformat (str, default '(?P<subject_id>.*)'):
             The regex pattern to use to extract subject id and (optionally) the
@@ -128,17 +138,17 @@ def import_dicom_old(
 
         --parelements (int, default 1):
             The number of parallel processes to use when running converting
-            DICOM images to NIfTI files. If specified as 'all', all avaliable
+            DICOM images to NIfTI files. If specified as 'all', all available
             resources will be utilized.
 
         --logfile (str, default ''):
             A string specifying the location of the log file and the columns in
-            which packetname, subject id and session name information are
+            which packet name, subject id and session name information are
             stored. The string should specify: ``"path:<path to the log file>|
-            packetname:<name of the packet extracted by the
-            pattern>|subjectid:<the column with subjectid
-            information>[|sessionid:<the column with sesion id
-            information>]"``.
+            packet_name:<the column with the packet name extracted by the
+            pattern>|subject_id:<the column with subject id
+            information>[|session_name:<the column with session name
+            information>]"``. Columns are numbered from 1.
 
         --archive (str, default 'leave'):
             What to do with a processed package.
@@ -147,7 +157,7 @@ def import_dicom_old(
 
             - 'move'   ... move the package to the default archive folder
             - 'copy'   ... copy the package to the default archive folder
-            - 'leave'  ... keep the package in the session or master inbox
+            - 'leave'  ... keep the package in the session's or the study's inbox
               folder
             - 'delete' ... delete the package after it has been processed.
 
@@ -163,7 +173,8 @@ def import_dicom_old(
         --add_json_info (str, default 'all'):
             What sequence information to extract from JSON sidecar files and add
             to session.txt file. Specify a comma separated list of fields or
-            'all'. See list in session.txt file description below.
+            'all'. See the list in the session.txt file description of
+            `dicom2niix`.
 
         --unzip (str, default 'yes'):
             Whether to unzip individual DICOM files that are gzipped. Valid
@@ -195,16 +206,20 @@ def import_dicom_old(
             in the case of interrupted scans) will be set aside before
             conversion to NIfTI.
 
+        --masterinbox (str, default None):
+            Deprecated, the former name of --inbox, which it sets when --inbox
+            is not given.
+
     Notes:
         The command is used to automatically process packets with individual
         session's DICOM or PAR/REC files all the way to, and including,
         generation of NIfTI files. Packet can be either a zip file, a tar
         archive or a folder that contains DICOM or PAR/REC files.
 
-        The command can import packets either from a dedicated masterinbox
-        folder and create the necessary session folders within
-        `--sessionsfolder`, or it can process the data already present in
-        the session specific folders.
+        The command can import packets either from a dedicated inbox
+        folder and create the necessary session folders within the sessions
+        folder, or it can process the data already present in the session
+        specific folders.
 
         The next sections will describe the two use cases in more detail.
 
@@ -228,12 +243,12 @@ def import_dicom_old(
             - Original packets are archived as specified by the `archive`
               parameter.
 
-            In this mode of operation the `masterinbox` parameter passed to
+            In this mode of operation the `inbox` parameter passed to
             `import_dicom` has to provide a path to the folder with the
             incoming packets. The default location is
-            `<study>/<sessionsfolder>/inbox/MR`, which is used automatically if
-            `masterinbox` is not specified. Data from each session has to be
-            present in the `masterinbox` directory either as a separate folder
+            `<sessionsfolder>/inbox/MR`, which is used automatically if
+            `inbox` is not specified. Data from each session has to be
+            present in the `inbox` directory either as a separate folder
             with the raw DICOM files or as a compressed package with that
             session's data. `import_dicom` supports the following packages:
             `.zip`, `.tar`, `.tar.gz`, `.tar.bz2`, `.tarz` and `.tar.bzip2`.
@@ -242,12 +257,12 @@ def import_dicom_old(
             folders are to be identified as potential packets to be processed.
             Specifically, the `pattern` parameter is a string that specifies a
             `regular expression <http://www.rexegg.com/regex-quickstart.html>`_
-            against which the files and folders in the `masterinbox` are
+            against which the files and folders in the `inbox` are
             matched. In addition, the regular expression has to return a named
             group, 'packet_name' that is used in further processing.
 
             The default `pattern` parameter is
-            `"(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tar\\..*$|$)"`. This
+            `"(?P<packet_name>.*?)(?:\\.zip$|\\.tar$|\\.tgz$|\\.tar\\..*$|$)"`. This
             pattern will identify the initial part of the packet file- or
             foldername, (without any extension that identifies a compressed
             package) as the packet name.
@@ -309,7 +324,7 @@ def import_dicom_old(
                     scanning code,subject,session,date of scan, ...
                     AP1789,S001,baseline,2019-03-21, ...
                     AP1790,S001,incentive,2019-03-21, ...
-                    WID1832,S002,baselime,2019-04-12, ...
+                    WID1832,S002,baseline,2019-04-12, ...
                     WID1913,S002,incentive,2019-04-12, ...
 
                 To use a log file, a `logfile` parameter has to be provided.
@@ -368,9 +383,9 @@ def import_dicom_old(
                 folder. Once all the files are extracted or copied, depending
                 on the `archive` parameter, the packet is then either moved
                 ('move') or copied ('copy') to the
-                `<study>/sessions/archive/MR` folder, left as is ('leave'), or
+                `<sessionsfolder>/archive/MR` folder, left as is ('leave'), or
                 deleted ('delete'). If the archive folder does not yet exist,
-                it is created. The default `archive` setting is 'move'.
+                it is created. The default `archive` setting is 'leave'.
 
                 If a session folder and an inbox folder within it already
                 exists, then the related packet will not be processed so that
@@ -379,7 +394,7 @@ def import_dicom_old(
                 command to process those packet(s) as well.
 
             Filtering sessions:
-                If not all packets in the `masterinbox` folder are to be
+                If not all packets in the `inbox` folder are to be
                 processed, it is possible to explicitly define which packets
                 can be processed by specifying the `sessions` parameter. The
                 parameter is a comma separated string of packet names that can
@@ -399,10 +414,10 @@ def import_dicom_old(
         Processing data from a session folder:
             If the raw DICOM files or compressed packages with the raw DICOM
             files are already present in the respective
-            `<study>/sessions/<session id>/inbox` folders, then the
-            `masterinbox` parameter has to be explicitly set to 'none', and the
+            `<sessionsfolder>/<session id>/inbox` folders, then the
+            `inbox` parameter has to be explicitly set to 'none', and the
             session folders to be processed have to be listed in the `sessions`
-            parameter. In this case the `session` parameter is a comma
+            parameter. In this case the `sessions` parameter is a comma
             separated string, where each entry in the list can be a glob
             pattern matching with multiple session folders.
 
@@ -433,11 +448,10 @@ def import_dicom_old(
             +------------------+----------------------------+-------------+
 
             After the sessions are identified and subject id extracted,
-            depending on the `check` parameter, the user is prompted to confirm
-            processing (`check="yes"`), the processing continues, but an error
-            is reported if no sessions are identified (`check="any"`), or the
-            processing continues and no error is reported even if no sessions
-            to be processed are found (`check="no"`).
+            depending on the `check` parameter, the processing continues but an
+            error is reported if no sessions are identified (`check="any"`), or
+            the processing continues and no error is reported even if no
+            sessions to be processed are found (`check="no"`).
 
             The folders found are expected to have the data stored in the inbox
             folder either as individual raw DICOM files—that can be nested in
@@ -456,27 +470,18 @@ def import_dicom_old(
 
     Examples:
         Data from a dedicated inbox folder:
-            First the examples for processing packages from `masterinbox` folder.
+            First the examples for processing packages from `inbox` folder.
 
             In the first example, we are assuming that the packages we want to
             process are in the default folder
             (`<path_to_studyfolder>/sessions/inbox/MR`), the file or folder names
             contain only the packet names to be used, and the subject id is equal
-            to the packet name. All packets found are to be processed, after the
-            user gives a go-ahead to an interactive prompt:
+            to the packet name. All packets found are to be processed:
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions"
-
-            If the processing should continue automatically if packages to process
-            were found, then the command should be:
-
-            ::
-
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
+                qunex import_dicom_old \
+                    --studyfolder="<path_to_studyfolder>" \
                     --check="any"
 
             If only package names starting with 'AP' or 'HQ' are to be processed
@@ -484,9 +489,9 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --sessions="AP.*,HQ.*" \\
+                qunex import_dicom_old \
+                    --studyfolder="<path_to_studyfolder>" \
+                    --sessions="AP.*,HQ.*" \
                     --check="any"
 
             If the packages are named e.g. 'Yale-AP4983.zip' with the extension
@@ -495,10 +500,10 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
-                    --sessions="AP.*,HQ.*" \\
+                qunex import_dicom_old \
+                    --studyfolder="<path_to_studyfolder>" \
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \
+                    --sessions="AP.*,HQ.*" \
                     --check="any"
 
             If the session name can also be extracted and the files are in the
@@ -507,11 +512,11 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
-                    --sessions="AP.*,HQ.*" \\
-                    --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \\
+                qunex import_dicom_old \
+                    --studyfolder="<path_to_studyfolder>" \
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \
+                    --sessions="AP.*,HQ.*" \
+                    --nameformat="(?P<subject_id>.*?)_(?P<session_name>.*)" \
                     --check="any"
 
             In this case, 'AP4876_Baseline' will be first extracted as a packet name
@@ -523,11 +528,11 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="<path_to_studyfolder>/sessions" \\
-                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \\
-                    --sessions="AP.*,HQ.*" \\
-                    --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \\
+                qunex import_dicom_old \
+                    --studyfolder="<path_to_studyfolder>" \
+                    --pattern=".*?-(?P<packet_name>.*?)($|\\..*$)" \
+                    --sessions="AP.*,HQ.*" \
+                    --logfile="path:/studies/myStudy/info/scanning_sessions.csv|packet_name:1|subject_id:2|session_name:3" \
                     --check="any"
 
         Data already present:
@@ -544,19 +549,19 @@ def import_dicom_old(
 
             ::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="/studies/myStudy/sessions" \\
-                    --masterinbox="none" \\
+                qunex import_dicom_old \
+                    --studyfolder="/studies/myStudy" \
+                    --inbox="none" \
                     --sessions="S*"
 
             In the above case all the folders will be processed, the packages will
-            be extracted and (by default) moved to
-            `/studies/myStudy/sessions/archive/MR`::
+            be extracted and (by default) left as is. To instead delete the
+            packages after successful processing::
 
-                qunex import_dicom_old \\
-                    --sessionsfolder="/studies/myStudy/sessions" \\
-                    --masterinbox="none" \\
-                    --sessions="*baseline" \\
+                qunex import_dicom_old \
+                    --studyfolder="/studies/myStudy" \
+                    --inbox="none" \
+                    --sessions="*baseline" \
                     --archive="delete"
 
             In the above case only the `S001_baseline` and `S002_baseline` sessions
@@ -566,6 +571,11 @@ def import_dicom_old(
 
     clean_dicom_folders = true_or_false(clean_dicom_folders)
     existing_structure = true_or_false(existing_structure)
+
+    if masterinbox is not None:
+        print("WARNING: the masterinbox parameter is now called inbox.")
+        if inbox is None:
+            inbox = masterinbox
 
     isgz = re.compile(r"(^.*)\.gz$")
     iszip = re.compile(r"(^.*)\.zip$")
@@ -697,19 +707,18 @@ def import_dicom_old(
 
     overwrite = overwrite if isinstance(overwrite, bool) else overwrite.lower() == "yes"
 
-    if sessionsfolder is None:
-        sessionsfolder = "."
+    sessionsfolder = gf.sessions_folder(studyfolder, sessionsfolder)
 
-    if masterinbox is None:
-        masterinbox = os.path.join(sessionsfolder, "inbox", "MR")
+    if inbox is None:
+        inbox = os.path.join(sessionsfolder, "inbox", "MR")
 
-    if masterinbox.lower() == "none":
-        masterinbox = None
+    if inbox.lower() == "none":
+        inbox = None
         if sessions is None or sessions == "":
             raise ge.CommandError(
                 "import_dicom",
                 "Sessions parameter not specified",
-                "If `masterinbox` is set to 'none' the `sessions` has to list sessions to process!",
+                "If `inbox` is set to 'none' the `sessions` has to list sessions to process!",
                 "Please check your command!",
             )
 
@@ -785,7 +794,7 @@ def import_dicom_old(
             for line in reader:
                 try:
                     if sessionname:
-                        sessions_info[line[log["packetname"]]] = {
+                        sessions_info[line[log["packet_name"]]] = {
                             "subjectid": line[log["subject_id"]],
                             "sessionname": line[log["session_name"]],
                             "sessionid": "%s_%s"
@@ -793,7 +802,7 @@ def import_dicom_old(
                             "packetname": line[log["packet_name"]],
                         }
                     else:
-                        sessions_info[line[log["packetname"]]] = {
+                        sessions_info[line[log["packet_name"]]] = {
                             "subjectid": line[log["subject_id"]],
                             "sessionname": None,
                             "sessionid": line[log["subject_id"]],
@@ -811,8 +820,8 @@ def import_dicom_old(
         "packetname": None,
     }
 
-    # ---- get list of files / folders in masterinbox
-    if masterinbox:
+    # ---- get list of files / folders in inbox
+    if inbox:
         report_set = [
             ("ok", "---> Found the following packets to process:"),
             (
@@ -837,28 +846,28 @@ def import_dicom_old(
             ),
         ]
 
-        if not os.path.exists(masterinbox):
+        if not os.path.exists(inbox):
             raise ge.CommandFailed(
                 "import_dicom",
-                "Master inbox does not exist",
-                f"A folder {masterinbox} does not exist.",
+                "Inbox does not exist",
+                f"A folder {inbox} does not exist.",
                 "Please check your path!",
             )
 
-        if not os.path.isdir(masterinbox):
+        if not os.path.isdir(inbox):
             raise ge.CommandFailed(
                 "import_dicom",
-                "Master inbox is not a folder",
-                f"{masterinbox} is not a folder.",
+                "Inbox is not a folder",
+                f"{inbox} is not a folder.",
                 "Please check your path!",
             )
 
         print(
             "---> Checking for packets in %s \n     ... using regular expression '%s'\n     ... extracting subject id using regular expression '%s'"
-            % (os.path.abspath(masterinbox), pattern, nameformat)
+            % (os.path.abspath(inbox), pattern, nameformat)
         )
 
-        files = glob.glob(os.path.join(masterinbox, "*"))
+        files = glob.glob(os.path.join(inbox, "*"))
         try:
             getop = re.compile(pattern)
         except Exception:
@@ -949,7 +958,7 @@ def import_dicom_old(
                     packets["ok"].append((afile, session))
 
                 else:
-                    packets["bad"].append(afile, dict(emptysession))
+                    packets["bad"].append((afile, dict(emptysession)))
 
     # ---- get list of session folders to process
     else:
@@ -957,7 +966,7 @@ def import_dicom_old(
             raise ge.CommandFailed(
                 "import_dicom",
                 "Input data not specified",
-                "Neither masterinbox nor sessions to process were specified.",
+                "Neither inbox nor sessions to process were specified.",
                 "Please check your command call!",
             )
 
@@ -1091,12 +1100,12 @@ def import_dicom_old(
         return
     elif not n_to_process:
         if check.lower() == "any":
-            if masterinbox:
+            if inbox:
                 raise ge.CommandFailed(
                     "import_dicom",
                     "No packets found to process",
-                    "No packets were found to be processed in the master inbox [%s]!"
-                    % (os.path.abspath(masterinbox)),
+                    "No packets were found to be processed in the inbox [%s]!"
+                    % (os.path.abspath(inbox)),
                     "Please check your data!",
                 )
             else:
@@ -1108,12 +1117,12 @@ def import_dicom_old(
                     "Please check your data!",
                 )
         else:
-            if masterinbox:
+            if inbox:
                 raise ge.CommandNull(
                     "import_dicom",
                     "No packets found to process",
-                    "No packets were found to be processed in the master inbox [%s]!"
-                    % (os.path.abspath(masterinbox)),
+                    "No packets were found to be processed in the inbox [%s]!"
+                    % (os.path.abspath(inbox)),
                 )
             else:
                 raise ge.CommandNull(
@@ -1138,7 +1147,7 @@ def import_dicom_old(
             for afile, session in packets["exist"]:
                 sfolder = os.path.join(sessionsfolder, session["sessionid"])
                 print(" ... %s" % (sfolder))
-                if masterinbox:
+                if inbox:
                     ifolder = os.path.join(sfolder, "inbox")
                     if os.path.exists(ifolder):
                         _safe_rmtree(ifolder)
@@ -1163,7 +1172,7 @@ def import_dicom_old(
             # --- Big info
             print("\n\n---=== PROCESSING %s ===---\n" % (session["sessionid"]))
 
-            if masterinbox and not os.path.exists(ifolder):
+            if inbox and not os.path.exists(ifolder):
                 os.makedirs(ifolder)
                 files = [afile]
             else:
@@ -1192,7 +1201,7 @@ def import_dicom_old(
 
                     else:
                         ptype = "folder"
-                        if masterinbox and ifolder != p:
+                        if inbox and ifolder != p:
                             fnum, dnum = _process_folder(p, fnum, dnum, ifolder)
 
                             # if os.path.exists(ifolder):
@@ -1269,7 +1278,7 @@ def import_dicom_old(
                 print("".join(["=" for e in range(len(s))]))
 
             for p in files:
-                if masterinbox or re.search(
+                if inbox or re.search(
                     r"\.zip$|\.tar$|\.tar.gz$|\.tar.bz2$|\.tarz$|\.tar.bzip2$|\.tgz$", p
                 ):
                     archivetarget = os.path.join(afolder, os.path.basename(p))

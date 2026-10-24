@@ -23,6 +23,7 @@ import os
 import pytest
 
 import qx_utilities.general.core as gc
+import qx_utilities.general.log as gl
 from qx_utilities.hcp.hcp_apply_auto_reclean import hcp_apply_auto_reclean
 from qx_utilities.hcp.hcp_asl import hcp_asl
 from qx_utilities.hcp.hcp_cortical_thickness import hcp_cortical_thickness
@@ -64,6 +65,7 @@ from qx_utilities.hcp.hcp_transmit_bias_group_average_corrected_maps import (
 from qx_utilities.hcp.create_transmit_bias_voltages_file import (
     create_transmit_bias_voltages_file,
 )
+from qx_utilities.hcp.hcp_utils import handle_hcp_links, write_transmit_bias_voltages
 from qx_utilities.hcp.map_hcp_data import map_hcp_data
 
 from .utils import build_hcp_session, default_options
@@ -141,7 +143,7 @@ def test_cortical_thickness_dry_run(session):
     log = hcp_cortical_thickness(sinfo, options)
     report, status = log.text, log.status
     _check_contract(report, status)
-    assert status[1] == "HCP CorrThick finished"
+    assert status[1] == "HCP CorrThick can be run"
     assert "Running HCP Pipelines command via QuNex:" in report
     assert '\n    --subject="sess-01"' in report
 
@@ -219,6 +221,23 @@ def test_diffusion_nhp_dry_run(session):
     assert "--wmprojabs=1" in report
     assert "--resamp=lsr" in report
     assert "--usephasezero=True" in report
+
+
+def test_longitudinal_diffusion_dry_run_says_it_can_be_run(session, tmp_path):
+    """
+    A longitudinal run has no test file. `check_run` took that as a finished
+    run, so the dry run reported the session as done rather than runnable.
+    """
+    sinfo, options = session(
+        dwi=True,
+        longitudinal=True,
+        hcp_longitudinal_template="TPL",
+        studyfolder=str(tmp_path),
+    )
+    log = hcp_diffusion(sinfo, options)
+
+    assert log.status == ("sess-01", "HCP Diffusion can be run", 0)
+    assert "DiffPreprocPipeline" in log.text
 
 
 # ------------------------------------------------------------------ functional
@@ -350,6 +369,23 @@ def test_map_hcp_data_dry_run(session):
     assert "Mapping HCP data" in report
 
 
+def test_map_hcp_data_reports_a_session_it_finds_no_hcp_folder_for(session):
+    """
+    A session given with --sessions and no batch file is a record of its id
+    alone. Its report was filed under a `session` key such a record does not
+    have, so the command raised a KeyError instead of saying what was wrong.
+    """
+    _, options = session()
+
+    log = map_hcp_data({"id": "sess-01"}, options)
+
+    assert log.status == (
+        "sess-01",
+        "Mapping sess-01 failed, check your input parameters and data!",
+        1,
+    )
+
+
 # ---------------------------------------------------------------- longitudinal
 
 
@@ -391,6 +427,33 @@ def test_long_transmit_bias_dry_run(session):
     report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
     assert "Transmit Bias" in report or "FS Pipeline" in report
+
+
+def test_the_subjects_folder_is_the_study_one_whatever_the_path_holds(
+    tmp_path, monkeypatch
+):
+    """
+    The subjects folder was `sessionsfolder.replace("sessions", "subjects")`,
+    which rewrites every "sessions" in the path: a study kept under a folder
+    named with it had its subjects put in a folder that is not the study's.
+    """
+    monkeypatch.setenv("HCPPIPEDIR", str(tmp_path / "hcppipedir"))
+    monkeypatch.setenv("QUNEXPATH", str(tmp_path / "qunexpath"))
+
+    study = tmp_path / "old_sessions" / "study"
+    sinfo, _ = build_hcp_session(str(study))
+    options = default_options(
+        run="test",
+        studyfolder=str(study),
+        comlogs=str(tmp_path / "comlogs"),
+        logfolder=str(tmp_path / "logs"),
+        hcp_longitudinal_template="TPL",
+    )
+
+    log = hcp_long_freesurfer(gc.SessionList([sinfo]), options)
+
+    assert '--path="%s"' % (study / "subjects" / "subj-01") in log.text
+    assert not (tmp_path / "old_subjects").exists()
 
 
 # ------------------------------------------------- transmit bias phases 1 - 4
@@ -448,3 +511,51 @@ def test_create_transmit_bias_voltages_file_dry_run(session, tmp_path):
     assert str(target) in report
     assert status[2] == 0
     assert not target.exists()
+
+
+def _hcp_sessions(root, ids, suffix):
+    """Sessions whose hcp folders are recorded somewhere of their own."""
+    sessions = []
+    for sid in ids:
+        hcp = os.path.join(root, "elsewhere", sid, "hcp")
+        os.makedirs(os.path.join(hcp, sid + suffix, "unprocessed", "rfMRI_REST1_AP"))
+        sessions.append({"id": sid, "hcp": hcp})
+    return sessions
+
+
+def test_transmit_bias_links_the_hcp_folder_of_each_session(tmp_path):
+    """
+    The links were made to `<sessionsfolder>/<id>/hcp/<id>` whatever the hcp
+    suffix or the session's own hcp folder, and a missing one was not said.
+    """
+    sessions = _hcp_sessions(str(tmp_path), ["s1", "s2"], "_V1")
+    group = str(tmp_path / "sessions" / "transmit_bias")
+    options = default_options(sessionsfolder=str(tmp_path / "sessions"), hcp_suffix="_V1")
+
+    log = gl.ReportLog()
+    assert handle_hcp_links(group, sessions, options, False, _log=log)
+    for session in sessions:
+        link = os.path.join(group, session["id"] + "_V1")
+        assert os.path.samefile(link, os.path.join(session["hcp"], session["id"] + "_V1"))
+    assert "ERROR" not in log.text
+
+    sessions[1]["hcp"] = str(tmp_path / "missing")
+    log = gl.ReportLog()
+    assert not handle_hcp_links(group, sessions, options, False, _log=log)
+    assert "HCP folder of session s2 could not be copied" in log.text
+
+
+def test_transmit_bias_voltages_are_read_from_the_hcp_folder_of_each_session(tmp_path):
+    sessions = _hcp_sessions(str(tmp_path), ["s1", "s2"], "_V1")
+    for value, session in zip([310, 320], sessions):
+        json_file = os.path.join(
+            session["hcp"], session["id"] + "_V1", "unprocessed", "rfMRI_REST1_AP",
+            session["id"] + "_V1_rfMRI_REST1_AP.json",
+        )
+        with open(json_file, "w") as f:
+            f.write('{"TxRefAmp": %d}' % value)
+    voltages = tmp_path / "voltages.txt"
+    options = default_options(sessionsfolder=str(tmp_path / "sessions"), hcp_suffix="_V1")
+
+    assert write_transmit_bias_voltages(sessions, options, str(voltages), gl.ReportLog())
+    assert voltages.read_text() == "310\n320\n"

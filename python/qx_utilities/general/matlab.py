@@ -18,6 +18,7 @@ None of the code is run directly from the terminal interface.
 # Copyright (c) Grega Repovs. All rights reserved.
 
 import os
+import shlex
 import subprocess
 
 import qx_utilities.general.log as gl
@@ -89,14 +90,11 @@ def extension_matlab_folders(qx_command):
     return folders
 
 
-def run(qx_command, args, run=None):
+def command_line(qx_command, args):
     """
-    Runs a matlab command, keeping its output in a comlog of its own.
-
-    The comlog is renamed by the exit status, so a failed matlab call is
-    visible in the file listing, and the outcome is recorded in the runlog.
-
-    For internal use only.
+    The matlab call `run` makes, `<function>(<arguments>)`, and the shell line
+    it makes it with. Every argument the function takes is filled in `args`,
+    as the call is positional.
     """
 
     # -- prepare arguments
@@ -134,17 +132,36 @@ def run(qx_command, args, run=None):
                 print(f"    ... WARNING: argument '{arg.name}' of {qx_command.name} has no documented type; passing value as-is")
             arglist.append("[]" if value == '' else "%s" % (value))
 
-    # -- make sure the extension's own matlab code can be found
+    # -- make sure the extension's own matlab code can be found: the path is
+    #    handed to the matlab call alone, this process's environment is left
+    #    as it was
 
+    current = os.environ.get('MATLABPATH', '')
+    matlabpath = current
     for folder in extension_matlab_folders(qx_command):
-        current = os.environ.get('MATLABPATH', '')
-        if folder not in current.split(':'):
-            os.environ['MATLABPATH'] = ':'.join([folder, current]) if current else folder
+        if folder not in matlabpath.split(':'):
+            matlabpath = ':'.join([folder, matlabpath]) if matlabpath else folder
+    setpath = "MATLABPATH=%s " % shlex.quote(matlabpath) if matlabpath != current else ""
 
     # -- compose command string
 
     mcom = "%s(%s)" % (qx_command.name, ", ".join(arglist))
-    com = '%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (mcommand, mcom)
+    com = '%s%s "try %s; catch ME; fprintf(\'\\nMatlab Error! Processing Failed!\\n%%s\\n\', ME.message); exit(1), end; exit"' % (setpath, mcommand, mcom)
+
+    return mcom, com
+
+
+def run(qx_command, args, run=None):
+    """
+    Runs a matlab command, keeping its output in a comlog of its own.
+
+    The comlog is renamed by the exit status, so a failed matlab call is
+    visible in the file listing, and the outcome is recorded in the runlog.
+
+    For internal use only.
+    """
+
+    mcom, com = command_line(qx_command, args)
 
     # --- run command, keeping the output
 

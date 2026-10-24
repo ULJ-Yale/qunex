@@ -13,8 +13,8 @@
 #
 # ## DESCRIPTION
 #
-# This script, dwi_pre_tractography.sh, implements ROI extraction
-# using a pre-specified ROI file in NIFTI or CIFTI format
+# This script, dwi_pre_tractography.sh, generates the dense trajectory
+# space files that dwi_probtrackx_dense_gpu uses
 #
 # ## PREREQUISITE INSTALLED SOFTWARE
 #
@@ -26,7 +26,7 @@
 #
 # ## PREREQUISITE PRIOR PROCESSING
 #
-# * The necessary input files are imaging data from previous processing and ROI file
+# * The necessary input files are imaging data from HCP preprocessing and dwi_bedpostx_gpu
 #
 #~ND~END~
 
@@ -53,37 +53,48 @@ Warning:
 
     DWI data needs to be in the following folder::
 
-        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
-
-    BedpostX output data needs to be in the following folder::
-
-        <study_folder>/<case>/hcp/<case>/T1w/Diffusion.bedpostX
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion
 
     This can be changed via the --diffusion_folder parameter.
 
+    BedpostX output data needs to be in the following folder::
+
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX
+
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
 
     --diffusion_folder (str):
-        Path to the diffusion folder.
+        Path to the diffusion folder, the DWI data of which sets the
+        diffusion resolution. The BedpostX outputs are always read from
+        ``<sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion.bedpostX``.
 
 Examples:
     ::
 
         qunex dwi_pre_tractography \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --scheduler='<name_of_scheduler_and_options>'
 
     Direct usage::
 
-        $0 <StudyFolder> <Session> <MSMflag>
+        $0 <StudyFolder> <Session> <MSMflag> [<DiffusionFolder>]
 
-    T1w and MNINonLinear folders are expected within <StudyFolder>/<Session>.
+    <StudyFolder> is the HCP Pipelines study folder, which is the session's
+    ``hcp`` folder (``<sessionsfolder>/<session>/hcp``) and not the QuNex
+    study folder. T1w and MNINonLinear folders are expected within
+    <StudyFolder>/<Session>.
 
     MSMflag=0 uses the default surfaces, MSMflag=1 uses the MSM surfaces defined
     in make_trajectory_space_mni.sh.
@@ -120,6 +131,8 @@ configdir="${QUNEXLIBRARYETC}/pre_tractography/config"
 #    form below is what the shell front end used and what the usage documents
 #    as direct use; both are kept.
 if [[ $1 == --* ]]; then
+    # the QuNex study folder, not the HCP Pipelines StudyFolder set below
+    QuNexStudyFolder=`get_options "--studyfolder" "$@"`
     SessionsFolder=`get_options "--sessionsfolder" "$@"`
     Session=`get_options "--sessions" "$@"`
     if [[ -z ${Session} ]]; then
@@ -128,8 +141,21 @@ if [[ $1 == --* ]]; then
     DiffusionFolder=`get_options "--diffusion_folder" "$@"`
     MSMflag=0
 
-    if [[ -z ${SessionsFolder} ]] || [[ -z ${Session} ]]; then
-        usage
+    # the sessions are in the sessions folder of the study, unless
+    # --sessionsfolder names another one
+    if [[ -z ${SessionsFolder} ]] && [[ -n ${QuNexStudyFolder} ]]; then
+        SessionsFolder="${QuNexStudyFolder}/sessions"
+    fi
+
+    if [[ -z ${SessionsFolder} ]]; then
+        echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
+        echo ""
+        exit 1
+    fi
+    if [[ -z ${Session} ]]; then
+        echo "ERROR: <session-id> not specified"
+        echo ""
+        exit 1
     fi
 
     # the folder the hcp data of this session sits in, which is what the
@@ -137,7 +163,9 @@ if [[ $1 == --* ]]; then
     StudyFolder="${SessionsFolder}/${Session}/hcp"
 else
     if [ "$3" == "" ]; then
-        usage
+        echo "ERROR: The direct usage needs <StudyFolder> <Session> <MSMflag>, see --help"
+        echo ""
+        exit 1
     fi
     StudyFolder=$1
     Session=$2

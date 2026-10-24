@@ -35,12 +35,13 @@ import shutil
 # qx imports
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 
-def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1, _log=None):
+def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='leave', parelements=1, studyfolder=None, _log=None):
     """
-    ``bruker_to_dicom [... processing options]``
+    ``bruker_to_dicom [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Convert bruker data into DICOM format for QuNex import.
 
@@ -48,9 +49,16 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The sessions folder where all the sessions are to be mapped to. It
-            should be a folder within the <study folder>.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The converted DICOM files are written to its
+            `inbox/MR` folder, where import_dicom looks for them.
 
         --inbox (str, default '<sessionsfolder>/inbox/bruker'):
             The location of the folder with bruker datasets.
@@ -61,14 +69,14 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
             expression patterns can be used. If provided, only folders within
             the inbox that match the list of sessions will be processed.
             Note: the session will match if the string is found within the
-            folder name. So 'S01' with match any folder that contains the string
-            'S01'!
+            folder name. So 'S01' will match any folder that contains the
+            string 'S01'!
 
         --archive (str, default 'leave'):
             What to do with bruker data once it is converted. Options are:
 
-            - move (move the package to the study's archive folder)
-            - copy (copy the package to the study's archive folder)
+            - move (move the package to `<sessionsfolder>/archive/bruker`)
+            - copy (copy the package to `<sessionsfolder>/archive/bruker`)
             - leave (keep the package where it was)
             - delete (delete the package).
 
@@ -79,8 +87,8 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
         ::
 
             qunex bruker_to_dicom \\
-                --sessionsfolder='/data/mice_study/sessions' \\
-                --sourcefolder='/data/raw/bruker' \\
+                --studyfolder='/data/mice_study' \\
+                --inbox='/data/raw/bruker' \\
                 --sessions='S01,S02'
 
     """
@@ -95,8 +103,9 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
     if archive not in ['leave', 'move', 'copy', 'delete']:
         raise ge.CommandError('bruker_to_dicom', 'Invalid dataset archive option', '%s is not a valid option for dataset archive option!' % (archive), 'Please specify one of: leave, move, copy, delete!')
 
-    if sessionsfolder is None:
-        sessionsfolder = os.path.abspath('.')
+    # the sessions folder: as given, else the study's `sessions` folder, else
+    # the current folder
+    sessionsfolder = gf.sessions_folder(studyfolder, sessionsfolder, default=os.path.abspath('.'))
 
     if inbox is None:
         inbox = os.path.join(sessionsfolder, 'inbox', 'bruker')
@@ -122,9 +131,9 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
     log.step(f"identifying files in {inbox}")
 
-    # prepare calls
+    # prepare calls, and the dataset each call converts, by the call's name
     calls = []
-    dirs = []
+    dirs = {}
 
     # iterate over subfolders in inbox
     for d in os.listdir(inbox):
@@ -160,14 +169,14 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
                     log.detail(f'import log can be found at {log_path}')
 
                 # dicomifier
-                calls.append({'name': 'bruker_to_dicom: ' + d, 'args': ['dicomifier', 'to-dicom', source_path, target_path], 'sout': log_path})
+                name = 'bruker_to_dicom: ' + d
+                calls.append({'name': name, 'args': ['dicomifier', 'to-dicom', source_path, target_path], 'sout': log_path})
 
-                # add to list of imported dirs
-                dir_dict = {
+                # add to the imported dirs
+                dirs[name] = {
                     'session': d,
                     'source': source_path,
                 }
-                dirs.append(dir_dict)
 
     # execute
     log.blank()
@@ -176,9 +185,12 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
 
     # archive
     failed = []
-    i = 0
+    archive_failed = []
     for call in done:
-        session = dirs[i]['session']
+        # by name, not by position: the calls come back in the order they
+        # finished, so with parelements above 1 a position could name another
+        # dataset, and archive or delete it although its conversion failed
+        session = dirs[call['name']]['session']
 
         if call['exit'] != 0:
             # a session whose conversion exited non-zero used to get this line
@@ -187,28 +199,43 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
             failed.append(session)
             log.error(f'failed import for {session}, inspect {call["log"]}')
         elif archive != 'leave':
-            source_path =  dirs[i]['source']
+            source_path = dirs[call['name']]['source']
 
             with log.section(f'archiving {session}'):
-                if archive == 'move':
-                    log.detail('moving dataset to archive')
-                    shutil.move(source_path, archive_dir)
-                elif archive == 'copy':
-                    log.detail('copying dataset to archive')
-                    shutil.copy2(source_path, archive_dir)
-                elif archive == 'delete':
-                    log.detail('deleting dataset')
-                    shutil.rmtree(source_path)
-
-        # index increase
-        i += 1
+                # a dataset archived before raised here, which left the
+                # remaining datasets unarchived and the failed conversions
+                # unreported
+                try:
+                    if archive == 'move':
+                        log.detail('moving dataset to archive')
+                        shutil.move(source_path, archive_dir)
+                    elif archive == 'copy':
+                        log.detail('copying dataset to archive')
+                        # a dataset is a folder, which `shutil.copy2` can not copy
+                        shutil.copytree(source_path, os.path.join(archive_dir, session))
+                    elif archive == 'delete':
+                        log.detail('deleting dataset')
+                        shutil.rmtree(source_path)
+                except OSError as e:
+                    archive_failed.append(session)
+                    log.error(f'failed archiving {session}: {e}')
 
     # raised after the loop, so one failing session does not abort its siblings
-    if failed:
+    if failed or archive_failed:
+        hints = []
+        if failed:
+            hints.append(
+                'Conversion to DICOM failed for %d of %d sessions: %s'
+                % (len(failed), len(done), ', '.join(failed))
+            )
+        if archive_failed:
+            hints.append(
+                'Archiving (%s) failed for %d sessions: %s'
+                % (archive, len(archive_failed), ', '.join(archive_failed))
+            )
         raise ge.CommandFailed(
             'bruker_to_dicom',
-            'Conversion failed',
-            'Conversion to DICOM failed for %d of %d sessions: %s'
-            % (len(failed), len(done), ', '.join(failed)),
+            'Conversion failed' if failed else 'Archiving failed',
+            *hints,
             'Please check the report!',
         )

@@ -55,7 +55,7 @@ _ARCHIVES = [".tar.gz", ".tgz", ".tar", ".zip", ".tar.bz2", ".tar.xz"]
 
 def hcp_roi_to_dicom(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_roi_to_dicom [... processing options]``
+    ``hcp_roi_to_dicom [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the ROI to DICOM step of HCP Pipeline (ROI_to_DICOM.sh). Takes the
     original T1w DICOM series and an ROI, given as a CIFTI dscalar file, a
@@ -87,9 +87,15 @@ def hcp_roi_to_dicom(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -212,8 +218,8 @@ def hcp_roi_to_dicom(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_roi_to_dicom \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --sessions=OP101 \\
                 --hcp_roidicom_cifti_roi=roi.dscalar.nii \\
                 --hcp_roidicom_regname=MSMAll \\
@@ -222,8 +228,8 @@ def hcp_roi_to_dicom(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_roi_to_dicom \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --sessions=OP101 \\
                 --hcp_roidicom_input=sessions/OP101/dicom/20 \\
                 --hcp_roidicom_vertex=12345 \\

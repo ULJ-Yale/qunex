@@ -18,8 +18,10 @@ the one below it.
 from types import SimpleNamespace
 
 import pytest
+import yaml
 
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 from qx_utilities.general.log import LogSettings, load_settings, resolve_logging
 from qx_utilities.general.log import settings as ls
 
@@ -112,6 +114,30 @@ def test_an_empty_settings_file_is_fine(tmp_path, monkeypatch):
     monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
 
     assert load_settings() == {}
+
+
+@pytest.mark.parametrize("stated", ["", " {}", " []", " false"])
+def test_a_study_logging_section_that_states_nothing_leaves_the_users(
+    tmp_path, monkeypatch, stated
+):
+    """
+    An empty ``logging:`` in the study file used to take the user's whole
+    section away, so the run logged by the defaults -- somewhere other than
+    where the container launcher, which reads the two files with
+    `general.folders`, placed it.
+    """
+    user = write(
+        tmp_path / "user" / "qunex_settings.yaml",
+        "logging:\n  layout: legacy\n  outside_study: cwd\n",
+    )
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+    study = write(tmp_path / "study" / "qunex_settings.yaml", "logging:%s\n" % stated)
+
+    resolved = resolve_logging("some_command", {}, studyfolder=str(study.parent))
+
+    assert (resolved.layout, resolved.outside_study) == ("legacy", "cwd")
+    sections = [yaml.safe_load(path.read_text())["logging"] for path in (user, study)]
+    assert gf.placement_settings(*sections) == (resolved.layout, resolved.outside_study)
 
 
 # ---------------------------------------------------------------- --logging
@@ -263,6 +289,35 @@ def test_a_malformed_settings_file_is_reported(tmp_path, monkeypatch):
         resolve_logging("some_command", {})
 
 
+@pytest.mark.parametrize("malformed", ["user", "study"])
+@pytest.mark.parametrize("section", ["true", "[layout, nested]", "legacy"])
+def test_a_logging_section_that_is_not_a_mapping_is_reported(
+    tmp_path, monkeypatch, malformed, section
+):
+    """
+    It used to end the run with an AttributeError, or -- in the user's file,
+    under a study that states the section -- go unnoticed, where the
+    container launcher stops on it.
+    """
+    files = {
+        "user": "logging:\n  layout: legacy\n",
+        "study": "logging:\n  layout: nested\n",
+    }
+    files[malformed] = "logging: %s\n" % section
+    user = write(tmp_path / "user" / "qunex_settings.yaml", files["user"])
+    study = write(tmp_path / "study" / "qunex_settings.yaml", files["study"])
+    monkeypatch.setattr(ls, "USER_SETTINGS_PATHS", [str(user)])
+
+    with pytest.raises(ge.CommandError) as resolved:
+        resolve_logging("some_command", {}, studyfolder=str(study.parent))
+    sections = [yaml.safe_load(path.read_text())["logging"] for path in (user, study)]
+    with pytest.raises(gf.PlacementError) as placed:
+        gf.placement_settings(*sections)
+
+    assert str(placed.value) in resolved.value.hints, "in the launcher's words"
+    assert any(str(tmp_path / malformed) in hint for hint in resolved.value.hints)
+
+
 # ------------------------------------------------------------- the registry
 
 
@@ -348,7 +403,7 @@ def test_a_study_may_state_keep_comlogs_and_comlog_folders(tmp_path):
         "logging:\n  keep_comlogs: true\n  comlog_folders: [session]\n",
     )
 
-    settings = ls.apply_study_settings(LogSettings(), str(tmp_path / "study"), {})
+    settings = resolve_logging("c", {}, studyfolder=str(tmp_path / "study"))
     assert settings.keep_comlogs is True
     assert settings.comlog_folders == ("session",)
 
@@ -402,7 +457,7 @@ def test_a_study_may_state_runlog_content(tmp_path):
         "logging:\n  runlog_content: full\n",
     )
 
-    settings = ls.apply_study_settings(LogSettings(), str(tmp_path / "study"), {})
+    settings = resolve_logging("c", {}, studyfolder=str(tmp_path / "study"))
     assert settings.runlog_content == "full"
 
 

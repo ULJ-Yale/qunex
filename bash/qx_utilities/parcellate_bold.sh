@@ -22,8 +22,15 @@ Glasser parcellation with subcortical labels included).
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given, unless
+        --singleinputfile is used.
 
     --sessions (str):
         Comma separated list of sessions to run.
@@ -34,7 +41,7 @@ Parameters:
 
     --inputpath (str):
         Specify path of the file you want to use for parcellation relative to
-        the master study folder and session directory (e.g.
+        the session's folder, ``<sessionsfolder>/<session>`` (e.g.
         '/images/functional/').
 
     --inputdatatype (str):
@@ -42,12 +49,15 @@ Parameters:
         'dtseries').
 
     --parcellationfile (str):
-       Specify the absolute path of the file you want to use for parcellation
+       Specify the file you want to use for parcellation: an absolute path, or
+       one relative to the study folder
        (e.g. '/data/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii').
 
     --singleinputfile (str):
        Parcellate only a single file in any location. Individual flags are not
-       needed (--session, --sessionsfolder, --inputfile).
+       needed (--sessions, --studyfolder, --sessionsfolder, --inputfile), and
+       --inputpath and --outpath are then used as given, not relative to a
+       session's folder.
 
     --overwrite (str, default 'no'):
         Whether to overwrite existing data (yes) or not (no). Note that
@@ -62,16 +72,18 @@ Parameters:
         Specify the suffix output name of the pconn file.
 
     --outpath (str):
-        Specify the output path name of the pconn file relative to the master
-        study folder (e.g. '/images/functional/').
+        Specify the output path name of the pconn file relative to the
+        session's folder, ``<sessionsfolder>/<session>`` (e.g.
+        '/images/functional/').
 
     --useweights (str, default 'no'):
         If computing a parcellated connectivity file you can specify which
         frames to omit (e.g. 'yes' or 'no').
 
     --weightsfile (str):
-        Specify the location of the weights file relative to the master study
-        folder (e.g. '/images/functional/movement/bold1.use').
+        Specify the location of the weights file relative to the session's
+        folder, ``<sessionsfolder>/<session>`` (e.g.
+        '/images/functional/movement/bold1.use').
 
     --extractdata (str):
         Specify if you want to save out the matrix as a CSV file.
@@ -107,9 +119,9 @@ Examples:
     ::
 
         qunex parcellate_bold \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --session='<session_id>' \\
-            --inputfile='<name_of_input_file' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<session_id>' \\
+            --inputfile='<name_of_input_file>' \\
             --inputpath='<path_for_input_file>' \\
             --inputdatatype='<type_of_dense_data_for_input_file>' \\
             --parcellationfile='<dlabel_file_for_parcellation>' \\
@@ -137,9 +149,10 @@ fi
 ########################################## INPUTS ##########################################
 
 # BOLD data should be pre-processed and in CIFTI format
-# The data should be in the folder relative to the master study folder, specified by the inputfile
+# the data should be in <sessionsfolder>/<session>/<inputpath>, specified by the inputfile
 # Mandatory input parameters:
-    # SessionsFolder # e.g. /data/qx_study/Connectome
+    # StudyFolder # e.g. /data/qx_study
+    # SessionsFolder # e.g. /data/qx_study/sessions
     # Session      # e.g. 100206
     # InputFile # e.g. bold1_Atlas_MSMAll_hp2000_clean.dtseries.nii
     # InputPath # e.g. /images/functional/
@@ -150,12 +163,12 @@ fi
     # ParcellationFile  # e.g. /data/qx_study/Connectome/Parcellations/glasser_parcellation/LR_Colelab_partitions_v1d_islands_withsubcortex.dlabel.nii"
     # ComputePConn # Specify if a parcellated connectivity file should be computed (pconn). This is done using covariance and correlation (e.g. yes; default is set to no).
     # UseWeights  # If computing a  parcellated connectivity file you can specify which frames to omit (e.g. yes' or no; default is set to no)
-    # WeightsFile # Specify the location of the weights file relative to the master study folder (e.g. /images/functional/movement/bold1.use)
+    # WeightsFile # Specify the location of the weights file relative to the session folder (e.g. /images/functional/movement/bold1.use)
     # ExtractData # yes/no
 
 ########################################## OUTPUTS #########################################
 
-# -- Outputs will be *pconn.nii files located in the location specified in the outputpath
+# outputs are written to <sessionsfolder>/<session>/<outpath>, or to --outpath with --singleinputfile
 
 # -- Get the command line options for this script
 get_options() {
@@ -164,6 +177,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
+unset StudyFolder
 unset SessionsFolder
 unset Session
 unset InputFile
@@ -198,6 +212,10 @@ while [ ${index} -lt ${numArgs} ]; do
         --version)
             version_show $@
             exit 0
+            ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
             ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
@@ -256,7 +274,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;
         *)
-            usage
             echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
@@ -264,53 +281,51 @@ while [ ${index} -lt ${numArgs} ]; do
     esac
 done
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check required parameters
 if [ -z ${SingleInputFile} ]; then
-        if [ -z ${SessionsFolder} ]; then
-            usage
-            echo "ERROR: <sessions-folder-path> not specified>"
+        if [ -z "${SessionsFolder}" ]; then
+            echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
             echo ""
             exit 1
         fi
         if [ -z ${CASE} ]; then
-            usage
             echo "ERROR: <session-id> not specified"
             echo ""
             exit 1
         fi
         if [ -z ${InputFile} ]; then
-            usage
             echo "ERROR: <file_to_compute_parcellation_on> not specified"
             echo ""
             exit 1
         fi
         if [ -z ${InputPath} ]; then
-            usage
             echo "ERROR: <path_for_input_file> not specified"
             echo ""
             exit 1
         fi
 fi
 if [ -z ${InputDataType} ]; then
-    usage
     echo "ERROR: <type_of_dense_data_for_input_file> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
-    usage
     echo "ERROR: <file_for_parcellation> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${OutName} ]; then
-    usage
     echo "ERROR: <name_of_output_pconn_file> not specified"
     exit 1
 fi
 
 if [ -z ${OutPath} ]; then
-    usage
     echo "ERROR: <path_for_output_file> not specified"
     exit 1
 fi
@@ -324,10 +339,6 @@ if [ -z ${WeightsFile} ]; then
     WeightsFile="no"
     echo "Note: Weights file not used."
 fi
-
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""

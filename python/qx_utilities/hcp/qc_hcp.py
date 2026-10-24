@@ -9,8 +9,8 @@
 ``qc_hcp.py``
 
 This file holds code for running visual QC (``hcp_run_qc``) for HCP-processed data.
-The QC command and all its helpers live here; the pipeline wrappers themselves are
-split by command group across the other ``*_hcp.py`` modules.
+The QC command and all its helpers live here; the pipeline wrappers themselves
+live in their own ``hcp_<command>.py`` modules.
 """
 
 import os
@@ -31,6 +31,7 @@ import nibabel as nib
 
 import qx_utilities.processing.core as pc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import ReportLog, action
 from qx_utilities.hcp.hcp_utils import do_hcp_options_check
@@ -112,15 +113,74 @@ def _qc_resolve_extra_templates(
             path = os.path.join(folder, userscenefile)
         templates.append((path, os.path.basename(userscenefile)))
     if processcustom == "yes":
-        custom_dir = os.path.join(studyfolder, "processing", "scenes", "QC", modality)
+        # the folder has the modality's documented name, myelin, as create_study
+        # and run_qc have it, not the name the code uses
+        folder = {"Myelin": "myelin"}.get(modality, modality)
+        custom_dir = os.path.join(gf.processing_folder(studyfolder), "scenes", "QC", folder)
         for p in sorted(glob.glob(os.path.join(custom_dir, "*.scene"))):
             templates.append((p, os.path.basename(p)))
     return templates
 
 
+def _warn_bold_scene_options(
+    modalities: list,
+    processcustom: str,
+    userscenefile: str,
+    omitdefaults: str,
+    snronly: str,
+    _log: ReportLog,
+) -> None:
+    """
+    Warn about the scene options BOLD does not take.
+
+    Custom and user scenes are not available for BOLD and BOLD_FC, and without
+    them ``--qc_omitdefaults`` leaves a BOLD run nothing to render. Warnings
+    rather than errors: a recipe or a batch file states these options once for
+    every QC step.
+    """
+
+    bold = [m for m in modalities if m in ("BOLD", "BOLD_FC")]
+    ignored = [
+        name
+        for name, given in [
+            ("--qc_processcustom", processcustom == "yes"),
+            ("--qc_userscenefile", bool(userscenefile)),
+        ]
+        if given
+    ]
+    if bold and ignored:
+        _log.warning(
+            "custom and user scenes are not available for %s, ignoring %s there"
+            % (" and ".join(bold), " and ".join(ignored))
+        )
+    if "BOLD" in modalities and omitdefaults == "yes" and snronly != "yes":
+        _log.warning(
+            "--qc_omitdefaults=yes and BOLD has no custom or user scenes, no BOLD QC "
+            "is rendered. Use --qc_bold_snronly=yes to compute only the TSNR reports."
+        )
+
+
+def _qc_skipframes(value) -> int:
+    """
+    Read ``--qc_bold_skipframes``: a number of frames, 0 when it is not given.
+    Any other value, a negative one included, is an error.
+    """
+
+    text = "" if value is None else str(value).strip()
+    if not text:
+        return 0
+    if not (text.isascii() and text.isdigit()):
+        raise ge.CommandError(
+            "hcp_run_qc",
+            "--qc_bold_skipframes=%s is not a number of frames." % value,
+            "Give the number of initial frames to leave out of the GS chart's y range, e.g. 5.",
+        )
+    return int(text)
+
+
 def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_run_qc [... processing options]``
+    ``hcp_run_qc [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run visual QC for a session.
 
@@ -128,6 +188,22 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         type: processing.session
 
     Parameters:
+        --batchfile (str, default ''):
+            The batch.txt file with all the sessions information.
+
+        --sessions (str, default ''):
+            A list of sessions to process.
+
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
+
         --qc_modality (str, default 'BOLD'):
             One or more modalities to run QC for, as a comma-separated list (e.g.
             'BOLD,T1w,DWI'). Supported: 'rawNII', 'BOLD', 'BOLD_FC', 'T1w', 'T2w',
@@ -167,14 +243,17 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         --qc_omitdefaults (str, default 'no'):
             If 'yes', skip the default template scene(s) for the requested modalities
             and only render user/custom scenes (see --qc_userscenefile /
-            --qc_processcustom).
+            --qc_processcustom). BOLD has neither, so a BOLD run renders no scene
+            and warns; with --qc_bold_snronly='yes' it still computes the TSNR
+            report. The rawNII and BOLD_FC QC are run regardless.
 
         --qc_userscenefile (str, default ''):
             A user-supplied scene template to render (in addition to the defaults).
             May be an absolute path or a bare name resolved against
-            --qc_userscenepath (or the template folder). Non-BOLD user scenes are
-            rendered with the common DUMMYPATH/DUMMYCASE/DUMMYTIMESTAMP/DUMMYPNGNAME
-            substitutions; BOLD user scenes are rendered as full BOLD QC (with TSNR).
+            --qc_userscenepath (or the template folder). User scenes are rendered
+            with the common DUMMYPATH/DUMMYCASE/DUMMYTIMESTAMP/DUMMYPNGNAME
+            substitutions. Not available for BOLD and BOLD_FC, where it is ignored
+            with a warning.
 
         --qc_userscenepath (str, default ''):
             Folder for --qc_userscenefile when it is given as a bare name.
@@ -182,6 +261,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         --qc_processcustom (str, default 'no'):
             If 'yes', also render every ``*.scene`` under
             <studyfolder>/processing/scenes/QC/<modality> for each requested modality.
+            Not available for BOLD and BOLD_FC, where it is ignored with a warning.
 
         --bolds (str, default 'all'):
             Which BOLDs to run QC for (BOLD and BOLD_FC modalities). Follows the
@@ -196,7 +276,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             attempts to infer it by globbing (BOLD modality).
 
         --qc_bold_skipframes (int, default 0):
-            Number of initial frames to omit from the GS plot range (BOLD modality).
+            Number of initial frames to omit from the GS plot range (BOLD
+            modality): the y axis of the GS chart is fitted to the frames after
+            them, the chart still shows every frame.
 
         --qc_bold_snronly (str, default 'no'):
             If 'yes', compute the TSNR report only and skip scene/png (BOLD modality).
@@ -256,8 +338,11 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             modalities (and, for BOLD/BOLD_FC, the individual runs and FC types) are
             expanded into independent jobs and run in parallel using
             ``--parelements``. Each modality writes into
-            ``<qc_outpath>/<modality>`` (default ``<sessionsfolder>/QC/<modality>``)
-            and keeps per-run logs under a ``qclog`` subfolder.
+            ``<qc_outpath>/<modality>`` (default ``<sessionsfolder>/QC/<modality>``).
+            The comlog of each QC call is kept with the run's other logs, in
+            the ``comlogs`` folder of the run's log folder and the
+            --comlog_folders destinations; a call that completes removes its
+            comlog, unless it reports errors or --keep_comlogs is given.
 
             With the exception of 'rawNII', each modality renders one or more
             Workbench scenes to PNG and, when ``--qc_scenezip=yes``, produces a
@@ -276,8 +361,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             - Prerequisites: raw NIfTIs (and, ideally, JSON sidecars) in
               ``<sessionsfolder>/<session>/nii`` after DICOM/BIDS import. Uses FSL
               ``slicesdir``.
-            - Required parameters: none beyond ``--sessions`` /
-              ``--sessionsfolder``.
+            - Required parameters: none beyond ``--studyfolder`` and
+              ``--batchfile``.
 
         T1w / T2w / myelin:
             - Generates: a ``<session>.<modality>.QC.wb.scene``, a PNG, and (if
@@ -295,6 +380,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
               ``MNINonLinear/Results/<bold>``.
             - Useful parameters: ``--bolds``, ``--hcp_bold_prefix``,
               ``--hcp_cifti_tail``, ``--qc_bold_skipframes``, ``--qc_bold_snronly``.
+            - Custom and user scenes (``--qc_processcustom``,
+              ``--qc_userscenefile``) are not available for BOLD and BOLD_FC; a run
+              that asks for them warns.
 
         BOLD_FC:
             - An independent modality (not a BOLD sub-option). Generates, per
@@ -328,7 +416,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         Run BOLD and structural QC for all sessions in a batch, 4 runs in parallel::
 
             qunex hcp_run_qc \\
-                --sessionsfolder='<study>/sessions' \\
+                --studyfolder='<study>' \\
                 --batchfile='<study>/processing/batch.txt' \\
                 --qc_modality='BOLD,T1w,T2w,myelin' \\
                 --parelements='4'
@@ -336,14 +424,16 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         Raw NIfTI QC (produces the zip + single-file HTML report)::
 
             qunex hcp_run_qc \\
-                --sessionsfolder='<study>/sessions' \\
+                --studyfolder='<study>' \\
+                --batchfile='<study>/processing/batch.txt' \\
                 --sessions='OP101,OP102' \\
                 --qc_modality='rawNII'
 
         BOLD FC QC for both map types (each needs its own input)::
 
             qunex hcp_run_qc \\
-                --sessionsfolder='<study>/sessions' \\
+                --studyfolder='<study>' \\
+                --batchfile='<study>/processing/batch.txt' \\
                 --sessions='OP101' \\
                 --qc_modality='BOLD_FC' \\
                 --qc_boldfc='pscalar,pconn' \\
@@ -354,7 +444,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         DWI QC with dtifit, BedpostX and EDDY stats::
 
             qunex hcp_run_qc \\
-                --sessionsfolder='<study>/sessions' \\
+                --studyfolder='<study>' \\
+                --batchfile='<study>/processing/batch.txt' \\
                 --sessions='OP101' \\
                 --qc_modality='DWI' \\
                 --qc_dwi_dtifit='yes' \\
@@ -364,7 +455,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         General QC of an arbitrary image::
 
             qunex hcp_run_qc \\
-                --sessionsfolder='<study>/sessions' \\
+                --studyfolder='<study>' \\
+                --batchfile='<study>/processing/batch.txt' \\
                 --sessions='OP101' \\
                 --qc_modality='general' \\
                 --qc_datapath='images/functional' \\
@@ -449,7 +541,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
     hcp_cifti_tail = _get_opt("hcp_cifti_tail", "boldsuffix", default="") or ""
     scenezip = (_get_opt("qc_scenezip", "scenezip", default="yes") or "yes").strip().lower()
     snronly = (_get_opt("qc_bold_snronly", "snronly", default="no") or "no").strip().lower()
-    skipframes = int(_get_opt("qc_bold_skipframes", "skipframes", default=0) or 0)
+    skipframes = _qc_skipframes(_get_opt("qc_bold_skipframes", "skipframes", default=0))
     dwi_path = _get_opt("qc_dwi_path", "dwipath", default="Diffusion") or "Diffusion"
     dwi_data = _get_opt("qc_dwi_data", "dwidata", default="data") or "data"
     dwi_dtifit = (_get_opt("qc_dwi_dtifit", "dtifitqc", default="no") or "no").strip().lower()
@@ -473,12 +565,17 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
         "pscalar": _get_opt("qc_boldfcpscalarinput", default="") or bold_fc_input,
         "pconn": _get_opt("qc_boldfcpconninput", default="") or bold_fc_input,
     }
+    # written into the scene file, where Workbench reads a relative path from
+    # the scene's own folder rather than from the folder the run works in, and
+    # the path the zipped scene rewrites, so it has to be the one written
     bold_fc_path = _get_opt("qc_boldfcpath", "boldfcpath", default="") or ""
+    if bold_fc_path:
+        bold_fc_path = os.path.abspath(bold_fc_path)
     omitdefaults = (_get_opt("qc_omitdefaults", "omitdefaults", default="no") or "no").strip().lower()
     userscenefile = _get_opt("qc_userscenefile", "userscenefile", default="") or ""
     userscenepath = _get_opt("qc_userscenepath", "userscenepath", default="") or ""
     processcustom = (_get_opt("qc_processcustom", "processcustom", default="no") or "no").strip().lower()
-    studyfolder = os.path.dirname(os.path.normpath(sessionsfolder))
+    studyfolder = options["studyfolder"]
     on_existing = (_get_opt("on_existing", default="leave") or "leave").strip().lower()
     if on_existing not in ("leave", "skip", "delete"):
         raise ge.CommandError(
@@ -508,6 +605,9 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     log.info(f"HCP folder: {hcp['base']}")
     log.info(f"Template folder: {scenetemplatefolder}")
+    _warn_bold_scene_options(
+        modalities_canon, processcustom, userscenefile, omitdefaults, snronly, log
+    )
 
     # Build a single list of QC jobs (across modalities) and run them in one executor.
     jobs = []
@@ -515,9 +615,12 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     for modality in modalities_canon:
         outpath = _resolve_outpath(modality)
-        os.makedirs(outpath, exist_ok=True)
-        qclog = os.path.join(outpath, "qclog")
-        os.makedirs(qclog, exist_ok=True)
+
+        # the comlogs of the QC calls are the run's, kept where every comlog of
+        # the run is: the list do_options_check built from its comlogs folder
+        # and the --comlog_folders destinations
+        qclog = options["comlogs"]
+        _qc_make_folders([outpath], options["run"], log)
 
         if modality == "rawNII":
             log.info("- rawNII: FSL slicesdir on raw NIFTIs")
@@ -580,38 +683,6 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                         },
                     }
                 )
-
-            # user/custom BOLD scenes (rendered as full BOLD QC with TSNR)
-            for tmpl_path, tmpl_base in _qc_resolve_extra_templates(
-                "BOLD", scenetemplatefolder, studyfolder,
-                userscenefile, userscenepath, processcustom,
-            ):
-                log.info(f"- BOLD user/custom scene: {tmpl_base}")
-                for boldinfo in bolds:
-                    jobs.append(
-                        {
-                            "modality": "BOLD",
-                            "sinfo": sinfo,
-                            "options": options,
-                            "overwrite": overwrite,
-                            "hcp": hcp,
-                            "params": {
-                                "run": run_bold,
-                                "template_scene": tmpl_path,
-                                "working_suffix": tmpl_base,
-                                "outpath": outpath,
-                                "qclog": qclog,
-                                "timestamp": timestamp,
-                                "on_existing": on_existing,
-                                "hcp_bold_prefix": hcp_bold_prefix,
-                                "hcp_cifti_tail": hcp_cifti_tail,
-                                "scenezip": scenezip,
-                                "snronly": snronly,
-                                "skipframes": skipframes,
-                                "boldinfo": boldinfo,
-                            },
-                        }
-                    )
 
         elif modality == "BOLD_FC":
             if "bolds" not in options or not options["bolds"]:
@@ -808,7 +879,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
                 }
             )
 
-        # user/custom scenes for non-BOLD modalities (BOLD is handled in its branch)
+        # user/custom scenes, which BOLD and BOLD_FC have none of
         if modality not in ("rawNII", "BOLD", "BOLD_FC"):
             for tmpl_path, tmpl_base in _qc_resolve_extra_templates(
                 modality, scenetemplatefolder, studyfolder,
@@ -841,7 +912,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             m = job["modality"]
             if m in ("T1w", "T2w", "Myelin", "general", "DWI"):
                 return True
-            return m == "BOLD" and not job["params"].get("working_suffix")
+            # a TSNR-only BOLD job renders no scene
+            return m == "BOLD" and job["params"]["snronly"] != "yes"
 
         before = len(jobs)
         jobs = [j for j in jobs if not _is_default_scene(j)]
@@ -849,6 +921,8 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
     if len(jobs) == 0:
         log.step("No QC jobs prepared.")
+    elif options["run"] != "run":
+        qc_report = _qc_dry_run(jobs, log)
     else:
         max_workers = max(1, min(int(options.get("parelements") or 1), len(jobs)))
         log.blank()
@@ -874,13 +948,79 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
             return "[]"
 
     failed_count = len(qc_report["failed"])
-    status = "HCP run QC: done %d %s, failed %d %s" % (
-        len(qc_report["done"]),
-        _format_item_list(qc_report["done"]),
-        failed_count,
-        _format_item_list(qc_report["failed"]),
-    )
+    if options["run"] != "run":
+        status = "HCP run QC: can be run %d %s, cannot be run %d %s" % (
+            len(qc_report.get("ready", [])),
+            _format_item_list(qc_report.get("ready", [])),
+            failed_count,
+            _format_item_list(qc_report["failed"]),
+        )
+    else:
+        status = "HCP run QC: done %d %s, failed %d %s" % (
+            len(qc_report["done"]),
+            _format_item_list(qc_report["done"]),
+            failed_count,
+            _format_item_list(qc_report["failed"]),
+        )
     return log.result(status, failed_count, sinfo["id"])
+
+
+def _qc_make_folders(folders: list, run: str, _log: ReportLog) -> None:
+    """
+    Create the QC output folders, or -- under ``--test`` -- name the ones a
+    real run would create, and create none.
+    """
+    for folder in folders:
+        if run == "run":
+            os.makedirs(folder, exist_ok=True)
+        elif not os.path.isdir(folder):
+            _log.detail(f"test, not created: {folder}")
+
+
+def _qc_job_label(job: dict) -> str:
+    """Name a QC job the way its report does: modality, then what it is run on."""
+    params = job["params"]
+    modality = job["modality"]
+    if modality == "CUSTOM_SCENE":
+        return f"{params['modality_label']} {params['template_basename']}"
+    label = modality
+    if modality == "BOLD_FC":
+        label += f" {params['bold_fc']}"
+    if "boldinfo" in params:
+        label += f" {params['boldinfo']['name']}"
+    return label
+
+
+def _qc_dry_run(jobs: list, _log: ReportLog) -> dict:
+    """
+    Report each QC job a real run would execute, and execute none.
+
+    Every job names the tool it runs, the folder it writes into and the scene
+    template it renders, if it renders one. Returns the report a real run
+    builds, with the jobs that can be run under ``ready`` and those that cannot
+    under ``failed``.
+    """
+    qc_report = {"done": [], "failed": [], "ready": []}
+    _log.blank()
+    _log.action("Running", f"{len(jobs)} QC jobs", "test", level="info")
+    for job in jobs:
+        params = job["params"]
+        label = _qc_job_label(job)
+        if not params.get("run", True):
+            _log.error(f"{label}: session not ready, this QC job would be skipped!")
+            qc_report["failed"].append(label)
+            continue
+        if job["modality"] == "BOLD" and params.get("snronly") == "yes":
+            # a TSNR-only job renders no scene
+            what = f"{label} TSNR report with wb_command -cifti-reduce into {params['outpath']}"
+        else:
+            tool = "slicesdir" if job["modality"] == "rawNII" else "wb_command -show-scene"
+            what = f"{label} QC with {tool} into {params['outpath']}"
+            if params.get("template_scene"):
+                what += f", template {params['template_scene']}"
+        _log.detail(f"test, not run: {what}")
+        qc_report["ready"].append(label)
+    return qc_report
 
 
 def _run_qc_executor(job: dict):
@@ -1828,7 +1968,6 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
     snronly = (params.get("snronly", "no") or "no").strip().lower()
     skipframes = int(params.get("skipframes", 0) or 0)
     on_existing = params.get("on_existing", "leave")
-    working_suffix = params.get("working_suffix", "QC.wb.scene")
 
     if not run:
         log.step("Skipping because session not ready.")
@@ -1968,7 +2107,9 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
             with open(gs_txt, "r") as f:
                 nvol = len([ln for ln in f.read().splitlines() if ln.strip()])
 
-        xmax = max(0, nvol - max(0, skipframes))
+        # the frames are a TR apart and the chart plots them against their time,
+        # so its axis ends at the duration in seconds
+        xmax = round(tr_sec * nvol, 2)
 
         with open(gs_txt, "r") as f:
             vals = []
@@ -2013,8 +2154,8 @@ def _run_qc_bold(sinfo, options, overwrite, hcp, params: dict):
 
         working_scene = os.path.join(
             outpath,
-            "%s%s.BOLD.%s.%s"
-            % (sinfo["id"], options["hcp_suffix"], bold_name, working_suffix),
+            "%s%s.BOLD.%s.QC.wb.scene"
+            % (sinfo["id"], options["hcp_suffix"], bold_name),
         )
         with open(template_scene, "r", encoding="utf-8", errors="ignore") as f:
             scene_txt = f.read()

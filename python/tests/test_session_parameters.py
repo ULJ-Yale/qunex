@@ -184,3 +184,85 @@ def test_subjid_maps_to_sessionid_everywhere_else():
     assert gcs.check_deprecated_parameters({"subjid": "S01"}, "import_dicom") == {
         "sessionid": "S01"
     }
+
+
+def test_a_deprecated_name_for_one_session_means_what_it_means_elsewhere(capsys):
+    """
+    The per-session tier applied `_TR:` as written, so it set an option
+    nothing reads, while the same name in the header or on the command line
+    is remapped to `tr`.
+    """
+    options = {"tr": 2.5, "command_ran": "preprocess_bold"}
+
+    soptions, ssources = gcs.update_options(
+        {"id": "S01", "_TR": "2.0", "--hcp_brainsize": "170"}, options, {}
+    )
+
+    assert soptions["tr"] == "2.0"
+    assert "TR" not in soptions
+    assert ssources["tr"] == gcs.PER_SESSION
+    assert soptions["hcp_brainsize"] == "170"
+
+
+@pytest.mark.parametrize("spelling", ["TR", "tr"])
+def test_a_deprecated_name_for_one_session_is_unset_in_either_spelling(spelling):
+    options = {
+        "tr": 2.5,
+        "command_ran": "preprocess_bold",
+        gcs.UNSET_BATCH_SESSION: spelling,
+    }
+
+    soptions, _ = gcs.update_options({"id": "S01", "_TR": "2.0"}, options, {})
+
+    assert soptions["tr"] == 2.5
+
+
+@pytest.mark.parametrize("name", ["hcp_bold_sequencetype", "hcp_biascorrect_t1w"])
+def test_a_parameter_no_longer_used_is_dropped_and_never_stored_under_none(
+    name, capsys
+):
+    """
+    The table maps a name that is no longer used to None. Only an empty value
+    was taken to mean that, so a stated one was stored under the key None.
+    """
+    options = gcs.check_deprecated_parameters(
+        {name: "interleaved", "hcp_brainsize": "170"}, "hcp_fmri_volume"
+    )
+
+    assert options == {"hcp_brainsize": "170"}
+    assert None not in options
+    out = capsys.readouterr().out
+    assert "no longer used" in out and "... %s" % name in out
+
+
+def test_a_parameter_no_longer_used_for_one_session_does_not_break_its_report(
+    capsys,
+):
+    """
+    A batch file entry `_hcp_bold_sequencetype: interleaved` reached the
+    per-session tier as the key None, and the session's parameter report,
+    which sorts the names that tier states, failed on comparing None with a
+    string: every processing run over such a batch file crashed.
+    """
+    options = {"command_ran": "hcp_fmri_volume", "hcp_brainsize": 150}
+    session = {
+        "id": "S01",
+        "_hcp_bold_sequencetype": "interleaved",
+        "_hcp_brainsize": "170",
+    }
+
+    soptions, ssources = gcs.update_options(
+        session, options, {"hcp_brainsize": "default"}
+    )
+
+    assert None not in soptions and None not in ssources
+    assert "hcp_bold_sequencetype" not in soptions
+    assert soptions["hcp_brainsize"] == "170"
+    assert ssources["hcp_brainsize"] == gcs.PER_SESSION
+
+    class Command:
+        name = "hcp_fmri_volume"
+
+    report = gcs.report_parameters(Command(), soptions, ssources, session=session)
+    assert "on session S01" in report
+    assert "hcp_brainsize" in report and "hcp_bold_sequencetype" not in report

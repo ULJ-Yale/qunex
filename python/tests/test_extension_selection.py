@@ -165,7 +165,7 @@ def test_the_build_covers_only_the_named_extension(clean_env, monkeypatch, tmp_p
 
 
 def test_the_build_without_a_selection_covers_everything(clean_env, monkeypatch, tmp_path):
-    """`build_qx_registry` keeps building every extension when told nothing."""
+    """`--build_extensions=yes` without a selection builds every extension."""
     core = _core(tmp_path)
     root = tmp_path / "extensions"
     root.mkdir()
@@ -175,7 +175,7 @@ def test_the_build_without_a_selection_covers_everything(clean_env, monkeypatch,
     monkeypatch.setenv("QUNEXPATH", str(core))
     monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(root))
 
-    _, built = qb.build_qx_registry(build_core=False)
+    _, built = qb.build_qx_registry(build_core=False, build_extensions=True)
 
     assert [ext_id for ext_id, _ in built] == ["extension:one", "extension:two"]
     assert (one / "qx_commands.yaml").exists()
@@ -203,11 +203,52 @@ def test_an_extension_in_two_roots_is_built_where_it_will_be_loaded(
         qx_registry.EXTENSION_FOLDERS_ENV, "%s:%s" % (first, second)
     )
 
-    _, built = qb.build_qx_registry(build_core=False)
+    _, built = qb.build_qx_registry(build_core=False, build_extensions=True)
 
     assert [ext_id for ext_id, _ in built] == ["extension:one"]
     assert (winning / "qx_commands.yaml").exists()
     assert not (shadowed / "qx_commands.yaml").exists()
+
+
+def test_the_core_build_leaves_extensions_alone(clean_env, monkeypatch, tmp_path, capsys):
+    """
+    Extensions are built with `build_qx_extensions`; the core build only says
+    so, for whoever still expects it to build them as it used to.
+    """
+    core = tmp_path / "qunex"
+    (core / "python").mkdir(parents=True)
+    root = tmp_path / "extensions"
+    root.mkdir()
+    one = _extension(root, "one")
+
+    monkeypatch.setenv("QUNEXPATH", str(core))
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(root))
+
+    _, built = qb.build_qx_registry()
+
+    assert built == []
+    assert (core / "qx_commands.yaml").exists()
+    assert not (one / "qx_commands.yaml").exists()
+    assert "qunex build_qx_extensions" in capsys.readouterr().out
+
+
+def test_leaving_core_alone_with_nothing_else_asked_for_is_an_error(
+    clean_env, monkeypatch, tmp_path
+):
+    """`--build_core=no` alone used to build every extension; now it would do nothing."""
+    core = _core(tmp_path)
+    root = tmp_path / "extensions"
+    root.mkdir()
+    one = _extension(root, "one")
+
+    monkeypatch.setenv("QUNEXPATH", str(core))
+    monkeypatch.setenv(qx_registry.EXTENSION_FOLDERS_ENV, str(root))
+
+    with pytest.raises(ge.CommandFailed) as raised:
+        qb.build_qx_registry(build_core="no")
+
+    assert "build_qx_extensions" in "\n".join(raised.value.report)
+    assert not (one / "qx_commands.yaml").exists()
 
 
 def test_an_unknown_name_stops_the_build(clean_env, monkeypatch, tmp_path):

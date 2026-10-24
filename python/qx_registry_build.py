@@ -7,7 +7,8 @@
 """
 Build-time half of the command registry: scans python/matlab/bash source for
 qx_command docstrings and writes qx_commands.yaml. Imported only by the
-build_qx_registry command; the per-call runtime path lives in qx_registry.py.
+build_qx_registry and build_qx_extensions commands; the per-call runtime path
+lives in qx_registry.py.
 """
 
 from __future__ import annotations
@@ -76,6 +77,9 @@ def _warn(msg: str) -> None:
 
 def _strip_quotes(s: str) -> str:
     s = s.strip()
+    # an rst literal (``BOLD_``) keeps a value docutils would otherwise read as markup
+    if len(s) >= 4 and s.startswith("``") and s.endswith("``"):
+        return s[2:-2]
     if (len(s) >= 2) and ((s[0] == s[-1]) and s[0] in ("'", '"')):
         return s[1:-1]
     return s
@@ -1210,7 +1214,7 @@ def build_qx_extensions(*, extensions: Optional[str] = None):
             "Name one or more with --extensions=<name>, or --extensions=all for all of them.",
         )
 
-    return build_qx_registry(build_core=False, extensions=named)
+    return build_qx_registry(build_core=False, build_extensions=True, extensions=named)
 
 
 def _select_extensions(
@@ -1253,12 +1257,87 @@ def _select_extensions(
     return [selected[key] for key in sorted(selected)]
 
 
+def _build_extension_registries(
+    folders: List[Path],
+    *,
+    registry_filename: str,
+    python_subdir: str,
+    matlab_subdir: str,
+    bash_subdir: str,
+) -> List[Tuple[str, Path]]:
+    """
+    Build the registry of each extension in `folders`, beside its code.
+
+    An extension with no commands in it yet is passed over. Returns
+    [(extension_id, registry_yaml_path), ...], sorted by id.
+    """
+    built: Dict[str, Path] = {}
+
+    for ext_root in folders:
+        ext_name = ext_root.name[len("qx_") :].strip()
+        if not ext_name:
+            continue
+        ext_id = f"extension:{ext_name}"
+
+        cmds: List[CommandInfo] = []
+
+        py_root = ext_root / python_subdir
+        if py_root.exists() and py_root.is_dir():
+            cmds.extend(index_python_commands(py_root, source_id=ext_id))
+
+        m_root = ext_root / matlab_subdir
+        if m_root.exists() and m_root.is_dir():
+            cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
+
+        b_root = ext_root / bash_subdir
+        if b_root.exists() and b_root.is_dir():
+            cmds.extend(index_bash_commands(b_root, source_id=ext_id))
+
+        if not cmds:
+            continue  # nothing to build yet
+
+        out_yaml = (ext_root / registry_filename).resolve()
+        build_registry_yaml(cmds, out=out_yaml, source_id=ext_id)
+        built[ext_id] = out_yaml
+
+    return sorted(built.items(), key=lambda x: x[0])
+
+
+def _report_build(
+    build_core: bool, build_extensions: bool, built: List[Tuple[str, Path]]
+) -> None:
+    """The closing summary of a build, with the warnings reported on the way."""
+    print("\n----------------------------------------------------------------\nRegistry built!")
+
+    if not build_extensions:
+        # extensions used to be built along with core, so whoever still expects
+        # that is told where it went -- if there is anything to build
+        if extension_folders():
+            print("\n--> Extension registries were left as they are. Build them with:")
+            print("        qunex build_qx_extensions --extensions=<name>[,<name>...]")
+    elif not built:
+        print("\n--> No extension registries were built: no extension was found with commands in it.")
+    else:
+        label = "extension registry" if len(built) == 1 else "extension registries"
+        if build_core:
+            print(f"\n--> In addition to core, built {len(built)} {label}:")
+        else:
+            print(f"\n--> Built {len(built)} {label}:")
+        for ext_id, path in built:
+            print(f"    - {ext_id}: {path}")
+
+    if _WARNINGS:
+        print(f"--> {len(_WARNINGS)} warning(s) reported:")
+        for msg in _WARNINGS:
+            print(f"    => {msg}")
+
+
 def build_qx_registry(
     *,
     core_python_root: Optional[str | Path] = None,
     core_registry_yaml: Optional[str | Path] = None,
     build_core: bool = True,
-    build_extensions: bool = True,
+    build_extensions: bool = False,
     extensions: Optional[str] = None,
     extension_registry_filename: str = DEFAULT_EXTENSION_REGISTRY_FILENAME,
     extension_python_subdir: str = "python",
@@ -1268,13 +1347,16 @@ def build_qx_registry(
     """
     ``build_qx_registry()``
 
-    Build core registry at $QUNEXPATH/qx_commands.yaml (python + matlab + bash for core),
-    and build each extension registry at <ext_root>/qx_commands.yaml (python + matlab + bash if present).
+    Build the core command registry at $QUNEXPATH/qx_commands.yaml, from the
+    core python, MATLAB and bash commands.
+
+    Extensions are left alone unless asked for. Their registries are built with
+    ``build_qx_extensions``, which leaves the core registry as it is; to build
+    them here as well, at <ext_root>/qx_commands.yaml, set
+    ``--build_extensions=yes`` or name them with ``--extensions``.
 
     An extension is found under $QUNEXPATH/qx_extensions, under $TOOLS/qx_extensions,
-    or under a folder named in $QUNEXEXTENSIONSFOLDERS. Its registry is written beside
-    its code and is what makes its commands visible to QuNex, so an extension has to be
-    built once before it can be used.
+    or under a folder named in $QUNEXEXTENSIONSFOLDERS.
 
     ..  qx_command:
         type: utility
@@ -1290,18 +1372,19 @@ def build_qx_registry(
 
         --build_core (str, default 'yes'):
             Whether to build the core registry. Set to 'no' to leave the core
-            registry alone and build only the extensions, which is what an
-            extension author wants and what a read-only installation requires.
+            registry alone; that builds nothing unless extensions are asked
+            for, which is what ``build_qx_extensions`` does.
 
-        --build_extensions (str, default 'yes'):
-            Whether to build the registry of every extension found. Set to 'no'
-            to build only core.
+        --build_extensions (str, default 'no'):
+            Whether to also build the registry of every extension found.
+            Extensions are usually built with ``build_qx_extensions`` instead.
 
         --extensions (str, default ''):
             Which extensions to build, as a comma separated list of names given
-            with or without the ``qx_`` prefix. 'all', or leaving it out, builds
-            every extension found. A name matching no extension is an error
-            naming the extensions that were found.
+            with or without the ``qx_`` prefix. 'all' builds every extension
+            found. Naming any builds them without ``--build_extensions``. A name
+            matching no extension is an error naming the extensions that were
+            found.
 
         --extension_registry_filename (str, default 'qx_commands.yaml'):
             The name of the registry file written inside each extension.
@@ -1323,9 +1406,20 @@ def build_qx_registry(
     qunex_root = _get_qunexpath()
 
     # both arrive as strings when they come from the command line, where
-    # `--build_core=no` has to mean no rather than a non-empty string
+    # `--build_core=no` has to mean no rather than a non-empty string; naming
+    # extensions is asking for them to be built
     build_core = flag(build_core)
-    build_extensions = flag(build_extensions)
+    build_extensions = flag(build_extensions) or bool((extensions or "").strip())
+
+    if not build_core and not build_extensions:
+        # `--build_core=no` alone used to build every extension, and a script
+        # still calling it so is told rather than quietly doing nothing
+        raise ge.CommandFailed(
+            'build_qx_registry',
+            "Nothing to build",
+            "--build_core=no leaves the core registry alone, and extensions are not built unless asked for.",
+            "Build extensions with: qunex build_qx_extensions --extensions=<name>",
+        )
 
     if core_python_root is None:
         core_python_root = qunex_root / "python"
@@ -1370,59 +1464,20 @@ def build_qx_registry(
         print(f"--> Leaving the core command registry as it is: {core_registry_yaml}")
         core_reg = load_registry_yaml(core_registry_yaml)
 
-    built_exts: Dict[str, Path] = {}
+    built: List[Tuple[str, Path]] = []
+    if build_extensions:
+        # `extension_folders()` is the same answer the runtime resolves against,
+        # so an extension present under several roots is built in the one copy
+        # QuNex will actually load. Walking the roots here instead wrote a
+        # registry into every copy, including the ones nothing would ever read
+        built = _build_extension_registries(
+            _select_extensions(extensions, extension_folders()),
+            registry_filename=extension_registry_filename,
+            python_subdir=extension_python_subdir,
+            matlab_subdir=extension_matlab_subdir,
+            bash_subdir=extension_bash_subdir,
+        )
 
-    if not build_extensions:
-        return core_reg, []
-
-    # `extension_folders()` is the same answer the runtime resolves against, so
-    # an extension present under several roots is built in the one copy QuNex
-    # will actually load. Walking the roots here instead wrote a registry into
-    # every copy, including the ones nothing would ever read
-    for ext_root in _select_extensions(extensions, extension_folders()):
-        ext_name = ext_root.name[len("qx_") :].strip()
-        if not ext_name:
-            continue
-        ext_id = f"extension:{ext_name}"
-
-        cmds: List[CommandInfo] = []
-
-        py_root = ext_root / extension_python_subdir
-        if py_root.exists() and py_root.is_dir():
-            cmds.extend(index_python_commands(py_root, source_id=ext_id))
-
-        m_root = ext_root / extension_matlab_subdir
-        if m_root.exists() and m_root.is_dir():
-            cmds.extend(index_matlab_commands(m_root, source_id=ext_id))
-
-        b_root = ext_root / extension_bash_subdir
-        if b_root.exists() and b_root.is_dir():
-            cmds.extend(index_bash_commands(b_root, source_id=ext_id))
-
-        if not cmds:
-            continue  # nothing to build yet
-
-        out_yaml = (ext_root / extension_registry_filename).resolve()
-        build_registry_yaml(cmds, out=out_yaml, source_id=ext_id)
-        built_exts[ext_id] = out_yaml
-
-    built = sorted(built_exts.items(), key=lambda x: x[0])
-
-    print("\n----------------------------------------------------------------\nRegistry built!")
-
-    if not built:
-        print("\n--> No extension registries were built: no extension was found with commands in it.")
-    if built:
-        label = "extension registry" if len(built) == 1 else "extension registries"
-        if build_core:
-            print(f"\n--> In addition to core, built {len(built)} {label}:")
-        else:
-            print(f"\n--> Built {len(built)} {label}:")
-        for ext_id, path in built:
-            print(f"    - {ext_id}: {path}")
-    if _WARNINGS:
-        print(f"--> {len(_WARNINGS)} warning(s) reported:")
-        for msg in _WARNINGS:
-            print(f"    => {msg}")
+    _report_build(build_core, build_extensions, built)
 
     return core_reg, built

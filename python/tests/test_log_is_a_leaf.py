@@ -35,6 +35,8 @@ LOG_PACKAGE = Path(__file__).resolve().parents[1] / "qx_utilities" / "general" /
 # nothing from it, or from anything else in `qx_utilities`
 ALLOWED = {
     "qx_utilities.general.exceptions",
+    # the study layout, and the rule for where a run logs
+    "qx_utilities.general.folders",
     "qx_utilities.general.parsing",
     # its own modules
     "qx_utilities.general.log",
@@ -70,8 +72,11 @@ def test_the_log_package_imports_only_leaf_utilities():
 
 
 def test_the_allowed_imports_are_themselves_leaves():
-    """The allowance is only sound while `exceptions` and `parsing` import nothing."""
+    """
+    The allowance is only sound while `exceptions`, `folders` and `parsing`
+    import nothing from the tree.
+    """
     root = LOG_PACKAGE.parents[1]
-    for module in ("general/exceptions.py", "general/parsing.py"):
+    for module in ("general/exceptions.py", "general/folders.py", "general/parsing.py"):
         reaching = _imported(ast.parse((root / module).read_text()))
         assert reaching == set(), "%s is no longer a leaf: %s" % (module, reaching)

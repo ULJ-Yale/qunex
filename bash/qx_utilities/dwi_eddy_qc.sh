@@ -24,18 +24,24 @@ Warning:
 
     The function assumes that eddy outputs are saved in the following folder::
 
-        <folder_with_sessions>/<session>/hcp/<session>/Diffusion/eddy/
+        <sessionsfolder>/<session>/hcp/<session>/Diffusion/eddy/
 
     This can be changed with the --eddypath argument, in this case eddypath should
-    point to the folder that contains the eddy subfolder.
+    point to the folder that holds the eddy outputs.
 
 ..  qx_command:
     type: processing.session
     language: bash    
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --session (str):
         Session ID to run EDDY QC on.
@@ -57,16 +63,18 @@ Parameters:
     --bvalsfile (str):
         bvals input file.
 
-    --report (str, default 'individual'):
-        If you want to generate a group report ('individual' or 'group').
+    --report (str):
+        The type of report to generate ('individual' or 'group').
 
     --overwrite (str, default 'no'):
         Whether to overwrite existing data (yes) or not (no). Note that
         previous data is deleted before the run, so in the case of a failed
         command run, previous results are lost.
 
-    --eddypath (str, default '<study_folder>/<session>/hcp/<session>/Diffusion/eddy/'):
-        Specify the relative path of the eddy folder you want to use for inputs.
+    --eddypath (str, default '<sessionsfolder>/<session>/hcp/<session>/Diffusion/eddy/'):
+        Specify the path of the eddy folder you want to use for inputs. A
+        relative path is taken relative to the session's
+        ``<sessionsfolder>/<session>/hcp/<session>`` folder.
 
     --bvecsfile (str):
         If specified, the tool will create a bvals_no_outliers.txt and a
@@ -74,15 +82,17 @@ Parameters:
         non-outlier volumes, based on the MSR estimates,
 
     --list (str):
-        Text file containing a list of qc.json files obtained from SQUAD. If
-        --report='group', then this argument needs to be specified.
+        Text file listing the single session QC folders (the output folders
+        of the individual runs), one per line. If --report='group', then this
+        argument needs to be specified.
 
     --groupvar (str):
         Text file containing extra grouping variable. Extra optional input if
         --report='group'.
 
-    --outputdir (str, default '<eddyBase>.qc'):
-          Output directory. Extra optional input if --report='group'.
+    --outputdir (str, default '<eddypath>/<eddybase>.qc'):
+        Output directory. Required for a group run: the default is the folder
+        of the session's individual run.
 
     --update (str):
         Applies only if --report='group' - set to <true> to update existing
@@ -98,29 +108,28 @@ Output files:
 
     Outputs for group run:
 
-    - group_qc.pdf ... single session QC report
-    - group_qc.db  ... database
+    - group_qc.pdf   ... group QC report
+    - group_db.json  ... database
 
 Notes:
     -  Input: requires hcp_diffusion runs (eddy outputs here:
-       ``<study_folder>/<session>/hcp/<session>/T1w/Diffusion/eddy``) and
+       ``<sessionsfolder>/<session>/hcp/<session>/Diffusion/eddy``) and
        hcp_pre_freesurfer-hcp_post_freesurfer to have run successfully
     -  Output for individual run:
-       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/eddy_unwarped_images.qc``
+       ``<sessionsfolder>/<session>/hcp/<session>/Diffusion/eddy/<eddybase>.qc``
 
        -  qc.pdf: single session QC report
        -  qc.json: single session QC and data info
        -  vols_no_outliers.txt: text file that contains the list of the
           non-outlier volumes (based on eddy residuals)
 
-    -  Output for group run:
-       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/eddy_unwarped_images.qc``
+    -  Output for group run: the folder given with ``--outputdir``
 
-       -  group_qc.pdf: single session QC report
-       -  group_qc.db: database
+       -  group_qc.pdf: group QC report
+       -  group_db.json: database
 
-    -  Log Location: logs are created in
-       ``/<study>/sessions/<session>/hcp/<session>/T1w/Diffusion/eddy/log_eddyqc``
+    -  Log Location: logs are created in the study's ``logs`` folder,
+       ``<studyfolder>/logs/<timestamp>_dwi_eddy_qc``
 
        -  Run progress and error information will be logged in this folder
 
@@ -128,7 +137,7 @@ Examples:
     ::
 
         qunex dwi_eddy_qc \\
-            --sessionsfolder='<path_to_study_folder_with_session_directories>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --session='<session_id>' \\
             --eddybase='<eddy_base_name>' \\
             --report='individual' \\
@@ -142,7 +151,7 @@ Examples:
     Individual run example (this command runs QC on dMRI eddy outputs)::
 
         qunex dwi_eddy_qc \\
-            --path='<path_to_study_folder_with_session_directories>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --session='<session_id>' \\
             --eddybase='<eddy_base_name>' \\
             --report='individual' \\
@@ -157,17 +166,10 @@ Examples:
     Group run example (this command runs QC on dMRI eddy outputs)::
 
         qunex dwi_eddy_qc \\
-            --path='<path_to_study_folder_with_session_directories>' \
-            --session='<session_id>' \
-            --list=<group_list_input> \
-            --eddybase='<eddy_base_name>' \
-            --report='individual'
-            --bvalsfile='<bvals_file>' \
-            --mask='<mask_file>' \
-            --eddyidx='<eddy_index_file>' \
-            --eddyparams='<eddy_param_file>' \
-            --bvecsfile='<bvecs_file>' \
-            --overwrite='yes' \
+            --studyfolder='<path_to_study_folder>' \\
+            --list='<group_list_input>' \\
+            --report='group' \\
+            --outputdir='<group_output_folder>' \\
             --scheduler='<name_of_scheduler_and_options>'
 
 
@@ -189,7 +191,7 @@ fi
 EddySquadCheck=`which eddy_squad`
 EddyQuadCheck=`which eddy_quad`
 
-if [ -z ${EddySquadCheck} ] || [ -z ${EddySquadCheck} ]; then
+if [ -z "${EddySquadCheck}" ] || [ -z "${EddyQuadCheck}" ]; then
     echo ""
     echo " -- ERROR: EDDY QC does not seem to be installed on this system."
     echo ""
@@ -215,6 +217,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
+unset StudyFolder
 unset SessionsFolder
 unset Session
 unset Report
@@ -250,6 +253,10 @@ while [ ${index} -lt ${numArgs} ]; do
         --version)
             version_show $@
             exit 0
+            ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
             ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
@@ -312,7 +319,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;
         *)
-            usage
             echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
@@ -320,62 +326,64 @@ while [ ${index} -lt ${numArgs} ]; do
     esac
 done
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check required parameters
-if [ -z ${SessionsFolder} ]; then
-    usage
-    echo "ERROR: <sessions-folder-path> not specified>"
+if [ -z "${SessionsFolder}" ]; then
+    echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
     echo ""
     exit 1
 fi
 if [ -z ${Report} ]; then
-    usage
-    echo "ERROR: <report> type specified>"
+    echo "ERROR: <report> type not specified"
+    echo ""
+    exit 1
+fi
+if [ ${Report} != "individual" ] && [ ${Report} != "group" ]; then
+    echo "ERROR: Unknown <report> type ${Report}, use 'individual' or 'group'"
     echo ""
     exit 1
 fi
 if [ ${Report} == "individual" ]; then
     # -- Check each individual parameter
     if [ -z ${CASE} ]; then
-        usage
-        echo "ERROR: <session-id> not specified>"
+        echo "ERROR: <session-id> not specified"
         echo ""
         exit 1
     fi
     if [ -z ${EddyBase} ]; then
-        usage
-        echo "ERROR: <eddy_base_name> not specified>"
+        echo "ERROR: <eddy_base_name> not specified"
         echo ""
         exit 1
     fi
     if [ -z ${BvalsFile} ]; then
-        usage
-        echo "ERROR: <bvals_file> not specified>"
+        echo "ERROR: <bvals_file> not specified"
         echo ""
         exit 1
     fi
     if [ -z ${EddyIdx} ]; then
-        usage
-        echo "ERROR: <eddy_index> file not specified>"
+        echo "ERROR: <eddy_index> file not specified"
         echo ""
         exit 1
     fi
     if [ -z ${EddyParams} ]; then
-        usage
-        echo "ERROR: <eddy_params> file not specified>"
+        echo "ERROR: <eddy_params> file not specified"
         echo ""
         exit 1
     fi
     if [ -z ${Mask} ]; then
-        usage
-        echo "ERROR: <mask> file not specified>"
+        echo "ERROR: <mask> file not specified"
         echo ""
         exit 1
     fi
 fi
 if [ ${Report} == "group" ]; then
     if [ -z ${List} ]; then
-        usage
-        echo "ERROR: <group_list_input> no specified>"
+        echo "ERROR: <group_list_input> not specified"
         echo ""
         exit 1
     fi
@@ -399,6 +407,13 @@ fi
 if [ -z ${GroupVar} ]; then
     GroupVar=""
 fi
+# the default is the folder of an individual run, which a group run would
+# either stop at or, with --overwrite, delete
+if [ -z "${OutputDir}" ] && [ ${Report} == "group" ]; then
+    echo "ERROR: <outputdir> not specified, a group run needs one"
+    echo ""
+    exit 1
+fi
 if [ -z ${OutputDir} ]; then
     OutputDir="${EddyPath}/${EddyBase}.qc"
 fi
@@ -408,10 +423,6 @@ fi
 if [ -z ${BvecsFile} ]; then
     BvecsFile=""
 fi
-
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
 
 # -- Report parameters
 echo ""
@@ -432,14 +443,14 @@ fi
 # -- Report individual parameters
 if [ ${Report} == "individual" ]; then
 echo "   Eddy Inputs Base Name: ${EddyBase}"
-echo "   Mask: ${EddyPath}/${Mask}"
-echo "   BVALS file: ${EddyPath}/${BvalsFile}"
-echo "   Eddy Index file: ${EddyPath}/${EddyIdx}"
-echo "   Eddy parameter file: ${EddyPath}/${EddyParams}"
+echo "   Mask: ${Mask}"
+echo "   BVALS file: ${BvalsFile}"
+echo "   Eddy Index file: ${EddyIdx}"
+echo "   Eddy parameter file: ${EddyParams}"
 fi
 # -- Report optional parameters
-echo "   BvecsFile: ${EddyPath}/${BvecsFile}"
-echo "   Overwrite: ${EddyPath}/${Overwrite}"
+echo "   BvecsFile: ${BvecsFile}"
+echo "   Overwrite: ${Overwrite}"
 echo "-- ${scriptName}: Specified Command-Line Options - End --"
 echo ""
 echo "------------------------- Start of work --------------------------------"
@@ -490,7 +501,12 @@ else
     # -- Check if individual run was selected
     if [ ${Report} == "individual" ]; then
         echo "Computing individual QC run on ${EddyQCIn} "
-        EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyIdx} -par ${EddyParams} -m ${Mask} -b ${BvalsFile} -g ${BvecsFile} -o ${EddyQCOut}"
+        EddyCommand="eddy_quad ${EddyQCIn}/${EddyBase} -idx ${EddyIdx} -par ${EddyParams} -m ${Mask} -b ${BvalsFile}"
+        # the bvecs are optional, and an empty -g would take -o for its value
+        if [ -n "${BvecsFile}" ]; then
+            EddyCommand="${EddyCommand} -g ${BvecsFile}"
+        fi
+        EddyCommand="${EddyCommand} -o ${EddyQCOut}"
         echo ""
         echo $EddyCommand
         echo ""
@@ -501,8 +517,17 @@ else
     echo ""
     # -- Check if group run was selected
     if [ ${Report} == "group" ]; then
-        echo "Computing group QC run on ${EddyQCIn} "
-        EddyCommand="eddy_squad ${EddyQCIn}/${EddyBase} -list ${List} -var ${GroupVar} -upd ${Update} -o {$EddyQCOut}"
+        echo "Computing group QC run on ${List} "
+        # eddy_squad takes the list of single session qc folders as its
+        # argument, the grouping variable and the update request are optional
+        EddyCommand="eddy_squad ${List}"
+        if [ -n "${GroupVar}" ]; then
+            EddyCommand="${EddyCommand} -g ${GroupVar}"
+        fi
+        if [ "${Update}" == "true" ] || [ "${Update}" == "yes" ]; then
+            EddyCommand="${EddyCommand} -u"
+        fi
+        EddyCommand="${EddyCommand} -o ${EddyQCOut}"
         echo ""
         echo $EddyCommand
         echo ""
@@ -515,24 +540,37 @@ fi
 # -- Perform completion checks
 echo "--- Checking DWI EDDY QC outputs..."
 echo ""
-if [ -f ${EddyQCOut}/qc.json ]; then
-    OutFile="${EddyQCOut}/qc.json"
-    echo "QC output file found:           $OutFile"
-    echo ""
+if [ ${Report} == "group" ]; then
+    # a group run writes the group report, not the single session files
+    if [ -f ${EddyQCOut}/group_qc.pdf ]; then
+        OutFile="${EddyQCOut}/group_qc.pdf"
+        echo "Group QC report found:           $OutFile"
+        echo ""
+    else
+        echo "Group QC report ${EddyQCOut}/group_qc.pdf missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
 else
-    echo "QC output file ${EddyQCOut}/qc.json missing. Something went wrong."
-    echo ""
-    exit 1
-fi
+    if [ -f ${EddyQCOut}/qc.json ]; then
+        OutFile="${EddyQCOut}/qc.json"
+        echo "QC output file found:           $OutFile"
+        echo ""
+    else
+        echo "QC output file ${EddyQCOut}/qc.json missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
 
-if [ -f ${EddyQCOut}/${CASE}_qc_mot_abs.txt ]; then
-    OutFile="${EddyQCOut}/${CASE}_qc_mot_abs.txt"
-    echo "QC absolute motion value file found:           $OutFile"
-    echo ""
-else
-    echo "QC absolute motion value file ${EddyQCOut}/${CASE}_qc_mot_abs.txt is missing. Something went wrong."
-    echo ""
-    exit 1
+    if [ -f ${EddyQCOut}/${CASE}_qc_mot_abs.txt ]; then
+        OutFile="${EddyQCOut}/${CASE}_qc_mot_abs.txt"
+        echo "QC absolute motion value file found:           $OutFile"
+        echo ""
+    else
+        echo "QC absolute motion value file ${EddyQCOut}/${CASE}_qc_mot_abs.txt is missing. Something went wrong."
+        echo ""
+        exit 1
+    fi
 fi
 
 echo "--- DWI EDDY QC successfully completed"

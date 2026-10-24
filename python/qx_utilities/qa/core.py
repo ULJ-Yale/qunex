@@ -24,6 +24,7 @@ from fnmatch import fnmatch
 from difflib import SequenceMatcher
 
 import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.general.parser as parser
 import qx_utilities.general.exceptions as ge
 import qx_utilities.qa.config as config
@@ -83,10 +84,11 @@ class QA:
         self.report += "\n              QA report"
         self.report += "\n=========================================="
 
+        #dicts in fail QA must have ID and reason/datatype they failed
+        #set before build_slist, which fails the listed sessions that have no folder
+        self.failQA = []
         #List of dictionaries, basically QA slist. Stores sessions that haven't failed QA.
         self.slist = self.build_slist(sessions, batchfile)
-        #dicts in fail QA must have ID and reason/datatype they failed
-        self.failQA = []
 
         self.config = config.parse_config(configfile)
 
@@ -118,9 +120,15 @@ class QA:
             slist, _ = gc.resolve_sessions(
                 batchfile=batchfile, sessions=sessions, command="run_qa"
             )
+            #a plain list: the copy of a SessionList is deep, so a key set on an
+            #element of the copy never reached the list, and qa_raw_data could
+            #not remove a changed session from it
+            slist = list(slist)
+            #fail() removes a missing session from self.slist
+            self.slist = slist
             #Iterating over a copy to allow removal from original list
             #Get only folders that are a specified session
-            for s in slist.copy():
+            for s in list(slist):
                 for dn in session_dirs:
                     if s['id'] == dn.split("/")[-2]:
                         s['QA_sessionfolder'] = dn[:-1]
@@ -223,10 +231,13 @@ class QA:
             else:
                 i_log += f"\n      session: {sfile['session']} valid"
 
-            #Check if paths are pointing to the right folder (in case of study move/copy)
+            #Check if paths are pointing to the right folder (in case of study move/copy).
+            #A relative path is relative to the session folder, so it always does
             path_fail=False
+            sessionfolder = os.path.abspath(s['QA_sessionfolder'])
+            paths = gf.resolve_session_folders(dict(sfile['paths']), sessionfolder)
             for pkey in sfile['paths'].keys():
-                if os.path.dirname(sfile['paths'][pkey]) != s['QA_sessionfolder']:
+                if not paths[pkey].startswith(sessionfolder + os.sep):
                     path_fail=True
                     self.fail(s,'raw_data',
                                 f"{pkey} path in {s['QA_sessiontxt']} does not match {s['QA_sessionfolder']}",

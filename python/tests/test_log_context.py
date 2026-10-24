@@ -118,6 +118,98 @@ def test_outside_study_may_name_a_path(tmp_path):
     )
 
 
+def test_a_log_folder_a_tier_states_is_read_from_the_deduced_folders(
+    tmp_path, monkeypatch
+):
+    """
+    What the run states -- on the command line, in a recipe or in the batch
+    file header -- comes in the deduced folders, with whether the run named
+    its study. A relative log folder is taken from that study once it exists,
+    as every other relative path of the run is; with a study found only by its
+    marker it is taken from the current folder.
+    """
+    study = tmp_path / "study"
+    (study / "sessions").mkdir(parents=True)
+    (tmp_path / "elsewhere").mkdir()
+    monkeypatch.chdir(tmp_path / "elsewhere")
+    stated = {"logfolder": "rel"}
+
+    named = context(
+        tmp_path, folders={"basefolder": str(study), "known": True, "stated": stated}
+    )
+    found = context(
+        tmp_path, folders={"basefolder": str(study), "known": False, "stated": stated}
+    )
+
+    assert named.logfolder == str(study / "rel")
+    assert found.logfolder == os.path.join(os.getcwd(), "rel")
+
+    # the arguments are read only when the folders do not say what was stated
+    unstated = context(
+        tmp_path,
+        args={"logfolder": str(tmp_path / "ignored")},
+        folders={"basefolder": str(study), "known": True, "stated": {}},
+    )
+    assert unstated.logfolder == str(study / "logs" / ("%s_test_command" % STAMP))
+
+
+@pytest.mark.parametrize(
+    "args, layout",
+    [
+        pytest.param({"logfolder": "legacy"}, "default", id="flag"),
+        pytest.param({}, "legacy", id="setting"),
+    ],
+)
+def test_the_legacy_layout_outside_a_study_logs_outside_it(
+    tmp_path, monkeypatch, args, layout
+):
+    """
+    `legacy` is a layout of a study's logs, `<study>/processing/logs`. Under it
+    a run outside a study used to log in the current folder itself; it now
+    gets a folder of its own where every run outside a study does.
+    """
+    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    monkeypatch.chdir(tmp_path)
+
+    run = context(tmp_path, args=args, folders={}, settings=settings(layout=layout))
+    here = context(
+        tmp_path,
+        args=args,
+        folders={},
+        settings=settings(layout=layout, outside_study="cwd"),
+    )
+
+    assert run.logfolder == os.path.join(
+        str(tmp_path / "home"), "qunex_logs", "%s_test_command" % STAMP
+    )
+    assert here.logfolder == os.path.join(os.getcwd(), "%s_test_command" % STAMP)
+
+
+# --------------------------------------------------------- where it started
+
+
+def test_a_run_remembers_where_it_was_started(tmp_path, monkeypatch):
+    """
+    A run enters its study once it knows it, and a job it submits starts
+    where the run was started -- so the run keeps that folder.
+    """
+    start = tmp_path / "start"
+    start.mkdir()
+    monkeypatch.chdir(start)
+
+    assert context(tmp_path).startfolder == os.getcwd() == os.path.realpath(start)
+    assert context(tmp_path, startfolder=str(tmp_path)).startfolder == str(tmp_path)
+
+    # a folder that is gone is no folder to start a job in
+    gone = tmp_path / "gone"
+    gone.mkdir()
+    monkeypatch.chdir(gone)
+    gone.rmdir()
+
+    assert context(tmp_path).startfolder is None
+    assert context(tmp_path, startfolder=str(start)).startfolder == str(start)
+
+
 # ------------------------------------------------------------------- runlog
 
 
@@ -232,13 +324,23 @@ def test_the_study_is_found_from_its_own_root_as_well_as_from_below(
 
     monkeypatch.chdir(tmp_path / start)
 
-    assert gc.deduce_folders({})["basefolder"] == str(tmp_path)
+    assert gc.deduce_folders({}) == {
+        "basefolder": str(tmp_path),
+        "known": False,
+        "sessionsfolder": None,
+        "stated": {},
+    }, "found by its marker: the logs go there, but the run names no folder"
 
 
 def test_a_folder_outside_any_study_still_deduces_none(tmp_path, monkeypatch):
     monkeypatch.chdir(tmp_path)
 
-    assert gc.deduce_folders({})["basefolder"] is None
+    assert gc.deduce_folders({}) == {
+        "basefolder": None,
+        "known": False,
+        "sessionsfolder": None,
+        "stated": {},
+    }
 
 
 # ---------------------------------------------------------- the status record
@@ -446,7 +548,9 @@ def test_run_and_log_names_the_comlog_by_the_exit_status(tmp_path):
 
     assert gl.run_and_log("exit 3", "a_matlab_command", run=run) == 3
 
-    assert [f.startswith("error_a_matlab_command") for f in os.listdir(run.comlogfolder)]
+    # one comlog, named by how the call ended
+    comlogs = os.listdir(run.comlogfolder)
+    assert len(comlogs) == 1 and comlogs[0].startswith("error_a_matlab_command")
     with open(run.path) as f:
         assert "ERROR running a_matlab_command" in f.read()
 
@@ -473,9 +577,9 @@ def test_comlog_folder_sits_under_the_log_folder_it_is_given(tmp_path):
     """
     The log package is handed the folder rather than deducing the study.
 
-    `general.core.deduce_folders` is what turns a sessions folder into a log
-    folder, and it stays there: a caller with only a sessions folder resolves
-    it and passes the result, which is what `hcp/export_hcp.py` does.
+    Where a run logs is decided where the run starts, and a command that opens
+    a comlog of its own is handed that folder: `gmri` hands it to a command
+    that declares `logfolder`.
     """
     logfolder = os.path.join(str(tmp_path), "processing", "logs")
 

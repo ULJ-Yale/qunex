@@ -86,9 +86,18 @@ def _copy(_log, options, source, target, ifh=False):
         shutil.copy2(source.replace(".img", ".ifh"), target.replace(".img", ".ifh"))
 
 
+def _link_or_copy(_log, options, source, target):
+    """Link or copy a file, or -- under ``--test`` -- report it and change nothing."""
+    if options["run"] != "run":
+        _log.detail(f"test, not linked: {os.path.basename(source)}")
+        return
+
+    gc.link_or_copy(source, target)
+
+
 def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0):
     """
-    ``run_basic_structural_segmentation [... processing options]``
+    ``run_basic_structural_segmentation [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run basic structural segmentation (BET + FAST) on NIL preprocessed images.
 
@@ -103,8 +112,15 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing outputs (yes) or not (no).
@@ -122,7 +138,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
     log = ReportLog()
     do_options_check(options, sinfo, "run_basic_structural_segmentation")
 
-    f = get_file_names(sinfo, options)
+    f = get_file_names(sinfo, options, _log=log)
     log.rule()
     log.info(
         f"Session id: {sinfo['id']} \n[started on {datetime.now().strftime('%A, %d. %B %Y %H:%M:%S')}]"
@@ -186,7 +202,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
                                 "gunzip -f %s" % (tmpfile),
                                 "... gunzipping %s" % (os.path.basename(tmpfile)),
                             )
-                            if os.path.exists(tmpfile):
+                            if options["run"] == "run" and os.path.exists(tmpfile):
                                 os.remove(tmpfile)
                         else:
                             _copy(log, options, f["t1_source"], f["t1"])
@@ -288,7 +304,7 @@ def run_basic_structural_segmentation(sinfo, options, overwrite=False, thread=0)
 #
 def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=None):
     """
-    ``check_for_freesurfer_data [... processing options]``
+    ``check_for_freesurfer_data [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Check for (and optionally copy) existing FreeSurfer outputs into the
     session folder.
@@ -304,8 +320,15 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing outputs (yes) or not (no).
@@ -323,6 +346,14 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
 
         --path_aparc_t1 (str, default ''):
             Path template to an aparc+aseg segmentation in T1 space.
+
+    Examples:
+        ::
+
+            qunex check_for_freesurfer_data \\
+                --studyfolder="/data/qunex_study" \\
+                --batchfile="/data/qunex_study/processing/batch.txt" \\
+                --path_freesurfer="/data/freesurfer/[sid]"
     """
     # `_log` is the log of the command this is a step of, when it is one: the
     # two FreeSurfer segmentation commands call it before doing their own work.
@@ -358,7 +389,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
     try:
         with comlog:
             d = get_session_folders(sinfo, options)
-            f = get_file_names(sinfo, options)
+            f = get_file_names(sinfo, options, _log=log)
 
             if verbose:
                 log.rule()
@@ -408,7 +439,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
                 ("path_aparc_bold", "fs_aparc_bold"),
             ]
             for s, t in fsfiles:
-                if not os.path.exists(f[t]) or overwrite:
+                if not pc.present(f, t, options) or overwrite:
                     if s in options:
                         sf = check_path(options[s], sinfo["id"])
                         if sf:
@@ -422,9 +453,8 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
                                 tf,
                                 ifh=gi.get_img_format(sf) == ".4dfp.img",
                             )
-                            log.detail(
-                                f"copied {os.path.basename(sf)} to target folder"
-                            )
+                            if options["run"] == "run":
+                                log.detail(f"copied {os.path.basename(sf)} to target folder")
                             if tf != f[t]:
                                 if options["image_target"] == "4dfp":
                                     _run_external(
@@ -479,7 +509,7 @@ def check_for_freesurfer_data(sinfo, options, overwrite=False, thread=0, _log=No
 #
 def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
     """
-    ``run_freesurfer_full_segmentation [... processing options]``
+    ``run_freesurfer_full_segmentation [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run full FreeSurfer segmentation on NIL preprocessed images.
 
@@ -494,8 +524,15 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing outputs (yes) or not (no).
@@ -528,7 +565,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
             # --- check if we need to run fsf
             if (
                 os.path.exists(f["fs_aseg_nii"]) and os.path.exists(f["fs_aparc+aseg_nii"])
-            ) or (os.path.exists(f["fs_aseg_t1"]) and os.path.exists(f["fs_aparc_t1"])):
+            ) or (pc.present(f, "fs_aseg_t1", options) and pc.present(f, "fs_aparc_t1", options)):
                 log.detail("FreeSurfer run already completed!")
 
             else:
@@ -541,9 +578,8 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                         f["t1"],
                         ifh=gi.get_img_format(f["t1_source"]) == ".4dfp.img",
                     )
-                    log.detail(
-                        f"copied {os.path.basename(f['t1_source'])} to target folder"
-                    )
+                    if options["run"] == "run":
+                        log.detail(f"copied {os.path.basename(f['t1_source'])} to target folder")
 
                 # --- convert to NIfTI
                 onifti = f["t1"]
@@ -599,14 +635,14 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
 
             if options["image_target"] == "nifti":
                 if not os.path.exists(f["fs_aseg_t1"]):
-                    gc.link_or_copy(f["fs_aseg_nii"], f["fs_aseg_t1"])
+                    _link_or_copy(log, options, f["fs_aseg_nii"], f["fs_aseg_t1"])
                 if not os.path.exists(f["fs_aparc_t1"]):
-                    gc.link_or_copy(f["fs_aparc+aseg_nii"], f["fs_aparc_t1"])
+                    _link_or_copy(log, options, f["fs_aparc+aseg_nii"], f["fs_aparc_t1"])
 
             # --- 4dfp path
             if options["image_target"] == "4dfp" or options["image_atlas"] == "711":
                 # --- check for aseg
-                if not os.path.exists(f["fs_aseg_t1"]):
+                if not pc.present(f, "fs_aseg_t1", options):
                     if not os.path.exists(f["fs_aseg_4dfp"]):
                         _run_external(
                             log, options, overwrite,
@@ -633,7 +669,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                 )
 
                 # --- check for aparc
-                if not os.path.exists(f["fs_aparc_t1"]):
+                if not pc.present(f, "fs_aparc_t1", options):
                     if not os.path.exists(f["fs_aparc+aseg_4dfp"]):
                         _run_external(
                             log, options, overwrite,
@@ -731,7 +767,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
                     )
                 else:
                     log.raw(
-                        "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
+                        "\nERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
                     )
 
     except (ExternalFailed, NoSourceFolder) as errormessage:
@@ -759,7 +795,7 @@ def run_freesurfer_full_segmentation(sinfo, options, overwrite=False, thread=0):
 
 def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thread=0):
     """
-    ``run_freesurfer_subcortical_segmentation [... processing options]``
+    ``run_freesurfer_subcortical_segmentation [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run subcortical-only FreeSurfer segmentation on NIL preprocessed images.
 
@@ -774,8 +810,15 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing outputs (yes) or not (no).
@@ -821,9 +864,8 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
                         f["t1"],
                         ifh=gi.get_img_format(f["t1_source"]) == ".4dfp.img",
                     )
-                    log.detail(
-                        f"copied {os.path.basename(f['t1_source'])} to target folder"
-                    )
+                    if options["run"] == "run":
+                        log.detail(f"copied {os.path.basename(f['t1_source'])} to target folder")
 
                 # --- convert to NIfTI
                 onifti = f["t1"]
@@ -863,7 +905,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
 
             if options["image_target"] == "nifti":
                 if not os.path.exists(f["fs_aseg_t1"]):
-                    gc.link_or_copy(f["fs_aseg_nii"], f["fs_aseg_t1"])
+                    _link_or_copy(log, options, f["fs_aseg_nii"], f["fs_aseg_t1"])
 
             # --- 4dfp path
             if options["image_target"] == "4dfp" or options["image_atlas"] == "711":
@@ -929,7 +971,7 @@ def run_freesurfer_subcortical_segmentation(sinfo, options, overwrite=False, thr
                     )
                 else:
                     log.raw(
-                        "ERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
+                        "\nERROR: bold template image is missing! Please run bbm (create brain masks for BOLD runs) and then rerun fsf to complete the last step!"
                     )
 
     except (ExternalFailed, NoSourceFolder) as errormessage:

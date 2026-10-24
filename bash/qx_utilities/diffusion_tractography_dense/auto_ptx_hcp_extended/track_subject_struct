@@ -9,14 +9,15 @@
 
 ptx_bin_CPU=$FSLDIR/bin/probtrackx2 #CPU_version
 ptx_bin_GPU=$FSLDIR/bin/probtrackx2_gpu #GPU_version
-#ptx_bin_GPU=/gpfs/project2/fas/n3/software/CodeHCPe/DiffusionTractographyStam/probtrackx2_gpu #GPU_version
 
 Usage() {
     cat << EOF
 
 Usage: track_subject_struct <BpXFolder> <structure> <seedMultiplier> <MNI_to_Diff_warp> <Diff_to_MNI_warp> <OutDir> [<GPU_flag>]
 
-    Specification of seedMultiplier is optional.
+    Specification of seedMultiplier is optional. The protocol of <structure> is
+    read from \$QUNEXLIBRARYETC/auto_ptx/protocols, or from the qx_library this
+    script is in.
 
 EOF
     exit 1
@@ -34,6 +35,7 @@ FA_to_MNI_warp=$5
 nSeed=300
 OutDir=$6
 GPU_flag=0
+ptx_bin=${ptx_bin_CPU}
 
 # apply seed multiplier if set
 if [ "$3" != "" ]; then
@@ -47,11 +49,21 @@ if [ $GPU_flag == "1" ]; then
     ptx_bin=${ptx_bin_GPU}
 fi
 
-echo "running automated tractography of subject ${sub}, structure ${struct}, using $nSeed seeds per voxel."
+echo "running automated tractography of ${bpdata}, structure ${struct}, using $nSeed seeds per voxel."
 
+# the autoPtx data: structure list, protocols and luts
+if [ -n "${QUNEXLIBRARYETC}" ]; then
+    AutoPtxData=${QUNEXLIBRARYETC}/auto_ptx
+else
+    AutoPtxData=$(cd "$(dirname "$0")/../../../.." && pwd)/qx_library/etc/auto_ptx
+fi
 
 # sources
-masks=$QUNEXLIBRARYETC/auto_ptx/protocols/$struct
+masks=${AutoPtxData}/protocols/$struct
+if [ ! -f $masks/seed.nii.gz ]; then
+    echo "ERROR: track_subject_struct: no protocol for ${struct} in ${AutoPtxData}/protocols."
+    exit 1
+fi
 # output
 tracts=${OutDir}/$struct
 mkdir -p $tracts
@@ -84,20 +96,17 @@ fi
 
 # count how many waypoints exist
 waypointNum=`ls $masks/target*.nii.gz | wc -l`
-if [ $waypointNum -gt "1" ]; then
-    wlist=`ls $masks/target*.nii.gz`
-    rm -f $masks/target.txt
-    for w in ${wlist}; do
-	echo "$w" >> $masks/target.txt
-    done
-fi
-
-jobMATH4="1"
 
 #Copy the seed, target and exclude files
 imcp $masks/seed $tracts/seed
 if [ $waypointNum -gt "1" ]; then
-    cp $masks/target.txt $tracts/target.txt
+    # the list of waypoints names the copies, and is written with the tracts,
+    # not into the protocol, which is read only in a container
+    rm -f $tracts/target.txt
+    for w in `ls $masks/target*.nii.gz`; do
+        imcp $w $tracts/`basename $w`
+        echo "$tracts/`basename $w`" >> $tracts/target.txt
+    done
     suf=".txt"
 else
     imcp $masks/target $tracts/target
@@ -126,6 +135,11 @@ else
 fi
 
 
+if [ ! -f $tracts/tracts/waytotal ] || { [ "$symtrack" = "1" ] && [ ! -f $tracts/tractsInv/waytotal ]; }; then
+    echo "ERROR: track_subject_struct: ${ptx_bin} did not complete for ${struct}."
+    exit 1
+fi
+
 # merge runs for forward and inverted tractography runs
 if [ "$symtrack" = "1" ]; then
   $FSLDIR/bin/immv $tracts/tracts/density $tracts/tractsInv/fwDensity
@@ -139,6 +153,6 @@ fi
 
 # perform normalisation for waytotal
 waytotal=`cat $tracts/tracts/waytotal`
-$FSLDIR/bin/fslmaths $tracts/tracts/density -div $waytotal -range $tracts/tracts/tractsNorm -odt float
+$FSLDIR/bin/fslmaths $tracts/tracts/density -div $waytotal -range $tracts/tracts/tractsNorm -odt float || exit 1
 
 

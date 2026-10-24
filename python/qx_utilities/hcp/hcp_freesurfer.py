@@ -32,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_freesurfer [... processing options]``
+    ``hcp_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the FS step of the HCP Pipeline (FreeSurferPipeline.sh).
 
@@ -49,9 +49,15 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -87,7 +93,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
             working folders and the 'MNINonLinear' folder.
 
         --hcp_filename (str, default 'automated'):
-            How to name the BOLD files once mapped intothe hcp input folder
+            How to name the BOLD files once mapped into the hcp input folder
             structure. The default ('automated') will automatically name each
             file by their number (e.g. BOLD_1). The alternative ('userdefined')
             is to use the file names, which can be defined by the user prior to
@@ -163,7 +169,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the above mentioned T1w
-        folder as well as MNINonLinear folder in the sessions's root hcp
+        folder as well as MNINonLinear folder in the session's root hcp
         folder.
 
     Notes:
@@ -235,7 +241,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
+                --studyfolder="." \\
                 --parsessions="10" \\
                 --overwrite="no" \\
                 --test
@@ -244,7 +250,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile="<path_to_study_folder>/processing/batch.hcp.txt" \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --parsessions="4" \\
                 --hcp_t2="NONE" \\
                 --overwrite="yes" \\
@@ -254,16 +260,17 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
+                --studyfolder="." \\
                 --parsessions="10" \\
                 --overwrite="no" \\
                 --scheduler="SLURM,time=03-24:00:00,cpus-per-task=2,mem-per-cpu=1250,partition=week"
 
-        Run with FreeSurfer edits applied and present in inbox/FS-edits::
+        Run with FreeSurfer edits applied and present in
+        ``<sessions folder>/inbox/FS_edits``::
 
             qunex hcp_freesurfer \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
+                --studyfolder="." \\
                 --sessions="s01,sub-07,sub-12" \\
                 --parsessions="3" \\
                 --overwrite="yes" \\
@@ -273,7 +280,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile="processing/batch.txt" \\
-                --sessionsfolder="sessions" \\
+                --studyfolder="." \\
                 --sessions="s01,sub-07,sub-12" \\
                 --parsessions="3" \\
                 --overwrite="yes" \\
@@ -283,7 +290,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --overwrite=no \\
                 --parsessions=10
 
@@ -291,16 +298,7 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_freesurfer \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
-                --overwrite=no \\
-                --parsessions=10 \\
-                --hcp_t2=NONE
-
-        ::
-
-            qunex hcp_freesurfer \\
-                --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --overwrite=no \\
                 --parsessions=10 \\
                 --hcp_t2=NONE
@@ -384,7 +382,8 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if editfiles or os.path.exists(controlfile):
                     copyfiles = []
                     for efile in editfiles:
-                        fname = os.path.basename(efile).split("_", 1)[1]
+                        # drop the '<session id>_' prefix, the id itself can hold an '_'
+                        fname = os.path.basename(efile).replace(sinfo["id"] + "_", "", 1)
                         edited.append(fname.replace(".mgz", ""))
                         destfile = os.path.join(hcp["FS_folder"], "mri", fname)
                         copyfiles.append((efile, destfile))
@@ -393,6 +392,11 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
                         copyfiles.append((controlfile, destfile))
                         edited.append("control")
                     for efile, destfile in copyfiles:
+                        # a dry run reports the edits and leaves the FS folder as it is
+                        if options["run"] != "run":
+                            log.detail(f"test, not copied: {os.path.basename(efile)} -> {destfile}")
+                            continue
+                        fname = os.path.basename(destfile)
                         if os.path.exists(destfile):
                             log.detail(f"replacing: {fname} ")
                         else:
@@ -451,7 +455,9 @@ def hcp_freesurfer(sinfo, options, overwrite=False, thread=0):
         # additional, reconall parameters
         if options["hcp_fs_extra_reconall"]:
             for f in options["hcp_fs_extra_reconall"].split("|"):
-                elements.append(("extra-reconall-arg", f))
+                # recon-all stops on an empty argument
+                if f:
+                    elements.append(("extra-reconall-arg", f))
 
         # additional QuNex passed parameters
         if options["hcp_expert_file"]:

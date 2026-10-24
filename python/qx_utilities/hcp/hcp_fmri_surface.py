@@ -20,7 +20,7 @@ import traceback
 from concurrent.futures import ProcessPoolExecutor
 from functools import partial
 
-import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog, ReportLog
@@ -32,10 +32,10 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_fmri_surface [... processing options]``
+    ``hcp_fmri_surface [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of the
-    HCP Pipeline .
+    HCP Pipeline.
 
     ..  qx_command:
         type: processing.session
@@ -51,9 +51,15 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -84,7 +90,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
             Adults study is used. Specifically, the source files are stored in
             individual folders within the main 'hcp' folder in parallel with the
             working folders and the 'MNINonLinear' folder with results. If set
-            to'hcpls' the folder structure used in the HCP Life Span study is
+            to 'hcpls' the folder structure used in the HCP Life Span study is
             used. Specifically, the source files are all stored within their
             individual subfolders located in the joint 'unprocessed' folder in
             the main 'hcp' folder, parallel to the working folders and the
@@ -132,16 +138,16 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the MNINonLinear folder
-        in the sessions's root hcp folder::
+        in the session's root hcp folder::
 
             study
             └─ sessions
-               └─ session1_session1
+               └─ subject1_session1
                   └─ hcp
                      └─ subject1_session1
-                       └─ MNINonlinear
-                          └─ Results
-                             └─ BOLD_1
+                        └─ MNINonLinear
+                           └─ Results
+                              └─ BOLD_1
 
     Notes:
         Runs the fMRI Surface (GenericfMRISurfaceProcessingPipeline.sh) step of
@@ -173,7 +179,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_surface  \\
                 --batchfile="processing/batch.txt"  \\
-                --sessionsfolder="sessions"  \\
+                --studyfolder="."  \\
                 --parsessions="10"  \\
                 --parelements="4"  \\
                 --overwrite="no"  \\
@@ -183,7 +189,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_surface  \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"  \\
-                --sessionsfolder="<path_to_study_folder>/sessions"  \\
+                --studyfolder="<path_to_study_folder>"  \\
                 --parsessions="4"  \\
                 --parelements="4"  \\
                 --overwrite="yes"  \\
@@ -193,7 +199,7 @@ def hcp_fmri_surface(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_surface \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --overwrite=no \\
                 --parsessions=10
     """
@@ -339,12 +345,10 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
 
         # longitudinal
         if options["longitudinal"]:
-            studyfolder = gc.deduce_folders(options)["basefolder"]
-            if not studyfolder:
-                log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                boldok = False
             # replace path
-            path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+            path = os.path.join(
+                gf.subjects_folder(options["studyfolder"]), sinfo["subject"]
+            )
             session = f"{sinfo['id']}{options['hcp_suffix']}.long.{options['hcp_longitudinal_template']}"
 
         elements = [
@@ -424,15 +428,18 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                 else:
                     report["done"].append(printbold)
 
-            # -- just checking
+            # -- just checking. A longitudinal run has no test file, and
+            #    nothing to find done
             else:
-                passed, _, failed = pc.check_run(
-                    tfile,
-                    full_test,
-                    "HCP fMRISurface " + boldtarget,
-                    overwrite=overwrite,
-                    _log=log,
-                )
+                passed = None
+                if tfile is not None:
+                    passed, _, failed = pc.check_run(
+                        tfile,
+                        full_test,
+                        "HCP fMRISurface " + boldtarget,
+                        overwrite=overwrite,
+                        _log=log,
+                    )
                 if passed is None:
                     log.step("HCP fMRISurface can be run")
                     report["ready"].append(printbold)

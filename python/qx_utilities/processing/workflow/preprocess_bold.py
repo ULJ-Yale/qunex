@@ -33,7 +33,7 @@ from qx_utilities.processing.workflow.dryrun import mcommand
 #         type="processing.session")
 def preprocess_bold(sinfo, options, overwrite=False, thread=0):
     """
-    ``preprocess_bold [... processing options]``
+    ``preprocess_bold [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Prepares BOLD files for further analysis. It performs spatial smoothing,
     temporal filtering, removal of nuisance signals and complex modeling of
@@ -72,11 +72,17 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the session information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
 
-        --parsessions (str, default 1):
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
+
+        --parsessions (int, default 1):
             How many sessions to run in parallel.
 
         --overwrite (str, default 'no'):
@@ -106,9 +112,9 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             placed in. The comlog is created at the first provided location and
             then linked or copied to the others. The valid locations are:
 
-            - 'study'   (for the default:
-              ``<study>/processing/logs/comlogs`` location)
-            - 'session' (for ``<sessionid>/logs/comlogs``)
+            - 'study'   (for the run's log folder, by default
+              ``<studyfolder>/logs/<run folder>/comlogs``)
+            - 'session' (for ``<sessionsfolder>/<session id>/logs/comlogs``)
             - 'hcp'     (for ``<hcp_folder>/logs/comlogs``)
             - <path>  (for an arbitrary directory).
 
@@ -136,7 +142,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             An optional prefix to place in front of processing name extensions
             in the resulting files, e.g. bold3<bold_prefix>_s_hpss.nii.gz.
 
-        --bold_variant (str, default detailed below):
+        --bold_variant (str, default ''):
             Optional variant of HCP BOLD preprocessing. If specified, the BOLD
             images in `images/functional<bold_variant>` will be processed.
 
@@ -179,14 +185,11 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         If it were set to "all", all would be processed. As each bold gets
         processed independently and only one fidl file can be specified, you
         are advised to use preprocess_conc when regressing task structure, and
-        only use preprocess_bold for resting state data. If you would still use
-        like to regress out events specified in a fidl file. They would neet to
-        be named as [<session id>_]<boldname>_<image_target>_<fidl name>.fidl.
-        In the case of cifti files, image_target is composed of
-        <cifti_tail>_cifti. If the files are not present in the relevant
-        individual sessions's folders, they are searched for in the
-        <sessionsfolder>/inbox/events folder. In that case the "<session id>_"
-        is not optional but required.
+        only use preprocess_bold for resting state data. If you would still
+        like to regress out events specified in a fidl file, the file
+        `<boldname><N><event_file>` is read from the session's
+        `images<img_suffix>/functional<bold_variant>/events` folder: unlike preprocess_conc, preprocess_bold does not look for it
+        in the `<sessionsfolder>/inbox` folders.
 
         The --bold_actions parameter specifies the actions, denoted by a single
         letter, that will be executed in the sequence listed:
@@ -270,7 +273,7 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
             --idvarsme
                 Both fdt and dvarsmet are exceeded.
             --udvarsme
-                Either fdt or udvarsmet are exceeded.
+                Either fdt or dvarsmet are exceeded.
 
             For more detailed description please see wiki entry on Movement
             scrubbing.
@@ -603,8 +606,8 @@ def preprocess_bold(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex preprocess_bold \\
+                --studyfolder=. \\
                 --batchfile=fcMRI/sessions_hcp.txt \\
-                --sessionsfolder=sessions \\
                 --overwrite=no \\
                 --parsessions=10 \\
                 --bolds=rest \\
@@ -731,7 +734,7 @@ def execute_preprocess_bold(sinfo, options, overwrite, boldinfo):
 
         # --- filenames and folders
 
-        f = pc.get_file_names(sinfo, options)
+        f = pc.get_file_names(sinfo, options, _log=log)
         f.update(pc.get_bold_file_names(sinfo, boldinfo["name"], options))
         d = pc.get_session_folders(sinfo, options)
 

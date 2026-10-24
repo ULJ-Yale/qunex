@@ -5,21 +5,48 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 Usage() {
-    echo ""
-    echo "auto_ptx <StudyFolder> <SessionId> <BpXFolder> [<std2diff> <diff2std>]"
-    echo ""
+    cat << EOF
+
+auto_ptx <StudyFolder> <SessionId> <BpXFolder> [<std2diff> <diff2std>]
+
+    Runs the autoPtx tractography of every structure in the structure list on
+    the bedpostX output in <StudyFolder>/<SessionId>/T1w/<BpXFolder>, and writes
+    the tracts into <StudyFolder>/<SessionId>/MNINonLinear/Results/autoPtx.
+
+    <StudyFolder> is the folder that holds the session's HCP folder, in QuNex
+    <sessionsfolder>/<session>/hcp, and <BpXFolder> the name of the bedpostX
+    folder under T1w, as dwi_bedpostx_gpu writes it: Diffusion.bedpostX.
+
+    The warps default to the session's MNINonLinear/xfms/standard2acpc_dc and
+    acpc_dc2standard. The structure list and the protocols are read from
+    \$QUNEXLIBRARYETC/auto_ptx, or from the qx_library this script is in.
+
+EOF
     exit 1
 }
 
 [ "$3" = "" ] && Usage
 
-StudyFolder=$1
+# the folder the scripts are in, absolute, as the run changes folder below
+execPath=$(cd "$(dirname "$0")" && pwd)
+
+# the autoPtx data: structure list, protocols and luts
+if [ -n "${QUNEXLIBRARYETC}" ]; then
+    AutoPtxData=${QUNEXLIBRARYETC}/auto_ptx
+else
+    AutoPtxData=$(cd "${execPath}/../../../.." && pwd)/qx_library/etc/auto_ptx
+fi
+
+if [ ! -d "$1" ]; then
+    echo "ERROR: auto_ptx: study folder $1 not found."
+    exit 1
+fi
+StudyFolder=$(cd "$1" && pwd)
 SessionId=$2
 BpxFolder=$3
 
 InputDir=$StudyFolder/$SessionId/T1w/$BpxFolder
 OutDir=${StudyFolder}/${SessionId}/MNINonLinear/Results/autoPtx
-mkdir -p ${OutDir}
 
 if [ "$4" == "" ]; then
     MNI_to_FA_warp=${StudyFolder}/${SessionId}/MNINonLinear/xfms/standard2acpc_dc.nii.gz
@@ -33,29 +60,39 @@ else
     FA_to_MNI_warp=$5
 fi
 
-logDir=${OutDir}/logs
-rm -rf $logDir
-mkdir -p $logDir
-execPath=`dirname $0`
+structures=${AutoPtxData}/structure_list
+
+# check the inputs before anything is run
+for required in "${InputDir}/merged_th1samples.nii.gz" "${InputDir}/nodif_brain_mask.nii.gz" "${MNI_to_FA_warp}" "${FA_to_MNI_warp}" "${structures}"; do
+    if [ ! -f "${required}" ]; then
+        echo "ERROR: auto_ptx: ${required} not found. Run hcp_diffusion, dwi_bedpostx_gpu and the HCP structural pipelines first."
+        exit 1
+    fi
+done
+
+mkdir -p ${OutDir}
 
 cd ${InputDir}
 
-structures=$QUNEXLIBRARYETC/auto_ptx/structure_list
-
-listJobs=""
-
+# the commands run, one per structure, kept with the results
 rm -f ${OutDir}/commands.txt
-
-while read line ; do
-    #echo $line
-    struct=`echo $line | awk '{print $1}'`
-    nseed=`echo $line | awk '{print $2}'`
-    wallt=`echo $line | awk '{print $3}' | tr ':' ' '`
-    hours=`echo $wallt | awk '{print $1}'`
-    minutes=`echo $wallt | awk '{print $2}'`
-    time=$(( 60 * hours + minutes ))
+while read -r struct nseed _; do
+    [ -z "${struct}" ] && continue
     echo "$execPath/track_subject_struct ${InputDir} $struct $nseed $MNI_to_FA_warp $FA_to_MNI_warp ${OutDir} $GPU_flag" >> ${OutDir}/commands.txt
 done < $structures
 
-chmod +x ${OutDir}/commands.txt
-bash ${OutDir}/commands.txt	
+# every structure is tracked, also after one fails, and the run fails if any did
+failed=""
+while read -r command; do
+    struct=$(echo ${command} | awk '{print $3}')
+    if ! ${command} < /dev/null; then
+        failed="${failed} ${struct}"
+    fi
+done < ${OutDir}/commands.txt
+
+if [ -n "${failed}" ]; then
+    echo "ERROR: auto_ptx: tractography failed for:${failed}"
+    exit 1
+fi
+
+echo "auto_ptx: tracts of ${SessionId} written to ${OutDir}"

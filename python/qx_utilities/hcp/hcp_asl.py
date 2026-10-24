@@ -18,7 +18,7 @@ import glob
 import os
 import os.path
 
-import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.general.log import SessionLog
@@ -30,7 +30,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_asl(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_asl [... processing options]``
+    ``hcp_asl [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP ASL Pipeline (https://github.com/physimals/hcp-asl).
 
@@ -47,9 +47,15 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -141,7 +147,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be present in the ASL folder in the
-        sessions's root hcp folder.
+        session's root hcp folder.
 
     Notes:
         Gradient coefficient file specification:
@@ -150,7 +156,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             in which case. Each option of the string has to be divided by a
             pipe "|" character and it has to specify, which information to look
             up, a possible value, and a file to use in that case, separated by
-            a colon ":" character. The information too look up needs to be
+            a colon ":" character. The information to look up needs to be
             present in the description of that session. Standard options are
             e.g.::
 
@@ -160,7 +166,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             Where device is formatted as <manufacturer>|<model>|<serial number>.
 
             If specifying a string it also has to include a `default`
-            option, which will be used in the information was not found. An
+            option, which will be used if the information was not found. An
             example could be::
 
                 "default:/data/gc1.conf|model:Prisma:/data/gc/Prisma.conf|model:Trio:/data/gc/Trio.conf"
@@ -183,7 +189,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             ``hcp_asl_use_t1``             ``use_t1``
             ``hcp_asl_nobandingcorr``      ``nobandingcorr``
             ``hcp_asl_interpolation``      ``interpolation``
-            ``hcp_asl_cores``              ``cores```
+            ``hcp_asl_cores``              ``cores``
             ``hcp_asl_stages``             ``stages``
             ``hcp_asl_ntis``               ``ntis``
             ``hcp_asl_tis``                ``tis``
@@ -194,21 +200,21 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             ``hcp_asl_te``                 ``te``
             ``hcp_asl_tail_discard_vols``  ``tail_discard_vols``
             ``hcp_asl_ibf``                ``ibf``
-            ``longitudinal``               ``is-longitudinal``
-            ``hcp_longitudinal_template``  ``longitudinal-template``
+            ``longitudinal``               ``is_longitudinal``
+            ``hcp_longitudinal_template``  ``longitudinal_template``
             ============================== ======================
 
     Examples:
         Example run::
 
             qunex hcp_asl \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt"
 
         Run with scheduler, while bumping up the number of used cores::
 
             qunex hcp_asl \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_asl_cores="8" \\
                 --scheduler="SLURM,time=24:00:00,mem-per-cpu=16000"
@@ -334,7 +340,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if not os.path.exists(fmap_ap_file):
                 log.error(f"AP fieldmap not found [{fmap_ap_file}]")
                 run = False
-            if not os.path.exists(fmap_ap_file):
+            if not os.path.exists(fmap_pa_file):
                 log.error(f"PA fieldmap not found [{fmap_pa_file}]")
                 run = False
 
@@ -353,7 +359,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                 --regname %(regname)s"
                 % {
                     "script": "process_hcp_asl",
-                    "subdir": os.path.join(sinfo["hcp"], sinfo["id"]),
+                    # the session's hcp folder, named with the hcp_suffix that
+                    # subid carries
+                    "subdir": hcp["base"],
                     "subid": sinfo["id"] + options["hcp_suffix"],
                     "mbpcasl": asl_file,
                     "fmap_ap": fmap_ap_file,
@@ -371,30 +379,24 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             # struct
             # get struct files
             # ACPC-aligned, DC-restored structural image
-            t1w_file = os.path.join(
-                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore.nii.gz"
-            )
+            t1w_file = os.path.join(hcp["T1w_folder"], "T1w_acpc_dc_restore.nii.gz")
             if os.path.exists(t1w_file):
                 comm += f"                --struct {t1w_file}"
 
             # sbrain
             t1w_brain_file = os.path.join(
-                sinfo["hcp"], sinfo["id"], "T1w", "T1w_acpc_dc_restore_brain.nii.gz"
+                hcp["T1w_folder"], "T1w_acpc_dc_restore_brain.nii.gz"
             )
             if os.path.exists(t1w_brain_file):
                 comm += f"                --sbrain {t1w_brain_file}"
 
             # wmparc
-            wmparc_file = os.path.join(
-                sinfo["hcp"], sinfo["id"], "T1w", "wmparc.nii.gz"
-            )
+            wmparc_file = os.path.join(hcp["T1w_folder"], "wmparc.nii.gz")
             if os.path.exists(wmparc_file):
                 comm += f"                --wmparc {wmparc_file}"
 
             # ribbon
-            ribbon_file = os.path.join(
-                sinfo["hcp"], sinfo["id"], "T1w", "ribbon.nii.gz"
-            )
+            ribbon_file = os.path.join(hcp["T1w_folder"], "ribbon.nii.gz")
             if os.path.exists(ribbon_file):
                 comm += f"                --ribbon {ribbon_file}"
 
@@ -491,13 +493,9 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
-                studyfolder = gc.deduce_folders(options)["basefolder"]
-                if not studyfolder:
-                    log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                    run = False
                 # replace path
                 longitudinal_study_dir = os.path.join(
-                    studyfolder, "subjects", sinfo["subject"]
+                    gf.subjects_folder(options["studyfolder"]), sinfo["subject"]
                 )
 
                 comm += f'                --longitudinal_template="{options["hcp_longitudinal_template"]}"'
@@ -534,15 +532,12 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP ASL", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP ASL can be run")
-                    report = "HCP ASL can be run"
-                    failed = 0
+                log.step("HCP ASL can be run")
+                report = "HCP ASL can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

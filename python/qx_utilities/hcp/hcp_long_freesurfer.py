@@ -21,6 +21,7 @@ from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
@@ -32,7 +33,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_long_freesurfer [... processing options]``
+    ``hcp_long_freesurfer [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP Longitudinal FreeSurfer Pipeline (LongitudinalFreeSurferPipeline.sh).
 
@@ -49,9 +50,15 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsubjects (int, default 1):
             How many subjects to run in parallel.
@@ -102,8 +109,11 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 - TIMEPOINTS.
 
     Output files:
-        The results of this step will be present in the
-        <study_folder>/<sessions_folder>/<subject_id>.
+        The sessions' hcp folders are linked into the subject's longitudinal
+        folder, <studyfolder>/subjects/<subject id>, and the results of this
+        step will be present there: the template in
+        <subject id>.long.<template> and each session in
+        <session id>.long.<template>.
 
     Notes:
         hcp_long_freesurfer parameter mapping:
@@ -113,7 +123,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             =================================== ===========================
             ``hcp_longitudinal_template``       ``longitudinal-template``
             ``hcp_no_t2w``                      ``use-T2w``
-            ``hcp_fs_seed``                     ``seed``
+            ``hcp_seed``                        ``seed``
             ``hcp_high_myelin``                 ``high-myelin``
             ``hcp_parallel_mode``               ``parallel-mode``
             ``hcp_fslsub_queue``                ``fslsub-queue``
@@ -126,14 +136,14 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_long_freesurfer \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_longitudinal_template="<template_id>"
     """
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal FS Pipeline", label="Subject")
 
     run = True
     report = ""
@@ -146,54 +156,57 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         hcp = _check_hcp_info(sinfo, options)
 
         # sort out the folder structure
-        sessionsfolder = options["sessionsfolder"]
-        subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
-        study_folder = os.path.join(subjectsfolder, subject_id)
+        study_folder = os.path.join(
+            gf.subjects_folder(options["studyfolder"]), subject_id
+        )
         if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+            if options["run"] == "run":
+                os.makedirs(study_folder)
+            else:
+                log.detail(f"test, not created: {study_folder}")
 
         longitudinal_template = options["hcp_longitudinal_template"]
         long_dir = os.path.join(
             study_folder, f"{subject_id}.long.{longitudinal_template}"
         )
 
-        # exit if overwrite is not set, else cleanup
+        # exit if overwrite is not set, else the earlier results are removed
+        # just before the run
         long_dir_exists = os.path.lexists(long_dir)
         if not overwrite and long_dir_exists:
             log.error(f"{long_dir} already exists and overwrite is set to no!")
             run = False
-        else:
-            if long_dir_exists:
-                if os.path.islink(long_dir):
-                    long_dir_target = os.path.realpath(long_dir)
-                    os.unlink(long_dir)
-                    if os.path.isdir(long_dir_target):
-                        shutil.rmtree(long_dir_target)
-                else:
-                    shutil.rmtree(long_dir)
 
         # symlink sessions
         for session in sinfo:
             source_dir = os.path.join(session["hcp"], session["id"])
+            target_dir = os.path.join(study_folder, session["id"])
             # check that source exists
             if not os.path.exists(source_dir):
-                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
+                log.error(f"{source_dir} does not exist, cannot map into the longitudinal folder structure!")
                 run = False
+            elif options["run"] == "run":
+                # a link left dangling, e.g. by a study that was moved, is
+                # replaced
+                if os.path.islink(target_dir) and not os.path.exists(target_dir):
+                    os.unlink(target_dir)
+                if not gc.link_or_copy(
+                    source_dir,
+                    target_dir,
+                    name=f"session {session['id']}",
+                    symlink=True,
+                    _log=log,
+                ):
+                    run = False
+            elif not os.path.exists(target_dir):
+                log.detail(f"test, not linked: {target_dir}")
 
-            target_dir = os.path.join(study_folder, session["id"])
-            gc.link_or_copy(source_dir, target_dir, symlink=True)
-
-        # logdir
+        # logdir, created just before the run
         logdir = os.path.join(
             options["logfolder"],
             "comlogs",
             f"extra_logs_hcp_long_freesurfer_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
 
         # build the command
         if run:
@@ -263,8 +276,22 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             )
 
             if options["run"] == "run":
+                # remove the results of an earlier run
+                if long_dir_exists:
+                    if os.path.islink(long_dir):
+                        long_dir_target = os.path.realpath(long_dir)
+                        os.unlink(long_dir)
+                        if os.path.isdir(long_dir_target):
+                            shutil.rmtree(long_dir_target)
+                    else:
+                        shutil.rmtree(long_dir)
                 if overwrite and os.path.exists(tfile):
                     os.remove(tfile)
+
+                if os.path.exists(logdir):
+                    shutil.rmtree(logdir)
+                os.makedirs(logdir)
+
                 endlog, _, failed = pc.run_external_for_file(
                     tfile,
                     comm,
@@ -285,20 +312,25 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 else:
                     report = "processing failed"
 
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
+                # append the files in logdir to the comlog, if one was kept:
+                # there is none after a clean run with --log=remove
+                if endlog:
+                    with open(endlog, "a", encoding="utf-8") as log_file:
+                        _append_sorted_logdir_to_log(log_file, logdir)
+                        # print succesful completion
+                        if failed == 0:
+                            print(
+                                f"\n---> Successful completion of task at {datetime.now()}",
+                                file=log_file,
+                            )
 
                 # remove the directory and its contents
                 shutil.rmtree(logdir)
 
             # -- just checking
             else:
+                if long_dir_exists:
+                    log.detail(f"test, not removed: {long_dir}")
                 passed, _, _ = pc.check_run(
                     tfile, None, "HCP Longitudinal FS", overwrite=overwrite, _log=log
                 )
@@ -312,13 +344,14 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
-        log.raw("\n" + ge.report_command_failed("hcp_long_freesurer", e))
+        log.raw("\n" + ge.report_command_failed("hcp_long_freesurfer", e))
         report = "processing failed"
         failed += 1
     except ge.CommandError as e:
-        log.raw("\n" + ge.report_command_error("hcp_long_freesurer", e))
+        log.raw("\n" + ge.report_command_error("hcp_long_freesurfer", e))
         report = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:

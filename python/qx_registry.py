@@ -353,12 +353,15 @@ def load_qx_registry(
 ) -> Tuple[Registry, Dict[str, CommandInfo]]:
     """
     Load core from $QUNEXPATH/qx_commands.yaml, then discover & merge extension registries.
+
+    Without $QUNEXPATH the core registry is the one of the tree this module is
+    in, so QuNex imported without the suite's environment still finds its
+    commands.
     """
     if core_registry_path is None:
         qunexpath = os.environ.get("QUNEXPATH", "").strip()
-        if not qunexpath:
-            raise ge.CommandError('load_qx_registry', "QUNEXPATH is not set and no core_registry_path was provided.")
-        core_registry_path = Path(qunexpath) / DEFAULT_CORE_REGISTRY_BASENAME
+        root = Path(qunexpath) if qunexpath else Path(__file__).resolve().parents[1]
+        core_registry_path = root / DEFAULT_CORE_REGISTRY_BASENAME
 
     core_registry_path = Path(core_registry_path).resolve()
     if not core_registry_path.exists():

@@ -27,11 +27,11 @@ Warning:
 
     DWI data needs to be in the following folder::
 
-        <study_folder>/<session>/hcp/<session>/unprocessed/Diffusion
+        <sessionsfolder>/<session>/hcp/<session>/unprocessed/Diffusion
 
     T1w data needs to be in the following folder::
 
-        <study_folder>/<session>/hcp/<session>/T1w
+        <sessionsfolder>/<session>/hcp/<session>/T1w
 
     If PreFreeSurfer component of the HCP Pipelines was run the function will
     make use of the T1w data [Results will be better due to superior brain
@@ -41,8 +41,14 @@ Warning:
     function will start from raw T1w data [Results may be less optimal].
 
 Parameters:
-    --sessionsfolder (str, default '.'):
-        Path to study data folder.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
@@ -55,13 +61,13 @@ Parameters:
 
     --unwarpdir (str):
         Direction for EPI image unwarping; e.g. 'x' or 'x-' for LR/RL, 'y' or
-        'y-' for AP/PA; may been to try out both -/+ combinations.
+        'y-' for AP/PA; may need to try out both -/+ combinations.
 
     --usefieldmap (str):
         Whether to use the standard field map ('yes' | 'no'). The field map
         images are expected in::
 
-            <study_folder>/<session>/hcp/<session>/unprocessed/FieldMap1
+            <sessionsfolder>/<session>/hcp/<session>/unprocessed/FieldMap1
 
         If set to <yes>
         then the parameter --te becomes mandatory. Mutually exclusive with
@@ -71,7 +77,7 @@ Parameters:
         Whether to use a Spin Echo (SE) field map pair for distortion
         correction ('yes' | 'no'). The SE field map images are expected in::
 
-            <study_folder>/<session>/hcp/<session>/unprocessed/SpinEchoFieldMap1
+            <sessionsfolder>/<session>/hcp/<session>/unprocessed/SpinEchoFieldMap1
 
         as <session>*AP_SB_SE.nii.gz and <session>*PA_SB_SE.nii.gz.
         Mutually exclusive with --usefieldmap.
@@ -89,10 +95,10 @@ Parameters:
 
     --te (float):
         This is the echo time difference of the fieldmap sequence - find this
-        out form the operator - defaults are *usually* 2.46ms on SIEMENS.
+        out from the operator - defaults are *usually* 2.46ms on SIEMENS.
 
     --nogpu (flag, default 'no'):
-        If set, this command will be processed useing a CPU instead of a GPU.
+        If set, this command will be processed using a CPU instead of a GPU.
 
     --extra_eddy_args (str, default '--fwhm=10,0,0,0,0 --ff=10 --nvoxhp=2000 --flm=quadratic --data_is_shelled --repol --cnr_maps'):
         Extra arguments to pass to eddy command. By default, some recommended
@@ -100,16 +106,18 @@ Parameters:
         string of parameters. The string is appended to the eddy call as is.
 
 Output files:
-    - difffolder=${sessionsfolder}/${session}/hcp/${session}/Diffusion
-    - t1wdifffolder=${sessionsfolder}/${session}/hcp/${session}/T1w/Diffusion
+    - difffolder=<sessionsfolder>/<session>/hcp/<session>/Diffusion
+    - t1wdifffolder=<sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion
 
     ::
 
-        $difffolder/rawdata
-        $difffolder/eddy
-        $difffolder/data
-        $difffolder/reg
-        $t1wdifffolder
+        <difffolder>/rawdata
+        <difffolder>/eddy
+        <difffolder>/reg
+        <difffolder>/fieldmap
+        <difffolder>/acqparams
+        <difffolder>/topup (with --usesefieldmap)
+        <t1wdifffolder>
 
 Notes:
     Apptainer (Singularity) and GPU support:
@@ -129,8 +137,8 @@ Examples:
     ::
 
         qunex dwi_legacy_gpu \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --pedir='1' \\
             --echospacing='0.69' \\
             --te='2.46' \\
@@ -145,8 +153,8 @@ Examples:
     ::
 
         qunex dwi_legacy_gpu \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --pedir='1' \\
             --echospacing='0.69' \\
             --te='2.46' \\
@@ -154,7 +162,7 @@ Examples:
             --diffdatasuffix='DWI_dir91_LR' \\
             --usefieldmap='yes' \\
             --overwrite='yes' \\
-            --bash="module load CUDA//11.3.1" \\
+            --bash="module load CUDA/11.3.1" \\
             --scheduler='<name_of_scheduler_and_options>'
 
     Example with disabled GPU processing:
@@ -162,8 +170,8 @@ Examples:
     ::
 
         qunex dwi_legacy_gpu \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --diffdatasuffix='DWI_dir91_LR' \\
             --usefieldmap='no' \\
             --pedir='1' \\
@@ -177,8 +185,8 @@ Examples:
     ::
 
         qunex dwi_legacy_gpu \\
-            --sessionsfolder='<folder_with_sessions>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --pedir='2' \\
             --echospacing='0.69' \\
             --unwarpdir='y-' \\
@@ -204,6 +212,7 @@ get_options() {
     local arguments=("$@")
 
     # -- initialize global output variables
+    unset studyfolder
     unset sessionsfolder
     unset session
     unset pedir
@@ -233,6 +242,10 @@ get_options() {
             --version)
                 version_show $@
                 exit 0
+                ;;
+            --studyfolder=*)
+                studyfolder=${argument#*=}
+                index=$(( index + 1 ))
                 ;;
             --sessionsfolder=*)
                 sessionsfolder=${argument#*=}
@@ -280,6 +293,11 @@ get_options() {
                 nogpu=${argument#*=}
                 index=$(( index + 1 ))
                 ;;
+            # --nogpu is a flag, and given without a value it asks for the cpu
+            --nogpu)
+                nogpu="yes"
+                index=$(( index + 1 ))
+                ;;
             --extra_eddy_args=*)
                 extra_eddy_args=${argument#*=}
                 index=$(( index + 1 ))
@@ -290,9 +308,19 @@ get_options() {
                 ;;
         esac
     done
+
+    # --nogpu='true' asks for the cpu as well
+    if [ "${nogpu,,}" == "true" ] || [ "${nogpu,,}" == "yes" ]; then nogpu="yes"; fi
+
+    # the sessions are in the sessions folder of the study, unless
+    # --sessionsfolder names another one
+    if [ -z "${sessionsfolder}" ] && [ -n "${studyfolder}" ]; then
+        sessionsfolder="${studyfolder}/sessions"
+    fi
+
     # -- check required parameters
-    if [ -z ${sessionsfolder} ]; then
-        echo "ERROR: <study-path> not specified"
+    if [ -z "${sessionsfolder}" ]; then
+        echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
         exit 1
     fi
     if [ -z ${session} ]; then

@@ -6,6 +6,12 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.6.0
+
+* `studyfolder` is now the main path parameter, `sessionsfolder` will be derived from it if you are using the default QuNex folder structure. If not, then `sessionsfolder` can still be used.
+* Paths in batch and session files are now relative to each session's folder, meaning that studies can be easily moved around. Absolute paths in existing studies keep working.
+* `build_qx_registry` now builds only the core command registry; extensions are built with `build_qx_extensions` (or with `--build_extensions=yes`).
+
 ## 1.5.4
 
 * Integrated the HCP Pipelines `ROI_to_DICOM.sh` command into QuNex as `hcp_roi_to_dicom`.

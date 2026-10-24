@@ -29,6 +29,7 @@ import re
 # qx imports
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.core as gc
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 
@@ -93,7 +94,25 @@ def map_to_qunex(file, sessionsfolder, sessions, overwrite, _log=None):
             log.step(f"file {tfile} already exists: skipping ...")
             return False
 
+    # the session's folder for the file: a file unpacked from a package is
+    # written there directly, so it has to exist
+    if not os.path.exists(os.path.dirname(tfile)):
+        os.makedirs(os.path.dirname(tfile))
+
     return [session, tfile]
+
+
+def _copy_to_archive(source: str, archive_folder: str) -> None:
+    """Copy a package file or a dataset folder into the archive folder."""
+    if os.path.isdir(source):
+        # a folder goes in under its own name, as a file does
+        shutil.copytree(
+            source,
+            os.path.join(archive_folder, os.path.basename(os.path.normpath(source))),
+            dirs_exist_ok=True,
+        )
+    else:
+        shutil.copy2(source, archive_folder)
 
 
 def import_nhp(
@@ -103,10 +122,11 @@ def import_nhp(
     action="link",
     overwrite="no",
     archive="leave",
+    studyfolder=None,
     _log=None,
 ):
     """
-    ``import_nhp [sessionsfolder=.] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=leave]``
+    ``import_nhp [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [inbox=<sessionsfolder>/inbox/NHP] [sessions=""] [action=link] [overwrite=no] [archive=leave]``
 
     Maps NHP data to the QuNex Suite file structure.
 
@@ -114,9 +134,15 @@ def import_nhp(
         type: utility
 
     Parameters:
-        --sessionsfolder (str, default '.'):
-            The sessions folder where all the sessions are to be mapped to.
-            It should be a folder within the <study folder>.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The imported sessions are mapped into it.
 
         --inbox (str, default '<sessionsfolder>/inbox/NHP'):
             The location of the NHP dataset or a dataset archive. It can be a folder
@@ -129,10 +155,10 @@ def import_nhp(
             An optional parameter that specifies a comma or pipe separated list
             of sessions from the inbox folder to be processed. Regular expression
             patterns can be used. If provided, only packets or folders within
-            the inbox that match the list of sessions will be processed. If `
-            inbox` is a file `sessions` will not be applied. Note: the session
+            the inbox that match the list of sessions will be processed. If
+            `inbox` is a file `sessions` will not be applied. Note: the session
             will match if the string is found within the package name or the
-            session id. So "NHP" with match any zip file that contains string
+            session id. So "NHP" will match any zip file that contains string
             "NHP" or any session id that contains "NHP"!
 
         --action (str, default 'link'):
@@ -153,7 +179,7 @@ def import_nhp(
 
             Please note that there can be an interaction with the `action`
             parameter. If files are moved during action, they will be missing if
-            `archive` is set to "move" or "copy.
+            `archive` is set to "move" or "copy".
 
 
 
@@ -164,14 +190,14 @@ def import_nhp(
 
         - dMRI images for each session will be stored in:
 
-            ``<sessionsfolder>/<session>/dMRI``
+            ``<sessionsfolder>/<session>/NHP/dMRI``
 
     Notes:
         The `import_nhp` command first inspects the location of the NHP dataset
         (specified by the `inbox` parameter) for suitable data. When looking for
         suitable data QuNex looks for dMRI subfolder inside each of the <session>
         folders (whether in the `inbox` folder or in archived data). Meaning that
-        the data inside `inbox` folder or achives should be structured as:
+        the data inside `inbox` folder or archives should be structured as:
 
             ``/<session>/<dMRI>/<image files>``
 
@@ -179,7 +205,10 @@ def import_nhp(
 
         ::
 
-            qunex import_nhp sessionsfolder=myStudy/sessions inbox=myData/NHP overwrite=yes
+            qunex import_nhp \\
+                --studyfolder=myStudy \\
+                --inbox=myData/NHP \\
+                --overwrite=yes
     """
 
     log = gl.log_or_console(_log)
@@ -194,7 +223,7 @@ def import_nhp(
             "import_nhp",
             "Invalid action specified",
             "%s is not a valid action!" % (action),
-            "Please specify one of: leave, copy, link, move!",
+            "Please specify one of: link, copy, move!",
         )
 
     if archive not in ["leave", "move", "copy", "delete"]:
@@ -202,11 +231,12 @@ def import_nhp(
             "import_nhp",
             "Invalid dataset archive option",
             "%s is not a valid option for dataset archive option!" % (archive),
-            "Please specify one of: move, copy, delete!",
+            "Please specify one of: leave, move, copy, delete!",
         )
 
-    if sessionsfolder is None:
-        sessionsfolder = os.path.abspath(".")
+    sessionsfolder = gf.sessions_folder(
+        studyfolder, sessionsfolder, default=os.path.abspath(".")
+    )
 
     if inbox is None:
         inbox = os.path.join(sessionsfolder, "inbox", "NHP")
@@ -268,7 +298,7 @@ def import_nhp(
             "Please check your path!",
         )
 
-    # mapping data to sessions" folders
+    # mapping data to sessions' folders
     log.step("mapping files to QuNex NHP folders")
     report = {}
     for file in source_files:
@@ -374,7 +404,9 @@ def import_nhp(
                     shutil.move(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
                 elif archive == "copy":
                     log.step("copying dataset to archive")
-                    shutil.copy2(inbox, os.path.join(sessionsfolder, "archive", "NHP"))
+                    _copy_to_archive(
+                        inbox, os.path.join(sessionsfolder, "archive", "NHP")
+                    )
                 elif archive == "delete":
                     log.step("deleting dataset")
                     if os.path.isfile(inbox):
@@ -394,7 +426,7 @@ def import_nhp(
                         )
                     elif archive == "copy":
                         log.step("copying dataset to archive")
-                        shutil.copy2(
+                        _copy_to_archive(
                             file, os.path.join(sessionsfolder, "archive", "NHP")
                         )
                     elif archive == "delete":
@@ -447,13 +479,16 @@ def import_nhp(
                         "Please check or set parameter 'overwrite' to 'yes' to rebuild it!",
                     )
 
+            # the folders relative to the session folder: `nhp` is the session
+            # folder itself, while `raw_data`, the inbox the data was imported
+            # from, lies outside it and is written absolute
             sout_nhp = open(sfile, "w")
             gl.print_qunex_header(file=sout_nhp)
             print("#", file=sout_nhp)
             print("session:", s, file=sout_nhp)
             print("subject:", subjectid, file=sout_nhp)
-            print("raw_data:", inbox, file=sout_nhp)
-            print("nhp:", sfolder, file=sout_nhp)
+            print("raw_data:", gf.session_relative(inbox, sfolder), file=sout_nhp)
+            print("nhp: .", file=sout_nhp)
             print(file=sout_nhp)
 
             # file info
@@ -462,10 +497,13 @@ def import_nhp(
                 # report
                 log.detail(f"mapped file {f}")
 
-                # add to subject
-                out = "%02d: %s" % (i, f)
+                # add to subject, the file named relative to the session folder
+                out = "%02d: %s" % (i, gf.session_relative(f, sfolder))
                 print(out, file=sout)
                 print(out, file=sout_nhp)
 
                 # increase index
                 i = i + 1
+
+            sout.close()
+            sout_nhp.close()

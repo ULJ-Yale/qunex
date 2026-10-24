@@ -8,173 +8,28 @@
 """
 ``commands_support.py``
 
-Helper code for perarations of commands and their parameters
+Helper code for preparations of commands and their parameters
 """
 
-import fnmatch
 import os
 import re
 
+from qx_utilities.general import batch_io as bio
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import extensions
+from qx_utilities.general import folders as gf
 from qx_utilities.general.log import INDENT
 
 # ==============================================================================
 #                                                            COMMAND DEPRECATION
 #
 
-# The "deprecated_commands" dictionary specifies old and new command names
-# The format is as such:
-# "new_command_name": ["deprecated_name1", "depercated_name2", ...]
+# The "deprecated_commands" dictionary specifies old and new command names:
+# "new_command_name": ["deprecated_name1", "deprecated_name2", ...]. QuNex's own
+# are in `general/folders.py` (`DEPRECATED_COMMANDS`), which the container
+# launcher carries, so that it files a run under the name it has now as well
 deprecated_commands = {
-    "fc_compute_ab_corr": ["fc_ComputeABCorr"],
-    "fc_compute_ab_corr_kca": ["fc_ComputeABCorrKCA"],
-    "fc_compute_gbc3": ["fc_ComputeGBC3"],
-    "fc_compute_gbcd": ["fc_ComputeGBCd"],
-    "fc_compute_roifc": [
-        "fc_ComputeROIFC",
-        "fc_ComputeROIFCGroup",
-        "fc_compute_roifc_group",
-    ],
-    "fc_compute_seedmaps": [
-        "fc_ComputeSeedMaps",
-        "fc_compute_seedmaps_group",
-        "fc_ComputeSeedMapsGroup",
-    ],
-    "fc_compute_seedmaps_multiple": ["fc_ComputeSeedMapsMultiple"],
-    "fc_extract_roi_timeseries_masked": ["fc_ExtractROITimeseriesMasked"],
-    "fc_extract_trial_timeseries_masked": ["fc_ExtractTrialTimeseriesMasked"],
-    "fc_segment_mri": ["fc_fcMRISegment", "fc_mri_segment"],
-    "fc_preprocess": ["fc_Preprocess"],
-    "fc_preprocess_conc": ["fc_PreprocessConc"],
-    "general_image_overlap": ["qa_imgOverlap"],
-    "general_compute_bold_list_stats": ["g_ComputeBOLDListStats"],
-    "general_compute_bold_stats": ["g_ComputeBOLDStats"],
-    "general_compute_group_bold_stats": ["g_ComputeGroupBOLDStats"],
-    "general_extract_roi_glm_values": ["g_ExtractROIGLMValues"],
-    "general_extract_glm_volumes": ["g_ExtractGLMVolumes"],
-    "general_extract_roi_values": ["g_ExtractROIValues"],
-    "general_find_peaks": ["g_FindPeaks"],
-    "general_parcellated2dense": ["g_Parcellated2Dense"],
-    "general_plot_bold_timeseries": ["g_PlotBoldTS"],
-    "general_plot_bold_timeseries_list": ["g_PlotBoldTSList"],
-    "general_qa_concfile": ["g_QAConcFile"],
-    "general_image_conjunction": ["g_ConjunctionG"],
-    "stats_compute_behavioral_correlations": ["s_ComputeBehavioralCorrelations"],
-    "stats_p2z": ["s_p2Z"],
-    "stats_ttest_dependent": ["s_TTestDependent"],
-    "stats_ttest_independent": ["s_TTestIndependent"],
-    "stats_ttest_zero": ["s_TTestZero"],
-    "run_qc": ["runQC", "RunQC", "QCPreproc"],
-    "parcellate_anat": ["ANATparcellate", "anat_parcellate"],
-    "compute_bold_fc": [
-        "BOLDcomputeFC",
-        "bold_compute_fc",
-        "compute_fc_bold",
-        "fc_compute_wrapper",
-        "computeBOLDfc",
-    ],
-    "parcellate_bold": ["BOLDparcellate", "bold_parcellate", "bold_parcellation"],
-    "data_sync": ["DataSync"],
-    "run_qc_dwi_eddy": ["runQC_DWIeddyQC"],
-    "dwi_eddy_qc": ["DWIeddyQC"],
-    "dwi_bedpostx_gpu": ["DWIFSLbedpostxGPU", "FSLBedpostxGPU", "dwi_fsl_bedpostx_gpu"],
-    "dwi_dtifit": ["DWIFSLdtifit", "FSLDTtifit", "dwi_fsl_dtifit"],
-    "run_qc_dwi_dtifit": [
-        "runQC_DWIFSLdtifit",
-        "run_qc_dwi_fsl_dtifit",
-        "runQC_DWIDTIFIT",
-    ],
-    "dwi_legacy_gpu": ["dwi_legacy", "hcpdLegacy", "DWILegacy"],
-    "dwi_parcellate": ["DWIparcellate", "DWIDenseParcellation"],
-    "dwi_probtrackx_dense_gpu": ["DWIprobtrackxDenseGPU", "ProbtrackxGPUDense"],
-    "dwi_seed_tractography_dense": ["DWIseedTractographyDense", "DWISeedTractography"],
-    "run_qc_t1w": ["runQC_T1w"],
-    "run_qc_t2w": ["runQC_T2w"],
-    "run_qc_myelin": ["runQC_Myelin"],
-    "run_qc_bold": ["runQC_BOLD"],
-    "run_qc_bold_fc": ["runQC_BOLDfc"],
-    "run_qc_dwi": ["runQC_DWI"],
-    "run_qc_dwi_process": ["runQC_DWIProcess"],
-    "run_qc_dwi_bedpostx": ["runQC_DWIBedpostX"],
-    "run_qc_custom": ["runQC_Custom"],
-    "run_qc_rawnii": ["runQC_rawNII"],
-    "extract_roi": ["extractROI", "ROIExtract", "roi_extract"],
-    "matlab_help": ["matlabHelp"],
-    "gmri_function": ["gmriFunction"],
-    "organize_dicom": ["organizeDicom"],
-    "dwi_pre_tractography": ["DWIpreTractography", "pretractographyDense"],
-    "aws_hcp_sync": ["AWSHCPsync"],
-    "map_hcp_files": ["mapHCPFiles"],
-    "auto_ptx": ["autoPtx"],
-    "compute_bold_fc_gbc": ["computeBOLDfcGBC"],
-    "compute_bold_fc_seed": ["computeBOLDfcSeed"],
-    "list_dicom": ["listDicom"],
-    "split_dicom": ["splitDicom"],
-    "sort_dicom": ["sortDicom"],
-    "import_hcp": ["HCPLSImport", "importHCP"],
-    "import_bids": ["BIDSImport", "importBIDS"],
-    "import_dicom": ["processInbox", "importDICOM"],
-    "export_hcp": ["mapIO", "exportHCP"],
-    "list_session_info": ["listSubjectInfo", "listSessionInfo"],
-    "create_session_info": ["getHCPReady", "createSessionInfo"],
-    "create_study": ["createStudy"],
-    "get_dicom_info": ["getDICOMInfo"],
-    "map_bids2nii": ["mapBIDS2nii"],
-    "map_hcpls2nii": ["mapHCPLS2nii"],
-    "run_nil_folder": ["runNILFolder"],
-    "run_nil": ["runNIL"],
-    "slice_image": ["sliceImage"],
-    "setup_hcp": ["setupHCP"],
-    "create_batch": ["createBatch"],
-    "manage_study": ["manageStudy"],
-    "create_list": ["createList"],
-    "create_conc": ["createConc"],
-    "gather_behavior": ["gatherBehavior"],
-    "pull_sequence_names": ["pullSequenceNames"],
-    "batch_tag2namekey": ["batchTag2NameKey"],
-    "join_fidl": ["joinFidl"],
-    "join_fidl_folder": ["joinFidlFolder"],
-    "split_fidl": ["splitFidl"],
-    "check_fidl": ["checkFidl"],
-    "map2pals": ["map2PALS"],
-    "map2hcp": ["map2HCP"],
-    "mask_map": ["maskMap"],
-    "join_maps": ["joinMaps"],
-    "run_palm": ["runPALM"],
-    "create_ws_palm_design": ["createWSPALMDesign"],
-    "get_dicom_fields": ["getDICOMFields"],
-    "change_dicom_files": ["changeDICOMFiles"],
-    "map_hcp_data": ["mapHCPData"],
-    "get_bold_data": ["getBOLDData"],
-    "create_bold_brain_masks": ["createBOLDBrainMasks"],
-    "run_basic_segmentation": ["runBasicSegmentation"],
-    "get_fs_data": ["getFSData"],
-    "run_subcortical_fs": ["runSubcorticalFS"],
-    "run_full_fs": ["runFullFS"],
-    "compute_bold_stats": ["computeBOLDStats"],
-    "create_stats_report": ["createStatsReport"],
-    "extract_nuisance_signal": ["extractNuisanceSignal"],
-    "preprocess_bold": ["preprocessBold"],
-    "preprocess_conc": ["preprocessConc"],
-    "hcp_pre_freesurfer": ["hcp_PreFS", "hcp1"],
-    "hcp_freesurfer": ["hcp_FS", "hcp2"],
-    "hcp_post_freesurfer": ["hcp_PostFS", "hcp3"],
-    "hcp_fmri_volume": ["hcp_fMRIVolume", "hcp4"],
-    "hcp_fmri_surface": ["hcp_fMRISurface", "hcp5"],
-    "hcp_icafix": ["hcp_ICAFix"],
-    "hcp_post_fix": ["hcp_PostFix"],
-    "hcp_reapply_fix": ["hcp_ReApplyFix"],
-    "hcp_msmall": ["hcp_MSMAll"],
-    "hcp_dedrift_and_resample": ["hcp_DeDriftAndResample"],
-    "hcp_diffusion": ["hcp_Diffusion", "hcpd"],
-    "run_shell_script": ["runShellScript"],
-    "create_bold_list": ["createBoldList"],
-    "create_conc_list": ["createConcList"],
-    "map_raw_data": ["mapRawData"],
-    "hcp_task_fmri_analysis": ["hcp_TaskfMRIAnalysis"],
-    "dwi_xtract": ["fsl_xtract"],
-    "dwi_f99": ["fsl_f99"],
+    new: list(old) for new, old in gf.DEPRECATED_COMMANDS.items()
 }
 
 # Add information provided in extensions
@@ -280,6 +135,7 @@ deprecated_parameters = {
     "PEdir": "pedir",
     "sequenceinfo": "add_json_info",
     "hcp_icafix_traindata": "hcp_icafix_model",
+    "masterinbox": "inbox",
 }
 
 # The "deprecated_values" dictionary specifies remapping of deprecated values
@@ -484,13 +340,14 @@ def check_deprecated_parameters(options, command):
                         mapto = v2
                         break
 
-            # if v is None then parameter is no longer in use
-            if v:
+            # a parameter mapped to None is no longer in use, and is dropped
+            # whatever its value: kept, it was stored under the key None
+            if mapto is None or not v:
+                deprecated.append(k)
+            else:
                 # remap
                 new_options[mapto] = v
                 remapped.append(k)
-            else:
-                deprecated.append(k)
         else:
             new_options[k] = v
 
@@ -591,12 +448,18 @@ def set_omp_threads(options):
     `gmri` - a step of a recipe, a scheduler job, a call from a script - used
     to get the machine's default and oversubscribe the node.
 
+    A dry run (`--test`) starts nothing that would read it, and leaves the
+    environment as it found it; `bin/qunex.sh` skips it for one as well.
+
     Parameters:
         --options   The merged options, from `process.merge_options`.
 
     Returns:
-        The value it set, or None when the environment already stated one.
+        The value it set, or None when the environment already stated one or
+        the run is a dry run.
     """
+    if options.get("run", "run") != "run":
+        return None
     if options.get("omp_threads"):
         threads = int(options["omp_threads"])
     elif os.environ.get("OMP_NUM_THREADS"):
@@ -624,6 +487,10 @@ def set_omp_threads(options):
 PER_SESSION = "batch file (session)"
 RECIPE_RUN = "recipe run"
 
+# The source of a sessions folder nobody named, taken to be the `sessions`
+# folder of the study folder somebody did name.
+FROM_STUDYFOLDER = "studyfolder"
+
 # How a recipe tells the step it starts which of the parameters on its command
 # line came from the recipe: the names, comma separated, in the step's
 # environment. A command line carries values and not the tier they came from,
@@ -641,66 +508,31 @@ RUN_WIDE_SOURCES = ("batch file", PER_SESSION, RECIPE_RUN)
 # ==============================================================================
 #                                            NOT TAKING WHAT THE BATCH FILE SAYS
 #
-# A batch file states parameters for every command of a study, and since the
-# header reaches every command class, a name it states can land somewhere its
-# author did not have in mind -- `targetfile` is declared by four commands that
-# write four different files. These say "not from there", one per batch tier,
-# and they are run level parameters, so they can be written on the command line
-# and at every level of a recipe.
-UNSET_BATCH_HEADER = "unset_batch_header_parameters"
-UNSET_BATCH_SESSION = "unset_batch_session_parameters"
+# from `batch_io`, which the launcher carries: it applies them to the header it reads
+UNSET_BATCH_HEADER = bio.UNSET_BATCH_HEADER
+UNSET_BATCH_SESSION = bio.UNSET_BATCH_SESSION
+unset_patterns = bio.unset_patterns
+is_unset = bio.is_unset
+without_unset = bio.without_unset
 
 
-def unset_patterns(stated):
+def header_without_unset(header, args, command):
     """
-    ``unset_patterns(stated)``
+    ``header_without_unset(header, args, command)``
 
-    The patterns an unset states: a name, a comma separated list of them, or an
-    array -- the forms a recipe's `unset_parameters` already takes, so there is
-    one convention rather than two. An empty list states nothing, which is how
-    a step opts back in under a run wide `all`.
+    The batch file header less what the run said not to take from it
+    (``--unset_batch_header_parameters`` in `args`), and the names taken out.
+    Twice, around the remap of the deprecated spellings, because the names a
+    header states and the names it contributes are not the same set -- a
+    header saying ``log:`` contributes ``log`` and ``comlog_folders``.
+    ``placement.without_unset`` for ``gmri``, ``run_recipe`` called on its
+    own.
     """
-    if stated is None:
-        return []
-    if isinstance(stated, str):
-        stated = stated.split(",")
-    return [str(pattern).strip() for pattern in stated if str(pattern).strip()]
-
-
-def is_unset(name, patterns):
-    """
-    ``is_unset(name, patterns)``
-
-    Whether any of `patterns` unsets `name`. A pattern is a parameter name, a
-    glob over parameter names (`hcp_*`), `*`, or `all` -- the last being the
-    spelling QuNex uses for "every one of them" elsewhere, and free here since
-    no command declares a parameter of that name.
-
-    `fnmatchcase` rather than `fnmatch`, as in `batch_io`: the answer must not
-    depend on the operating system. `_` is not a metacharacter, so `hcp_*`
-    matches what it looks like it matches.
-    """
-    return any(
-        pattern in ("all", "*") or name == pattern or fnmatch.fnmatchcase(name, pattern)
-        for pattern in patterns
-    )
-
-
-def without_unset(options, patterns):
-    """
-    ``without_unset(options, patterns)``
-
-    The options left once the patterns have taken out what they name, and the
-    names they took. The names are returned because a pattern is not a list: a
-    run has to be able to say what `hcp_*` removed on the day it ran, rather
-    than leaving a reader to work it out from the release it ran on.
-    """
-    if not options or not patterns:
-        return options, []
-
-    unset = sorted(key for key in options if is_unset(key, patterns))
-
-    return {key: value for key, value in options.items() if key not in unset}, unset
+    patterns = unset_patterns(args.get(UNSET_BATCH_HEADER))
+    header, as_written = without_unset(header, patterns)
+    header = check_deprecated_parameters(header, command)
+    header, as_remapped = without_unset(header, patterns)
+    return header, sorted(set(as_written) | set(as_remapped))
 
 
 def declared_parameters(qx_command):
@@ -736,6 +568,7 @@ def update_options(session, options, sources=None):
     ssources = dict(sources or {})
     patterns = unset_patterns(options.get(UNSET_BATCH_SESSION))
 
+    stated = {}
     for key, value in session.items():
         if key.startswith("_"):
             key = key[1:]
@@ -744,6 +577,16 @@ def update_options(session, options, sources=None):
         else:
             continue
 
+        if not is_unset(key, patterns):
+            stated[key] = value
+
+    # a deprecated spelling means here what it means in the header and on the
+    # command line, where it is remapped; left as written, a `_TR:` set an
+    # option nothing reads. An unset is honoured in either spelling
+    if stated:
+        stated = check_deprecated_parameters(stated, options.get("command_ran"))
+
+    for key, value in stated.items():
         if is_unset(key, patterns):
             continue
 
@@ -967,6 +810,7 @@ extra_parameters = [
     "logfolder",
     "logstatus",
     "basefolder",
+    "studyfolder",
     "sessionsfolder",
     "sperlist",
     "runinpar",

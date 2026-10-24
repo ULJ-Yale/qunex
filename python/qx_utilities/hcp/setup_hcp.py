@@ -27,6 +27,7 @@ import shutil
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 from qx_utilities.hcp.hcp_utils import check_inline_parameter_use
 
 # ---- some definitions
@@ -145,7 +146,9 @@ def setup_hcp(
         structure that conforms to the naming conventions used in the HCP
         minimal preprocessing workflow. For the mapping to be correct, the
         command expects the source session.txt file (sourcefile) to hold the
-        relevant information on images. To save space, the images are not
+        relevant information on images. The images are taken from the folder
+        its `raw_data` entry names; a relative one (e.g. `raw_data: nii`) is
+        relative to the session folder. To save space, the images are not
         copied into the new folder structure but rather hard-links are created
         if possible.
 
@@ -226,28 +229,30 @@ def setup_hcp(
                 16: bold8:rest      :RSBOLD 3mm 48 2.5s       : se(2) :phenc(PA)
 
             HCP folder structure version:
-                `version` parameter determines the HCP folder structure to use:
+                `hcp_folderstructure` parameter determines the HCP folder
+                structure to use:
 
-                --'v1'
+                --'hcpya'
                     Unprocessed data is parallel to processed data, functional
                     data folders have `_fncb` suffix and field map data folders
                     have `_strc` tail.
-                --'v2'
+                --'hcpls'
                     Unprocessed data is a subfolder in the HCP session folder,
                     functional data folders and field map data folders do not
                     have the `_fncb` and `_strc` extensions, respectively.
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying
-            `sessions` and optionally `sessionsfolder` and `parsessions`
-            parameters. In this case the command will be run for each of the
-            specified sessions in the sessionsfolder (current directory by
-            default). `sessions` limits the run to the specified id codes, and
-            an optional `filter` parameter selects the sessions whose batch
-            file entry matches a key. (for more information see online
-            documentation). `sourcefolder` will be
-            filled in automatically as each session's folder. Commands will
-            run in parallel, where the degree of parallelism is determined by
+            `sessions` and optionally `studyfolder` (or `sessionsfolder`) and
+            `parsessions` parameters. In this case the command will be run for
+            each of the specified sessions in the sessions folder (the
+            `sessions` folder of the study, or the current directory when
+            neither is given). `sessions` limits the run to the specified id
+            codes, and an optional `filter` parameter selects the sessions
+            whose batch file entry matches a key (for more information see
+            online documentation). `sourcefolder` will be filled in
+            automatically as each session's folder. Commands will run in
+            parallel, where the degree of parallelism is determined by
             `parsessions` (1 by default).
 
             If `scheduler` parameter is set, the command will be run using the
@@ -276,19 +281,21 @@ def setup_hcp(
         simultaneously::
 
             qunex setup_hcp \\
-                --sessionsfolder=/<study_folder>/sessions \\
+                --studyfolder=/<study_folder> \\
                 --sessions="<session_id_1>,<session_id_2>"
 
         To run setup_hcp for all sessions in the batch file use::
 
             qunex setup_hcp \\
-                --sessionsfolder="/<study_folder>/sessions" \\
+                --studyfolder="/<study_folder>" \\
                 --batchfile="/<study_folder>/processing/batch.txt"
     """
 
     print("Running setup_hcp\n================")
 
+    # the folders a session file names are relative to its session folder
     inf = gc.read_batch(os.path.join(sourcefolder, sourcefile))[0][0]
+    gf.resolve_session_folders(inf, sourcefolder)
     rawf = inf.get("raw_data", None)
     options = {"use_sequence_info": gc.pcslist(use_sequence_info)}
 

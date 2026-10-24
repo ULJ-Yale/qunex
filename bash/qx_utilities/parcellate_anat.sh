@@ -23,19 +23,27 @@ included).
     language: bash
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study data folder.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --session (str):
-        Comma separated list of sessions to run.
+        The id of the session to run. To run the command over several
+        sessions, give them with --sessions or --batchfile instead: qunex then
+        runs it once for each session.
 
     --inputdatatype (str):
         Specify the type of dense data for the input file (e.g. MyelinMap_BC or
         corrThickness).
 
     --parcellationfile (str):
-        Specify the absolute path of the ∗.dlabel file you want to use for
-        parcellation.
+        Specify the ∗.dlabel file you want to use for parcellation: an absolute
+        path, or one relative to the study folder.
 
     --outname (str):
         Specify the suffix output name of the pconn file.
@@ -45,8 +53,9 @@ Parameters:
         previous data is deleted before the run, so in the case of a failed
         command run, previous results are lost.
 
-    --extractdata (flag):
-        Specify if you want to save out the matrix as a CSV file.
+    --extractdata (str, default 'no'):
+        Specify if you want to save out the matrix as a CSV file ('yes' /
+        'no').
 
 Examples:
     Run directly via::
@@ -80,7 +89,7 @@ Examples:
     ::
 
         qunex parcellate_anat \\
-            --sessionsfolder='<folder_with_sessions>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --session='<case_id>' \\
             --inputdatatype='MyelinMap_BC' \\
             --parcellationfile='<dlabel_file_for_parcellation>' \\
@@ -107,11 +116,11 @@ fi
 ########### INPUTS ###############
 
 	# -- Data should be pre-processed and in CIFTI format
-	# -- The data should be in the folder relative to the master study folder, specified by the inputfile
+	# the data should be in <sessionsfolder>/<session>/hcp/<session>/MNINonLinear/fsaverage_LR32k
 
 ########## OUTPUTS ###############
 
-	# -- Outputs will be *pconn.nii files located in the location specified in the outputpath
+	# outputs are *pscalar.nii files written next to the input
 
 # -- Get the command line options for this script
 get_options() {
@@ -120,6 +129,7 @@ local scriptName=$(basename ${0})
 local arguments=($@)
 
 # -- Initialize global output variables
+unset StudyFolder
 unset SessionsFolder
 unset Session
 unset InputDataType
@@ -145,6 +155,10 @@ while [ ${index} -lt ${numArgs} ]; do
             version_show $@
             exit 0
             ;;
+        --studyfolder=*)
+            StudyFolder=${argument/*=/""}
+            index=$(( index + 1 ))
+            ;;
         --sessionsfolder=*)
             SessionsFolder=${argument/*=/""}
             index=$(( index + 1 ))
@@ -161,6 +175,12 @@ while [ ${index} -lt ${numArgs} ]; do
             ExtractData=${argument/*=/""}
             index=$(( index + 1 ))
             ;;
+        # --extractdata was documented as a flag, given without a value it
+        # asks for the CSV file
+        --extractdata)
+            ExtractData="yes"
+            index=$(( index + 1 ))
+            ;;
         --parcellationfile=*)
             ParcellationFile=${argument/*=/""}
             index=$(( index + 1 ))
@@ -174,7 +194,6 @@ while [ ${index} -lt ${numArgs} ]; do
             index=$(( index + 1 ))
             ;;      
         *)
-            usage
             echo "ERROR: Unrecognized Option: ${argument}"
             echo ""
             exit 1
@@ -182,40 +201,37 @@ while [ ${index} -lt ${numArgs} ]; do
     esac
 done
 
+# the sessions are in the sessions folder of the study, unless --sessionsfolder
+# names another one
+if [ -z "${SessionsFolder}" ] && [ -n "${StudyFolder}" ]; then
+    SessionsFolder="${StudyFolder}/sessions"
+fi
+
 # -- Check required parameters
-if [ -z ${SessionsFolder} ]; then
-    usage
-    echo "ERROR: <sessions-folder-path> not specified>"
+if [ -z "${SessionsFolder}" ]; then
+    echo "ERROR: Neither --studyfolder nor --sessionsfolder specified"
     echo ""
     exit 1
 fi
 if [ -z ${CASE} ]; then
-    usage
-    echo "ERROR: <session-id> not specified>"
+    echo "ERROR: <session-id> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${InputDataType} ]; then
-    usage
-    echo "ERROR: <type_of_dense_data_for_input_file>"
+    echo "ERROR: <type_of_dense_data_for_input_file> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${ParcellationFile} ]; then
-    usage
-    echo "ERROR: <file_for_parcellation> not specified>"
+    echo "ERROR: <file_for_parcellation> not specified"
     echo ""
     exit 1
 fi
 if [ -z ${OutName} ]; then
-    usage
-    echo "ERROR: <name_of_output_pconn_file> not specified>"
+    echo "ERROR: <name_of_output_pconn_file> not specified"
     exit 1
 fi
-
-# -- Set StudyFolder
-cd $SessionsFolder/../ &> /dev/null
-StudyFolder=`pwd` &> /dev/null
 
 # -- Report options
 echo ""

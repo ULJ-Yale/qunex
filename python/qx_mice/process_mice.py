@@ -40,7 +40,7 @@ from qx_utilities.general.log import ReportLog
 
 def preprocess_mice(sinfo, options, overwrite=False, thread=0):
     """
-    ``preprocess_mice [... processing options]``
+    ``preprocess_mice [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the QuNex mice preprocessing command.
 
@@ -58,9 +58,15 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --bolds (str, default ''):
             Which bold images to process. You can select bolds through their
@@ -92,8 +98,8 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
         --fix_rdata (str, default 'qx_library/etc/mice_pipelines/zerbi_2015_neuroimage.RData'):
             Path to the RData file used by fix.
 
-        --fix_threshold (int, default 2):
-            Fix ICA treshold.
+        --fix_threshold (int, default 20):
+            FIX ICA threshold.
 
         --fix_no_motion_cleanup:
             A flag for disabling cleanup of motion confounds. Disabled by
@@ -115,22 +121,22 @@ def preprocess_mice(sinfo, options, overwrite=False, thread=0):
             Path to the template file.
 
     Output files:
-        The results of this step will be present in the nii folder
-        in the sessions's root::
+        The results of this step will be present in the mice folder
+        of each session::
 
             study
             └─ sessions
-            ├─ session1
-            |  └─ mice
-            └─ session2
-                └─ mice
+               ├─ session1
+               |  └─ mice
+               └─ session2
+                  └─ mice
 
     Examples:
         ::
 
             qunex preprocess_mice \\
-                --sessionsfolder="/data/mice_study/sessions" \\
-                --sessions="/data/mice_study/processsing/batch.txt"
+                --studyfolder="/data/mice_study" \\
+                --batchfile="/data/mice_study/processing/batch.txt"
 
     """
     log = ReportLog()
@@ -239,7 +245,7 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
         work_dir, f"{boldinfo['name']}_filtered_func_data_clean_BP_ABI.nii.gz"
     )
     if not overwrite and os.path.exists(test_file):
-        log.raw(f" ... overwrite is disable and output [{test_file}] already exists, skipping this bold.\n")
+        log.raw(f" ... overwrite is disabled and output [{test_file}] already exists, skipping this bold.\n")
         report["done"].append(boldinfo["name"])
     else:
         if boldok:
@@ -331,12 +337,12 @@ def _execute_preprocess_mice(sinfo, options, overwrite, boldinfo):
                 log.step(f"BOLD {boldinfo['name']} is not ready for preprocess_mice command")
                 report["not ready"].append(boldinfo["name"])
 
-        return {"r": log.text, "report": report}
+    return {"r": log.text, "report": report}
 
 
 def map_mice_data(sinfo, options, overwrite=False, thread=0):
     """
-    ``map_mice_data [... processing options]``
+    ``map_mice_data [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Maps preprocessed mice data to the sessions' image folder.
 
@@ -350,9 +356,15 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --bolds (str, default ''):
             Which bold images to process. You can select bolds through their
@@ -373,23 +385,25 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
     Output files:
-        The results of this step will be present in the functional folder
-        in the sessions's root::
+        The results of this step will be present in the images/functional
+        folder of each session::
 
             study
             └─ sessions
-            ├─ session1
-            |  └─ functional
-            └─ session2
-                └─ functional
+               ├─ session1
+               |  └─ images
+               |     └─ functional
+               └─ session2
+                  └─ images
+                     └─ functional
 
 
     Examples:
         ::
 
             qunex map_mice_data \\
-              --sessionsfolder="/data/mice_study/sessions" \\
-              --sessions="/data/mice_study/processsing/batch.txt"
+              --studyfolder="/data/mice_study" \\
+              --batchfile="/data/mice_study/processing/batch.txt"
 
     """
     log = ReportLog()
@@ -416,7 +430,10 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
             options["sessionsfolder"], sinfo["id"], "images", "functional"
         )
         if not os.path.exists(func_dir):
-            os.makedirs(func_dir)
+            if options["run"] == "run":
+                os.makedirs(func_dir)
+            else:
+                log.detail(f"test, not created: {func_dir}")
 
         for boldinfo in bolds:
             log.step(f"Mapping {boldinfo['name']}")
@@ -500,7 +517,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
                 log.detail(f"checking {bold_abi}")
                 if os.path.exists(source_abi):
                     if os.path.exists(target_abi) and not overwrite:
-                        log.detail(f"{bold_abi} already exists and overwrite is set to no, skipping this file")
+                        log.detail(f"{bold_abi} already exists and overwrite is set to no, this file would be skipped")
                     report["ready"].append(bold_abi)
                 else:
                     log.warning(f"{bold_abi} does not exist, rerun the preprocess_mice step", depth=1)
@@ -515,7 +532,7 @@ def map_mice_data(sinfo, options, overwrite=False, thread=0):
 
         report = (
             sinfo["id"],
-            "preprocess_mice: bolds " + "; ".join(rep),
+            "map_mice_data: bolds " + "; ".join(rep),
             len(report["failed"] + report["not ready"]),
         )
 

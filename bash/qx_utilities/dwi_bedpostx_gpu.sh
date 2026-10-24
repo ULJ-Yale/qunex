@@ -14,7 +14,7 @@ usage() {
     cat << EOF
 ``dwi_bedpostx_gpu``
 
-Run FSL bedpostx command wile making use of GPUs to speed up the processing.
+Run FSL bedpostx command while making use of GPUs to speed up the processing.
 
 ..  qx_command:
     type: processing.session
@@ -25,19 +25,31 @@ Warning:
     for preprocessing and completed diffusion processing. DWI data is expected to
     be in the following folder::
 
-        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion
 
-This can be changed with the --diffusion_folder parameter.
+    This can be changed with the --diffusion_folder parameter.
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         Comma separated list of sessions to run.
 
     --diffusion_folder (str):
-        Path to the diffusion folder.
+        Path to the diffusion folder. The bedpostx outputs are written next
+        to it, to ``<diffusion_folder>.bedpostX``.
+
+    --species (str):
+        dwi_bedpostx_gpu currently supports processing of human and macaque
+        data. If processing macaques set this parameter to macaque, the DWI
+        data is then expected in ``<sessionsfolder>/<session>/NHP/dMRI``.
 
     --fibers (str, default '3'):
         Number of fibres per voxel.
@@ -84,7 +96,7 @@ Parameters:
         partition=<queue_to_send_job_to>'
 
     --nogpu (flag, default 'no'):
-        If set, this command will be processed useing a CPU instead of a GPU.
+        If set, this command will be processed using a CPU instead of a GPU.
 
 Notes:
     Apptainer (Singularity) and GPU support:
@@ -101,8 +113,8 @@ Examples:
     ::
 
         qunex dwi_bedpostx_gpu \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --fibers='3' \\
             --burnin='3000' \\
             --model='3' \\
@@ -114,8 +126,8 @@ Examples:
     ::
 
         qunex dwi_bedpostx_gpu \\
-            --sessionsfolder='<path_to_study_sessions_folder>' \\
-            --sessions='<comma_separarated_list_of_cases>' \\
+            --studyfolder='<path_to_study_folder>' \\
+            --sessions='<comma_separated_list_of_cases>' \\
             --fibers='3' \\
             --burnin='3000' \\
             --model='3' \\
@@ -164,6 +176,7 @@ get_options() {
     local script_name=$(basename ${0})
     local arguments=($@)
     # -- Initialize global output variables
+    unset studyfolder
     unset sessionsfolder
     unset session
     runcmd=""
@@ -183,12 +196,23 @@ get_options() {
     # the documented spelling, and the one qunex passes; --session is what the
     # shell front end passed and is kept
     if [ -z "$session" ]; then session=`opts_getopt "--sessions" $@`; fi
+    studyfolder=`opts_getopt "--studyfolder" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
     nogpu=`opts_getopt "--nogpu" $@`
+    # --nogpu is a flag, and given without a value it asks for the cpu
+    for fn in "$@"; do
+        if [ "$fn" == "--nogpu" ]; then nogpu="yes"; fi
+    done
+    # --nogpu='true' asks for the cpu as well
+    if [ "${nogpu,,}" == "true" ] || [ "${nogpu,,}" == "yes" ]; then nogpu="yes"; fi
     diffusion_folder=`opts_getopt "--diffusion_folder" $@`
 
+    # the sessions are in the sessions folder of the study, unless
+    # --sessionsfolder names another one
+    if [ -z "$sessionsfolder" ] && [ -n "$studyfolder" ]; then sessionsfolder="${studyfolder}/sessions"; fi
+
     # -- Check required parameters
-    if [ -z "$sessionsfolder" ]; then echo "Error: sessions folder"; exit 1; fi
+    if [ -z "$sessionsfolder" ]; then echo "Error: Neither --studyfolder nor --sessionsfolder specified"; exit 1; fi
     if [ -z "$session" ]; then echo "Error: session missing"; exit 1; fi
 
     # -- Set defaults if not provided
@@ -200,14 +224,14 @@ get_options() {
     if [ -z "$model" ]; then echo "Note: The model parameter is not set, using default [2]"; model=2; fi
     if [ -z "$rician" ]; then echo "Note: The rician parameter is not set, using default [yes]"; rician="yes"; fi
 
-    # -- Set StudyFolder
-    cd $sessionsfolder/../ &> /dev/null
-    StudyFolder=`pwd` &> /dev/null
+    # the study folder, when not given, is the folder the sessions folder is
+    # in; found in a subshell, so that the working directory does not change
+    studyfolder="${studyfolder:-$(cd "${sessionsfolder}/.." 2> /dev/null && pwd)}"
 
     # -- Report run parameters
     echo ""
     echo " ---> Executing ${script_name} dwi_bedpostx_gpu:"
-    echo "     Study folder: ${StudyFolder}"
+    echo "     Study folder: ${studyfolder}"
     echo "     Sessions Folder: ${sessionsfolder}"
     echo "     Session: ${session}"
     echo "     Number of fibers: ${fibers}"

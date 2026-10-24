@@ -26,7 +26,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_fmri_stats [... processing options]``
+    ``hcp_fmri_stats [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the fMRI Statistics step of HCP Pipeline (fMRIStats.sh).
     Computes fMRI statistics including mTSNR, fCNR, and percent BOLD.
@@ -46,9 +46,15 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -85,7 +91,8 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
             Whether to compute cleanup effects metrics, TRUE or FALSE.
 
         --hcp_fmristats_procstring (str, default ''):
-            Processing string suffix for cleaned data.
+            Processing string suffix for cleaned data (e.g. '_clean').
+            Mandatory, the command does not run without it.
 
         --hcp_fmristats_icamode (str, default ''):
             ICA mode: 'sICA' for spatial ICA only, 'sICA+tICA' for combined
@@ -137,9 +144,10 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
 
             qunex hcp_fmri_stats \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
+                --studyfolder=. \\
                 --hcp_concat_names="fMRI_CONCAT_ALL" \\
                 --hcp_icafix_highpass="2000" \\
+                --hcp_fmristats_procstring="_clean" \\
                 --hcp_matlab_mode="interpreted"
     """
 
@@ -290,15 +298,12 @@ def hcp_fmri_stats(sinfo, options, overwrite=False, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # -- just checking: there is no file to check the run against, so
+            #    a session whose inputs are all present can be run
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP fMRI Stats", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP fMRI Stats can be run")
-                    report = "HCP fMRI Stats can be run"
-                    failed = 0
+                log.step("HCP fMRI Stats can be run")
+                report = "HCP fMRI Stats can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")

@@ -20,8 +20,8 @@ import os.path
 import traceback
 from concurrent.futures import ProcessPoolExecutor
 
-import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
@@ -36,7 +36,7 @@ from qx_utilities.hcp.hcp_utils import execute_hcp_multi_dedrift_and_resample
 # TODO: take care of per session bold specification
 def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_long_msmall [... processing options]``
+    ``hcp_long_msmall [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP Longitudinal MSMAll Pipeline
     (MSMAllPipeline.sh with the longitudinal setup).
@@ -60,9 +60,15 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -75,13 +81,18 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
             The path to the folder where logs are to be stored,
             if other than default.
 
+        --hcp_longitudinal_template (str, default 'base'):
+            Name of the longitudinal template.
+
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
-            used in the ICAFix run. If multi-run ICAFix was run with two or
-            more groups then HCP MSMAll will be executed over the first
-            specified group (and the scans listed for hcp_msmall_bolds must
-            be limited to scans in the first concatenation group as well).
+            used in the ICAFix run. The bolds have to be in multi-run ICAFix
+            groups: a list without groups (single-run ICAFix) stops the
+            command with an error. If multi-run ICAFix was run with two or
+            more groups then HCP MSMAll and DeDriftAndResample are executed
+            for every group, in the order listed, and each group replaces
+            the MSMAll outputs of the group before it (see the notes below).
             If not provided MSMAll will assume multi-run ICAFix was executed
             with all bolds bundled together in a single concatenation called
             fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
@@ -93,7 +104,11 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
             to be a subset of bolds used from the hcp_icafix_bolds parameter
             [if not specified all bolds specified in hcp_icafix_bolds will
             be used, which is probably NOT what you want to do if
-            hcp_icafix_bolds includes non-resting-state scans].
+            hcp_icafix_bolds includes non-resting-state scans]. A bold can
+            be given by its name, number or tag. With two or more multi-run
+            ICAFix groups, every entry has to name a bold in each group, so,
+            as each bold belongs in one group only, only tags that every
+            group carries can be used (see the notes below).
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -102,13 +117,24 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
         --hcp_msmall_outfmriname (str, default 'rfMRI_REST'):
             The name which will be given to the concatenation of scans specified
-            by the hcp_msmall_bold parameter.
+            by the hcp_msmall_bolds parameter.
 
         --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
             Path to directory containing MSMAll template files.
 
         --hcp_msmall_outregname (str, default 'MSMAll_InitialReg'):
             Output registration name.
+
+        --hcp_resample_regname (str, default '<hcp_msmall_outregname>_2_d40_WRN'):
+            The MSMAll registration DeDriftAndResample applies. By default
+            the one this MSMAll run computes, named as MSMAll names it:
+            <hcp_msmall_outregname>_<number of iteration modes>_d<ica dim>_<method>.
+            hcp_long_msmall runs MSMAll with its default iteration modes
+            (CA_CAT), ICA dimension (40) and method (WRN), whatever
+            hcp_msmall_iteration_modes, hcp_msmall_ica_dim and
+            hcp_msmall_method say, so the name is
+            <hcp_msmall_outregname>_2_d40_WRN. Set it only to apply another
+            registration.
 
         --hcp_hiresmesh (int, default 164):
             High resolution mesh node count.
@@ -134,7 +160,10 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be generated and populated in the
-        MNINonLinear folder inside the same sessions's root hcp folder.
+        MNINonLinear folders of the subject's longitudinal folder,
+        <studyfolder>/subjects/<subject id>: in <subject id>.long.<template>
+        for the template and in <session id>.long.<template> for each
+        session.
 
     Notes:
         Runs the longitudinal MSMAll step of the HCP Pipeline. This function
@@ -169,6 +198,27 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         MSMAll registration to the same full set of fMRI scans that were
         cleaned using hcp_icafix.
 
+        If hcp_icafix_bolds names two or more multi-run ICAFix groups, the
+        groups are processed one after the other, in the order in which
+        they are listed. For each group, MSMAll is executed on the bolds of
+        the group that hcp_msmall_bolds selects (on all bolds of the group
+        if hcp_msmall_bolds is not provided) and, if it completes
+        successfully, DeDriftAndResample applies the registration named by
+        hcp_resample_regname, by default the resulting one, to the bolds of
+        the group in every session, and to the template.
+        All groups write the same MSMAll outputs, named by
+        hcp_msmall_outfmriname and hcp_msmall_outregname, so each group
+        replaces the outputs of the group before it: the bolds of each
+        group are resampled with the registration computed from that group
+        (unless hcp_resample_regname names another), while the registration
+        and the maps that remain are those of the last group. As in
+        hcp_msmall, every entry of hcp_msmall_bolds has to name a bold of
+        every group, and each bold belongs in one group only, so with
+        several groups only bold tags that every group carries can be used. To compute the registration
+        from the bolds of one group only, list just that group in
+        hcp_icafix_bolds, as it was given to hcp_icafix; the bolds of the
+        other groups are then not resampled.
+
         hcp_msmall parameter mapping:
 
             ============================= ============================
@@ -188,17 +238,19 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
             ============================= ============================
 
     Examples:
+        ::
+
             qunex hcp_long_msmall \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
-                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_msmall_bolds="REST_1,REST_2" \\
                 --hcp_longitudinal_template="<template_id>"
     """
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal MSMAll Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal MSMAll Pipeline", label="Subject")
 
     run = True
     report = {"done": [], "failed": [], "skipped": [], "ready": [], "not ready": []}
@@ -221,16 +273,26 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        msmall_groups, _, pars_ok = parse_msmall_bolds(options, bolds, log)
+        msmall_groups, single_run, pars_ok = parse_msmall_bolds(options, bolds, log)
+
+        # the longitudinal pipeline runs on a multi-run ICAFix concatenation
+        if single_run:
+            log.error(
+                "hcp_long_msmall needs multi-run ICAFix bolds: name their "
+                "concatenation in hcp_icafix_bolds (<group>:<bold>,<bold>), or "
+                "leave it unset for fMRI_CONCAT_ALL!"
+            )
+            pars_ok = False
 
         if not pars_ok:
-            raise ge.CommandFailed("hcp_msmall", "... invalid input parameters!")
+            raise ge.CommandFailed("hcp_long_msmall", "... invalid input parameters!")
 
         if run:
             for group in msmall_groups:
+                # named before anything can fail, the handlers report it
+                groupname = group["name"]
                 try:
                     # get group data
-                    groupname = group["name"]
                     bolds = group["bolds"]
 
                     # outfmriname
@@ -340,12 +402,10 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     # fix names to use
                     fixnamestouse = "@".join(group["msmall_bolds"])
 
-                    studyfolder = gc.deduceFolders(options)["basefolder"]
-                    if not studyfolder:
-                        log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
-                        boldok = False
                     # replace path
-                    path = os.path.join(studyfolder, "subjects", subject_id)
+                    path = os.path.join(
+                        gf.subjects_folder(options["studyfolder"]), subject_id
+                    )
 
                     comm = (
                         '%(script)s \
@@ -400,7 +460,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     # -- Run
                     if run and boldok:
                         if options["run"] == "run":
-                            _, _, failed = pc.run_external_for_file(
+                            _, _, msmall_failed = pc.run_external_for_file(
                                 None,
                                 comm,
                                 "Running HCP MSMAll",
@@ -414,9 +474,8 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 shell=True,
                                 _log=log,
                             )
-                            failed = False
 
-                            if failed:
+                            if msmall_failed:
                                 report["failed"].append(
                                     f"msmall_{subject_id}_{groupname}"
                                 )
@@ -503,14 +562,14 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
                         # -- just checking
                         else:
-                            passed, _, failed = pc.check_run(
+                            _, _, check_failed = pc.check_run(
                                 None,
                                 None,
                                 "HCP MSMAll " + f"{subject_id}_{groupname}",
                                 overwrite=True,
                                 _log=log,
                             )
-                            if failed == 0:
+                            if check_failed == 0:
                                 log.step("HCP MSMAll can be run")
                                 report["ready"].append(f"{subject_id}_{groupname}")
                             else:
@@ -533,9 +592,16 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                     report["failed"].append(f"{subject_id}_{groupname}")
         else:
             log.step("Subject cannot be processed.")
-            report["not ready"] = subject_id
-            failed = 1
+            report["not ready"].append(subject_id)
 
+    except ge.CommandFailed as e:
+        log.raw("\n" + ge.report_command_failed("hcp_long_msmall", e))
+        report = "processing failed"
+        failed = 1
+    except ge.CommandError as e:
+        log.raw("\n" + ge.report_command_error("hcp_long_msmall", e))
+        report = "processing failed"
+        failed = 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
         report = "Error"
@@ -547,12 +613,14 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
     log.close(pipeline="HCP Longitudinal MSMAll Preprocessing")
 
-    for check in ["failed", "not ready", "skipped"]:
-        failed += len(report[check])
+    # summarize the groups, unless the subject failed before reaching them
+    if isinstance(report, dict):
+        for check in ["failed", "not ready", "skipped"]:
+            failed += len(report[check])
 
-    report = ", ".join([
-        f"{item}: {len(report[item])} [{', '.join(report[item])}]"
-        for item in ["done", "ready", "skipped", "not ready", "failed"]
-    ])
+        report = ", ".join([
+            f"{item}: {len(report[item])} [{', '.join(report[item])}]"
+            for item in ["done", "ready", "skipped", "not ready", "failed"]
+        ])
 
     return log.result((subject_id, report, failed))

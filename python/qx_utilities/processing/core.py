@@ -276,17 +276,76 @@ def get_exact_file(candidate):
         return ""
 
 
-def get_file_names(sinfo, options):
+# the QuNex name of a 4dfp image and the legacy (NIL) name it is linked from
+LEGACY_4DFP_FILES = {
+    "t1_brain": "m111_brain",
+    "t1_seg": "m111_seg",
+    "fs_aseg_t1": "fs_aseg_111",
+    "fs_aseg_bold": "fs_aseg_333",
+    "fs_aparc_t1": "fs_aparc+aseg_111",
+    "fs_aparc_bold": "fs_aparc+aseg_333",
+}
+
+
+def _link_legacy_files(f, options, _log=None):
+    """
+    Link the legacy 4dfp images of a session to their QuNex names.
+
+    Each image is linked with its `.ifh` header, when the legacy file exists
+    and the QuNex one does not. Under ``--test`` nothing is linked: the link
+    that would have been made is noted on `_log` instead, and
+    :func:`present` answers for the file the link would have made.
+    """
+    for target, legacy in LEGACY_4DFP_FILES.items():
+        for ext in [".img", ".ifh"]:
+            source = f[legacy].replace(".img", ext)
+            destination = f[target].replace(".img", ext)
+            if not os.path.exists(source) or os.path.exists(destination):
+                continue
+            if options.get("run", "run") == "run":
+                # a link that could not be made leaves the QuNex name missing,
+                # which the checks that read it then report
+                if not gc.link_or_copy(source, destination):
+                    _say(_log, "warning", f"could not link {source} -> {destination}")
+            else:
+                _say(_log, "detail", f"test, not linked: {source} -> {destination}")
+
+
+def present(f, key, options):
+    """
+    Whether the file `f[key]` is there, or would be once its legacy 4dfp
+    image is linked to it.
+
+    :func:`get_file_names` links a legacy image to its QuNex name in a real
+    run only, so a dry run checks for the image the link would be made from.
+    A real run checks the QuNex name alone: a link that could not be made
+    leaves it missing, and so it is reported.
+    """
+    if os.path.exists(f[key]):
+        return True
+    legacy = LEGACY_4DFP_FILES.get(key)
+    return (
+        options.get("run", "run") != "run"
+        and options["image_target"] == "4dfp"
+        and legacy is not None
+        and os.path.exists(f[legacy])
+    )
+
+
+def get_file_names(sinfo, options, *, _log=None):
     """
     Build the dictionary of QuNex file names for a session's data.
 
     Resolves the structural, segmentation, BOLD and derived file paths a
     processing command reads and writes, based on the session folders and the
-    naming options (tails, variants, glm/conc names).
+    naming options (tails, variants, glm/conc names). For a 4dfp target, the
+    legacy images of the session are linked to their QuNex names -- under
+    ``--test`` only noted on `_log`.
 
     Parameters:
         sinfo (dict): session information; ``id`` is used.
         options (dict): command options controlling naming and targets.
+        _log: the log the links not made under ``--test`` are noted on.
 
     Returns:
         dict: mapping of file keys to absolute paths for this session.
@@ -386,59 +445,7 @@ def get_file_names(sinfo, options):
     # --- convert legacy paths (create hard links)
 
     if options["image_target"] == "4dfp":
-        # ---> BET & FAST
-
-        if os.path.exists(f["m111_brain"]) and not os.path.exists(f["t1_brain"]):
-            gc.link_or_copy(f["m111_brain"], f["t1_brain"])
-
-        if os.path.exists(f["m111_seg"]) and not os.path.exists(f["t1_seg"]):
-            gc.link_or_copy(f["m111_seg"], f["t1_seg"])
-
-        # ---> FreeSurfer
-
-        if os.path.exists(f["fs_aseg_111"]) and not os.path.exists(f["fs_aseg_t1"]):
-            gc.link_or_copy(f["fs_aseg_111"], f["fs_aseg_t1"])
-        if os.path.exists(
-            f["fs_aseg_111"].replace(".img", ".ifh")
-        ) and not os.path.exists(f["fs_aseg_t1"].replace(".img", ".ifh")):
-            gc.link_or_copy(
-                f["fs_aseg_111"].replace(".img", ".ifh"),
-                f["fs_aseg_t1"].replace(".img", ".ifh"),
-            )
-
-        if os.path.exists(f["fs_aseg_333"]) and not os.path.exists(f["fs_aseg_bold"]):
-            gc.link_or_copy(f["fs_aseg_333"], f["fs_aseg_bold"])
-        if os.path.exists(
-            f["fs_aseg_333"].replace(".img", ".ifh")
-        ) and not os.path.exists(f["fs_aseg_bold"].replace(".img", ".ifh")):
-            gc.link_or_copy(
-                f["fs_aseg_333"].replace(".img", ".ifh"),
-                f["fs_aseg_bold"].replace(".img", ".ifh"),
-            )
-
-        if os.path.exists(f["fs_aparc+aseg_111"]) and not os.path.exists(
-            f["fs_aparc_t1"]
-        ):
-            gc.link_or_copy(f["fs_aparc+aseg_111"], f["fs_aparc_t1"])
-        if os.path.exists(
-            f["fs_aparc+aseg_111"].replace(".img", ".ifh")
-        ) and not os.path.exists(f["fs_aparc_t1"].replace(".img", ".ifh")):
-            gc.link_or_copy(
-                f["fs_aparc+aseg_111"].replace(".img", ".ifh"),
-                f["fs_aparc_t1"].replace(".img", ".ifh"),
-            )
-
-        if os.path.exists(f["fs_aparc+aseg_333"]) and not os.path.exists(
-            f["fs_aparc_bold"]
-        ):
-            gc.link_or_copy(f["fs_aparc+aseg_333"], f["fs_aparc_bold"])
-        if os.path.exists(
-            f["fs_aparc+aseg_333"].replace(".img", ".ifh")
-        ) and not os.path.exists(f["fs_aparc_bold"].replace(".img", ".ifh")):
-            gc.link_or_copy(
-                f["fs_aparc+aseg_333"].replace(".img", ".ifh"),
-                f["fs_aparc_bold"].replace(".img", ".ifh"),
-            )
+        _link_legacy_files(f, options, _log)
 
     return f
 

@@ -122,6 +122,43 @@ def test_read_batch_reads_the_image_data(tmp_path):
     assert records[0]["02"]["task"] == "rest"
 
 
+def test_a_short_header_is_still_the_header(tmp_path):
+    """
+    Blocks of up to ten characters were dropped, the header among them, which
+    made the first session the header: its own overrides became the study's.
+    """
+    records, header = bio.read_batch(
+        write_batch(tmp_path, "_x: 1\n---\nid: S01\n_hcp_suffix: a\n---\nid: S2\n")
+    )
+
+    assert header == {"x": "1"}
+    assert [r["id"] for r in records] == ["S01", "S2"], "a short session is a session"
+    assert records[0]["_hcp_suffix"] == "a", "and S01's override stays S01's"
+
+
+@pytest.mark.parametrize(
+    "text", ["# batch\n---\nid: S01\n", "---\nid: S01\n"], ids=["comment", "bare"]
+)
+def test_an_empty_header_is_still_the_header(tmp_path, text):
+    """
+    With no header lines the file starts with the separator, which was then
+    read as a `-<parameter>: <value>` line and failed the whole file.
+    """
+    records, header = bio.read_batch(write_batch(tmp_path, text))
+
+    assert header == {}
+    assert [r["id"] for r in records] == ["S01"]
+
+
+def test_the_folders_a_session_records_are_read_as_written(tmp_path):
+    records, _ = bio.read_batch(
+        write_batch(tmp_path, "_x: 1\n---\nid: S01\nhcp: hcp\nraw_data: /data/S01\n")
+    )
+
+    assert records[0]["hcp"] == "hcp", "resolving them is for whoever knows the folder"
+    assert records[0]["raw_data"] == "/data/S01"
+
+
 def test_read_batch_raises_on_a_missing_file(tmp_path):
     with pytest.raises(bio.BatchError):
         bio.read_batch(str(tmp_path / "there-is-no-batch.txt"))

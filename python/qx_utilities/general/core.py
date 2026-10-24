@@ -33,6 +33,7 @@ from collections import namedtuple
 import qx_utilities.general.batch_io as bio
 import qx_utilities.general.filelock as fl
 import qx_utilities.general.exceptions as ge
+import qx_utilities.general.folders as gf
 import qx_utilities.general.log as gl
 
 # the batch file parser, the session selector and the filter live in batch_io,
@@ -58,9 +59,10 @@ def resolve_sessions(
     sessionsfolder=None,
     command=None,
     verbose=False,
+    resolve_folders=True,
 ):
     """
-    ``resolve_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=None, command=None, verbose=False)``
+    ``resolve_sessions(batchfile=None, sessions=None, filter=None, sessionsfolder=None, command=None, verbose=False, resolve_folders=True)``
 
     The single entry point for "which batch file, which sessions". Returns a
     tuple of the SessionList of the selected sessions and the parameters
@@ -74,6 +76,12 @@ def resolve_sessions(
     list of session ids or globs, matched against the folders in sessionsfolder
     if one is given and taken as plain ids if it is not. The returned header
     parameters are then empty.
+
+    The folders a session record names (`hcp`, `raw_data`, ...) are recorded
+    relative to the session's own folder; when sessionsfolder is given they
+    are made absolute against `<sessionsfolder>/<session id>`. A caller that
+    does not know the sessions folder yet passes `resolve_folders=False` and
+    resolves them with `folders.resolve_sessions_folders` once it does.
 
     If the command is running as a SLURM job array, only the sessions that
     belong to this array task are returned.
@@ -107,72 +115,72 @@ def resolve_sessions(
         # get the chunk
         slist = slist[slurm_array_ix::slurm_array_size]
 
+    if sessionsfolder and resolve_folders:
+        gf.resolve_sessions_folders(slist, sessionsfolder)
+
+        if verbose:
+            _warn_missing_session_folders(slist, batchfile)
+
     return slist, header
+
+
+def _warn_missing_session_folders(sessions, batchfile):
+    """Warns about the folders the session records name that do not exist."""
+    for session in sessions:
+        for field in gf.SESSION_FOLDER_FIELDS:
+            if field in session and not os.path.exists(session[field]):
+                print(
+                    "WARNING: session %s - folder %s: %s specified in %s does not "
+                    "exist! Check your paths!"
+                    % (session["id"], field, session[field], batchfile or "the batch file")
+                )
 
 
 # ==============================================================================
 #                                                          EXECUTION AND LOGGING
 
-def deduce_folders(args, command=None, timestamp=None):
+def deduce_folders(args):
     """
     ``deduce_folders(args)``
 
-    Tries to deduce the location of study specific folders based on the provided
-    arguments. For internal use only.
+    The study and the sessions folder a run names, and whether it knows its
+    study, from the parameters it states. For internal use only.
+
+    `args` is what the run states, under the names in use or a deprecated one
+    (`--basefolder` is a sessions folder); the caller merges the tiers it has
+    read, the command line over a recipe over the batch file header. The
+    study is the one named, else the folder a named sessions folder is in --
+    both of which make it known -- else the study marked at or above the log
+    folder, the source folder, the folder, the reference or the current
+    folder (`general.folders.run_study`). The sessions folder is the one
+    named, else the `sessions` folder of the named study, else None; a
+    relative one named together with a study is taken from that study, as
+    `process.merge_options` takes it. Where the run logs is
+    `general.folders.run_folders`' to decide.
+
+    Returns:
+        a dict: `basefolder`, the study, or None outside one; `known`, whether
+        the run named it; `sessionsfolder`, absolute, or None; and `stated`,
+        the parameters that place a run, as `general.folders` reads them.
     """
+    stated = gf.placement_parameters(args)
+    study, known = gf.run_study(stated)
 
-    reference = args.get("reference")
-    logfolder = args.get("logfolder")
-    basefolder = args.get("basefolder")
-    if not basefolder:
-        basefolder = args.get("studyfolder")
-    sessionsfolder = args.get("sessionsfolder")
-    sourcefolder = args.get("sourcefolder")
-    folder = args.get("folder")
-
-    if sessionsfolder:
-        sessionsfolder = os.path.abspath(sessionsfolder)
-
-    if basefolder is None:
+    named = stated.get("sessionsfolder")
+    if named and stated.get("studyfolder") and not os.path.isabs(named):
+        sessionsfolder = bio.run_path(named, study)
+    else:
+        sessionsfolder = gf.sessions_folder(
+            stated.get("studyfolder"), named, default=None
+        )
         if sessionsfolder:
-            basefolder = os.path.dirname(sessionsfolder)
-        else:
-            for f in [
-                os.path.abspath(e)
-                for e in [logfolder, sourcefolder, folder, reference, "."]
-                if e
-            ]:
-                # the starting folder is tested first: a command run from the
-                # study root is still being run inside a study
-                if f and not basefolder:
-                    while f and f != "/":
-                        if any(
-                            os.path.exists(os.path.join(f, marker))
-                            for marker in [".qunexstudy", ".mnapstudy"]
-                        ):
-                            basefolder = f
-                            break
-                        f = os.path.dirname(f)
-
-    if logfolder is None and timestamp and command:
-        if basefolder:
-            logfolder = os.path.join(basefolder, "logs", f"{timestamp}_{command}")
-        else:
-            logfolder = os.path.join(os.path.abspath("."), f"{timestamp}_{command}")
-    elif logfolder == "legacy" or (not timestamp and not command):
-        if basefolder:
-            logfolder = os.path.join(basefolder, "processing", "logs")
-        else:
-            logfolder = os.path.abspath(".")
-
-    if logfolder is None:
-        homedir = os.path.expanduser("~")
-        logfolder = os.path.join(homedir, "qunex")
+            sessionsfolder = os.path.abspath(sessionsfolder)
 
     return {
-        "basefolder": basefolder,
+        "basefolder": study,
+        "known": known,
         "sessionsfolder": sessionsfolder,
-        "logfolder": logfolder,
+        "stated": stated,
     }
 
 
@@ -838,7 +846,8 @@ def link_or_copy(source, target, status=None, name=None, symlink=False, *, _log=
             comlog-retention parameter.
         status (bool | None): running status carried through (defaults True).
         name (str | None): human readable name used in the report message.
-        symlink (bool): create a symbolic link instead of a hard link.
+        symlink (bool): create a symbolic link to the absolute path of the
+            source instead of a hard link.
 
     Returns:
         bool: the running status -- False when the file could not be mapped.
@@ -856,8 +865,12 @@ def link_or_copy(source, target, status=None, name=None, symlink=False, *, _log=
         name = "file"
     if os.path.exists(source):
         try:
-            if os.path.exists(target):
-                if os.path.samefile(source, target):
+            # a dangling link at the target is there too, as earlier versions
+            # left one where they linked a relative source: a link can not be
+            # made over it, and a copy would be written through it, to
+            # wherever it points
+            if os.path.lexists(target):
+                if os.path.exists(target) and os.path.samefile(source, target):
                     note("detail", f"{name} already mapped")
                     return status and True
                 else:
@@ -867,7 +880,9 @@ def link_or_copy(source, target, status=None, name=None, symlink=False, *, _log=
             if not symlink:
                 os.link(source, target)
             else:
-                os.symlink(source, target)
+                # a symbolic link holds the path it is given and reads it from
+                # the link's own folder: a relative source would point elsewhere
+                os.symlink(os.path.abspath(source), target)
 
             note("detail", f"{name} mapped")
             return status and True
@@ -1011,7 +1026,9 @@ def create_session_file(command, sfolder, session, subject, overwrite, prefix=""
     """
     ``create_session_file(command, sfolder, session, subject, overwrite, prefix)``
 
-    Creates the generic, non pipeline specific, session file.
+    Creates the generic, non pipeline specific, session file. The session's
+    folders are recorded relative to the session folder, so that the study
+    can be moved.
     """
 
     # open fifle
@@ -1035,18 +1052,15 @@ def create_session_file(command, sfolder, session, subject, overwrite, prefix=""
     print("subject:", subject, file=sout)
 
     # bids
-    bfolder = os.path.join(sfolder, "bids")
-    if os.path.exists(bfolder):
-        print("bids:", bfolder, file=sout)
+    if os.path.exists(os.path.join(sfolder, "bids")):
+        print("bids: bids", file=sout)
 
     # nii
-    nfolder = os.path.join(sfolder, "nii")
-    if os.path.exists(bfolder):
-        print("raw_data:", nfolder, file=sout)
+    if os.path.exists(os.path.join(sfolder, "nii")):
+        print("raw_data: nii", file=sout)
 
     # hcp
-    hfolder = os.path.join(sfolder, "hcp")
-    print("hcp:", hfolder, file=sout)
+    print("hcp: hcp", file=sout)
 
     # empty line
     print(file=sout)

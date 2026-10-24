@@ -38,7 +38,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_msmall(sinfo, options, overwrite=True, thread=0):
     """
-    ``hcp_msmall [... processing options]``
+    ``hcp_msmall [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the MSMAll step of the HCP Pipeline (MSMAllPipeline.sh).
 
@@ -60,15 +60,25 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
 
         --parelements (int, default 1):
             How many elements (e.g. msmall groups) to run in parallel.
+            Every group writes the same MSMAll outputs, and the same
+            dedrifted registration and resampled maps in DeDriftAndResample,
+            so groups run in parallel write these files at the same time:
+            keep it at 1 when hcp_icafix_bolds names two or more groups.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -82,9 +92,10 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
             used in the ICAFix run. If multi-run ICAFix was run with two or
-            more groups then HCP MSMAll will be executed over the first
-            specified group (and the scans listed for hcp_msmall_bolds must
-            be limited to scans in the first concatenation group as well).
+            more groups then HCP MSMAll is executed for every group, in the
+            order listed, and each group replaces the outputs of the group
+            before it, so the MSMAll registration that remains is the one
+            computed from the last group (see the notes below).
             If not provided MSMAll will assume multi-run ICAFix was executed
             with all bolds bundled together in a single concatenation called
             fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
@@ -96,7 +107,11 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
             to be a subset of bolds used from the hcp_icafix_bolds parameter
             [if not specified all bolds specified in hcp_icafix_bolds will
             be used, which is probably NOT what you want to do if
-            hcp_icafix_bolds includes non-resting-state scans].
+            hcp_icafix_bolds includes non-resting-state scans]. A bold can
+            be given by its name, number or tag. With two or more multi-run
+            ICAFix groups, every entry has to name a bold in each group, so,
+            as each bold belongs in one group only, only tags that every
+            group carries can be used (see the notes below).
 
         --hcp_icafix_highpass (int, default detailed below):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
@@ -105,7 +120,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
         --hcp_msmall_outfmriname (str, default 'rfMRI_REST'):
             The name which will be given to the concatenation of scans specified
-            by the hcp_msmall_bold parameter.
+            by the hcp_msmall_bolds parameter.
 
         --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
             Path to directory containing MSMAll template files.
@@ -122,7 +137,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         --hcp_regname (str, default 'MSMSulc'):
             Input registration name.
 
-        --hcp_matlab_mode (str, default default detailed below):
+        --hcp_matlab_mode (str, default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
@@ -133,6 +148,15 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         --hcp_msmall_resample (str, default 'TRUE'):
             Whether to automatically run HCP DeDriftAndResample if HCP MSMAll
             finishes successfully.
+
+        --hcp_resample_regname (str, default detailed below):
+            The MSMAll registration DeDriftAndResample applies. By default
+            the one this MSMAll run computes, named as MSMAll names it:
+            <hcp_msmall_outregname>_<number of iteration modes>_d<hcp_msmall_ica_dim>_<hcp_msmall_method>,
+            where the number of iteration modes is the number of
+            "_"-separated modes in hcp_msmall_iteration_modes, so
+            'MSMAll_InitialReg_2_d40_WRN' with the default settings. Set it
+            only to apply another registration.
 
         --hcp_msmall_myelin_target (str, default 'Q1-Q6_RelatedParcellation210.MyelinMap_BC_MSMAll_2_d41_WRN_DeDrift.32k_fs_LR.dscalar.nii'):
             Myelin map target, will use
@@ -208,7 +232,7 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
 
     Output files:
         The results of this step will be generated and populated in the
-        MNINonLinear folder inside the same sessions's root hcp folder.
+        MNINonLinear folder inside the same session's root hcp folder.
 
     Notes:
         Runs the MSMAll step of the HCP Pipeline. This function executes two
@@ -243,6 +267,36 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         `hcp_icafix_bolds` parameter, since typically one wants to apply the
         MSMAll registration to the same full set of fMRI scans that were
         cleaned using hcp_icafix.
+
+        If hcp_icafix_bolds names two or more multi-run ICAFix groups,
+        MSMAll is executed once for every group, in the order in which the
+        groups are listed, on the bolds of the group that hcp_msmall_bolds
+        selects (on all bolds of the group if hcp_msmall_bolds is not
+        provided). All these runs write the same outputs, named by
+        hcp_msmall_outfmriname and hcp_msmall_outregname, so each group
+        replaces the outputs of the group before it, and the MSMAll
+        registration that remains is the one computed from the last group.
+        If MSMAll completes for every group, DeDriftAndResample is then
+        executed once for every group and applies the registration named by
+        hcp_resample_regname to the bolds of the group: by default the
+        registration MSMAll computed, see hcp_resample_regname. With
+        parelements above 1 the groups are run at the same time instead
+        (see parelements).
+
+        hcp_msmall_bolds is checked against every group, and the command
+        stops with an error before anything is run if one of its entries
+        does not name a bold of a group. Each bold belongs in one group
+        only, so a bold given by its name or number names a bold of one
+        group, and with several groups hcp_msmall_bolds can only list bold
+        tags that every group carries. A bold named in two groups of
+        hcp_icafix_bolds, by its name in one and by its tag in the other or
+        by a tag repeated in both, stops the command with an error that
+        names the bold and both groups. To compute the
+        registration from the bolds of one group only, run hcp_msmall with
+        hcp_icafix_bolds listing just that group, as it was given to
+        hcp_icafix, and with hcp_msmall_resample set to FALSE, and then run
+        hcp_dedrift_and_resample with all the groups (see the examples
+        below).
 
         hcp_msmall parameter mapping:
 
@@ -281,8 +335,8 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         HCP MSMAll after application of single-run ICAFix::
 
             qunex hcp_msmall \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_msmall_bolds="REST_1,REST_2" \\
                 --hcp_matlab_mode="interpreted"
@@ -290,10 +344,27 @@ def hcp_msmall(sinfo, options, overwrite=True, thread=0):
         HCP MSMAll after application of multi-run ICAFix::
 
             qunex hcp_msmall \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
-                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
+                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1,TASK_2" \\
                 --hcp_msmall_bolds="REST_1,REST_2" \\
+                --hcp_matlab_mode="interpreted"
+
+        HCP MSMAll computed from the first of two multi-run ICAFix groups,
+        and applied to the bolds of both::
+
+            qunex hcp_msmall \\
+                --studyfolder=. \\
+                --batchfile=processing/batch.txt \\
+                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1" \\
+                --hcp_msmall_bolds="REST_1,REST_2" \\
+                --hcp_msmall_resample=FALSE \\
+                --hcp_matlab_mode="interpreted"
+
+            qunex hcp_dedrift_and_resample \\
+                --studyfolder=. \\
+                --batchfile=processing/batch.txt \\
+                --hcp_icafix_bolds="GROUP_1:REST_1,REST_2,TASK_1|GROUP_2:REST_3,TASK_2" \\
                 --hcp_matlab_mode="interpreted"
     """
 
@@ -424,6 +495,9 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         "skipped": [],
     }
 
+    # outfmriname, the name the run is reported under
+    outfmriname = options["hcp_msmall_outfmriname"]
+
     try:
         # get data
         bolds = group["bolds"]
@@ -432,9 +506,6 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
         msmall_bolds = None
         if group["msmall_bolds"]:
             msmall_bolds = "@".join(group["msmall_bolds"])
-
-        # outfmriname
-        outfmriname = options["hcp_msmall_outfmriname"]
 
         log.rule(before=1)
         log.action("Processing", f"MSMAll {outfmriname}", options["run"])
@@ -454,11 +525,12 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             fmriprocstring = options["hcp_msmall_procstring"]
 
         # check if files for all bolds exist
+        boldtargets = []
         for boldinfo in bolds:
             # set ok to true for now
             boldok = True
 
-            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             # input file check
             boldimg = os.path.join(
@@ -478,14 +550,11 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             if not boldok:
                 boldsok = False
 
-            # if msmallBolds is not defined add all icafix bolds
-            if msmall_bolds is None:
-                # add @ separator
-                if msmall_bolds != "":
-                    msmall_bolds = msmall_bolds + "@"
+            boldtargets.append(boldtarget)
 
-                # add latest image
-                msmall_bolds = msmall_bolds + boldtarget
+        # if msmallBolds is not defined add all icafix bolds
+        if msmall_bolds is None:
+            msmall_bolds = "@".join(boldtargets)
 
         if options["hcp_msmall_templates"] is None:
             msmalltemplates = os.path.join(
@@ -542,7 +611,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             % {
                 "script": os.path.join(hcp["hcp_base"], "MSMAll", "MSMAllPipeline.sh"),
                 "path": sinfo["hcp"],
-                "session": sinfo["id"],
+                "session": sinfo["id"] + options["hcp_suffix"],
                 "msmallBolds": msmall_bolds,
                 "outfmriname": outfmriname,
                 "highpass": highpass,
@@ -588,7 +657,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             )
 
         # hcp_msmall_vn
-        if options["hcp_msmall_vn"] is not None:
+        if options["hcp_msmall_vn"]:
             comm += "                --vn=YES"
 
         # hcp_msmall_reg_conf_path
@@ -634,7 +703,7 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
             )
 
         # hcp_msmall_no_ind_mean
-        if options["hcp_msmall_no_ind_mean"] is not None:
+        if options["hcp_msmall_no_ind_mean"]:
             comm += "                --use-ind-mean=NO"
 
         # hcp_msmall_start_frame
@@ -668,23 +737,19 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
                 )
 
                 if failed:
-                    report["failed"].append(printbold)
+                    report["failed"].append(outfmriname)
                 else:
-                    report["done"].append(printbold)
+                    report["done"].append(outfmriname)
 
             # -- just checking
             else:
-                passed, _, failed = pc.check_run(
-                    None, None, "HCP MSMAll " + outfmriname, overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP MSMAll can be run")
-                    report["ready"].append(printbold)
-                else:
-                    report["skipped"].append(printbold)
+                # there is no file to check the run against, so one whose
+                # inputs are all present can be run
+                log.step("HCP MSMAll can be run")
+                report["ready"].append(outfmriname)
 
         else:
-            report["not ready"].append(printbold)
+            report["not ready"].append(outfmriname)
             if options["run"] == "run":
                 log.error("something missing, skipping this BOLD!")
             else:
@@ -693,10 +758,10 @@ def execute_hcp_single_msmall(sinfo, options, hcp, run, group):
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(f"\n\n\n --- Failed during processing of bolds {msmall_bolds}\n")
         log.raw(str(errormessage))
-        report["failed"].append(msmall_bolds)
+        report["failed"].append(outfmriname)
     except Exception:
         log.info(f" --- Failed during processing of bolds {msmall_bolds} with error:\n {traceback.format_exc()}\n")
-        report["failed"].append(msmall_bolds)
+        report["failed"].append(outfmriname)
 
     return {"r": log.text, "report": report}
 
@@ -889,7 +954,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             )
 
         # hcp_msmall_vn
-        if options["hcp_msmall_vn"] is not None:
+        if options["hcp_msmall_vn"]:
             comm += "                --vn=YES"
 
         # hcp_msmall_reg_conf_path
@@ -935,7 +1000,7 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
             )
 
         # hcp_msmall_no_ind_mean
-        if options["hcp_msmall_no_ind_mean"] is not None:
+        if options["hcp_msmall_no_ind_mean"]:
             comm += "                --use-ind-mean=NO"
 
         # -- Report command
@@ -967,14 +1032,10 @@ def execute_hcp_multi_msmall(sinfo, options, hcp, run, group):
 
             # -- just checking
             else:
-                passed, _, failed = pc.check_run(
-                    None, None, "HCP MSMAll " + groupname, overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP MSMAll can be run")
-                    report["ready"].append(groupname)
-                else:
-                    report["skipped"].append(groupname)
+                # there is no file to check the run against, so one whose
+                # inputs are all present can be run
+                log.step("HCP MSMAll can be run")
+                report["ready"].append(groupname)
 
         else:
             report["not ready"].append(groupname)

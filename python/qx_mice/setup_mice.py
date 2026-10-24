@@ -39,7 +39,7 @@ from qx_utilities.general.log import ReportLog
 
 def setup_mice(sinfo, options, overwrite=False, thread=0):
     """
-    ``setup_mice [... processing options]``
+    ``setup_mice [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Runs the command to prepare a QuNex study for mice preprocessing.
 
@@ -53,9 +53,15 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --bolds (str, default ''):
             Which bold images to process. You can select bolds through their
@@ -84,34 +90,34 @@ def setup_mice(sinfo, options, overwrite=False, thread=0):
             The factor by which to increase voxel size. If not provided QuNex
             will not increase the voxel size.
 
-        --orienatation (str, default 'x -y z'):
+        --orientation (str, default 'x -y z'):
             A string depicting how to fix the orientation. Set to "" to leave
             orientation as is.
 
     Output files:
         The results of this step will be present in the mice folder
-        in the sessions's root::
+        of each session::
 
             study
             └─ sessions
-            ├─ session1
-            |  └─ mice
-            └─ session2
-                └─ mice
+               ├─ session1
+               |  └─ mice
+               └─ session2
+                  └─ mice
 
     Examples:
         ::
 
             qunex setup_mice \\
-                --sessionsfolder='/data/mice_study/sessions' \\
-                --sessions='/data/mice_study/processsing/batch.txt'
+                --studyfolder='/data/mice_study' \\
+                --batchfile='/data/mice_study/processing/batch.txt'
 
         ::
 
             qunex setup_mice \\
-                --sessionsfolder='/data/mice_study/sessions' \\
-                --sessions='/data/mice_study/processsing/batch.txt' \\
-                --sessionids='joe01' \\
+                --studyfolder='/data/mice_study' \\
+                --batchfile='/data/mice_study/processing/batch.txt' \\
+                --sessions='joe01' \\
                 --bolds='bold1' \\
                 --tr='1'
 
@@ -209,9 +215,13 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
     nifti_dir = os.path.join(options["sessionsfolder"], sinfo["id"], "nii")
     work_dir = os.path.join(options["sessionsfolder"], sinfo["id"], "mice")
 
-    # create mice dir if it does not exist
+    # create mice dir if it does not exist, tolerating a parallel bold of the
+    # same session creating it first
     if not os.path.exists(work_dir):
-        os.makedirs(work_dir)
+        if options["run"] == "run":
+            os.makedirs(work_dir, exist_ok=True)
+        else:
+            log.detail(f"test, not created: {work_dir}")
 
     # --- check for bold image
     source_bold = os.path.join(nifti_dir, f"{boldinfo['ima']}.nii.gz")
@@ -228,12 +238,15 @@ def _execute_setup_mice(sinfo, options, overwrite, boldinfo):
 
     # overwrite and file exists
     if not overwrite and os.path.exists(target_bold):
-        log.raw(f" ... overwrite is disable and target bold [{target_bold}] already exists, skipping this bold.\n")
+        log.raw(f" ... overwrite is disabled and target bold [{target_bold}] already exists, skipping this bold.\n")
         report["done"].append(boldinfo["name"])
     else:
         # map
-        log.raw(f" ... mapping {source_bold} => {target_bold}.\n")
-        gc.link_or_copy(source_bold, target_bold)
+        if options["run"] == "run":
+            log.raw(f" ... mapping {source_bold} => {target_bold}.\n")
+            gc.link_or_copy(source_bold, target_bold)
+        else:
+            log.detail(f"test, not mapped: {source_bold} => {target_bold}")
 
         if boldok:
             # set up the command

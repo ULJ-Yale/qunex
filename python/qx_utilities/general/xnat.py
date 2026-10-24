@@ -218,6 +218,16 @@ def xnat_find_checkpoint(checkpoint_str):
     return file_name, summary
 
 
+def _in_study_logs(path):
+    """Whether a checkpoint entry is in `<study>/logs`, where runs log by default."""
+    study = os.environ["STUDY_FOLDER"].rstrip("/")
+    if not path.startswith(study):
+        return False
+    # the 'all' checkpoint joins its entries to the study without a separator
+    relative = path[len(study):].lstrip("/")
+    return relative == "logs" or relative.startswith("logs/")
+
+
 def xnat_load_checkpoint(file_path):
     """
     xnat_load_checkpoint
@@ -260,7 +270,8 @@ def xnat_load_checkpoint(file_path):
         os.environ["STUDY_FOLDER"],
     ]
     try:
-        files = [line.rstrip() for line in open(file_path)]
+        with open(file_path) as f:
+            files = [line.rstrip() for line in f]
     except Exception:
         raise ge.CommandFailed(
             "run_recipe",
@@ -274,6 +285,7 @@ def xnat_load_checkpoint(file_path):
     files = list(filter(lambda n: "/dicom/" not in n, files))
     files = list(filter(lambda n: "/checkpoints/" not in n, files))
     files = list(filter(lambda n: "/processing/logs" not in n, files))
+    files = [n for n in files if not _in_study_logs(n)]
 
     use_filter = os.environ.get("XNAT_DEFAULT_FILTERS", "")
 

@@ -28,7 +28,7 @@ from qx_utilities.processing.workflow import dryrun
 
 def get_bold_data(sinfo, options, overwrite=False, thread=0):
     """
-    ``get_bold_data [... processing options]``
+    ``get_bold_data [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Map NIL preprocessed data into the session's images folder.
 
@@ -42,8 +42,15 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
         --sessions (str, default ''):
             A list of sessions to process.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --overwrite (str, default 'no'):
             Whether to overwrite existing data (yes) or not (no).
@@ -51,6 +58,14 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
         --logfolder (str, default ''):
             The path to the folder where runlogs and comlogs are to be stored,
             if other than default.
+
+    Examples:
+        ::
+
+            qunex get_bold_data \\
+                --studyfolder=. \\
+                --batchfile=processing/batch.txt \\
+                --overwrite=no
     """
     log = ReportLog()
 
@@ -60,7 +75,7 @@ def get_bold_data(sinfo, options, overwrite=False, thread=0):
 
     log.info("Structural data ...")
     pc.do_options_check(options, sinfo, "get_bold_data")
-    f = pc.get_file_names(sinfo, options)
+    f = pc.get_file_names(sinfo, options, _log=log)
 
     with pc.combined_comlog(log, options, "get_bold_data", thread=sinfo["id"]):
         copy = True

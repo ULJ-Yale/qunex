@@ -32,7 +32,7 @@ from qx_utilities.hcp.hcp_utils import execute_hcp_post_fix
 
 def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
     """
-    ``hcp_post_fix [... processing options]``
+    ``hcp_post_fix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the PostFix step of HCP Pipeline (PostFix.sh).
 
@@ -53,9 +53,15 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging  data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used.
 
         --parsessions (int, default 1):
             How many sessions to run in parallel.
@@ -89,7 +95,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
             Value for the highpass filter, [0] for multi-run HCP ICAFix and
             [2000] for single-run HCP ICAFix.
 
-        --hcp_matlab_mode (str, default default detailed below):
+        --hcp_matlab_mode (str, default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
@@ -107,7 +113,7 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
     Output files:
         The results of this step will be generated and populated in the
-        MNINonLinear folder inside the same sessions's root hcp folder.
+        MNINonLinear folder inside the same session's root hcp folder.
 
         The final output files are::
 
@@ -145,15 +151,15 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
         ::
 
             qunex hcp_post_fix \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_matlab_mode="interpreted"
 
         ::
 
             qunex hcp_post_fix \\
+                --studyfolder=. \\
                 --batchfile=processing/batch.txt \\
-                --sessionsfolder=sessions \\
                 --hcp_icafix_bolds="GROUP_1:BOLD_1,BOLD_2|GROUP_2:BOLD_3,BOLD_4" \\
                 --hcp_matlab_mode="interpreted"
     """

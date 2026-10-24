@@ -28,7 +28,7 @@ from qx_utilities.hcp.hcp_utils import (
 
 def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
     """
-    ``hcp_make_average_dataset [... processing options]``
+    ``hcp_make_average_dataset [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
     Run the HCP make average dataset pipeline (MakeAverageDataset.sh).
 
@@ -43,9 +43,16 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
         --batchfile (str, default ''):
             The batch.txt file with all the sessions' information.
 
-        --sessionsfolder (str, default '.'):
-            The path to the study/sessions folder, where the imaging data is
-            supposed to go.
+        --studyfolder (str):
+            The path to the study folder. The sessions are in its `sessions`
+            folder, unless --sessionsfolder names another one.
+
+        --sessionsfolder (str, default '<studyfolder>/sessions'):
+            The path to the folder with the sessions. Set it only when the
+            sessions are not in the `sessions` folder of the study. With
+            neither --studyfolder nor --sessionsfolder given, the current
+            folder is used. The average dataset is made in its
+            `average_dataset` folder.
 
         --hcp_suffix (str, default ''):
             Specifies a suffix to the session id if multiple variants are run,
@@ -54,6 +61,9 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
         --logfolder (str, default ''):
             The path to the folder where logs are to be stored,
             if other than default.
+
+        --hcp_outgroupname (str):
+            Name to use for the group output folder. Mandatory.
 
         --hcp_surface_atlas_dir (str, default '${HCPPIPEDIR}/global/templates/standard_mesh_atlases'):
             Path to the location of the standard surfaces.
@@ -74,7 +84,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
         --hcp_pregradient_smoothing (int, default 1):
             Sigma of the pregradient smoothing.
 
-        --hcp_mad_regname (str, default 'MSMALL'):
+        --hcp_mad_regname (str, default 'MSMAll'):
             Name of the registration.
 
         --hcp_mad_videen_maps (str, default 'corrThickness,thickness,MyelinMap_BC,SmoothedMyelinMap_BC'):
@@ -97,8 +107,16 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
             be averaged.
 
     Output files:
-        A group folder with outputs is created inside the average_dataset foledr in
-        QuNex's sessions folder.
+        The sessions' hcp folders are linked into
+        <sessionsfolder>/average_dataset/<hcp_outgroupname>, the study folder
+        MakeAverageDataset.sh runs in, and the script writes the average
+        dataset into its <hcp_outgroupname> folder,
+        <sessionsfolder>/average_dataset/<hcp_outgroupname>/<hcp_outgroupname>.
+        hcp_temporal_ica links it in as the group folder of a multi-session
+        run with the same --hcp_outgroupname, unless that group folder
+        already holds an average dataset: a link an earlier run made to a
+        dataset named with --hcp_tica_average_dataset, or a folder from an
+        older QuNex layout, is used as it is (see hcp_temporal_ica).
 
     Notes:
         Mapping of QuNex parameters onto HCP make average dataset parameters:
@@ -128,7 +146,7 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
         A run with the default set of parameters::
 
             qunex hcp_make_average_dataset \\
-                --sessionsfolder="<path_to_study_folder>/sessions" \\
+                --studyfolder="<path_to_study_folder>" \\
                 --batchfile="<path_to_study_folder>/processing/batch.txt" \\
                 --hcp_outgroupname="hcp_group"
 
@@ -147,9 +165,9 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
 
         # check sessions
         for session in sessions:
-            hcp = get_hcp_paths(session, options)
-
-            if "hcp" not in session:
+            if "hcp" in session:
+                hcp = get_hcp_paths(session, options)
+            else:
                 log.error(f"There is no hcp info for session {session['id']} in batch.txt")
                 run = False
 
@@ -178,16 +196,18 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
             log.error("hcp_make_average_dataset needs to be ran across several sessions!")
             run = False
 
-        # multi session
-        else:
+        # multi session, set up only when the sessions and the group name are
+        # all there
+        elif run:
             # set study dir
-            study_dir = os.path.join(
-                options["sessionsfolder"], "average_dataset", outgroupname
-            )
+            study_dir = average_dataset_study(options["sessionsfolder"], outgroupname)
 
             # create folder
             if not os.path.exists(study_dir):
-                os.makedirs(study_dir)
+                if options["run"] == "run":
+                    os.makedirs(study_dir)
+                else:
+                    log.detail(f"test, not created: {study_dir}")
 
             # link sessions
             for session in sessions:
@@ -197,31 +217,45 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
                 target_dir = os.path.join(study_dir, session_name)
 
                 # link
-                gc.link_or_copy(source_dir, target_dir, symlink=True)
-
-        # hcp_surface_atlas_dir
-        surface_atlas = ""
-        if options["hcp_surface_atlas_dir"] is None:
-            surface_atlas = os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases")
-        else:
-            surface_atlas = options["hcp_surface_atlas_dir"]
-
-        # hcp_grayordinates_dir
-        grayordinates = ""
-        if options["hcp_grayordinates_dir"] is None:
-            grayordinates = os.path.join(hcp["hcp_Templates"], "91282_Greyordinates")
-        else:
-            grayordinates = options["hcp_grayordinates_dir"]
-
-        # hcp_freesurfer_labels
-        freesurferlabels = ""
-        if options["hcp_freesurfer_labels"] is None:
-            freesurferlabels = os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt")
-        else:
-            freesurferlabels = options["hcp_freesurfer_labels"]
+                if options["run"] == "run":
+                    # a link left dangling, e.g. by a study that was moved, is
+                    # replaced
+                    if os.path.islink(target_dir) and not os.path.exists(target_dir):
+                        os.unlink(target_dir)
+                    if not gc.link_or_copy(
+                        source_dir,
+                        target_dir,
+                        name=f"session {session['id']}",
+                        symlink=True,
+                        _log=log,
+                    ):
+                        run = False
+                elif not os.path.exists(target_dir):
+                    log.detail(f"test, not linked: {target_dir}")
 
         # build the command
         if run:
+            # hcp_surface_atlas_dir
+            surface_atlas = ""
+            if options["hcp_surface_atlas_dir"] is None:
+                surface_atlas = os.path.join(hcp["hcp_Templates"], "standard_mesh_atlases")
+            else:
+                surface_atlas = options["hcp_surface_atlas_dir"]
+
+            # hcp_grayordinates_dir
+            grayordinates = ""
+            if options["hcp_grayordinates_dir"] is None:
+                grayordinates = os.path.join(hcp["hcp_Templates"], "91282_Greyordinates")
+            else:
+                grayordinates = options["hcp_grayordinates_dir"]
+
+            # hcp_freesurfer_labels
+            freesurferlabels = ""
+            if options["hcp_freesurfer_labels"] is None:
+                freesurferlabels = os.path.join(hcp["hcp_Config"], "FreeSurferAllLut.txt")
+            else:
+                freesurferlabels = options["hcp_freesurfer_labels"]
+
             comm = (
                 '%(script)s \
                 --study-folder="%(study_dir)s" \
@@ -290,15 +324,11 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
                     _log=log,
                 )
 
-            # -- just checking
+            # just checking, there is no test file to check against
             else:
-                passed, report, failed = pc.check_run(
-                    None, None, "HCP make average dataset", overwrite=True, _log=log
-                )
-                if passed is None:
-                    log.step("HCP make average dataset can be run")
-                    report = "HCP make average dataset can be run"
-                    failed = 0
+                log.step("HCP make average dataset can be run")
+                report = "HCP make average dataset can be run"
+                failed = 0
 
         else:
             log.step("Session cannot be processed.")
@@ -315,3 +345,24 @@ def hcp_make_average_dataset(sessions, options, overwrite=True, thread=0):
     log.close(pipeline="HCP make average dataset preprocessing")
 
     return log.result((sessionid_list, report, failed))
+
+
+def average_dataset_study(sessionsfolder: str, group: str) -> str:
+    """
+    The study folder hcp_make_average_dataset runs MakeAverageDataset.sh in,
+    its --study-folder, with the group's sessions linked into it:
+    <sessionsfolder>/average_dataset/<group>.
+
+    The script writes the average dataset into the <group> folder of this one,
+    see `average_dataset_folder`.
+    """
+    return os.path.join(sessionsfolder, "average_dataset", group)
+
+
+def average_dataset_folder(sessionsfolder: str, group: str) -> str:
+    """
+    The average dataset hcp_make_average_dataset makes of a group, the folder
+    that holds its MNINonLinear:
+    <sessionsfolder>/average_dataset/<group>/<group>.
+    """
+    return os.path.join(average_dataset_study(sessionsfolder, group), group)

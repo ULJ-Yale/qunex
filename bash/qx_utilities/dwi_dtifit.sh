@@ -28,11 +28,21 @@ Note:
     The DWI data is expected to be in the following folder, to use different data,
     you can use the diffdata parameter::
 
-        <study_folder>/<session>/hcp/<session>/T1w/Diffusion
+        <sessionsfolder>/<session>/hcp/<session>/T1w/Diffusion
+
+    With --species='macaque' it is expected in
+    ``<sessionsfolder>/<session>/NHP/dMRI``, and --diffusion_folder sets
+    another folder.
 
 Parameters:
-    --sessionsfolder (str):
-        Path to study folder that contains sessions.
+    --studyfolder (str):
+        The path to the study folder. The sessions are in its ``sessions``
+        folder, unless --sessionsfolder names another one.
+
+    --sessionsfolder (str, default '<studyfolder>/sessions'):
+        The path to the folder with the sessions. Set it only when the
+        sessions are not in the ``sessions`` folder of the study. One of
+        --studyfolder and --sessionsfolder has to be given.
 
     --sessions (str):
         The sessions to run.
@@ -43,17 +53,20 @@ Parameters:
         command run, previous results are lost.
 
     --species (str):
-        dtifit currently supports processing of human and macaqu data. If
+        dtifit currently supports processing of human and macaque data. If
         processing macaques set this parameter to macaque.
 
-    --mask (str, default 'T1w/Diffusion/nodif_brain_mask'):
-        Set binary mask file.
+    --mask (str, default '<diffusion_folder>/nodif_brain_mask'):
+        Set binary mask file. A path that is not an existing file is taken
+        relative to the diffusion folder.
 
-    --bvecs (str, default 'T1w/Diffusion/bvecs'):
-        b vectors file.
+    --bvecs (str, default '<diffusion_folder>/bvecs'):
+        b vectors file. A path that is not an existing file is taken relative
+        to the diffusion folder.
 
-    --bvals (str, default 'T1w/Diffusion/bvals'):
-        b values file.
+    --bvals (str, default '<diffusion_folder>/bvals'):
+        b values file. A path that is not an existing file is taken relative
+        to the diffusion folder.
 
     --diffusion_folder (str):
         Path to the diffusion folder.
@@ -71,7 +84,7 @@ Parameters:
         Fit the tensor with weighted least square [not set by default].
 
     --kurt (str):
-        Output mean kurtosis map (for multi-shell data [not set by default].
+        Output mean kurtosis map (for multi-shell data) [not set by default].
 
     --kurtdir (str):
         Output parallel/perpendicular kurtosis map (for multi-shell data) [not
@@ -105,8 +118,10 @@ Parameters:
         Gradient nonlinearity tensor file [not set by default].
 
 Examples:
+    ::
+
         qunex dwi_dtifit \\
-            --sessionsfolder='<path_to_study_sessionsfolder>' \\
+            --studyfolder='<path_to_study_folder>' \\
             --sessions='<session_id>' \\
             --overwrite='yes'
 
@@ -137,14 +152,19 @@ opts_getopt() {
     done
 }
 
+# a flag is set when given bare or as --flag=yes (or true): --flag=no does not
+# set it, and neither does another option starting with the same name (--kurtdir
+# is not --kurt)
 get_flags() {
     sopt="$1"
     shift 1
     for fn in "$@" ; do
-        if [ `echo $fn | grep -- "^${sopt}" | wc -w` -gt 0 ]; then
-            echo "yes"
-            return 0
-        fi
+        case "${fn,,}" in
+            "${sopt}"|"${sopt}=yes"|"${sopt}=true")
+                echo "yes"
+                return 0
+                ;;
+        esac
     done
 }
 
@@ -161,6 +181,7 @@ get_options() {
     # the documented spelling, and the one qunex passes; --session is what the
     # shell front end passed and is kept
     if [ -z "$session" ]; then session=`opts_getopt "--sessions" $@`; fi
+    study_folder=`opts_getopt "--studyfolder" $@`
     sessionsfolder=`opts_getopt "--sessionsfolder" $@`
     overwrite=`opts_getopt "--overwrite" $@`
     species=`opts_getopt "--species" $@`
@@ -184,13 +205,17 @@ get_options() {
     gradnonlin=`opts_getopt "--gradnonlin" $@`
     diffusion_folder=`opts_getopt "--diffusion_folder" $@`
 
+    # the sessions are in the sessions folder of the study, unless
+    # --sessionsfolder names another one
+    if [ -z "$sessionsfolder" ] && [ -n "$study_folder" ]; then sessionsfolder="${study_folder}/sessions"; fi
+
     # -- Check required parameters
-    if [ -z "$sessionsfolder" ]; then echo "Error: sessionsfolder missing"; exit 1; fi
+    if [ -z "$sessionsfolder" ]; then echo "Error: Neither --studyfolder nor --sessionsfolder specified"; exit 1; fi
     if [ -z "$session" ]; then echo "Error: session missing"; exit 1; fi
 
-    # -- Set study_folder
-    cd $sessionsfolder/../ &> /dev/null
-    study_folder=`pwd` &> /dev/null
+    # the study folder, when not given, is the folder the sessions folder is
+    # in; found in a subshell, so that the working directory does not change
+    study_folder="${study_folder:-$(cd "${sessionsfolder}/.." 2> /dev/null && pwd)}"
 
     # -- Report options
     echo ""
@@ -199,7 +224,6 @@ get_options() {
     echo "   Study Folder: ${study_folder}"
     echo "   Sessions Folder: ${sessionsfolder}"
     echo "   Session: ${session}"
-    echo "   Study Log Folder: ${LogFolder}"
     echo "   Overwrite prior run: ${overwrite}"
 
     # Report species if not default
