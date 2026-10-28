@@ -838,7 +838,7 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$Covariance" ]; then Covariance="true"; fi
         if [ -z "$Verbose" ]; then Verbose="true"; fi
         if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
-        if [ -z "$OutPath" ]; then OutPath="/images/functional"; fi
+        if [ -z "$OutPath" ]; then OutPath="images/functional"; fi
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command:
