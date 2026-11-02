@@ -181,3 +181,46 @@ def test_a_failed_mapping_names_its_record_only_when_one_was_kept(tmp_path, logg
         assert str(run / "comlogs" / record) in hint
     else:
         assert hint == "Please check your data and the log of this run!"
+
+
+def test_a_file_directly_in_the_hcp_folder_is_mapped(tmp_path):
+    """All of the folder is mapped, as documented: only its folders were."""
+    study, out, _ = make_export(tmp_path)
+    (study / "sessions" / "s1" / "hcp" / "s1" / "s1.QC.wb.scene").write_text("scene")
+
+    export_hcp(
+        studyfolder=str(study), sessions="s1", mapaction="copy", mapto=str(out), overwrite="yes"
+    )
+
+    assert (out / "s1" / "s1.QC.wb.scene").read_text() == "scene"
+    assert (out / "s1" / "T1w" / "b.nii").read_text() == "new"
+
+
+def test_an_excluded_link_that_points_nowhere_does_not_stop_the_mapping(tmp_path):
+    """Outside the container T1w/fsaverage is one, and excluding it did not help."""
+    study, out, target = make_export(tmp_path)
+    source = study / "sessions" / "s1" / "hcp" / "s1" / "T1w"
+    (source / "fsaverage").symlink_to(tmp_path / "nowhere")
+
+    export_hcp(
+        studyfolder=str(study),
+        sessions="s1",
+        mapaction="copy",
+        mapto=str(out),
+        overwrite="yes",
+        mapexclude="fsaverage",
+    )
+
+    assert (target / "b.nii").read_text() == "new"
+    assert not os.path.lexists(target / "fsaverage")
+
+
+def test_a_link_that_points_nowhere_still_stops_the_mapping(tmp_path):
+    study, out, _ = make_export(tmp_path)
+    source = study / "sessions" / "s1" / "hcp" / "s1" / "T1w"
+    (source / "fsaverage").symlink_to(tmp_path / "nowhere")
+
+    with pytest.raises(ge.CommandFailed, match="Source files missing"):
+        export_hcp(
+            studyfolder=str(study), sessions="s1", mapaction="copy", mapto=str(out), overwrite="yes"
+        )

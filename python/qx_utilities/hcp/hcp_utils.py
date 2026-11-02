@@ -703,6 +703,10 @@ def parse_icafix_bolds(options, bolds, _log):
     hcp_bolds = options["hcp_icafix_bolds"]
 
     if not hcp_bolds:
+        if not bolds:
+            _log.error("There are no bolds to run HCP ICAFix on, check the session's images.")
+            return [], False
+
         _log.info("Concatenating all bolds\n")
         _log.info("HCP ICAFix on 1 groups")
         return [{"name": "fMRI_CONCAT_ALL", "bolds": bolds}], True

@@ -6,12 +6,13 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 """
-``compute_bold_fc`` and ``dwi_bedpostx_gpu``, run with stub tools.
+``compute_bold_fc``, ``extract_roi`` and ``dwi_bedpostx_gpu``, run with stub tools.
 
 The FC script judged a run by a CIFTI result of the run's own name, so a volume
 result and a list run, whose results carry the name of the list, were failures
 or went unchecked, and the exit status of the matlab call was not read at all.
 bedpostx writes three merged files per fiber, and nine were all that counted.
+``extract_roi`` printed an error when it wrote nothing, and exited 0 regardless.
 """
 
 import sys
@@ -129,6 +130,26 @@ def test_compute_bold_fc_checks_a_list_run_by_the_name_of_the_list(
     )
 
     assert result.returncode == status, result.stdout
+
+
+@pytest.mark.parametrize("name, stem", [("group.txt", "group"), ("group.v2.list", "group.v2")])
+def test_a_list_run_is_checked_by_the_name_matlab_gives_its_results(fc_study, tmp_path, name, stem):
+    """matlab drops the last extension, and only `.list` was dropped here."""
+    study, functional = fc_study
+    target = tmp_path / "results"
+    flist = tmp_path / name
+    flist.write_text(f"session id: S1\nfile: {functional / 'bold1.nii.gz'}\n")
+
+    result = run_gbc(
+        tmp_path,
+        study,
+        matlab_stub(tmp_path, target / f"{stem}_gbc_mFz.nii.gz"),
+        "--runtype=list",
+        f"--flist={flist}",
+        f"--targetf={target}",
+    )
+
+    assert result.returncode == 0, result.stdout
 
 
 def test_a_list_run_shows_the_list_it_was_given(fc_study, tmp_path):
@@ -260,3 +281,28 @@ def test_run_qc_reads_eddy_and_bedpostx_of_the_dwipath_it_is_given(run_qc_dwi_st
     assert "EDDY QC outputs found" in result.stdout, result.stdout
     assert "FSLBedpostX outputs missing" not in result.stdout, result.stdout
     assert list((study / "sessions" / "QC" / "DWI").glob("S1.DWI.eddy.QC.pdf"))
+
+
+@pytest.mark.parametrize(
+    "written, status, succeeds",
+    [(True, 0, True), (False, 0, False), (False, 1, False)],
+    ids=["its result", "no result", "the call failed"],
+)
+def test_extract_roi_fails_without_its_result(tmp_path, written, status, succeeds):
+    csv = tmp_path / "roi.csv"
+    command = matlab_stub(tmp_path, result=csv if written else None, status=status)
+
+    result = run_script(
+        tmp_path,
+        "extract_roi",
+        [
+            "--roifile=roi.nii.gz",
+            "--inputfile=bold.nii.gz",
+            f"--outpath={tmp_path}",
+            "--outname=roi",
+        ],
+        QUNEXMCOMMAND=command,
+    )
+
+    assert (result.returncode == 0) is succeeds, result.stdout + result.stderr
+    assert "try, imgf=nimage" in (tmp_path / "matlab_calls.txt").read_text()

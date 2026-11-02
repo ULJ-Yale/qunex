@@ -794,6 +794,11 @@ def run_through_scheduler(command, sessions=None, args=[], parsessions=1, run=No
         if sched_command and "processing.study" in sched_command.type:
             parjobs = 1
 
+        # nor for a run across sessions: split over jobs, each would write the
+        # same group results from a part of the group
+        if args.get("runtype") in ["group", "list"]:
+            parjobs = 1
+
         # init queues
         sessionids_array = [""] * parjobs
 

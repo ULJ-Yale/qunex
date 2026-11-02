@@ -114,8 +114,8 @@ def hcp_post_fix(sinfo, options, overwrite=False, thread=0):
 
         The final output files are::
 
-            MNINonLinear/Results/<boldname>/
-            <session id>_<boldname>_hp<highpass>_ICA_Classification_singlescreen.scene
+            MNINonLinear/Results/<group name>/
+            <session id>_<group name>_hp<highpass>_ICA_Classification_singlescreen.scene
 
         where highpass is the used value for the highpass filter. The
         default highpass value is 0.

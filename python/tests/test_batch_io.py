@@ -398,3 +398,41 @@ def test_a_bad_filter_is_reported_as_a_command_failure(tmp_path):
 def test_get_sessions_list_is_gone():
     """Every caller takes a batch file and a session specification separately."""
     assert not hasattr(gc, "get_sessions_list")
+
+
+@pytest.mark.parametrize(
+    "stated, kept",
+    [
+        ("S03,S01", ["S03", "S01"]),
+        ("S03|S01", ["S03", "S01"]),
+        ("S02,S0*", ["S02", "S01", "S03"]),
+        ("S01,TYPO", ["S01", "TYPO"]),
+        ("S01,NOPE*", ["S01", "NOPE*"]),
+        (None, ["S01", "S02", "S03"]),
+    ],
+)
+def test_a_list_across_sessions_keeps_what_its_specification_states(stated, kept):
+    selected = [{"id": e} for e in ["S01", "S02", "S03"]]
+
+    assert bio.as_stated(selected, stated) == kept
+
+
+def test_what_a_filter_removes_stays_out_of_a_list_across_sessions():
+    assert bio.as_stated([{"id": "S02"}], "S01,S02", "group:a") == ["S02"]
+
+
+def test_a_list_across_sessions_keeps_the_order_of_a_list_file(tmp_path):
+    listfile = tmp_path / "g.list"
+    listfile.write_text("session id: S03\nsession id: S01\n")
+
+    assert bio.as_stated([{"id": "S01"}, {"id": "S03"}], str(listfile)) == ["S03", "S01"]
+
+
+def test_a_session_two_globs_select_is_selected_once(tmp_path):
+    for session in ["S01", "S02"]:
+        (tmp_path / session).mkdir()
+
+    selected = bio.select_sessions([], "S01,S0*", sessionsfolder=str(tmp_path))
+
+    assert [e["id"] for e in selected] == ["S01", "S02"]
+    assert [e["id"] for e in bio.select_sessions([], "S01,S01")] == ["S01"]

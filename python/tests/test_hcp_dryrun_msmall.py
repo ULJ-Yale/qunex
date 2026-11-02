@@ -14,6 +14,7 @@ import os
 
 import pytest
 
+from qx_utilities.general.commands_support import check_deprecated_parameters
 from qx_utilities.hcp.hcp_apply_auto_reclean import hcp_apply_auto_reclean
 from qx_utilities.hcp.hcp_dedrift_and_resample import hcp_dedrift_and_resample
 from qx_utilities.hcp.hcp_icafix import hcp_icafix
@@ -290,3 +291,40 @@ def test_icafix_bolds_without_a_group_stop_the_command(msmall_session, command):
     assert "invalid input parameters" in log.text
     assert "Running HCP Pipelines command" not in log.text
     assert log.status[2] == 1
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        hcp_icafix,
+        hcp_post_fix,
+        hcp_reapply_fix,
+        hcp_msmall,
+        hcp_dedrift_and_resample,
+        hcp_apply_auto_reclean,
+    ],
+)
+def test_a_session_without_bolds_stops_the_command(msmall_session, command):
+    """
+    hcp_msmall and hcp_apply_auto_reclean raised an UnboundLocalError, and
+    hcp_icafix called a run with an empty --fmri-names ready.
+    """
+    sinfo, options = msmall_session
+    for key in ["3", "4"]:
+        del sinfo[key]
+
+    log = command(sinfo, options(hcp_icafix_bolds=None))
+
+    assert "There are no bolds" in log.text
+    assert "Traceback" not in log.text
+    assert "Running HCP Pipelines command" not in log.text
+    assert log.status[2] == 1
+
+
+@pytest.mark.parametrize("name", ["hcp_msmall_start_frame", "hcp_msmall_end_frame"])
+def test_the_frames_of_single_run_msmall_are_said_to_be_gone(name, capsys):
+    """Only single runs read them, and a removed parameter went without a word."""
+    remaining = check_deprecated_parameters({name: "5"}, "hcp_msmall")
+
+    assert name not in remaining
+    assert name in capsys.readouterr().out

@@ -11,7 +11,7 @@ The unprocessed folders of the `hcpya` structure, and the XTRACT tract list.
 Under `hcpya` setup_hcp names a field map folder `FieldMap<n>_strc` and its files
 `<id>_FieldMap_*`; the commands looked in folders with the wrong tail and for
 files with the tail in their name, so a field map was never found. Diffusion is
-`Diffusion_unproc` there, or HCP's PreEddy deletes what it reads from.
+`Diffusion_unproc` there, apart from what the pipeline writes to `Diffusion`.
 """
 
 import os
@@ -76,6 +76,26 @@ def xtract_session(tmp_path):
         xtract_list="vof_r,vof_l",
     )
     return sinfo, options
+
+
+@pytest.mark.parametrize(
+    "folders, source",
+    [
+        (["Diffusion"], "Diffusion"),
+        (["Diffusion", "Diffusion_unproc"], "Diffusion_unproc"),
+        ([], "Diffusion_unproc"),
+    ],
+    ids=["set up before they were kept apart", "set up since", "not set up yet"],
+)
+def test_hcpya_diffusion_is_read_from_where_the_study_has_it(tmp_path, folders, source):
+    sinfo, sessionsfolder = build_hcp_session(str(tmp_path))
+    base = os.path.join(sinfo["hcp"], "sess-01")
+    for folder in folders:
+        os.makedirs(os.path.join(base, folder))
+    options = default_options(sessionsfolder=sessionsfolder, hcp_folderstructure="hcpya")
+    do_hcp_options_check(options, "hcp_diffusion")
+
+    assert get_hcp_paths(sinfo, options)["DWI_source"] == os.path.join(base, source)
 
 
 def test_xtract_hands_on_its_tract_list_with_the_flag_xtract_reads(xtract_session, monkeypatch):

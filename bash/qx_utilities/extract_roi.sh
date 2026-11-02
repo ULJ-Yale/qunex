@@ -156,7 +156,8 @@ get_options $@
 cmd="imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
 echo ${QUNEXMCOMMAND}
 echo $cmd
-${QUNEXMCOMMAND} "imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); quit"
+# octave and matlab both exit 1 on an error this way, matlab would otherwise stay at its prompt
+${QUNEXMCOMMAND} "try, imgf=nimage('$inputfile'); roif=nimage('$roifile'); csvwrite(strcat('$outpath','/','$outname','.csv'), imgf.img_extract_roi(roif)); catch err, disp(err.message); for k = 1:numel(err.stack), disp(sprintf('    %s, line %d', err.stack(k).name, err.stack(k).line)); end; exit(1); end; quit" || { echo "ERROR --- ROI extraction failed, see the error above."; exit 1; }
 
 # -- Completion check
 if [[ -f ${outpath}/${outname}.csv ]]; then
@@ -169,6 +170,7 @@ else
     echo "   roi_extract generation did not complete correctly."
     echo ""
     echo "----------------------------------------------------------------"
+    exit 1
 fi
 
 }

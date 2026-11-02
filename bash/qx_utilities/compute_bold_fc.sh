@@ -841,6 +841,8 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$MaskFrames" ]; then MaskFrames="0"; fi
         if [ -z "$OutPath" ]; then OutPath="images/functional"; fi
         if [ -z "$IgnoreFrames" ]; then IgnoreFrames="udvarsme"; fi
+    # what a failed call says, and where it failed
+    MatlabCatch="catch err, disp(err.message); for k = 1:numel(err.stack), disp(sprintf('    %s, line %d', err.stack(k).name, err.stack(k).line)); end; exit(1); end; quit()"
     if [ ${Calculation} == "seed" ]; then
         # -- run FC seed command:
         # Call to get matlab help ---> ${QUNEXMCOMMAND} "help fc_compute_gbc3,quit()"
@@ -849,7 +851,7 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
         # octave and matlab both exit 1 on an error this way, matlab would otherwise stay at its prompt
-        ${QUNEXMCOMMAND} "try, fc_compute_seedmaps_multiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance); catch err, disp(err.message); exit(1); end; quit()" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
+        ${QUNEXMCOMMAND} "try, fc_compute_seedmaps_multiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance); ${MatlabCatch}" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
@@ -863,7 +865,7 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
         if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
-        ${QUNEXMCOMMAND} "try, fc_compute_gbc3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep); catch err, disp(err.message); exit(1); end; quit()" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
+        ${QUNEXMCOMMAND} "try, fc_compute_gbc3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep); ${MatlabCatch}" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
     fi
     # -- Remove temp lists
     echo ""
@@ -955,7 +957,7 @@ fi
 if [[ ${Calculation} != "dense" ]]; then
     # a volume is saved as .nii.gz, and the results of a list run carry the name of the list
     CheckName=${OutName}
-    if [[ ${RunType} == "list" ]]; then CheckName=`basename ${FileList} .list`; fi
+    if [[ ${RunType} == "list" ]]; then CheckName=`basename ${FileList}`; CheckName=${CheckName%.*}; fi
     CheckRun=`ls -t1 ${OutPath}/${CheckName}*.nii ${OutPath}/${CheckName}*.nii.gz 2> /dev/null | head -n 1`
     if [[ ! -z ${CheckRun} ]]; then
         echo ""

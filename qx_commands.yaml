@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-11-02T10:14:07.115697+00:00'
+generated_at: '2026-11-02T11:54:22.108444+00:00'
 source:
     id: core
 commands:
@@ -4732,8 +4732,8 @@ commands:
         type: str
         default: NONE
         description: List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines
-            which bolds to extract. Exists to enable extraction of a subset of the runs in a HCP ICAFix group into a new concatenated
-            series. Extraction works only when there is a single ICAFix group.
+            which bolds to extract. Exists to enable extraction of a subset of the runs in an HCP ICAFix group into a new
+            concatenated series. Extraction works only when there is a single ICAFix group.
     -   name: hcp_resample_extractextraregnames
         type: str
         default: NONE
@@ -4741,7 +4741,7 @@ commands:
     -   name: hcp_resample_extractvolume
         type: str
         default: NONE
-        description: Whether to also extract the specified HCP ICAFix from the volume data, requires hcp_resample_extractnames
+        description: Whether to also extract the specified HCP ICAFix runs from the volume data, requires hcp_resample_extractnames
             to work.
     -   name: hcp_msmall_templates
         type: str
@@ -7976,7 +7976,7 @@ commands:
     -   name: qc_dwi_bedpostx
         type: str
         default: 'no'
-        description: If 'yes', also render a BedpostX variant scene; requires a complete Diffusion.bedpostX output.
+        description: If 'yes', also render a BedpostX variant scene; requires a complete <qc_dwi_path>.bedpostX output.
     -   name: qc_dwi_eddyqcstats
         type: str
         default: 'no'

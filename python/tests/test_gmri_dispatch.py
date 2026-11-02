@@ -199,6 +199,48 @@ def test_a_group_run_hands_a_script_the_sessions_it_resolved(
     assert calls[0][0]["sessions"] == "S01,S02"
 
 
+@pytest.mark.parametrize("batched", [True, False], ids=["a batch file", "no batch file"])
+@pytest.mark.parametrize(
+    "sessions, handed",
+    [
+        ("S02,S01", "S02,S01"),
+        ("S01,S0*", "S01,S02"),
+        ("S01,TYPO", "S01,TYPO"),
+    ],
+    ids=["its order", "each once", "what selected nothing"],
+)
+def test_a_group_run_keeps_what_its_sessions_state(
+    gmri, tmp_path, monkeypatch, batched, sessions, handed
+):
+    """
+    A session's place in the list is its frame in the group results, a session
+    counted twice is a frame too many, and a mistyped one has to reach the script
+    that reports it, or the group comes out smaller without a word.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / "sessions" / "S02").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+    args = {"studyfolder": str(study), "sessions": sessions, "runtype": "group"}
+    if batched:
+        batch = tmp_path / "batch.txt"
+        batch.write_text(
+            "_sessionsfolder: %s\n---\nid: S01\nsubject: S01\n01: T1w\n"
+            "---\nid: S02\nsubject: S02\n01: T1w\n" % (study / "sessions")
+        )
+        args["batchfile"] = str(batch)
+    calls = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: calls.append(args) or 0,
+    )
+
+    gmri.runCommand("compute_bold_fc", args)
+
+    assert [call["sessions"] for call in calls] == [handed]
+
+
 def test_a_bash_comlog_is_named_after_the_command_and_what_varies(gmri):
     """
     `run_qc` is run once per modality into one log folder, so a comlog named

@@ -293,7 +293,7 @@ def execute_hcp_reapply_fix(sinfo, options, hcp, run, group):
             # boldok
             boldok = True
 
-            printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
+            _, boldtarget, _ = pc.get_bold_names(boldinfo, options)
 
             boldimg = os.path.join(
                 hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
@@ -317,8 +317,14 @@ def execute_hcp_reapply_fix(sinfo, options, hcp, run, group):
                 # add latest image
                 boldtargets = boldtargets + boldtarget
 
-        # run HCP hand reclassification if not longitudinal
-        if not options["longitudinal"]:
+        # matlab run mode, compiled=0, interpreted=1, octave=2
+        matlabrunmode = matlab_run_mode(options)
+        if not matlab_run_mode_ok(options, log):
+            groupok = False
+
+        # run HCP hand reclassification if not longitudinal, and not for a group
+        # that is refused anyway
+        if groupok and not options["longitudinal"]:
             log.step(f"Executing HCP Hand reclassification for group: {groupname}\n")
             result = execute_hcp_hand_reclassification(
                 sinfo, options, hcp, run, groupname
@@ -337,11 +343,6 @@ def execute_hcp_reapply_fix(sinfo, options, hcp, run, group):
             and rc_report["failed"] == []
             and rc_report["not ready"] == []
         ):
-            # matlab run mode, compiled=0, interpreted=1, octave=2
-            matlabrunmode = matlab_run_mode(options)
-            if not matlab_run_mode_ok(options, log):
-                groupok = False
-
             # highpass
             highpass = (
                 0
@@ -387,13 +388,13 @@ def execute_hcp_reapply_fix(sinfo, options, hcp, run, group):
 
             if options["hcp_icafix_domotionreg"] is not None:
                 comm += (
-                    '             --motionregression="%s"'
+                    '             --motion-regression="%s"'
                     % options["hcp_icafix_domotionreg"]
                 )
 
             if options["hcp_icafix_deleteintermediates"] is not None:
                 comm += (
-                    '             --deleteintermediates="%s"'
+                    '             --delete-intermediates="%s"'
                     % options["hcp_icafix_deleteintermediates"]
                 )
 

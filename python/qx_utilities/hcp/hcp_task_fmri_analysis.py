@@ -243,7 +243,7 @@ def hcp_task_fmri_analysis(sinfo, options, overwrite=False, thread=0):
             # hcp_task_lvl1fsfs
             if options["hcp_task_lvl1fsfs"] is not None:
                 lvl1fsfs = options["hcp_task_lvl1fsfs"].replace(",", "@")
-                if len(lvl1fsfs.split(",")) != len(lvl1tasks.split(",")):
+                if len(lvl1fsfs.split("@")) != len(lvl1tasks.split("@")):
                     log.error("mismatch in the length of hcp_task_lvl1tasks and hcp_task_lvl1fsfs")
                     run = False
 

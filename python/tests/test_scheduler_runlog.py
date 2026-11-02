@@ -109,6 +109,19 @@ def filed(output):
     return re.sub(WHEN, "<WHEN>", output)
 
 
+@pytest.mark.parametrize("given, jobs", [({"runtype": "group"}, 1), ({}, 3)])
+def test_a_group_run_is_one_job(run, scheduled, given, jobs):
+    """Split over jobs, each wrote the same group results from one session."""
+    run.header()
+    sessions = [{"id": session} for session in ["S01", "S02", "S03"]]
+
+    submit(run, sessions=sessions, given={"run": "run", **given})
+
+    assert len(scheduled) == jobs
+    if jobs == 1:
+        assert '--sessions="S01,S02,S03"' in scheduled[0]["command"]
+
+
 def test_the_submission_is_appended_to_the_runlog_the_run_opened(run):
     run.header()
 

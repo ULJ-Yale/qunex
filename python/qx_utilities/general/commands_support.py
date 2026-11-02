@@ -129,6 +129,8 @@ deprecated_parameters = {
     "sbjroi": "sessionroi",
     "subjectf": "sessionf",
     "hcp_bold_sequencetype": None,
+    "hcp_msmall_start_frame": None,
+    "hcp_msmall_end_frame": None,
     "hcp_biascorrect_t1w": None,
     "args": "palm_args",
     "TR": "tr",

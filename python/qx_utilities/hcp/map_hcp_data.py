@@ -58,20 +58,31 @@ def _remove(_log, options, path):
         _log.detail(f"test, not removed: {path}")
 
 
-def _bold_resolution(results_folder, default):
+def _bold_resolution(results_folder, default, _log):
     """
     The voxel size of the BOLDs in `results_folder`: the resolution the fMRI
     pipelines ran at, which can have been stated for them alone. `default` when
-    there is no BOLD to read it from.
+    there is no BOLD to read it from, and the first BOLD's when they differ, as
+    there is one segmentation for all of them.
     """
+    resolutions = []
     for folder in sorted(glob.glob(os.path.join(results_folder, "*"))):
         image = os.path.join(folder, os.path.basename(folder) + ".nii.gz")
         if os.path.exists(image):
             try:
-                return "%g" % nib.load(image).header.get_zooms()[0]
+                resolutions.append("%g" % nib.load(image).header.get_zooms()[0])
             except nib.filebasedimages.ImageFileError:
                 continue
-    return default
+
+    if not resolutions:
+        return default
+
+    if len(set(resolutions)) > 1:
+        _log.warning(
+            "The BOLDs have different resolutions (%s), the segmentation is resampled to %s mm."
+            % (", ".join(sorted(set(resolutions))), resolutions[0])
+        )
+    return resolutions[0]
 
 
 def _write_movement_data(source, target):
@@ -406,7 +417,7 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
             )
             resample = os.path.exists(t1_restore) and aparc_t1_ready
             bold_res = _bold_resolution(
-                os.path.join(d["hcp"], "MNINonLinear", "Results"), options["hcp_bold_res"]
+                os.path.join(d["hcp"], "MNINonLinear", "Results"), options["hcp_bold_res"], log
             )
             flirt = f"flirt -interp nearestneighbour -ref {t1_restore} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {bold_res}"
             description = (

@@ -23,6 +23,7 @@ import qx_utilities.hcp.qc_hcp as qc_hcp
 import qx_utilities.hcp.hcp_apply_auto_reclean as hcp_apply_auto_reclean_module
 import qx_utilities.hcp.hcp_icafix as hcp_icafix_module
 import qx_utilities.processing.core as pc
+from qx_utilities.general.log import ReportLog
 from qx_utilities.hcp.hcp_apply_auto_reclean import hcp_apply_auto_reclean
 from qx_utilities.hcp.hcp_icafix import hcp_icafix
 from qx_utilities.hcp.hcp_post_fix import hcp_post_fix
@@ -258,9 +259,30 @@ def test_the_matlab_mode_of_one_session_does_not_reach_the_next(
     assert log.status[2] == 1
 
 
-def test_apply_auto_reclean_dry_run_says_it_can_be_run(bare_fix_session):
-    """It set FSL_FIX_MATLAB_MODE in this process and its dry run reported nothing."""
+@pytest.fixture
+def reclean_session(bare_fix_session):
+    """A session with the MSMAll registration hcp_apply_auto_reclean works on."""
     sinfo, options, root = bare_fix_session
+    native = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Native")
+    os.makedirs(native, exist_ok=True)
+    open(os.path.join(native, "sess-01.L.sphere.MSMAll.native.surf.gii"), "w").close()
+    return sinfo, options, root
+
+
+def test_apply_auto_reclean_needs_the_msmall_registration(bare_fix_session):
+    """The pipeline hard codes MSMAll, and a study without it was called ready."""
+    sinfo, options, root = bare_fix_session
+
+    log = hcp_apply_auto_reclean(sinfo, options(hcp_matlab_mode="octave"))
+
+    assert "run hcp_msmall first" in log.text
+    assert "HCP ApplyAutoReclean can be run" not in log.text
+    assert log.status[2] == 1
+
+
+def test_apply_auto_reclean_dry_run_says_it_can_be_run(reclean_session):
+    """It set FSL_FIX_MATLAB_MODE in this process and its dry run reported nothing."""
+    sinfo, options, root = reclean_session
     environment = dict(os.environ)
     before = _tree(root)
 
@@ -275,9 +297,9 @@ def test_apply_auto_reclean_dry_run_says_it_can_be_run(bare_fix_session):
     assert log.status[2] == 0
 
 
-def test_apply_auto_reclean_hands_its_call_the_matlab_mode(bare_fix_session, monkeypatch):
+def test_apply_auto_reclean_hands_its_call_the_matlab_mode(reclean_session, monkeypatch):
     """The mode reaches the pipeline on its command line, the environment stays."""
-    sinfo, options, root = bare_fix_session
+    sinfo, options, root = reclean_session
     calls = []
 
     def run_external(checkfile, comm, description, **kwargs):
@@ -321,8 +343,43 @@ def test_reapply_fix_does_not_run_a_group_with_a_bold_missing(msmall_session):
 
     assert "BOLD_2.nii.gz] missing" in log.text
     assert "ReApplyFixMultiRunPipeline.sh" not in log.text
+    assert "Hand reclassification" not in log.text, "the group is refused before any work"
     assert log.status[1] == "HCP ReApplyFix: bolds G1 not ready"
     assert log.status[2] == 1
+
+
+def test_reapply_fix_needs_a_matlab_mode(msmall_session, monkeypatch):
+    """It reached the command line as `None`, after the hand reclassification had run."""
+    sinfo, options = msmall_session
+    monkeypatch.delenv("FSL_FIX_MATLAB_MODE")
+
+    log = hcp_reapply_fix(sinfo, options())
+
+    assert "FSL_FIX_MATLAB_MODE not set" in log.text
+    assert "Hand reclassification" not in log.text
+    assert log.status[2] == 1
+
+
+def test_reapply_fix_hands_on_the_flags_the_pipeline_reads(msmall_session):
+    """`--motionregression` and `--deleteintermediates` stopped the pipeline."""
+    sinfo, options = msmall_session
+    results = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results")
+    for bold in ["BOLD_1", "BOLD_2"]:
+        open(os.path.join(results, bold, bold + ".nii.gz"), "w").close()
+
+    text = hcp_reapply_fix(
+        sinfo,
+        options(
+            hcp_matlab_mode="compiled",
+            hcp_icafix_domotionreg="TRUE",
+            hcp_icafix_deleteintermediates="TRUE",
+        ),
+    ).text
+
+    assert '--motion-regression="TRUE"' in text
+    assert '--delete-intermediates="TRUE"' in text
+    assert "--motionregression" not in text
+    assert "--deleteintermediates" not in text
 
 
 def test_post_fix_dry_run_says_it_can_be_run(fix_session):
@@ -365,7 +422,18 @@ def test_the_lowres_segmentation_is_resampled_to_the_resolution_of_the_bolds(tmp
     for bold, voxel in bolds.items():
         _write_bold(str(results / bold / (bold + ".nii.gz")), voxel)
 
-    assert _bold_resolution(str(results), "2") == res
+    assert _bold_resolution(str(results), "2", ReportLog()) == res
+
+
+def test_bolds_of_different_resolutions_are_said_to_differ(tmp_path):
+    results = tmp_path / "Results"
+    results.mkdir()
+    for bold, voxel in {"BOLD_1": 1.5, "BOLD_2": 2.0}.items():
+        _write_bold(str(results / bold / (bold + ".nii.gz")), voxel)
+    log = ReportLog()
+
+    assert _bold_resolution(str(results), "2", log) == "1.5"
+    assert "different resolutions (1.5, 2)" in log.text
 
 
 def test_a_bold_that_can_not_be_read_says_nothing_of_the_resolution(tmp_path):
@@ -373,7 +441,7 @@ def test_a_bold_that_can_not_be_read_says_nothing_of_the_resolution(tmp_path):
     (results / "BOLD_1").mkdir(parents=True)
     (results / "BOLD_1" / "BOLD_1.nii.gz").write_text("")
 
-    assert _bold_resolution(str(results), "2") == "2"
+    assert _bold_resolution(str(results), "2", ReportLog()) == "2"
 
 
 def test_transmit_bias_group_dry_run_says_it_can_be_run(tmp_path, monkeypatch, no_external):

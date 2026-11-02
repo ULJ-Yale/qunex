@@ -13,6 +13,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `build_qx_registry` now builds only the core command registry; extensions are built with `build_qx_extensions` (or with `--build_extensions=yes`).
 * Integrated the HCP Pipelines MMORF registration chain into QuNex as `hcp_pre_mmorf`, `hcp_mmorf` and `hcp_post_mmorf`.
 * `hcp_diffusion` now checks and overwrites the folder named by `--hcp_dwi_name`. It always looked in `T1w/Diffusion`, so it could report a wrong result and, with `--overwrite`, remove `data.nii.gz` of a default run.
+* `export_hcp` now also maps the files directly in a session's hcp folder, and `--mapexclude` now also covers links that point nowhere.
+* Removed single-run HCP ICAFix: `hcp_icafix_bolds` now has to name its groups or be left unset, which bundles all bolds, and `hcp_msmall_start_frame` and `hcp_msmall_end_frame` are gone.
+* Under `hcpya`, `setup_hcp` now keeps unprocessed diffusion data in `Diffusion_unproc`, and field maps set up by it are now found.
+* A group run of `compute_bold_fc` now takes globs, `.list` files and filters in its sessions, keeps their stated order and stays one job under a scheduler.
+* `compute_bold_fc`, `extract_roi` and `run_qc` now fail when a call fails or its result is missing, including `.nii.gz` and list runs of `compute_bold_fc` and `eddyqcstats` without `dwi_eddy_qc`.
 * Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
 
 ## 1.5.4

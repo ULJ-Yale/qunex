@@ -37,6 +37,7 @@ from qx_utilities.general import scheduler as gs
 from qx_utilities.general import process as gp
 from qx_utilities.general import matlab as gm
 from qx_utilities.general import run_bash as gb
+from qx_utilities.general import batch_io as bio
 from qx_utilities.general import core as gc
 from qx_utilities.general import exceptions as ge
 from qx_utilities.general import commands_support as gcs
@@ -425,6 +426,19 @@ def _run_command(command, args, start):
     if qx_command.language in ["matlab", "bash"]:
         cargs = {**args, **filled}
 
+        # a group run is one call over the whole list, as ids and not the globs
+        # of a stated specification, and a session's place in the list is its
+        # frame in the results
+        if sessions and cargs.get("runtype") == "group":
+            sessions = [
+                {"id": sid}
+                for sid in bio.as_stated(
+                    sessions,
+                    cargs.get("sessions", cargs.get("session")),
+                    cargs.get("filter"),
+                )
+            ]
+
         if "scheduler" in args:
             # the job is submitted, not run: what it did is for the run on the
             # node to report in its runlog, and the status record, when one is
@@ -456,9 +470,8 @@ def _run_command(command, args, start):
         else:
             # a script run over the sessions of a batch file at once is handed
             # their ids: it cannot read the batch file they came from, which is
-            # a run level parameter it is not passed. A group run is one call
-            # over the whole list, and it reads ids: not the globs of a stated
-            # specification
+            # a run level parameter it is not passed. A group run is handed the
+            # list settled above
             if sessions and (
                 not ({"session", "sessions"} & set(cargs))
                 or cargs.get("runtype") == "group"

@@ -175,7 +175,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_extractnames (str, default 'NONE'):
             List of bolds and concat names provided in the same format as the
             hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
-            to enable extraction of a subset of the runs in a HCP
+            to enable extraction of a subset of the runs in an HCP
             ICAFix group into a new concatenated series. Extraction works
             only when there is a single ICAFix group.
 
@@ -184,7 +184,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             registrations, often MSMSulc
 
         --hcp_resample_extractvolume (str, default 'NONE'):
-            Whether to also extract the specified HCP ICAFix from the
+            Whether to also extract the specified HCP ICAFix runs from the
             volume data, requires hcp_resample_extractnames to work.
 
         --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):

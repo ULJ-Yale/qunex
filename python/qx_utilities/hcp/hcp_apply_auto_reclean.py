@@ -313,6 +313,20 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, group):
         # subject/session
         subject = sinfo["id"] + options["hcp_suffix"]
 
+        # the pipeline works on the MSMAll registration whatever a study used,
+        # and without it stops only once it reaches that step
+        msmall_sphere = os.path.join(
+            hcp["hcp_nonlin"], "Native", f"{subject}.L.sphere.MSMAll.native.surf.gii"
+        )
+        if not pc.check_for_file(
+            msmall_sphere,
+            "MSMAll registration present",
+            f"MSMAll registration [{msmall_sphere}] missing, run hcp_msmall first!",
+            bad_level="error",
+            _log=log,
+        ):
+            run = False
+
         # highpass
         highpass = (
             0

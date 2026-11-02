@@ -336,6 +336,22 @@ def test_task_fmri_analysis_dry_run(session):
     assert "task analysis" in report or "task fMRI" in report.lower()
 
 
+@pytest.mark.parametrize(
+    "tasks, designs, mismatch",
+    [("A,B", "C", True), ("A@B", "C,D", False), ("A,B", "C@D", False)],
+)
+def test_task_fmri_analysis_has_one_design_per_task(session, tasks, designs, mismatch):
+    """Both lists were joined with `@` and split on a comma, so they always matched."""
+    sinfo, options = session(
+        hcp_task_lvl1tasks=tasks, hcp_task_lvl1fsfs=designs, hcp_task_summaryname="A/A"
+    )
+
+    log = hcp_task_fmri_analysis(sinfo, options)
+
+    assert ("mismatch in the length" in log.text) is mismatch
+    assert log.status[2] == int(mismatch)
+
+
 # ------------------------------------------------------------------- denoising
 
 

@@ -325,7 +325,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
 
         --qc_dwi_bedpostx (str, default 'no'):
             If 'yes', also render a BedpostX variant scene; requires a complete
-            Diffusion.bedpostX output.
+            <qc_dwi_path>.bedpostX output.
 
         --qc_dwi_eddyqcstats (str, default 'no'):
             If 'yes', hard-link the FSL EDDY qc.pdf into the QC folder and record
@@ -408,7 +408,7 @@ def hcp_run_qc(sinfo, options, overwrite=False, thread=0):
               stats.
             - Prerequisites: ``<hcp>/T1w/<qc_dwi_path>/<qc_dwi_data>.nii.gz`` and
               ``nodif_brain_mask.nii.gz``; sub-steps require their own outputs
-              (dtifit, Diffusion.bedpostX, EDDY qc).
+              (dtifit, <qc_dwi_path>.bedpostX, EDDY qc).
             - Useful parameters: ``--qc_dwi_path``, ``--qc_dwi_data``,
               ``--qc_dwi_dtifit``, ``--qc_dwi_bedpostx``, ``--qc_dwi_eddyqcstats``.
 

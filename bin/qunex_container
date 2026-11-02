@@ -1035,12 +1035,40 @@ def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
         folders = []
         for pattern in ids:
             folders += glob.glob(os.path.join(sessionsfolder, pattern))
-        slist = SessionList([{"id": os.path.basename(e)} for e in sorted(folders)])
+        slist = SessionList([{"id": os.path.basename(e)} for e in sorted(set(folders))])
 
     else:
-        slist = SessionList([{"id": e} for e in ids])
+        slist = SessionList([{"id": e} for e in dict.fromkeys(ids)])
 
     return slist.filter_by_string(filter)
+
+
+def as_stated(selected, sessions=None, filter=None):
+    """
+    ``as_stated(selected, sessions=None, filter=None)``
+
+    The ids of the `selected` sessions as a run that works across sessions is to
+    get them: each once, and in the order the specification `sessions` states
+    them, as a session's place in the list is its frame in the group results.
+
+    An id or glob in `sessions` that selected nothing stays in the list, for the
+    command reading it to report: a mistyped session would otherwise make the
+    group smaller without a word. With a `filter`, which is there to remove
+    sessions, it does not stay.
+    """
+    selected = [e["id"] for e in selected]
+
+    if sessions and LIST_FILE.match(sessions):
+        stated = [e["id"] for e in read_list(sessions.strip()) if "id" in e]
+    else:
+        stated = _split_sessions(sessions)
+
+    ids = []
+    for pattern in stated:
+        matched = [e for e in selected if e == pattern or fnmatch.fnmatchcase(e, pattern)]
+        ids += matched or ([] if filter else [pattern])
+
+    return list(dict.fromkeys(ids)) or selected
 
 
 # ------------------------------------------------------------------------------

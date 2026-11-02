@@ -236,6 +236,11 @@ def export_hcp(sessionsfolder=None, batchfile=None, sessions=None, filter=None, 
         targetfolder = os.path.join(mapto, session['id'])
 
         for datafolder in hcpfolders:
+            # a file directly in the hcp folder, as the QC scenes are
+            if not os.path.isdir(datafolder):
+                to_map.append((datafolder, os.path.join(targetfolder, os.path.basename(datafolder))))
+                continue
+
             for dirpath, _, filenames in os.walk(datafolder):
                 for filename in filenames:
                         to_map.append((os.path.join(datafolder, dirpath, filename), os.path.join(targetfolder, os.path.relpath(dirpath, hcpfolder), filename)))
@@ -253,12 +258,13 @@ def export_hcp(sessionsfolder=None, batchfile=None, sessions=None, filter=None, 
     toexclude = []
 
     for sfile, tfile in to_map:
-        if not os.path.exists(sfile):
-            missing.append((sfile, tfile))
-        # excluded before the target is checked: an excluded file whose target
-        # existed was overwritten with --overwrite=yes
-        elif mapexclude and any([e.search(sfile) is not None for e in mapexclude]):
+        # excluded before anything else is checked: an excluded file whose
+        # target existed was overwritten with --overwrite=yes, and an excluded
+        # link that points nowhere stopped the whole mapping
+        if mapexclude and any([e.search(sfile) is not None for e in mapexclude]):
             toexclude.append((sfile, tfile))
+        elif not os.path.exists(sfile):
+            missing.append((sfile, tfile))
         elif os.path.isfile(tfile):
             existing.append((sfile, tfile))
         else:

@@ -128,11 +128,13 @@ def get_hcp_paths(sinfo, options):
     d["T1w_source"] = os.path.join(d["source"], "T1w")
     d["T2w_source"] = os.path.join(d["source"], "T2w")
     # unprocessed data parallel to processed data would otherwise share a
-    # folder with what the pipeline writes
-    d["DWI_source"] = os.path.join(
-        d["source"],
-        "Diffusion_unproc" if options["hcp_folderstructure"] == "hcpya" else "Diffusion",
-    )
+    # folder with what the pipeline writes. A study set up before the two were
+    # kept apart still has it there
+    d["DWI_source"] = os.path.join(d["source"], "Diffusion")
+    if options["hcp_folderstructure"] == "hcpya":
+        unprocessed = os.path.join(d["source"], "Diffusion_unproc")
+        if os.path.isdir(unprocessed) or not os.path.isdir(d["DWI_source"]):
+            d["DWI_source"] = unprocessed
     d["ASL_source"] = os.path.join(d["source"], "ASL")
 
     d["T1w_folder"] = os.path.join(hcpbase, "T1w")
