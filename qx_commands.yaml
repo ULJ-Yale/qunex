@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-10-24T08:01:15.526213+00:00'
+generated_at: '2026-11-02T08:20:15.037861+00:00'
 source:
     id: core
 commands:
@@ -6397,6 +6397,97 @@ commands:
         description: Maps with more than one map (column) that cannot be merged and must be averaged.
     returns: []
     origin: core
+-   name: hcp_mmorf
+    aliases: []
+    path: qx_utilities.hcp.hcp_mmorf.hcp_mmorf
+    language: python
+    call: hcp_mmorf [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]
+    description: Run the registration step of the HCP MMORF chain (MMORFPipeline.sh).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). With 'yes' the mov_to_ref_mm_* files in MMORFNonLinear/xfms
+            and the completion file of hcp_post_mmorf are removed before the run, and hcp_post_mmorf has to be run again.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: studyfolder
+        type: str
+        default: null
+        description: The path to the study folder. The sessions are in its `sessions` folder, unless --sessionsfolder names
+            another one.
+    -   name: sessionsfolder
+        type: str
+        default: <studyfolder>/sessions
+        description: The path to the folder with the sessions. Set it only when the sessions are not in the `sessions` folder
+            of the study. With neither --studyfolder nor --sessionsfolder given, the current folder is used.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel. QuNex does not assign GPUs to sessions, so run one session per
+            GPU.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: hcp_folderstructure
+        type: str
+        default: hcpls
+        description: The HCP folder structure of the session, 'hcpya' or 'hcpls'.
+    -   name: hcp_mmorf_t1_template
+        type: str
+        default: HCP "MMORF_T1_0.7mm.nii.gz"
+        description: The T1w template. Also used by hcp_post_mmorf.
+    -   name: hcp_mmorf_t2_template
+        type: str
+        default: HCP "MMORF_T2_0.7mm.nii.gz"
+        description: The T2w template.
+    -   name: hcp_mmorf_ref_mask
+        type: str
+        default: HCP "MMORF_T1_0.7mm_brain_mask.nii.gz"
+        description: The reference brain mask.
+    -   name: hcp_mmorf_diffusion_ref
+        type: str
+        default: HCP "MMORF_DTI_0.7mm_tensor.nii.gz"
+        description: The diffusion tensor template.
+    -   name: hcp_mmorf_dti_ref_mask
+        type: str
+        default: HCP "MMORF_DTI_0.7mm_brain_mask.nii.gz"
+        description: The reference brain mask of the diffusion tensor template.
+    -   name: hcp_dwi_name
+        type: str
+        default: Diffusion
+        description: A session processed under another name is rejected, as the MMORF scripts only read T1w/Diffusion.
+    -   name: hcp_species
+        type: str
+        default: Human
+        description: A non-human species is rejected, as the MMORF scripts and templates support human data only.
+    -   name: longitudinal
+        type: flag
+        default: null
+        description: Rejected if set, as the MMORF scripts have no longitudinal path.
+    returns: []
+    origin: core
 -   name: hcp_msmall
     aliases: []
     path: qx_utilities.hcp.hcp_msmall.hcp_msmall
@@ -6940,7 +7031,7 @@ commands:
         description: The registration used, FS or MSMSulc.
     -   name: hcp_inflatescale
         type: int
-        default: '1'
+        default: HCP 1
         description: Inflate extra scale parameter.
     -   name: hcp_fs_ind_mean
         type: str
@@ -6982,6 +7073,109 @@ commands:
         default: detected
         description: Flat map root name. Only relevant for non-human species (when hcp_species is not 'Human'). When unset
             the HCP pipeline default is used.
+    returns: []
+    origin: core
+-   name: hcp_post_mmorf
+    aliases: []
+    path: qx_utilities.hcp.hcp_post_mmorf.hcp_post_mmorf
+    language: python
+    call: hcp_post_mmorf [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]
+    description: Run the last step of the HCP MMORF chain (PostMMORFPipeline.sh).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). With 'yes' the command's completion file is removed
+            before the run, and the pipeline writes its results over the existing ones. With 'no', a completion file older
+            than the warp of hcp_mmorf stops the command instead of being taken as finished.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: studyfolder
+        type: str
+        default: null
+        description: The path to the study folder. The sessions are in its `sessions` folder, unless --sessionsfolder names
+            another one.
+    -   name: sessionsfolder
+        type: str
+        default: <studyfolder>/sessions
+        description: The path to the folder with the sessions. Set it only when the sessions are not in the `sessions` folder
+            of the study. With neither --studyfolder nor --sessionsfolder given, the current folder is used.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: hcp_folderstructure
+        type: str
+        default: hcpls
+        description: The HCP folder structure of the session, 'hcpya' or 'hcpls'.
+    -   name: hcp_mmorf_t1_template
+        type: str
+        default: HCP "MMORF_T1_0.7mm.nii.gz"
+        description: The T1w template. Also used by hcp_mmorf.
+    -   name: hcp_hiresmesh
+        type: int
+        default: '164'
+        description: The high resolution mesh, which hcp_post_freesurfer must have built. Passed only if it is not 164, which
+            is HCP's default.
+    -   name: hcp_lowresmesh
+        type: str
+        default: '32'
+        description: The low resolution meshes, separated by commas, which hcp_post_freesurfer must have built. Passed only
+            if it is not 32, which is HCP's default.
+    -   name: hcp_mmorf_diffusionmesh
+        type: int
+        default: HCP 79
+        description: The diffusion mesh, which this command creates. It can not be a mesh of hcp_post_freesurfer, whose files
+            it would overwrite. Passed only if set.
+    -   name: hcp_mmorf_regname
+        type: str
+        default: HCP MSMAll
+        description: The surface registration to use, which must be in MNINonLinear/Native. Passed only if set.
+    -   name: hcp_mmorf_regnameorig
+        type: str
+        default: HCP MSMSulc
+        description: The registration the first one started from, which must be in MNINonLinear/Native. After hcp_post_freesurfer
+            with hcp_regname=FS the sphere is called reg.reg_LR. Passed only if set.
+    -   name: hcp_inflatescale
+        type: float
+        default: HCP 1
+        description: Additional inflation scaling, for a low resolution mesh above 32k. Passed only if set.
+    -   name: hcp_dwi_name
+        type: str
+        default: Diffusion
+        description: A session processed under another name is rejected, as the MMORF scripts only read T1w/Diffusion.
+    -   name: hcp_species
+        type: str
+        default: Human
+        description: A non-human species is rejected, as the MMORF scripts and templates support human data only.
+    -   name: longitudinal
+        type: flag
+        default: null
+        description: Rejected if set, as the MMORF scripts have no longitudinal path.
     returns: []
     origin: core
 -   name: hcp_pre_freesurfer
@@ -7252,6 +7446,97 @@ commands:
         type: str
         default: ''
         description: 'Indicates whether to correct bias field for BET (default: FALSE). Accepted values are ''TRUE'' and ''FALSE''.'
+    returns: []
+    origin: core
+-   name: hcp_pre_mmorf
+    aliases: []
+    path: qx_utilities.hcp.hcp_pre_mmorf.hcp_pre_mmorf
+    language: python
+    call: hcp_pre_mmorf [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]
+    description: Run the first step of the HCP MMORF chain (PreMMORFPipeline.sh).
+    type: processing.session
+    args:
+    -   name: sinfo
+        type: null
+        default: null
+        description: null
+    -   name: options
+        type: null
+        default: null
+        description: null
+    -   name: overwrite
+        type: str
+        default: 'no'
+        description: Whether to overwrite existing data (yes) or not (no). A new linear registration invalidates the later
+            steps, so with 'yes' the whole MMORFNonLinear folder and the completion file of hcp_post_mmorf are removed before
+            the run. Both hcp_mmorf and hcp_post_mmorf then have to be run again.
+    -   name: thread
+        type: null
+        default: null
+        description: null
+    options:
+    -   name: batchfile
+        type: str
+        default: ''
+        description: The batch.txt file with all the sessions information.
+    -   name: studyfolder
+        type: str
+        default: null
+        description: The path to the study folder. The sessions are in its `sessions` folder, unless --sessionsfolder names
+            another one.
+    -   name: sessionsfolder
+        type: str
+        default: <studyfolder>/sessions
+        description: The path to the folder with the sessions. Set it only when the sessions are not in the `sessions` folder
+            of the study. With neither --studyfolder nor --sessionsfolder given, the current folder is used.
+    -   name: parsessions
+        type: int
+        default: '1'
+        description: How many sessions to run in parallel.
+    -   name: hcp_suffix
+        type: str
+        default: ''
+        description: Specifies a suffix to the session id if multiple variants are run, empty otherwise.
+    -   name: logfolder
+        type: str
+        default: ''
+        description: The path to the folder where logs are to be stored, if other than default.
+    -   name: hcp_folderstructure
+        type: str
+        default: hcpls
+        description: The HCP folder structure of the session, 'hcpya' or 'hcpls'.
+    -   name: hcp_mmorf_t1_brain_template
+        type: str
+        default: HCP "MMORF_T1_0.7mm_brain.nii.gz"
+        description: The T1w brain template for the linear registration.
+    -   name: hcp_mmorf_lowest_shell_threshold
+        type: float
+        default: detected
+        description: The b-value limit of the lowest diffusion shell. Volumes with a lower b-value are used for the tensor
+            fit. When not set it is detected from T1w/Diffusion/bvals, as the lowest shell rounded to 100 plus 200. A value
+            set here is used as it is, with a warning when it does not separate the lowest shell from the rest.
+    -   name: hcp_mmorf_gradnonlin
+        type: str
+        default: detected
+        description: Whether to apply gradient nonlinearity correction to the tensor fit, yes or no. When not set it is 'yes'
+            if T1w/Diffusion/grad_dev.nii.gz exists and 'no' otherwise.
+    -   name: hcp_dwi_b0maxbval
+        type: float
+        default: '50'
+        description: The highest b-value still taken as b0 when detecting the lowest shell. Shared with hcp_diffusion, never
+            passed to the pipeline.
+    -   name: hcp_dwi_name
+        type: str
+        default: Diffusion
+        description: A session processed under another name is rejected, as the MMORF scripts only read T1w/Diffusion.
+    -   name: hcp_species
+        type: str
+        default: Human
+        description: A non-human species is rejected, as the MMORF scripts and templates support human data only.
+    -   name: longitudinal
+        type: flag
+        default: null
+        description: Rejected if set, as the MMORF scripts have no longitudinal path.
     returns: []
     origin: core
 -   name: hcp_prep_long

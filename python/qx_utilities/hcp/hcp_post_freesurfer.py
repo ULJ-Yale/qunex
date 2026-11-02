@@ -141,7 +141,7 @@ def hcp_post_freesurfer(sinfo, options, overwrite=False, thread=0):
         --hcp_mcsigma (str, default 'sqrt(200)'):
             Correction sigma used for metric smoothing.
 
-        --hcp_inflatescale (int, default 1):
+        --hcp_inflatescale (int, default HCP 1):
             Inflate extra scale parameter.
 
         --hcp_fs_ind_mean (str, default 'YES'):

@@ -223,8 +223,9 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             command.
 
     Output files:
-        The results of this command will be present in the Diffusion folder
-        in the session's root hcp folder.
+        The results of this command will be present in the folder named by
+        --hcp_dwi_name, Diffusion by default, in the session's root hcp folder
+        and in its T1w folder.
 
     Notes:
         Gradient Coefficient File Specification:
@@ -609,7 +610,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     for eddyoption in eddyoptions:
                         comm += "                --extra-eddy-arg=" + eddyoption
 
-            if options["hcp_dwi_name"] is not None:
+            if options["hcp_dwi_name"]:
                 comm += "                --dwiname=" + options["hcp_dwi_name"]
 
             if options["hcp_dwi_selectbestb0"]:
@@ -677,7 +678,11 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             tfile = None
             full_test = None
             if not options["longitudinal"]:
-                tfile = os.path.join(hcp["T1w_folder"], "Diffusion", "data.nii.gz")
+                tfile = os.path.join(
+                    hcp["T1w_folder"],
+                    options["hcp_dwi_name"] or "Diffusion",
+                    "data.nii.gz",
+                )
 
                 if hcp["hcp_dwi_check"]:
                     full_test = {

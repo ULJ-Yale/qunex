@@ -377,3 +377,16 @@ def test_the_status_record_says_what_was_submitted_and_no_job_writes_it(
     assert all(said in entry["summary"] for entry in record["sessions"]), record
     # what the jobs did is for them to say, in their own runlogs
     assert record["failed"] == (None if mode == "run" else 0)
+
+
+def test_a_job_array_of_another_command_names_the_commands_it_allows(study, scheduled):
+    with pytest.raises(ge.CommandError) as error:
+        gs.run_through_scheduler(
+            "hcp_mmorf",
+            sessions=SESSIONS,
+            args={"scheduler": "SLURM,time=1:00:00,array", "run": "run"},
+            run=make_run(study),
+        )
+
+    for command in ["hcp_nhp_freesurfer", "hcp_fmri_surface", "run_recipe"]:
+        assert command in error.value.error

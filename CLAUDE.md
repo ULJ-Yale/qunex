@@ -37,6 +37,7 @@ pragmatic, focused improvements over strict rewrites.**
     `hcp_pre_freesurfer.py`, `hcp_fmri_volume.py`); shared code is in `hcp_utils.py` (option
     checks, BOLD/gdc parsing, denoising executors), `hcp_paths.py` (`get_hcp_paths`), `qc_hcp.py`
     (visual QC), `tica_folders.py` (the study dir and group folder of `hcp_temporal_ica`),
+    `mmorf_utils.py` (the checks and the run flow of the `hcp_*mmorf` commands),
     `import_hcp.py`/`export_hcp.py`/`setup_hcp.py`. There is no `process_hcp.py`.
   - `qx_registry.py` / `qx_registry_build.py` — the command registry. Commands are discovered
     automatically from `.. qx_command:` blocks in python/matlab/bash docstrings; there is no
@@ -55,7 +56,7 @@ pragmatic, focused improvements over strict rewrites.**
 
 - ../qunex.wiki - Core QuNex Wiki (documentation and tutorials).
 - ../qunexsdk - QuNex SDK with additional dev related code (acceptance testing, container building, devops).
-- ../qunexsdk-wiki - QuNex SDK Wiki (SDK Wiki).
+- ../qunexsdk.wiki - QuNex SDK Wiki (SDK Wiki).
 
 Assure that relevant content in sister repos is always updated and brought up to speed when making code changes. This is especially important with larger/architectural changes.
 
@@ -66,6 +67,9 @@ Assure that relevant content in sister repos is always updated and brought up to
 - Match the style of nearby code in the file you edit. Keep code readable and testable.
 - Never revert unrelated working-tree changes. Avoid renaming public commands/functions
   unless requested. Keep backward compatibility for user-facing CLI and pipeline behavior.
+- Develop for the next container. QuNex and what it wraps (HCP Pipelines and the other tools)
+  are updated together, so code can rely on the latest upstream. Do not add checks, fallbacks or
+  documentation for what an older container lacks, and do not report such a gap as an issue.
 
 ## Python
 

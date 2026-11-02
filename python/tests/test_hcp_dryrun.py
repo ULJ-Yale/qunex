@@ -41,6 +41,7 @@ from qx_utilities.hcp.hcp_long_transmit_bias import hcp_long_transmit_bias
 from qx_utilities.hcp.hcp_make_average_dataset import hcp_make_average_dataset
 from qx_utilities.hcp.hcp_msmall import hcp_msmall
 from qx_utilities.hcp.hcp_nhp_freesurfer import hcp_nhp_freesurfer
+from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_post_fix import hcp_post_fix
 from qx_utilities.hcp.hcp_post_freesurfer import hcp_post_freesurfer
 from qx_utilities.hcp.hcp_pre_freesurfer import hcp_pre_freesurfer
@@ -128,6 +129,21 @@ def test_post_freesurfer_dry_run(session):
     report, status = log.text, log.status
     _check_contract(report, status)
     assert "HCP PostFreeSurfer" in report or "HCP PostFS" in report
+
+
+def test_post_freesurfer_leaves_inflatescale_to_hcp_unless_set(session):
+    sinfo, options = session(hcp_processing_mode="LegacyStyleData")
+    aparc = os.path.join(get_hcp_paths(sinfo, options)["FS_folder"], "mri", "aparc+aseg.mgz")
+    os.makedirs(os.path.dirname(aparc))
+    open(aparc, "w").close()
+
+    assert options["hcp_inflatescale"] is None
+    report = hcp_post_freesurfer(sinfo, options).text
+    assert "PostFreeSurferPipeline.sh" in report
+    assert "--inflatescale=" not in report
+
+    options["hcp_inflatescale"] = "2"
+    assert '--inflatescale="2"' in hcp_post_freesurfer(sinfo, options).text
 
 
 def test_nhp_freesurfer_dry_run(session):
@@ -221,6 +237,51 @@ def test_diffusion_nhp_dry_run(session):
     assert "--wmprojabs=1" in report
     assert "--resamp=lsr" in report
     assert "--usephasezero=True" in report
+
+
+def _diffusion_data(sinfo, name):
+    path = os.path.join(sinfo["hcp"], "sess-01", "T1w", name, "data.nii.gz")
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    open(path, "w").close()
+    return path
+
+
+def test_diffusion_dry_run_checks_the_named_folder(session):
+    sinfo, options = session(dwi=True, hcp_dwi_name="Other")
+    _diffusion_data(sinfo, "Diffusion")
+    assert hcp_diffusion(sinfo, options).status[1] == "HCP Diffusion can be run"
+
+    _diffusion_data(sinfo, "Other")
+    assert hcp_diffusion(sinfo, options).status[1] != "HCP Diffusion can be run"
+
+
+@pytest.mark.parametrize(
+    "name, folder, flag",
+    [(None, "Diffusion", False), ("", "Diffusion", False), ("Other", "Other", True)],
+)
+def test_diffusion_overwrite_removes_only_the_named_data(
+    session, monkeypatch, name, folder, flag
+):
+    sinfo, options = session(dwi=True)
+    options.update(run="run", hcp_dwi_name=name)
+    target = _diffusion_data(sinfo, folder)
+    bystander = _diffusion_data(sinfo, "Bystander")
+    runs = []
+
+    def run_external(tfile, comm, *args, **kwargs):
+        runs.append((tfile, comm))
+        return None, "done", 0
+
+    monkeypatch.setattr(
+        "qx_utilities.hcp.hcp_diffusion.pc.run_external_for_file", run_external
+    )
+    hcp_diffusion(sinfo, options, overwrite=True)
+
+    ((tested, comm),) = runs
+    assert tested == target
+    assert ("--dwiname=" in comm) is flag
+    assert not os.path.exists(target)
+    assert os.path.exists(bystander)
 
 
 def test_longitudinal_diffusion_dry_run_says_it_can_be_run(session, tmp_path):

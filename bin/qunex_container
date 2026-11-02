@@ -3157,9 +3157,7 @@ def main(args=None):
                 print(
                     "ERROR: SLURM job arrays are supported only for HCP Minimal Preprocessing Pipelines commands and run_recipe!"
                 )
-                print(
-                    "         ... hcp_pre_freesurfer, hcp_freesurfer, hcp_post_freesurfer, hcp_fmri_volume, hcp_fmri_surface, run_recipe"
-                )
+                print("         ... " + ", ".join(array_commands))
                 exit(1)
 
     # array for storing session ids

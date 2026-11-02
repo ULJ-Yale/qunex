@@ -11,6 +11,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `studyfolder` is now the main path parameter, `sessionsfolder` will be derived from it if you are using the default QuNex folder structure. If not, then `sessionsfolder` can still be used.
 * Paths in batch and session files are now relative to each session's folder, meaning that studies can be easily moved around. Absolute paths in existing studies keep working.
 * `build_qx_registry` now builds only the core command registry; extensions are built with `build_qx_extensions` (or with `--build_extensions=yes`).
+* Integrated the HCP Pipelines MMORF registration chain into QuNex as `hcp_pre_mmorf`, `hcp_mmorf` and `hcp_post_mmorf`.
+* `hcp_diffusion` now checks and overwrites the folder named by `--hcp_dwi_name`. It always looked in `T1w/Diffusion`, so it could report a wrong result and, with `--overwrite`, remove `data.nii.gz` of a default run.
 
 ## 1.5.4
 

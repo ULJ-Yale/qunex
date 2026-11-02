@@ -287,6 +287,26 @@ def test_a_job_that_runs_no_sessions_is_not_numbered(tmp_path, launch):
     assert (folder / "batchlogs" / ("PBS_run_recipe_r.%s.sh" % stamp)).exists()
 
 
+def test_a_job_array_of_another_command_names_the_commands_it_allows(
+    tmp_path, launch, capsys
+):
+    study = make_study(tmp_path / "study")
+
+    done = launch(
+        "hcp_mmorf",
+        "--studyfolder=%s" % study,
+        "--sessions=S01,S02",
+        "--scheduler=SLURM,time=1:00:00,array",
+    )
+
+    assert done.code == 1
+    assert not done.submitted
+    out = capsys.readouterr().out
+    assert "SLURM job arrays are supported only" in out
+    for command in ["hcp_nhp_freesurfer", "hcp_fmri_surface", "run_recipe"]:
+        assert command in out
+
+
 def test_a_job_array_writes_an_output_for_each_of_its_tasks(tmp_path, launch):
     study = make_study(tmp_path / "study")
 
