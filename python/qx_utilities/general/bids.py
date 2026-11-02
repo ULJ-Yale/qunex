@@ -301,7 +301,7 @@ def import_bids(
             BIDS dataset in `<sessionsfolder>/inbox/BIDS`.
 
         --sessions (str, optional):
-            An optional parameter that specifies a comma or pipe separated list
+            An optional parameter that specifies a comma separated list
             of sessions from the inbox folder to be processed. Glob patterns
             can be used. If provided, only packets or folders within the inbox
             that match the list of sessions will be processed. If `inbox` is a

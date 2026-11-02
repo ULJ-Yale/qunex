@@ -955,7 +955,10 @@ def anchor_command_line(args, command=None, study=None):
 
 
 def _split_sessions(sessions):
-    """Splits a comma, space or pipe separated session specification into a list."""
+    """
+    Splits a comma or space separated session specification into a list. A pipe
+    separates them as well, for backwards compatibility: it is not documented.
+    """
     if sessions is None:
         return []
     return [e.strip() for e in re.split(r" +|,|\|", sessions.strip()) if e.strip()]
@@ -1013,7 +1016,7 @@ def select_sessions(records, sessions=None, filter=None, sessionsfolder=None):
     Returns the SessionList of records the session specification and the filter
     select.
 
-    `sessions` is a comma, space or pipe separated list of session ids or globs
+    `sessions` is a comma or space separated list of session ids or globs
     (`*`, `?`, `[abc]`), `filter` a '&' or '|' separated string of <key>:<value>
     pairs. An empty `sessions` or `filter` selects everything.
 

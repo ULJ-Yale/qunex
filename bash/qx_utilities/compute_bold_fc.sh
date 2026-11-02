@@ -774,7 +774,7 @@ if [ ${RunType} == "individual" ]; then
             rm -rf ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
             # -- Generate output directories
             mkdir ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
-            mkdir ${OutPath} > /dev/null 2>&1
+            mkdir -p ${OutPath} > /dev/null 2>&1
             # -- Generate the temp list
             echo "session id:${INPUTCASE}" >> ${SessionsFolder}/${INPUTCASE}/${InputPath}/templist_${Calculation}_${OutName}/${OutName}.list
             for InputFile in ${InputFiles}; do
@@ -793,7 +793,7 @@ fi
 
 if [ ${RunType} == "group" ] && [ ${Calculation} != "dense" ]; then
     # -- Generate output directories
-    mkdir ${OutPath} > /dev/null 2>&1
+    mkdir -p ${OutPath} > /dev/null 2>&1
     # -- Cleanup prior tmp lists
     rm -rf ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
     mkdir ${OutPath}/templist_${Calculation}_${OutName} > /dev/null 2>&1
@@ -823,6 +823,7 @@ if [ ${Calculation} != "dense" ]; then
     # reads its standard input when it is given no file
     if [ ${RunType} == "list" ]; then
         FinalInput=${FileList}
+        mkdir -p ${OutPath} > /dev/null 2>&1
     fi
     # -- Echo inputs
     echo ""
@@ -847,7 +848,8 @@ if [ ${Calculation} != "dense" ]; then
         # Example with string input ---> ${QUNEXMCOMMAND} "fc_compute_seedmaps_multiple('listname:$CASE-$OutName|session id:$CASE|file:$InputFile', '$ROIInfo', $MaskFrames, '$FCCommand', '$OutPath', '$Method', '$IgnoreFrames', $Covariance);,quit()"
         if [ -z "$Method" ]; then Method="mean"; fi
         if [ -z "$FCCommand" ]; then FCCommand="all"; fi
-        ${QUNEXMCOMMAND} "fc_compute_seedmaps_multiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance);,quit()"
+        # octave and matlab both exit 1 on an error this way, matlab would otherwise stay at its prompt
+        ${QUNEXMCOMMAND} "try, fc_compute_seedmaps_multiple('$FinalInput', '$ROIInfo', $MaskFrames, '$FCCommand', '${OutPath}', '$Method', '$IgnoreFrames', $Covariance); catch err, disp(err.message); exit(1); end; quit()" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
     fi
     # -- Check if GBC seed run is specified
     if [ ${Calculation} == "gbc" ]; then
@@ -861,7 +863,7 @@ if [ ${Calculation} != "dense" ]; then
         if [ -z "$RadiusDilate" ]; then RadiusDilate="0"; fi
         if [ -z "$ComputeTime" ]; then ComputeTime="true"; fi
         if [ -z "$VoxelStep" ]; then VoxelStep="1000"; fi
-        ${QUNEXMCOMMAND} "fc_compute_gbc3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep);,quit()"
+        ${QUNEXMCOMMAND} "try, fc_compute_gbc3('$FinalInput','$GBCCommand', $MaskFrames, $Verbose, $TargetROI, '${OutPath}', $RadiusSmooth, $RadiusDilate, '$IgnoreFrames', $ComputeTime, $Covariance, $VoxelStep); catch err, disp(err.message); exit(1); end; quit()" || { echo "ERROR --- ${Calculation} calculation failed, see the error above."; RunError="yes"; }
     fi
     # -- Remove temp lists
     echo ""
@@ -880,7 +882,7 @@ if [ ${Calculation} == "dense" ]; then
         # -- Parse input from the InputFiles variable
         InputFiles=`echo "${InputFiles}" | sed 's/,/ /g;s/|/ /g'`
         # -- Generate output directories
-        mkdir ${OutPath} > /dev/null 2>&1
+        mkdir -p ${OutPath} > /dev/null 2>&1
         # -- Generate the temp list
         for InputFile in ${InputFiles}; do
             dtseriesCheck=`echo ${InputFile} | grep ".dtseries.nii"`
@@ -950,30 +952,19 @@ if [[ "$ExtractData" == "yes" ]] && [[ ${Calculation} != "dense" ]] && [[ ! `ech
     fi
 fi
 # -- Perform completion checks
-if [[ ${RunType} == "group" ]] && [[ ${Calculation} != "dense" ]]; then
-    CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
-   if [[ ! -z ${CheckRun} ]]; then
+if [[ ${Calculation} != "dense" ]]; then
+    # a volume is saved as .nii.gz, and the results of a list run carry the name of the list
+    CheckName=${OutName}
+    if [[ ${RunType} == "list" ]]; then CheckName=`basename ${FileList} .list`; fi
+    CheckRun=`ls -t1 ${OutPath}/${CheckName}*.nii ${OutPath}/${CheckName}*.nii.gz 2> /dev/null | head -n 1`
+    if [[ ! -z ${CheckRun} ]]; then
         echo ""
         echo "--- Connectivity calculation completed. Look for files beginning with: "
-        echo "    ${OutPath}/${OutName}"
+        echo "    ${OutPath}/${CheckName}"
         echo ""
     else
         echo ""
-        echo "ERROR --- Result for ${OutPath}/${OutName} not found. Something went wrong."
-        echo ""
-        RunError="yes"
-    fi
-fi
-if [[ ${RunType} == "individual" ]] && [[ ${Calculation} != "dense" ]]; then
-    CheckRun=`ls -t1 ${OutPath}/${OutName}*.nii 2> /dev/null | head -n 1`
-   if [[ ! -z ${CheckRun} ]]; then
-        echo ""
-        echo "--- Connectivity calculation completed. Look for files beginning with: "
-        echo "    ${OutPath}/${OutName}"
-        echo ""
-    else
-        echo ""
-        echo "ERROR --- Result for ${OutPath}/${OutName} not found. Something went wrong."
+        echo "ERROR --- Result for ${OutPath}/${CheckName} not found. Something went wrong."
         echo ""
         RunError="yes"
     fi

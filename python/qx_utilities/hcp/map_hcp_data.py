@@ -22,6 +22,8 @@ import time
 import traceback
 from datetime import datetime
 
+import nibabel as nib
+
 import qx_utilities.general.core as gc
 import qx_utilities.processing.core as pc
 import qx_utilities.general.log as gl
@@ -54,6 +56,22 @@ def _remove(_log, options, path):
         os.remove(path)
     else:
         _log.detail(f"test, not removed: {path}")
+
+
+def _bold_resolution(results_folder, default):
+    """
+    The voxel size of the BOLDs in `results_folder`: the resolution the fMRI
+    pipelines ran at, which can have been stated for them alone. `default` when
+    there is no BOLD to read it from.
+    """
+    for folder in sorted(glob.glob(os.path.join(results_folder, "*"))):
+        image = os.path.join(folder, os.path.basename(folder) + ".nii.gz")
+        if os.path.exists(image):
+            try:
+                return "%g" % nib.load(image).header.get_zooms()[0]
+            except nib.filebasedimages.ImageFileError:
+                continue
+    return default
 
 
 def _write_movement_data(source, target):
@@ -387,7 +405,10 @@ def map_hcp_data(sinfo, options, overwrite=False, thread=0):
                 testrun and os.path.exists(aparc_t1_source)
             )
             resample = os.path.exists(t1_restore) and aparc_t1_ready
-            flirt = f"flirt -interp nearestneighbour -ref {t1_restore} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {options['hcp_bold_res']}"
+            bold_res = _bold_resolution(
+                os.path.join(d["hcp"], "MNINonLinear", "Results"), options["hcp_bold_res"]
+            )
+            flirt = f"flirt -interp nearestneighbour -ref {t1_restore} -in {f['fs_aparc_t1']} -out {f['fs_aparc_bold']} -applyisoxfm {bold_res}"
             description = (
                 " ... resampling t1 cortical segmentation (%s) to bold space (%s)"
                 % (

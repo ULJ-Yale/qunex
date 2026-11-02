@@ -231,6 +231,9 @@ study is the one named, else the folder a named sessions folder is in, else the 
   `gf.sessions_folder(studyfolder, sessionsfolder)`. `gmri` hands the derived sessions folder to
   every command that declares `sessionsfolder`, and forwards `--studyfolder` to a bash script only
   if the script documents it — so a script that documents it must parse it.
+- A session specification is separated by commas or spaces. A pipe still separates one
+  (`bio._split_sessions` and the scripts' `sed`), for backwards compatibility only: docs, recipes
+  and QuNex's own code use commas.
 - Session and batch files record a session's folders (`dicom`, `raw_data`, `data`, `hcp`, `bids`,
   `hcpls`, `nhp`) **relative to the session folder** (`hcp: hcp`). Write literals or
   `gf.session_relative(path, session_folder)`, never `abspath`. They are read back against

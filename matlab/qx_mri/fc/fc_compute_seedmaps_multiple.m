@@ -283,19 +283,19 @@ for n = 1:list.nsessions
         % ---> if needed, save individual images
 
         if ~isempty(strfind(options, 'cv')) && cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_cov']); fprintf(' cov');
+            pr.img_saveimageframe(r, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_cov']); fprintf(' cov');
         end
         if ~isempty(strfind(options, 'r')) && ~cv
-            pr.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_r']); fprintf(' r');
+            pr.img_saveimageframe(r, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_r']); fprintf(' r');
         end
         if ~isempty(strfind(options, 'f')) && ~cv
             group(r).Fz.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_Fz']); fprintf(' Fz');
         end
         if ~isempty(strfind(options, 'p')) && ~cv
-            p.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_p']); fprintf(' p');
+            p.img_saveimageframe(r, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_p']); fprintf(' p');
         end
         if ~isempty(strfind(options, 'z')) && ~cv
-            z.img_saveimageframe(n, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_Z']); fprintf(' Z');
+            z.img_saveimageframe(r, [targetf '/' lname '_' group(r).roi '_' list.session(n).id '_Z']); fprintf(' Z');
         end
 
     end

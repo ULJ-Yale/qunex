@@ -234,8 +234,9 @@ def setup_hcp(
 
                 --'hcpya'
                     Unprocessed data is parallel to processed data, functional
-                    data folders have `_fncb` suffix and field map data folders
-                    have `_strc` tail.
+                    data folders have `_fncb` suffix, field map data folders
+                    have `_strc` tail and the diffusion data folder is
+                    `Diffusion_unproc`.
                 --'hcpls'
                     Unprocessed data is a subfolder in the HCP session folder,
                     functional data folders and field map data folders do not
@@ -326,10 +327,12 @@ def setup_hcp(
     if hcp_folderstructure == "hcpya":
         fctail = "_fncb"
         fmtail = "_strc"
+        dwitail = "_unproc"
         basef = os.path.join(sourcefolder, targetfolder, inf[session_key] + hcp_suffix)
     else:
         fctail = ""
         fmtail = ""
+        dwitail = ""
         basef = os.path.join(
             sourcefolder, targetfolder, inf[session_key] + hcp_suffix, "unprocessed"
         )
@@ -629,7 +632,7 @@ def setup_hcp(
                 tbase = "_".join([sid, "DWI", v["task"]])
 
             tfile = [tbase + e for e in [".nii.gz", ".bval", ".bvec"]]
-            tfold = "Diffusion"
+            tfold = "Diffusion" + dwitail
 
         elif v["name"] in ["mbPCASLhr", "PCASLhr", "ASL"]:
             sfile = k + ".nii.gz"

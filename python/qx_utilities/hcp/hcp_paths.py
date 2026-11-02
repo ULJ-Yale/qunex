@@ -127,7 +127,12 @@ def get_hcp_paths(sinfo, options):
     d["hcp_nonlin"] = os.path.join(hcpbase, "MNINonLinear")
     d["T1w_source"] = os.path.join(d["source"], "T1w")
     d["T2w_source"] = os.path.join(d["source"], "T2w")
-    d["DWI_source"] = os.path.join(d["source"], "Diffusion")
+    # unprocessed data parallel to processed data would otherwise share a
+    # folder with what the pipeline writes
+    d["DWI_source"] = os.path.join(
+        d["source"],
+        "Diffusion_unproc" if options["hcp_folderstructure"] == "hcpya" else "Diffusion",
+    )
     d["ASL_source"] = os.path.join(d["source"], "ASL")
 
     d["T1w_folder"] = os.path.join(hcpbase, "T1w")
@@ -245,7 +250,7 @@ def get_hcp_paths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
+                sinfo["id"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
         for fmap in fmapmag:
@@ -269,7 +274,7 @@ def get_hcp_paths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Phase.nii.gz",
+                sinfo["id"] + "*_FieldMap_Phase.nii.gz",
             )
         )
         for imagepath in fmapphase:
@@ -284,7 +289,7 @@ def get_hcp_paths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_GE.nii.gz",
+                sinfo["id"] + "*_FieldMap_GE.nii.gz",
             )
         )
         for imagepath in fmapge:
@@ -298,7 +303,7 @@ def get_hcp_paths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Precomputed.nii.gz",
+                sinfo["id"] + "*_FieldMap_Precomputed.nii.gz",
             )
         )
         for imagepath in fmapprecomputed:
@@ -314,7 +319,7 @@ def get_hcp_paths(sinfo, options):
             os.path.join(
                 d["source"],
                 "FieldMap*" + options["fmtail"],
-                sinfo["id"] + options["fmtail"] + "*_FieldMap_Magnitude*.nii.gz",
+                sinfo["id"] + "*_FieldMap_Magnitude*.nii.gz",
             )
         )
         for imagepath in fmapmag_precomputed:

@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-11-02T08:20:15.037861+00:00'
+generated_at: '2026-11-02T10:14:07.115697+00:00'
 source:
     id: core
 commands:
@@ -95,10 +95,10 @@ commands:
     -   name: sessions
         type: str
         default: ''
-        description: 'An optional parameter that specifies a comma or pipe separated list of sessions from the inbox folder
-            to be processed. Regular expression patterns can be used. If provided, only folders within the inbox that match
-            the list of sessions will be processed. Note: the session will match if the string is found within the folder
-            name. So ''S01'' will match any folder that contains the string ''S01''!'
+        description: 'An optional parameter that specifies a comma separated list of sessions from the inbox folder to be
+            processed. Regular expression patterns can be used. If provided, only folders within the inbox that match the
+            list of sessions will be processed. Note: the session will match if the string is found within the folder name.
+            So ''S01'' will match any folder that contains the string ''S01''!'
     -   name: archive
         type: str
         default: leave
@@ -579,6 +579,10 @@ commands:
         type: str
         default: ''
         description: Radius for dilating mask (no dilation if empty).
+    -   name: gbc-command
+        type: str
+        default: null
+        description: Specify the the type of gbc to run. This is a string describing GBC to compute. E.g. 'mFz:0.1|mFz:0.2|aFz:0.1|aFz:0.2|pFz:0.1|pFz:0.2'
     -   name: verbose
         type: str
         default: 'false'
@@ -616,6 +620,10 @@ commands:
         default: null
         description: An array mask defining which frames to use (1) and which not (0). All if empty. If single value is specified
             then this number of frames is skipped.
+    -   name: mem-limit
+        type: str
+        default: '4'
+        description: Restrict memory. Memory limit expressed in gigabytes.
     returns: []
     origin: core
 -   name: compute_bold_stats
@@ -800,7 +808,7 @@ commands:
         type: str
         default: None
         description: If provided, only the specified sessions from the sessions folder will be processed. They are to be specified
-            as a pipe or comma separated list, glob patterns are valid session specifiers.
+            as a comma separated list, glob patterns are valid session specifiers.
     -   name: filter
         type: str
         default: None
@@ -973,7 +981,7 @@ commands:
     -   name: sessions
         type: str
         default: None
-        description: A comma or pipe separated string of session names to include (can be glob patterns).
+        description: A comma separated string of session names to include (can be glob patterns).
     -   name: filter
         type: str
         default: None
@@ -1102,7 +1110,7 @@ commands:
     -   name: sessions
         type: str
         default: None
-        description: A comma or pipe separated string of session names to include (can be glob patterns).
+        description: A comma separated string of session names to include (can be glob patterns).
     -   name: filter
         type: str
         default: None
@@ -1190,9 +1198,9 @@ commands:
     -   name: sessions
         type: str
         default: '*'
-        description: Either an explicit list (space, comma or pipe separated) of sessions to process or the path to a list
-            file with sessions to process. If left unspecified, '*' will be used and all folders within the sessions folder
-            will be processed.
+        description: Either an explicit list (space or comma separated) of sessions to process or the path to a list file
+            with sessions to process. If left unspecified, '*' will be used and all folders within the sessions folder will
+            be processed.
     -   name: pipelines
         type: str
         default: hcp
@@ -2413,7 +2421,7 @@ commands:
     -   name: sessions
         type: str
         default: ''
-        description: A list of sessions to map (comma/pipe-separated, patterns allowed). When a batch file is given, it selects
+        description: A list of sessions to map (comma-separated, patterns allowed). When a batch file is given, it selects
             within it.
     -   name: filter
         type: str
@@ -3481,9 +3489,9 @@ commands:
     -   name: sessions
         type: str
         default: None
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
-            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
-            may be given instead.
+        description: Either a string with a comma separated list of sessions (sessions ids) to be processed; glob patterns
+            (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given
+            instead.
     -   name: filter
         type: str
         default: None
@@ -4301,17 +4309,16 @@ commands:
     -   name: hcp_icafix_bolds
         type: str
         default: ''
-        description: Specify a list of bolds for ICAFix. You should specify how to group/concatenate bolds together along
-            with bolds, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>", in this case multi-run
-            HCP ICAFix will be executed, which is the default. Instead of full bold names, you can also use bold tags from
-            the batch file. If this parameter is not provided ICAFix will bundle all bolds together and execute multi-run
-            HCP ICAFix, the concatenated file will be named fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in this case single-run HCP ICAFix will be executed
-            over specified bolds. This is a legacy option and not recommended.
+        description: 'Specify how to group/concatenate the bolds for ICAFix, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>".
+            Instead of full bold names, you can also use bold tags from the batch file. If this parameter is not provided
+            ICAFix will bundle all bolds together, the concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold named in two groups, or twice, whether by its
+            name or by its tag, is an error. Every entry needs a group name: "<boldname1>,<boldname2>" and "<group1>:<boldname1>|<boldname2>"
+            are errors.'
     -   name: hcp_icafix_highpass
         type: int
         default: '0'
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix.
+        description: Value for the highpass filter.
     -   name: hcp_bold_res
         type: str
         default: '2'
@@ -4636,11 +4643,11 @@ commands:
         type: str
         default: ''
         description: List of bolds on which ICAFix was applied, with the same format as for ICAFix. Typically, this should
-            be identical to the list used in the ICAFix run. If multi-run ICAFix was run with two or more groups then HCP
-            DeDriftAndResample is executed for every group, in the order listed, and each of these runs applies the same MSMAll
-            registration (hcp_resample_regname) to the bolds of its group. If not provided DeDriftAndResample will assume
-            multi-run ICAFix was executed with all bolds bundled together in a single concatenation called fMRI_CONCAT_ALL
-            (i.e., same default behavior as in ICAFix).
+            be identical to the list used in the ICAFix run. If ICAFix was run with two or more groups then HCP DeDriftAndResample
+            is executed for every group, in the order listed, and each of these runs applies the same MSMAll registration
+            (hcp_resample_regname) to the bolds of its group. If not provided DeDriftAndResample will assume ICAFix was executed
+            with all bolds bundled together in a single concatenation called fMRI_CONCAT_ALL (i.e., same default behavior
+            as in ICAFix).
     -   name: hcp_resample_concatregname
         type: str
         default: MSMAll
@@ -4672,9 +4679,8 @@ commands:
         description: The method hcp_msmall was run with. Used only to name the MSMAll registration to apply (hcp_resample_regname).
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix. Should
-            be identical to the value used for ICAFix.
+        default: '0'
+        description: Value for the highpass filter. Should be identical to the value used for ICAFix.
     -   name: hcp_hiresmesh
         type: int
         default: '164'
@@ -4707,15 +4713,13 @@ commands:
         description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
             will be used, outside 'interpreted' is the default.
     -   name: hcp_icafix_domotionreg
-        type: bool
-        default: detailed below
-        description: Whether to regress motion parameters as part of the cleaning. The default value after a single-run HCP
-            ICAFix is [TRUE], while the default after a multi-run HCP ICAFix is [FALSE].
+        type: str
+        default: 'FALSE'
+        description: Whether to regress motion parameters as part of the cleaning.
     -   name: hcp_resample_dontfixnames
         type: str
         default: NONE
-        description: A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Only applicable if single-run
-            ICAFix was used. Generally not recommended.
+        description: A list of comma separated bolds that will not have HCP ICAFix reapplied to them. Generally not recommended.
     -   name: hcp_resample_inregname
         type: str
         default: NONE
@@ -4728,16 +4732,16 @@ commands:
         type: str
         default: NONE
         description: List of bolds and concat names provided in the same format as the hcp_icafix_bolds parameter. Defines
-            which bolds to extract. Exists to enable extraction of a subset of the runs in a multi-run HCP ICAFix group into
-            a new concatenated series. Extraction works only when there is a single multi-run ICAFix group.
+            which bolds to extract. Exists to enable extraction of a subset of the runs in a HCP ICAFix group into a new concatenated
+            series. Extraction works only when there is a single ICAFix group.
     -   name: hcp_resample_extractextraregnames
         type: str
         default: NONE
-        description: Extract multi-run HCP ICAFix runs for additional surface registrations, often MSMSulc
+        description: Extract HCP ICAFix runs for additional surface registrations, often MSMSulc
     -   name: hcp_resample_extractvolume
         type: str
         default: NONE
-        description: Whether to also extract the specified multi-run HCP ICAFix from the volume data, requires hcp_resample_extractnames
+        description: Whether to also extract the specified HCP ICAFix from the volume data, requires hcp_resample_extractnames
             to work.
     -   name: hcp_msmall_templates
         type: str
@@ -5576,7 +5580,7 @@ commands:
     path: qx_utilities.hcp.hcp_icafix.hcp_icafix
     language: python
     call: hcp_icafix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]
-    description: Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
+    description: Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run).
     type: processing.session
     args:
     -   name: sinfo
@@ -5630,37 +5634,32 @@ commands:
     -   name: hcp_icafix_bolds
         type: str
         default: ''
-        description: 'Specify a list of bolds for ICAFix. You should specify how to group/concatenate bolds together along
-            with bolds, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>", in this case multi-run
-            HCP ICAFix will be executed, which is the default. Instead of full bold names, you can also use bold tags from
-            the batch file. If this parameter is not provided ICAFix will bundle all bolds together and execute multi-run
-            HCP ICAFix, the concatenated file will be named fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in this case single-run HCP ICAFix will be executed
-            over specified bolds. This is a legacy option and not recommended. A tag names every bold that carries it, and
-            a bold can be named once only: a bold named in two groups, or twice, whether by its name or by its tag, is an
-            error. With groups, every entry needs a group name: "<group1>:<boldname1>|<boldname2>" is an error.'
+        description: 'Specify how to group/concatenate the bolds for ICAFix, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>".
+            Instead of full bold names, you can also use bold tags from the batch file. If this parameter is not provided
+            ICAFix will bundle all bolds together, the concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold named in two groups, or twice, whether by its
+            name or by its tag, is an error. Every entry needs a group name: "<boldname1>,<boldname2>" and "<group1>:<boldname1>|<boldname2>"
+            are errors.'
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix.
+        default: '0'
+        description: Value for the highpass filter.
     -   name: hcp_matlab_mode
         type: str
         default: default detailed below
         description: Specifies the Matlab version, can be 'interpreted', 'compiled' or 'octave'. Inside the container 'compiled'
-            will be used, outside 'interpreted' is the default. For single-run HCP ICAFix the default is 'octave'.
+            will be used, outside 'interpreted' is the default.
     -   name: hcp_icafix_domotionreg
         type: str
-        default: detailed below
-        description: Whether to regress motion parameters as part of the cleaning. The default value for single-run HCP ICAFix
-            is [TRUE], while the default for multi-run HCP ICAFix is [FALSE].
+        default: 'FALSE'
+        description: Whether to regress motion parameters as part of the cleaning.
     -   name: hcp_icafix_model
         type: str
-        default: detailed below
+        default: HCP_Style_Single_Multirun_Dedrift.RData
         description: Which model to use for classification. Can be one of the pre-trained models shipped with FSL or a custom
             model as `somefile.RData`, `somefile.pyfix_model`, or a pyfix built-in model without extension. You can provide
             a path to a file, a relative one taken from the study folder, or just a filename if the file is in the FSL training_files
-            folder. [HCP_hp<high-pass>.RData] for single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData] for
-            multi-run HCP ICAFix.
+            folder.
     -   name: hcp_icafix_threshold
         type: int
         default: '10'
@@ -5701,8 +5700,8 @@ commands:
     -   name: hcp_icafix_concatenate_only
         type: flag
         default: null
-        description: When set, the script stops after the concatenation step, e.g., for use in experimental alternative multi-run
-            denoising. PostFix is then not run, as there is no ICA output for it.
+        description: When set, the script stops after the concatenation step, e.g., for use in experimental alternative denoising.
+            PostFix is then not run, as there is no ICA output for it.
     -   name: hcp_reuse_existing_ica
         type: str
         default: 'FALSE'
@@ -5891,13 +5890,11 @@ commands:
     -   name: hcp_icafix_bolds
         type: str
         default: ''
-        description: 'List of bolds on which ICAFix was applied, with the same format as for ICAFix. Typically, this should
-            be identical to the list used in the ICAFix run. The bolds have to be in multi-run ICAFix groups: a list without
-            groups (single-run ICAFix) stops the command with an error. If multi-run ICAFix was run with two or more groups
-            then HCP MSMAll and DeDriftAndResample are executed for every group, in the order listed, and each group replaces
-            the MSMAll outputs of the group before it (see the notes below). If not provided MSMAll will assume multi-run
-            ICAFix was executed with all bolds bundled together in a single concatenation called fMRI_CONCAT_ALL (i.e., same
-            default behavior as in ICAFix).'
+        description: List of bolds on which ICAFix was applied, with the same format as for ICAFix. Typically, this should
+            be identical to the list used in the ICAFix run. If ICAFix was run with two or more groups then HCP MSMAll and
+            DeDriftAndResample are executed for every group, in the order listed, and each group replaces the MSMAll outputs
+            of the group before it (see the notes below). If not provided MSMAll will assume ICAFix was executed with all
+            bolds bundled together in a single concatenation called fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
     -   name: hcp_msmall_bolds
         type: str
         default: detailed below
@@ -5905,13 +5902,12 @@ commands:
             Typically, this should be limited to resting-state scans. Specified bolds have to be a subset of bolds used from
             the hcp_icafix_bolds parameter [if not specified all bolds specified in hcp_icafix_bolds will be used, which is
             probably NOT what you want to do if hcp_icafix_bolds includes non-resting-state scans]. A bold can be given by
-            its name, number or tag. With two or more multi-run ICAFix groups, every entry has to name a bold in each group,
-            so, as each bold belongs in one group only, only tags that every group carries can be used (see the notes below).
+            its name, number or tag. With two or more ICAFix groups, every entry has to name a bold in each group, so, as
+            each bold belongs in one group only, only tags that every group carries can be used (see the notes below).
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix. Should
-            be identical to the value used for ICAFix.
+        default: '0'
+        description: Value for the highpass filter. Should be identical to the value used for ICAFix.
     -   name: hcp_msmall_outfmriname
         type: str
         default: rfMRI_REST
@@ -6549,11 +6545,11 @@ commands:
         type: str
         default: ''
         description: List of bolds on which ICAFix was applied, with the same format as for ICAFix. Typically, this should
-            be identical to the list used in the ICAFix run. If multi-run ICAFix was run with two or more groups then HCP
-            MSMAll is executed for every group, in the order listed, and each group replaces the outputs of the group before
-            it, so the MSMAll registration that remains is the one computed from the last group (see the notes below). If
-            not provided MSMAll will assume multi-run ICAFix was executed with all bolds bundled together in a single concatenation
-            called fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
+            be identical to the list used in the ICAFix run. If ICAFix was run with two or more groups then HCP MSMAll is
+            executed for every group, in the order listed, and each group replaces the outputs of the group before it, so
+            the MSMAll registration that remains is the one computed from the last group (see the notes below). If not provided
+            MSMAll will assume ICAFix was executed with all bolds bundled together in a single concatenation called fMRI_CONCAT_ALL
+            (i.e., same default behavior as in ICAFix).
     -   name: hcp_msmall_bolds
         type: str
         default: detailed below
@@ -6561,13 +6557,12 @@ commands:
             Typically, this should be limited to resting-state scans. Specified bolds have to be a subset of bolds used from
             the hcp_icafix_bolds parameter [if not specified all bolds specified in hcp_icafix_bolds will be used, which is
             probably NOT what you want to do if hcp_icafix_bolds includes non-resting-state scans]. A bold can be given by
-            its name, number or tag. With two or more multi-run ICAFix groups, every entry has to name a bold in each group,
-            so, as each bold belongs in one group only, only tags that every group carries can be used (see the notes below).
+            its name, number or tag. With two or more ICAFix groups, every entry has to name a bold in each group, so, as
+            each bold belongs in one group only, only tags that every group carries can be used (see the notes below).
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix. Should
-            be identical to the value used for ICAFix.
+        default: '0'
+        description: Value for the highpass filter. Should be identical to the value used for ICAFix.
     -   name: hcp_msmall_outfmriname
         type: str
         default: rfMRI_REST
@@ -6674,14 +6669,6 @@ commands:
         type: flag
         default: null
         description: Whether not to use the mean of the individual myelin map as the group reference map's mean.
-    -   name: hcp_msmall_start_frame
-        type: int
-        default: null
-        description: The starting frame to choose from each fMRI run (inclusive), only applied for single runs.
-    -   name: hcp_msmall_end_frame
-        type: int
-        default: null
-        description: The ending frame to choose from each fMRI run (inclusive), only applied for single runs.
     returns: []
     origin: core
 -   name: hcp_nhp_freesurfer
@@ -6884,17 +6871,16 @@ commands:
     -   name: hcp_icafix_bolds
         type: str
         default: ''
-        description: Specify a list of bolds for ICAFix. You should specify how to group/concatenate bolds together along
-            with bolds, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>", in this case multi-run
-            HCP ICAFix will be executed, which is the default. Instead of full bold names, you can also use bold tags from
-            the batch file. If this parameter is not provided ICAFix will bundle all bolds together and execute multi-run
-            HCP ICAFix, the concatenated file will be named fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in this case single-run HCP ICAFix will be executed
-            over specified bolds. This is a legacy option and not recommended.
+        description: 'Specify how to group/concatenate the bolds for ICAFix, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>".
+            Instead of full bold names, you can also use bold tags from the batch file. If this parameter is not provided
+            ICAFix will bundle all bolds together, the concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold named in two groups, or twice, whether by its
+            name or by its tag, is an error. Every entry needs a group name: "<boldname1>,<boldname2>" and "<group1>:<boldname1>|<boldname2>"
+            are errors.'
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix.
+        default: '0'
+        description: Value for the highpass filter.
     -   name: hcp_matlab_mode
         type: str
         default: detailed below
@@ -7599,7 +7585,7 @@ commands:
     path: qx_utilities.hcp.hcp_reapply_fix.hcp_reapply_fix
     language: python
     call: hcp_reapply_fix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]
-    description: Run the ReApplyFix step of HCP Pipeline (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
+    description: Run the ReApplyFix step of HCP Pipeline (ReApplyFixMultiRunPipeline.sh).
     type: processing.session
     args:
     -   name: sinfo
@@ -7652,17 +7638,16 @@ commands:
     -   name: hcp_icafix_bolds
         type: str
         default: ''
-        description: Specify a list of bolds for ICAFix. You should specify how to group/concatenate bolds together along
-            with bolds, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>", in this case multi-run
-            HCP ICAFix will be executed, which is the default. Instead of full bold names, you can also use bold tags from
-            the batch file. If this parameter is not provided ICAFix will bundle all bolds together and execute multi-run
-            HCP ICAFix, the concatenated file will be named fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in this case single-run HCP ICAFix will be executed
-            over specified bolds. This is a legacy option and not recommended.
+        description: 'Specify how to group/concatenate the bolds for ICAFix, e.g. "<group1>:<boldname1>,<boldname2>| <group2>:<boldname3>,<boldname4>".
+            Instead of full bold names, you can also use bold tags from the batch file. If this parameter is not provided
+            ICAFix will bundle all bolds together, the concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold named in two groups, or twice, whether by its
+            name or by its tag, is an error. Every entry needs a group name: "<boldname1>,<boldname2>" and "<group1>:<boldname1>|<boldname2>"
+            are errors.'
     -   name: hcp_icafix_highpass
         type: int
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix.
+        default: '0'
+        description: Value for the highpass filter.
     -   name: hcp_matlab_mode
         type: str
         default: default detailed below
@@ -7670,9 +7655,8 @@ commands:
             will be used, outside 'interpreted' is the default.
     -   name: hcp_icafix_domotionreg
         type: str
-        default: detailed below
-        description: Whether to regress motion parameters as part of the cleaning. The default value for single-run HCP ICAFix
-            is [TRUE], while the default for multi-run HCP ICAFix is [FALSE].
+        default: 'FALSE'
+        description: Whether to regress motion parameters as part of the cleaning.
     -   name: hcp_icafix_deleteintermediates
         type: str
         default: 'FALSE'
@@ -8205,8 +8189,8 @@ commands:
         description: The registration string corresponding to the input files.
     -   name: hcp_icafix_highpass
         type: str
-        default: detailed below
-        description: Value for the highpass filter, [0] for multi-run HCP ICAFix and [2000] for single-run HCP ICAFix.
+        default: ''
+        description: Value for the highpass filter HCP ICAFix was run with. Mandatory.
     -   name: hcp_tica_procstring
         type: str
         default: _Atlas_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean
@@ -9042,12 +9026,12 @@ commands:
     -   name: sessions
         type: str
         default: null
-        description: An optional parameter that specifies a comma or pipe separated list of sessions from the inbox folder
-            to be processed. Glob patterns can be used. If provided, only packets or folders within the inbox that match the
-            list of sessions will be processed. If `inbox` is a file `sessions` has to be a list of session specifications,
-            only those sessions that match the list will be processed. If `inbox` is a valid bids datastructure folder or
-            archive, then the sessions can be specified either in `<subject id>[_<session name>]` format or as explicit `sub-<subject
-            id>[/ses-<session name>]` names.
+        description: An optional parameter that specifies a comma separated list of sessions from the inbox folder to be processed.
+            Glob patterns can be used. If provided, only packets or folders within the inbox that match the list of sessions
+            will be processed. If `inbox` is a file `sessions` has to be a list of session specifications, only those sessions
+            that match the list will be processed. If `inbox` is a valid bids datastructure folder or archive, then the sessions
+            can be specified either in `<subject id>[_<session name>]` format or as explicit `sub-<subject id>[/ses-<session
+            name>]` names.
     -   name: action
         type: str
         default: link
@@ -9365,9 +9349,9 @@ commands:
     -   name: sessions
         type: str
         default: detailed below
-        description: 'An optional parameter that specifies a comma or pipe separated list of sessions from the inbox folder
-            to be processed. Regular expression patterns can be used. If provided, only packets or folders within the inbox
-            that match the list of sessions will be processed. If `inbox` is a file `sessions` will not be applied. If `inbox`
+        description: 'An optional parameter that specifies a comma separated list of sessions from the inbox folder to be
+            processed. Regular expression patterns can be used. If provided, only packets or folders within the inbox that
+            match the list of sessions will be processed. If `inbox` is a file `sessions` will not be applied. If `inbox`
             is a valid HCPLS datastructure folder, then the sessions will be matched against the `<subject id>[_<session name>]`.
             Note: the session will match if the string is found within the package name or the session id. So ''HCPA'' will
             match any zip file that contains string ''HCPA'' or any session id that contains ''HCPA''!'
@@ -9444,11 +9428,11 @@ commands:
     -   name: sessions
         type: str
         default: ''
-        description: 'An optional parameter that specifies a comma or pipe separated list of sessions from the inbox folder
-            to be processed. Regular expression patterns can be used. If provided, only packets or folders within the inbox
-            that match the list of sessions will be processed. If `inbox` is a file `sessions` will not be applied. Note:
-            the session will match if the string is found within the package name or the session id. So "NHP" will match any
-            zip file that contains string "NHP" or any session id that contains "NHP"!'
+        description: 'An optional parameter that specifies a comma separated list of sessions from the inbox folder to be
+            processed. Regular expression patterns can be used. If provided, only packets or folders within the inbox that
+            match the list of sessions will be processed. If `inbox` is a file `sessions` will not be applied. Note: the session
+            will match if the string is found within the package name or the session id. So "NHP" will match any zip file
+            that contains string "NHP" or any session id that contains "NHP"!'
     -   name: action
         type: str
         default: link
@@ -9643,9 +9627,9 @@ commands:
     -   name: sessions
         type: str
         default: null
-        description: A string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob patterns
-            (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given
-            instead. If a batchfile is provided, this parameter selects within it.
+        description: A string with a comma separated list of sessions (sessions ids) to be processed; glob patterns (`*`,
+            `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given instead.
+            If a batchfile is provided, this parameter selects within it.
     -   name: filter
         type: str
         default: null
@@ -10705,10 +10689,10 @@ commands:
     -   name: sessions
         type: str
         default: None
-        description: Either a string with pipe `|` or comma separated list of sessions (sessions ids) to be processed; glob
-            patterns (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids
-            may be given instead. If neither sessions nor batchfile is given, all the sessions in the sessions folder that
-            have one of the sourcefiles are processed.
+        description: Either a string with a comma separated list of sessions (sessions ids) to be processed; glob patterns
+            (`*`, `?`, `[abc]`) may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list of session ids may be given
+            instead. If neither sessions nor batchfile is given, all the sessions in the sessions folder that have one of
+            the sourcefiles are processed.
     -   name: filter
         type: str
         default: None
@@ -11351,8 +11335,8 @@ commands:
         type: str
         default: None
         description: If provided, only the specified sessions from the sessions folder will be processed. They are to be specified
-            as a pipe or comma separated list, glob patterns are valid session specifiers. This parameter also accepts session
-            .list files.
+            as a comma separated list, glob patterns are valid session specifiers. This parameter also accepts session .list
+            files.
     -   name: configfile
         type: str
         default: None

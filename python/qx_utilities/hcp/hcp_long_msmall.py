@@ -29,8 +29,10 @@ from qx_utilities.hcp.hcp_utils import (
     _build_skipped_report,
     _check_hcp_info,
     do_hcp_options_check,
+    matlab_run_mode,
+    matlab_run_mode_ok,
 )
-from qx_utilities.hcp.hcp_utils import execute_hcp_multi_dedrift_and_resample
+from qx_utilities.hcp.hcp_utils import execute_hcp_dedrift_and_resample
 
 
 # TODO: take care of per session bold specification
@@ -87,13 +89,11 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
-            used in the ICAFix run. The bolds have to be in multi-run ICAFix
-            groups: a list without groups (single-run ICAFix) stops the
-            command with an error. If multi-run ICAFix was run with two or
+            used in the ICAFix run. If ICAFix was run with two or
             more groups then HCP MSMAll and DeDriftAndResample are executed
             for every group, in the order listed, and each group replaces
             the MSMAll outputs of the group before it (see the notes below).
-            If not provided MSMAll will assume multi-run ICAFix was executed
+            If not provided MSMAll will assume ICAFix was executed
             with all bolds bundled together in a single concatenation called
             fMRI_CONCAT_ALL (i.e., same default behavior as in ICAFix).
 
@@ -105,14 +105,13 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
             [if not specified all bolds specified in hcp_icafix_bolds will
             be used, which is probably NOT what you want to do if
             hcp_icafix_bolds includes non-resting-state scans]. A bold can
-            be given by its name, number or tag. With two or more multi-run
+            be given by its name, number or tag. With two or more
             ICAFix groups, every entry has to name a bold in each group, so,
             as each bold belongs in one group only, only tags that every
             group carries can be used (see the notes below).
 
-        --hcp_icafix_highpass (int, default detailed below):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix. Should be identical to the value
+        --hcp_icafix_highpass (int, default 0):
+            Value for the highpass filter. Should be identical to the value
             used for ICAFix.
 
         --hcp_msmall_outfmriname (str, default 'rfMRI_REST'):
@@ -179,7 +178,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         Except for specialized/expert-user situations, the hcp_icafix_bolds
         parameter should be identical to what was used in hcp_icafix. If
         hcp_icafix_bolds is not provided MSMAll/DeDriftAndResample will
-        assume multi-run ICAFix was executed with all bolds bundled
+        assume ICAFix was executed with all bolds bundled
         together in a single concatenation called fMRI_CONCAT_ALL. (This is
         the default behavior if hcp_icafix_bolds parameter is not provided
         in the case of hcp_icafix).
@@ -198,7 +197,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         MSMAll registration to the same full set of fMRI scans that were
         cleaned using hcp_icafix.
 
-        If hcp_icafix_bolds names two or more multi-run ICAFix groups, the
+        If hcp_icafix_bolds names two or more ICAFix groups, the
         groups are processed one after the other, in the order in which
         they are listed. For each group, MSMAll is executed on the bolds of
         the group that hcp_msmall_bolds selects (on all bolds of the group
@@ -273,16 +272,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        msmall_groups, single_run, pars_ok = parse_msmall_bolds(options, bolds, log)
-
-        # the longitudinal pipeline runs on a multi-run ICAFix concatenation
-        if single_run:
-            log.error(
-                "hcp_long_msmall needs multi-run ICAFix bolds: name their "
-                "concatenation in hcp_icafix_bolds (<group>:<bold>,<bold>), or "
-                "leave it unset for fMRI_CONCAT_ALL!"
-            )
-            pars_ok = False
+        msmall_groups, pars_ok = parse_msmall_bolds(options, bolds, log)
 
         if not pars_ok:
             raise ge.CommandFailed("hcp_long_msmall", "... invalid input parameters!")
@@ -381,23 +371,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                         myelintarget = options["hcp_msmall_myelin_target"]
 
                     # matlab run mode, compiled=0, interpreted=1, octave=2
-                    matlabrunmode = None
-                    if options["hcp_matlab_mode"] is None:
-                        if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                            log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                            boldok = False
-                        else:
-                            matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
-                    else:
-                        if options["hcp_matlab_mode"] == "compiled":
-                            matlabrunmode = "0"
-                        elif options["hcp_matlab_mode"] == "interpreted":
-                            matlabrunmode = "1"
-                        elif options["hcp_matlab_mode"] == "octave":
-                            matlabrunmode = "2"
-                        else:
-                            log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
-                            boldok = False
+                    matlabrunmode = matlab_run_mode(options)
+                    if not matlab_run_mode_ok(options, log):
+                        boldok = False
 
                     # fix names to use
                     fixnamestouse = "@".join(group["msmall_bolds"])
@@ -497,7 +473,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                         # add step info
                                         sinfo_long_i["long"] = 1
                                         future = executor.submit(
-                                            execute_hcp_multi_dedrift_and_resample,
+                                            execute_hcp_dedrift_and_resample,
                                             sinfo_long_i,
                                             options,
                                             hcp,
@@ -537,7 +513,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 )
                                 # add step info
                                 sinfo_template["long"] = 2
-                                result = execute_hcp_multi_dedrift_and_resample(
+                                result = execute_hcp_dedrift_and_resample(
                                     sinfo_template, options, hcp, run, group
                                 )
                                 log.raw(result["r"])

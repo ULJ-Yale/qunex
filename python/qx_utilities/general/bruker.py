@@ -64,7 +64,7 @@ def bruker_to_dicom(sessionsfolder=None, inbox=None, sessions=None, archive='lea
             The location of the folder with bruker datasets.
 
         --sessions (str, default ''):
-            An optional parameter that specifies a comma or pipe separated list
+            An optional parameter that specifies a comma separated list
             of sessions from the inbox folder to be processed. Regular
             expression patterns can be used. If provided, only folders within
             the inbox that match the list of sessions will be processed.

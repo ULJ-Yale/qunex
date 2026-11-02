@@ -62,7 +62,7 @@ def export_hcp(sessionsfolder=None, batchfile=None, sessions=None, filter=None, 
             A path to a batch.txt file.
 
         --sessions (str, default ''):
-            A list of sessions to map (comma/pipe-separated, patterns allowed).
+            A list of sessions to map (comma-separated, patterns allowed).
             When a batch file is given, it selects within it.
 
         --filter (str, default ''):

@@ -80,9 +80,8 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
         --hcp_tica_surfregname (str, default ''):
             The registration string corresponding to the input files.
 
-        --hcp_icafix_highpass (str, default detailed below):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix.
+        --hcp_icafix_highpass (str, default ''):
+            Value for the highpass filter HCP ICAFix was run with. Mandatory.
 
         --hcp_tica_procstring (str, default '_Atlas_<hcp_tica_surfregname>_hp<hcp_icafix_highpass>_clean'):
             File name component representing the preprocessing already done,

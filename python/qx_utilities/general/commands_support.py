@@ -219,7 +219,7 @@ def is_batchfile_path(sessions):
     Checks whether a `sessions` value is a path to a batch file - the legacy
     spelling of `batchfile` - rather than a specification of sessions.
 
-    A session specification is a comma, pipe or space separated list of session
+    A session specification is a comma or space separated list of session
     ids or globs, or a single `*.list` file. A path to a batch file is what is
     left: a single item, not a `*.list` file, that has either a directory
     component or a file extension.

@@ -26,6 +26,7 @@ import qx_utilities.general.exceptions as ge
 import qx_utilities.general.utilities as gu
 import qx_utilities.hcp.qc_hcp as qc_hcp
 import qx_utilities.processing.core as pc
+from qx_utilities.general.log import ReportLog
 
 from .utils import build_hcp_session, default_options
 
@@ -166,6 +167,16 @@ def test_run_qc_bold_with_omitdefaults_says_it_renders_nothing(bold_session, snr
                 "test, not run: BOLD %s TSNR report with wb_command -cifti-reduce into %s"
                 % (bold, qc)
             ) in log.text
+
+
+def test_eddy_qc_stats_say_what_they_need(tmp_path):
+    """They were a warning, and the DWI QC was reported done."""
+    log = ReportLog()
+    hcp = {"base": str(tmp_path)}
+
+    assert not qc_hcp._run_qc_dwi_eddy(hcp, "Diffusion", "S1", str(tmp_path), "stamp", log)
+    assert "run dwi_eddy_qc before it" in log.text
+    assert os.path.join(str(tmp_path), "Diffusion", "eddy") in log.text
 
 
 @pytest.mark.parametrize("skipframes", ["two", "2.5", "-1"])

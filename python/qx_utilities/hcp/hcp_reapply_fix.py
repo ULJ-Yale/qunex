@@ -11,8 +11,7 @@
 """
 ``hcp_reapply_fix.py``
 
-The HCP ReApplyFix pipeline, its single-run / multi-run executors and the
-hand reclassification step.
+The HCP ReApplyFix pipeline, its executor and the hand reclassification step.
 """
 
 import os
@@ -30,6 +29,8 @@ from qx_utilities.hcp.hcp_utils import (
     parse_icafix_bolds,
     _build_skipped_report,
     do_hcp_options_check,
+    matlab_run_mode,
+    matlab_run_mode_ok,
 )
 
 
@@ -37,8 +38,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     """
     ``hcp_reapply_fix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
-    Run the ReApplyFix step of HCP Pipeline
-    (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
+    Run the ReApplyFix step of HCP Pipeline (ReApplyFixMultiRunPipeline.sh).
 
     ..  qx_command:
         type: processing.session
@@ -82,32 +82,27 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You should specify how to
-            group/concatenate bolds together along with bolds, e.g.
+            Specify how to group/concatenate the bolds for ICAFix, e.g.
             "<group1>:<boldname1>,<boldname2>|
-            <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed, which is the default. Instead of full bold
-            names, you can also  use bold tags from the batch file. If this
-            parameter is not provided ICAFix will bundle all bolds together and
-            execute multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
-            this case single-run HCP ICAFix will be executed over specified
-            bolds. This is a legacy option and not recommended.
+            <group2>:<boldname3>,<boldname4>". Instead of full bold names, you
+            can also use bold tags from the batch file. If this parameter is
+            not provided ICAFix will bundle all bolds together, the
+            concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold
+            named in two groups, or twice, whether by its name or by its tag,
+            is an error. Every entry needs a group name: "<boldname1>,<boldname2>"
+            and "<group1>:<boldname1>|<boldname2>" are errors.
 
-        --hcp_icafix_highpass (int, default detailed below):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix.
+        --hcp_icafix_highpass (int, default 0):
+            Value for the highpass filter.
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
-        --hcp_icafix_domotionreg (str, default detailed below):
-            Whether to regress motion parameters as part of the cleaning. The
-            default value for single-run HCP ICAFix is [TRUE], while the
-            default for multi-run HCP ICAFix is [FALSE].
+        --hcp_icafix_domotionreg (str, default 'FALSE'):
+            Whether to regress motion parameters as part of the cleaning.
 
         --hcp_icafix_deleteintermediates (str, default 'FALSE'):
             If TRUE, deletes both the concatenated high-pass filtered and
@@ -136,19 +131,17 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
             MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
         where highpass is the used value for the highpass filter. The
-        default highpass value is 0 for multi-run HCP ICAFix and 2000 for
-        single-run HCP ICAFix.
+        default highpass value is 0.
 
     Notes:
         Runs the ReApplyFix step of HCP Pipeline. This function executes two
         steps, first it applies the hand reclassifications of noise and
         signal components from FIX (ApplyHandReClassifications.sh) using the
         ReclassifyAsNoise.txt and ReclassifyAsSignal.txt input files. Next it
-        executes the HCP Pipeline's ReApplyFix or ReApplyFixMulti
-        (ReApplyFixMultiRunPipeline.sh or ReApplyFixPipeline.sh).
+        executes the HCP Pipeline's ReApplyFix (ReApplyFixMultiRunPipeline.sh).
 
         If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
-        all bolds together and execute multi-run HCP ICAFix, the
+        all bolds together, the
         concatenated file will be named fMRI_CONCAT_ALL. WARNING: if
         session has many bolds such processing requires a lot of
         computational resources.
@@ -212,15 +205,12 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
-        single_fix, icafix_bolds, icafix_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
+        icafix_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
         if not pars_ok:
             raise ge.CommandFailed("hcp_reapply_fix", "... invalid input parameters!")
 
         # --- Multi threading
-        if single_fix:
-            parelements = max(1, min(options["parelements"], len(icafix_bolds)))
-        else:
-            parelements = max(1, min(options["parelements"], len(icafix_groups)))
+        parelements = max(1, min(options["parelements"], len(icafix_groups)))
         log.blank()
         log.action(
             "Processing",
@@ -230,43 +220,22 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
         )
 
         # --- Execute
-        # single fix
-        if single_fix:
-            # create a multiprocessing Pool
-            process_pool_executor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(execute_hcp_single_reapply_fix, sinfo, options, hcp, run)
-            results = process_pool_executor.map(f, icafix_bolds)
+        # create a multiprocessing Pool
+        process_pool_executor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(execute_hcp_reapply_fix, sinfo, options, hcp, run)
+        results = process_pool_executor.map(f, icafix_groups)
 
-            # merge r and report
-            for result in results:
-                log.raw(result["r"])
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["failed"] += temp_report["failed"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
-
-        # multi fix
-        else:
-            # create a multiprocessing Pool
-            process_pool_executor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(execute_hcp_multi_reapply_fix, sinfo, options, hcp, run)
-            results = process_pool_executor.map(f, icafix_groups)
-
-            # merge r and report
-            for result in results:
-                log.raw(result["r"])
-                temp_report = result["report"]
-                report["done"] += temp_report["done"]
-                report["failed"] += temp_report["failed"]
-                report["incomplete"] += temp_report["incomplete"]
-                report["ready"] += temp_report["ready"]
-                report["not ready"] += temp_report["not ready"]
-                report["skipped"] += temp_report["skipped"]
+        # merge r and report
+        for result in results:
+            log.raw(result["r"])
+            temp_report = result["report"]
+            report["done"] += temp_report["done"]
+            report["failed"] += temp_report["failed"]
+            report["incomplete"] += temp_report["incomplete"]
+            report["ready"] += temp_report["ready"]
+            report["not ready"] += temp_report["not ready"]
+            report["skipped"] += temp_report["skipped"]
 
         # report
         rep = []
@@ -295,195 +264,7 @@ def hcp_reapply_fix(sinfo, options, overwrite=True, thread=0):
     return log.result(report)
 
 
-def execute_hcp_single_reapply_fix(sinfo, options, hcp, run, boldinfo):
-
-    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
-
-    # prepare return variables
-    log = ReportLog()
-    report = {
-        "done": [],
-        "incomplete": [],
-        "failed": [],
-        "ready": [],
-        "not ready": [],
-        "skipped": [],
-    }
-
-    try:
-        # run HCP hand reclassification
-        log.rule()
-        log.step(f"Executing HCP Hand reclassification for bold: {printbold}\n")
-        result = execute_hcp_hand_reclassification(
-            sinfo, options, hcp, run, True, boldtarget, printbold
-        )
-
-        # merge r
-        log.raw(result["r"])
-
-        # move on to ReApplyFix
-        rc_report = result["report"]
-        if (
-            rc_report["incomplete"] == []
-            and rc_report["failed"] == []
-            and rc_report["not ready"] == []
-        ):
-            boldok = True
-
-            # highpass
-            highpass = (
-                2000
-                if options["hcp_icafix_highpass"] is None
-                else options["hcp_icafix_highpass"]
-            )
-
-            # matlab run mode, compiled=0, interpreted=1, octave=2
-            matlabrunmode = None
-            if options["hcp_matlab_mode"] is None:
-                if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                    boldok = False
-                else:
-                    matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
-            else:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
-                    boldok = False
-
-            # ReApplyFixPipeline.sh reads FSL_FIX_MATLAB_MODE through FIX's
-            # settings.sh to find the MCR in compiled mode, so the mode is
-            # also set for this call alone
-            comm = (
-                'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
-                --path="%(path)s" \
-                --subject="%(subject)s" \
-                --fmri-name="%(boldtarget)s" \
-                --high-pass="%(highpass)s" \
-                --reg-name="%(regname)s" \
-                --low-res-mesh="%(lowresmesh)s" \
-                --matlab-run-mode="%(matlabrunmode)s" \
-                --motion-regression="%(motionregression)s" \
-                --delete-intermediates="%(deleteintermediates)s"'
-                % {
-                    "script": os.path.join(
-                        hcp["hcp_base"], "ICAFIX", "ReApplyFixPipeline.sh"
-                    ),
-                    "path": sinfo["hcp"],
-                    "subject": sinfo["id"] + options["hcp_suffix"],
-                    "boldtarget": boldtarget,
-                    "highpass": highpass,
-                    "regname": options["hcp_icafix_regname"],
-                    "lowresmesh": options["hcp_lowresmesh"],
-                    "matlabrunmode": matlabrunmode,
-                    "motionregression": (
-                        "TRUE"
-                        if options["hcp_icafix_domotionreg"] is None
-                        else options["hcp_icafix_domotionreg"]
-                    ),
-                    "deleteintermediates": options["hcp_icafix_deleteintermediates"],
-                }
-            )
-
-            if options["hcp_clean_substring"] is not None:
-                comm += (
-                    '             --clean-substring="%s"'
-                    % options["hcp_clean_substring"]
-                )
-
-            # -- Report command
-            if boldok:
-                log.rule(after=1)
-                log.raw("Running HCP Pipelines command via QuNex:\n\n")
-                log.raw(comm.replace("--", "\n    --").replace("             ", ""))
-                log.rule(after=1)
-
-            # -- Test files
-            # postfix
-            postfix = "%s%s_hp%s_clean.dtseries.nii" % (
-                boldtarget,
-                "_Atlas",
-                highpass,
-            )
-            if (
-                options["hcp_icafix_regname"] != "NONE"
-                and options["hcp_icafix_regname"] != ""
-            ):
-                postfix = "%s%s_%s_hp%s_clean.dtseries.nii" % (
-                    boldtarget,
-                    "_Atlas",
-                    options["hcp_icafix_regname"],
-                    highpass,
-                )
-
-            tfile = os.path.join(hcp["hcp_nonlin"], "Results", boldtarget, postfix)
-            full_test = None
-
-            # -- Run
-            if run and boldok:
-                if options["run"] == "run":
-                    _, _, failed = pc.run_external_for_file(
-                        tfile,
-                        comm,
-                        "Running single-run HCP ReApplyFix",
-                        overwrite=True,
-                        thread=sinfo["id"],
-                        remove=options["log"] == "remove",
-                        task=options["command_ran"],
-                        logfolder=options["comlogs"],
-                        logtags=[options["logtag"], boldtarget],
-                        full_test=full_test,
-                        shell=True,
-                        _log=log,
-                    )
-
-                    if failed:
-                        report["failed"].append(printbold)
-                    else:
-                        report["done"].append(printbold)
-
-                # -- just checking
-                else:
-                    passed, _, failed = pc.check_run(
-                        tfile, full_test, "single-run HCP ReApplyFix " + boldtarget, _log=log
-                    )
-                    if passed is None:
-                        log.step("single-run HCP ReApplyFix can be run")
-                        report["ready"].append(printbold)
-                    else:
-                        report["skipped"].append(printbold)
-
-            else:
-                report["not ready"].append(printbold)
-                if options["run"] == "run":
-                    log.error("something missing, skipping this BOLD!")
-                else:
-                    log.error("something missing, this BOLD would be skipped!")
-                # log beautify
-                log.raw("\n\n")
-
-        else:
-            log.error(f"Hand reclassification failed for bold: {printbold}!")
-            report["failed"].append(printbold)
-            boldok = False
-
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
-        log.raw(str(errormessage))
-        report["failed"].append(printbold)
-    except Exception:
-        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
-        report["failed"].append(printbold)
-
-    return {"r": log.text, "report": report}
-
-
-def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
+def execute_hcp_reapply_fix(sinfo, options, hcp, run, group):
     # get group data
     groupname = group["name"]
     bolds = group["bolds"]
@@ -540,7 +321,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
         if not options["longitudinal"]:
             log.step(f"Executing HCP Hand reclassification for group: {groupname}\n")
             result = execute_hcp_hand_reclassification(
-                sinfo, options, hcp, run, False, groupname, groupname
+                sinfo, options, hcp, run, groupname
             )
 
             # merge r
@@ -556,25 +337,10 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
             and rc_report["failed"] == []
             and rc_report["not ready"] == []
         ):
-            groupok = True
-
             # matlab run mode, compiled=0, interpreted=1, octave=2
-            matlabrunmode = None
-            if options["hcp_matlab_mode"] is None:
-                if "FSL_FIX_MATLAB_MODE" not in os.environ:
-                    log.error("hcp_matlab_mode not set and FSL_FIX_MATLAB_MODE not set in the environment, set either one!\n")
-                else:
-                    matlabrunmode = os.environ["FSL_FIX_MATLAB_MODE"]
-            else:
-                if options["hcp_matlab_mode"] == "compiled":
-                    matlabrunmode = "0"
-                elif options["hcp_matlab_mode"] == "interpreted":
-                    matlabrunmode = "1"
-                elif options["hcp_matlab_mode"] == "octave":
-                    matlabrunmode = "2"
-                else:
-                    log.error("unknown setting for hcp_matlab_mode, use compiled, interpreted or octave!\n")
-                    groupok = False
+            matlabrunmode = matlab_run_mode(options)
+            if not matlab_run_mode_ok(options, log):
+                groupok = False
 
             # highpass
             highpass = (
@@ -700,7 +466,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                     _, _, failed = pc.run_external_for_file(
                         tfile,
                         comm,
-                        "Running multi-run HCP ReApplyFix",
+                        "Running HCP ReApplyFix",
                         overwrite=True,
                         thread=sinfo["id"],
                         remove=options["log"] == "remove",
@@ -720,10 +486,10 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 # -- just checking
                 else:
                     passed, _, failed = pc.check_run(
-                        tfile, full_test, "multi-run HCP ReApplyFix " + groupname, _log=log
+                        tfile, full_test, "HCP ReApplyFix " + groupname, _log=log
                     )
                     if passed is None:
-                        log.step("multi-run HCP ReApplyFix can be run")
+                        log.step("HCP ReApplyFix can be run")
                         report["ready"].append(groupname)
                     else:
                         report["skipped"].append(groupname)
@@ -752,9 +518,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
     return {"r": log.text, "report": report}
 
 
-def execute_hcp_hand_reclassification(
-    sinfo, options, hcp, run, single_fix, boldtarget, printbold
-):
+def execute_hcp_hand_reclassification(sinfo, options, hcp, run, groupname):
     # prepare return variables
     log = ReportLog()
     report = {
@@ -767,34 +531,27 @@ def execute_hcp_hand_reclassification(
     }
 
     try:
-        log.action("Processing", f"ICA {printbold}", options["run"])
-        boldok = True
+        log.action("Processing", f"ICA {groupname}", options["run"])
+        groupok = True
 
         # load parameters or use default values
-        if single_fix:
-            highpass = (
-                2000
-                if options["hcp_icafix_highpass"] is None
-                else options["hcp_icafix_highpass"]
-            )
-        else:
-            highpass = (
-                0
-                if options["hcp_icafix_highpass"] is None
-                else options["hcp_icafix_highpass"]
-            )
+        highpass = (
+            0
+            if options["hcp_icafix_highpass"] is None
+            else options["hcp_icafix_highpass"]
+        )
 
-        # --- check for bold image
+        # --- check for the ICA image
         icaimg = os.path.join(
             hcp["hcp_nonlin"],
             "Results",
-            boldtarget,
-            "%s_hp%s_clean.nii.gz" % (boldtarget, highpass),
+            groupname,
+            "%s_hp%s_clean.nii.gz" % (groupname, highpass),
         )
-        boldok = pc.check_for_file(icaimg,
-            f"ICA {boldtarget} present",
+        groupok = pc.check_for_file(icaimg,
+            f"ICA {groupname} present",
             f"ICA [{icaimg}] missing!",
-            status=boldok,
+            status=groupok,
             bad_level="error",
             _log=log,
         )
@@ -803,7 +560,7 @@ def execute_hcp_hand_reclassification(
             '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
-            --fmri-name="%(boldtarget)s" \
+            --fmri-name="%(groupname)s" \
             --high-pass="%(highpass)s"'
             % {
                 "script": os.path.join(
@@ -811,27 +568,27 @@ def execute_hcp_hand_reclassification(
                 ),
                 "studyfolder": sinfo["hcp"],
                 "subject": sinfo["id"] + options["hcp_suffix"],
-                "boldtarget": boldtarget,
+                "groupname": groupname,
                 "highpass": highpass,
             }
         )
 
         # -- Report command
-        if boldok:
+        if groupok:
             log.pipeline_command(comm)
 
         # -- Test files
         tfile = os.path.join(
             hcp["hcp_nonlin"],
             "Results",
-            boldtarget,
-            "%s_hp%s.ica" % (boldtarget, highpass),
+            groupname,
+            "%s_hp%s.ica" % (groupname, highpass),
             "HandNoise.txt",
         )
         full_test = None
 
         # -- Run
-        if run and boldok:
+        if run and groupok:
             if options["run"] == "run":
                 endlog, _, failed = pc.run_external_for_file(
                     tfile,
@@ -842,48 +599,48 @@ def execute_hcp_hand_reclassification(
                     remove=options["log"] == "remove",
                     task="hcp_HandReclassification",
                     logfolder=options["comlogs"],
-                    logtags=[options["logtag"], boldtarget],
+                    logtags=[options["logtag"], groupname],
                     full_test=full_test,
                     shell=True,
                     _log=log,
                 )
 
                 if failed:
-                    report["failed"].append(printbold)
+                    report["failed"].append(groupname)
                 else:
-                    report["done"].append(printbold)
+                    report["done"].append(groupname)
 
             # -- just checking
             else:
                 passed, _, failed = pc.check_run(
                     tfile,
                     full_test,
-                    "HCP HandReclassification " + boldtarget,
+                    "HCP HandReclassification " + groupname,
                     overwrite=True,
                     _log=log,
                 )
                 if passed is None:
                     log.step("HCP HandReclassification can be run")
-                    report["ready"].append(printbold)
+                    report["ready"].append(groupname)
                 else:
-                    report["skipped"].append(printbold)
+                    report["skipped"].append(groupname)
 
         else:
-            report["not ready"].append(printbold)
+            report["not ready"].append(groupname)
             if options["run"] == "run":
-                log.error("something missing, skipping this BOLD!")
+                log.error("something missing, skipping this group!")
             else:
-                log.error("something missing, this BOLD would be skipped!")
+                log.error("something missing, this group would be skipped!")
 
         # log beautify
         log.raw("\n")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n\n\n --- Failed during processing of bold {printbold} with error:\n")
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
-        report["failed"].append(printbold)
+        report["failed"].append(groupname)
     except Exception:
-        log.info(f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n")
-        report["failed"].append(printbold)
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
+        report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

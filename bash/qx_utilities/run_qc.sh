@@ -1950,7 +1950,9 @@ main() {
                             echo ""
                             # Check if SNR only requested
                             if [ "$SNROnly" == "yes" ]; then
+                                Modality="BOLD"
                                 runsnr_BOLD
+                                completionCheck
                             else
                                 # -- Check if running defaults, BOLD has no custom or user scenes
                                 if [ "$OmitDefaults" == 'no' ]; then
@@ -2200,24 +2202,25 @@ main() {
                                 echo "---> QC for FSL BedpostX requested. Checking if BedpostX was completed..."
                                 echo ""
                                 # -- Check if the file even exists
-                                if [ -f ${HCPFolder}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz ]; then
+                                if [ -f ${HCPFolder}/T1w/${DWIPath}.bedpostX/merged_f1samples.nii.gz ]; then
                                     # -- Set file sizes to check for completion
                                     minimumfilesize=20000000
-                                    actualfilesize=`wc -c < ${HCPFolder}/T1w/Diffusion.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
-                                    filecount=`ls ${HCPFolder}/T1w/Diffusion.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
-                                    # -- Then check if run is complete based on file count
-                                    if [ "$filecount" == 9 ]; then
+                                    actualfilesize=`wc -c < ${HCPFolder}/T1w/${DWIPath}.bedpostX/merged_f1samples.nii.gz` > /dev/null 2>&1
+                                    filecount=`ls ${HCPFolder}/T1w/${DWIPath}.bedpostX/merged_*nii.gz | wc | awk {'print $1'}`
+                                    fibercount=`ls ${HCPFolder}/T1w/${DWIPath}.bedpostX/merged_f*samples.nii.gz | wc | awk {'print $1'}`
+                                    # -- Then check if run is complete based on file count: th, ph and f per fiber
+                                    if [ "$filecount" == "$(( fibercount * 3 ))" ]; then
                                         # -- Then check if run is complete based on file size
                                         if [ $(echo "$actualfilesize" | bc) -ge $(echo "$minimumfilesize" | bc) ]; then > /dev/null 2>&1
                                             echo ""
-                                            echo "    ---> BedpostX outputs found and completed here: ${HCPFolder}/T1w/Diffusion.bedpostX/"
+                                            echo "    ---> BedpostX outputs found and completed here: ${HCPFolder}/T1w/${DWIPath}.bedpostX/"
                                             echo ""
                                             # -- Replace DWI scene specifications with the dtifit results
                                             Com3h1="cp ${OutPath}/${WorkingSceneFile} ${OutPath}/${WorkingBedpostXSceneFile}"
                                             Com3h2="sed -i -e 's|1st frame|mean d diffusivity|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                                             Com3h3="sed -i -e 's|10th frame|mean f anisotropy|g' ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com3h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|Diffusion.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
-                                            Com3h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|Diffusion.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h4="sed -i -e 's|$DWIPath/data_frame1_brain.nii.gz|${DWIPath}.bedpostX/mean_dsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
+                                            Com3h5="sed -i -e 's|$DWIPath/data_frame10_brain.nii.gz|${DWIPath}.bedpostX/mean_fsumsamples.nii.gz|g' ${OutPath}/${WorkingBedpostXSceneFile}"
                                             # -- combine BedpostX commands
                                             Com3h="$Com3h1; $Com3h2; $Com3h3; $Com3h4; $Com3h5"
                                             # -- Combine BedpostX commands
@@ -2227,7 +2230,7 @@ main() {
                                 else
                                     echo ""
                                     echo "---> ERROR: FSLBedpostX outputs missing or incomplete for $CASEName. Skipping BedpostX QC request for upcoming QC calls. Check BedpostX results: "
-                                    echo "           ---> ${HCPFolder}/T1w/Diffusion.bedpostX/ "
+                                    echo "           ---> ${HCPFolder}/T1w/${DWIPath}.bedpostX/ "
                                     echo ""
                                     BedpostXQC="no"
                                 fi
@@ -2238,27 +2241,29 @@ main() {
                                 echo "---> QC Stats for FSL EDDY requested. Checking if EDDY QC was completed..."
                                 echo ""
                                 # -- Then check if eddy qc is completed
-                                if [ -f ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
+                                if [ -f ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/qc.pdf ]; then
                                     echo "    ---> EDDY QC outputs found and completed here: "; echo ""
                                         # -- Regenerate the qc_mot_abs if missing
-                                        if [ -f ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt ]; then
-                                            echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
+                                        if [ -f ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt ]; then
+                                            echo "        ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt"
                                         else
-                                            echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
-                                            cat ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
+                                            echo "        ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt not found. Regenerating... "
+                                            cat ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/qc.json | grep "qc_mot_abs" | sed -n -e 's/^.*: //p' | tr -d ',' >> ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt
                                         fi
                                     echo ""
-                                    echo "        ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf"
+                                    echo "        ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/qc.pdf"
                                     echo ""
                                     # -- Run links and printing to reports
-                                    ln ${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASEName}.${Modality}.eddy.QC.pdf
-                                    printf "${HCPFolder}/Diffusion/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt
+                                    ln ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/qc.pdf ${OutPath}/${CASEName}.${Modality}.eddy.QC.pdf
+                                    printf "${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/${CASEName}_qc_mot_abs.txt\n" >> ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt
 
                                     echo "---> Completed EDDY QC stats for ${CASEName}"
                                     echo "    Final report can be found here: ${OutPath}/EddyQCReport_qc_mot_abs_${TimeStampRunQC}.txt"; echo ""
                                 else
                                     echo ""
-                                    echo "---> ERROR: EDDY QC outputs missing or incomplete for $CASEName. Skipping EDDY QC request. Check EDDY results."
+                                    echo "---> ERROR: EDDY QC outputs missing for $CASEName: ${HCPFolder}/${DWIPath}/eddy/eddy_unwarped_images.qc/qc.pdf"
+                                    echo "     --eddyqcstats reads the outputs of dwi_eddy_qc, run dwi_eddy_qc before this QC."
+                                    QCFailed="yes"
                                     echo ""
                                 fi
                             fi

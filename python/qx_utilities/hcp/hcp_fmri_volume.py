@@ -1268,7 +1268,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     ):
                         fmfolder = os.path.join(
                             hcp["source"],
-                            "FieldMap%s%s" % (fmnum, options["fctail"]),
+                            "FieldMap%s%s" % (fmnum, options["fmtail"]),
                         )
 
                         fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))

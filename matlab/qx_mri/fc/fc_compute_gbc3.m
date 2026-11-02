@@ -192,6 +192,10 @@ fprintf(' ... done.');
 
 %   --- Get variables ready first
 
+if ~isempty(targetf)
+    general_check_folder(targetf, 'results folder');
+end
+
 template = nimage(list.session(1).files{1}, 'single', 1);
 nvoxels   = template.voxels;
 desc      = parseCommand(command);

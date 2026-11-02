@@ -13,6 +13,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `build_qx_registry` now builds only the core command registry; extensions are built with `build_qx_extensions` (or with `--build_extensions=yes`).
 * Integrated the HCP Pipelines MMORF registration chain into QuNex as `hcp_pre_mmorf`, `hcp_mmorf` and `hcp_post_mmorf`.
 * `hcp_diffusion` now checks and overwrites the folder named by `--hcp_dwi_name`. It always looked in `T1w/Diffusion`, so it could report a wrong result and, with `--overwrite`, remove `data.nii.gz` of a default run.
+* Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
 
 ## 1.5.4
 

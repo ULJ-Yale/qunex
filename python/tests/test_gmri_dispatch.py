@@ -165,6 +165,40 @@ def test_a_bash_command_is_run_once_per_session_with_the_header_filled_in(
     assert "hcp_brainsize" not in calls[0][0], "with what the command declares"
 
 
+@pytest.mark.parametrize("sessions", ["S01,S0[2]", "S01|S0*", "S0*"])
+def test_a_group_run_hands_a_script_the_sessions_it_resolved(
+    gmri, tmp_path, monkeypatch, sessions
+):
+    """
+    A group run is one call, and the script splits on commas alone, so a pipe or
+    a glob reached it as one session that did not exist.
+    """
+    study = tmp_path / "study"
+    (study / "sessions" / "S01").mkdir(parents=True)
+    (study / "sessions" / "S02").mkdir(parents=True)
+    (study / ".qunexstudy").write_text("")
+    batch = tmp_path / "batch.txt"
+    batch.write_text(
+        "_sessionsfolder: %s\n---\nid: S01\nsubject: S01\n01: T1w\n"
+        "---\nid: S02\nsubject: S02\n01: T1w\n" % (study / "sessions")
+    )
+    calls = []
+    monkeypatch.setattr(
+        gmri.gb,
+        "run",
+        lambda qx_command, args, run=None, session=None: calls.append((args, session))
+        or 0,
+    )
+
+    gmri.runCommand(
+        "compute_bold_fc",
+        {"batchfile": str(batch), "sessions": sessions, "runtype": "group"},
+    )
+
+    assert len(calls) == 1
+    assert calls[0][0]["sessions"] == "S01,S02"
+
+
 def test_a_bash_comlog_is_named_after_the_command_and_what_varies(gmri):
     """
     `run_qc` is run once per modality into one log folder, so a comlog named

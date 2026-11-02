@@ -500,7 +500,7 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
 
         # xtract_list
         if "xtract_list" in options:
-            comm = comm + " -list %s" % options["xtract_list"]
+            comm = comm + " -tract_list %s" % options["xtract_list"]
 
         # xtract_structures
         if "xtract_structures" in options:

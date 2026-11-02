@@ -97,7 +97,7 @@ else
 	# -- Parse inputs
 	if [[ "$setflag" =~ .*-.* ]]; then
 		SyncFolders=`opts_GetOpt "${setflag}syncfolders" "$@" | sed 's/,/ /g;s/|/ /g'`; StudyFolders=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
-		CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$StudyFolders" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
+		CASES=`opts_GetOpt "${setflag}sessions" "$@" | sed 's/,/ /g;s/|/ /g'`; CASES=`echo "$CASES" | sed 's/,/ /g;s/|/ /g'` # list of inputs; removing comma or pipes
 		SyncServer=`opts_GetOpt "${setflag}syncserver" $@` # server to Sync to
 		SyncDestination=`opts_GetOpt "${setflag}syncdestination" $@` # server to Sync to
 		SyncLogFolder=`opts_GetOpt "${setflag}synclogfolder" $@`       # Log folder

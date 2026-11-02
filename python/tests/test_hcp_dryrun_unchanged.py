@@ -14,6 +14,8 @@ call made fatal, and each still has to name what it would have run.
 import os
 import subprocess
 
+import nibabel as nib
+import numpy as np
 import pytest
 
 import qx_utilities.general.core as gc
@@ -22,14 +24,13 @@ import qx_utilities.hcp.hcp_apply_auto_reclean as hcp_apply_auto_reclean_module
 import qx_utilities.hcp.hcp_icafix as hcp_icafix_module
 import qx_utilities.processing.core as pc
 from qx_utilities.hcp.hcp_apply_auto_reclean import hcp_apply_auto_reclean
-from qx_utilities.hcp.hcp_dedrift_and_resample import hcp_dedrift_and_resample
 from qx_utilities.hcp.hcp_icafix import hcp_icafix
 from qx_utilities.hcp.hcp_post_fix import hcp_post_fix
 from qx_utilities.hcp.hcp_reapply_fix import hcp_reapply_fix
 from qx_utilities.hcp.hcp_transmit_bias_group_average_fit import (
     hcp_transmit_bias_group_average_fit,
 )
-from qx_utilities.hcp.map_hcp_data import map_hcp_data
+from qx_utilities.hcp.map_hcp_data import _bold_resolution, map_hcp_data
 
 from .utils import build_hcp_session, default_options
 
@@ -58,8 +59,8 @@ def session(tmp_path, monkeypatch):
 @pytest.fixture
 def msmall_session(tmp_path, monkeypatch):
     """
-    A session with two BOLDs and their single-run ICA-FIX outputs, at the
-    default high-pass of 2000, so a dry run reaches both commands.
+    A session with two BOLDs and the ICA-FIX outputs of their group G1, at the
+    default high-pass of 0, so a dry run reaches both commands.
     """
     monkeypatch.setenv("HCPPIPEDIR", str(tmp_path / "hcppipedir"))
     monkeypatch.setenv("QUNEXPATH", str(tmp_path / "qunexpath"))
@@ -72,11 +73,13 @@ def msmall_session(tmp_path, monkeypatch):
     results = os.path.join(sessionsfolder, "sess-01", "hcp", "sess-01", "MNINonLinear", "Results")
     for bold in ["BOLD_1", "BOLD_2"]:
         os.makedirs(os.path.join(results, bold))
-        for name in ["%s_Atlas_hp2000_clean.dtseries.nii", "%s_hp2000_clean.nii.gz"]:
+        for name in ["%s_Atlas_hp0_clean.dtseries.nii", "%s_hp0_clean.nii.gz"]:
             open(os.path.join(results, bold, name % bold), "w").close()
+    os.makedirs(os.path.join(results, "G1"))
+    open(os.path.join(results, "G1", "G1_hp0_clean.nii.gz"), "w").close()
 
     def _options(**overrides):
-        overrides.setdefault("hcp_icafix_bolds", "BOLD_1,BOLD_2")
+        overrides.setdefault("hcp_icafix_bolds", "G1:BOLD_1,BOLD_2")
         return default_options(
             run="test",
             sessionsfolder=sessionsfolder,
@@ -119,19 +122,16 @@ def no_external(monkeypatch):
 @pytest.fixture
 def fix_session(tmp_path, msmall_session, no_external):
     """
-    msmall_session with the BOLD images ICA-FIX reads, and the clean output of
-    a multi-run group G1 that PostFix reads.
+    msmall_session with the BOLD images ICA-FIX reads.
     """
     sinfo, options = msmall_session
     results = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results")
     for bold in ["BOLD_1", "BOLD_2"]:
         open(os.path.join(results, bold, bold + ".nii.gz"), "w").close()
-    os.makedirs(os.path.join(results, "G1"))
-    open(os.path.join(results, "G1", "G1_hp0_clean.nii.gz"), "w").close()
     return sinfo, options, tmp_path
 
 
-def test_single_run_icafix_dry_run_says_it_can_be_run(fix_session):
+def test_icafix_dry_run_says_it_can_be_run(fix_session):
     """It was reported skipped: with no file to check, `check_run` says done."""
     sinfo, options, root = fix_session
     before = _tree(root)
@@ -139,50 +139,7 @@ def test_single_run_icafix_dry_run_says_it_can_be_run(fix_session):
     log = hcp_icafix(sinfo, options())
 
     assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
-    assert log.text.count("single-run HCP ICAFix can be run") == 2
-    assert os.path.join("ICAFIX", "hcp_fix") in log.text
-    assert "skipped" not in log.status[1]
-    assert log.status[1] == (
-        "HCP ICAFix: 1 (ICAFix), 1 (PostFix), 2 (ICAFix), 2 (PostFix) ready"
-    )
-    assert log.status[2] == 0
-
-
-@pytest.mark.parametrize(
-    "model, handed",
-    [
-        ("models/my.RData", "{root}/models/my.RData"),
-        ("models/my", "{root}/models/my"),
-        ("HCP_hp2000", "HCP_hp2000"),
-    ],
-)
-def test_single_run_icafix_hands_on_a_model_in_the_study_absolute(
-    fix_session, monkeypatch, model, handed
-):
-    """
-    hcp_fix changes into the BOLD's folder before it looks for the model,
-    then in FIX's training_files: a model given relative to the study, where
-    the run works, was not found. A bare name is left for that lookup.
-    """
-    sinfo, options, root = fix_session
-    (root / "models").mkdir()
-    (root / "models" / "my.RData").write_text("")
-    monkeypatch.chdir(root)
-
-    log = hcp_icafix(sinfo, options(hcp_icafix_model=model))
-
-    assert '"%s"' % handed.format(root=root) in log.text
-    assert log.status[2] == 0
-
-
-def test_multi_run_icafix_dry_run_says_it_can_be_run(fix_session):
-    sinfo, options, root = fix_session
-    before = _tree(root)
-
-    log = hcp_icafix(sinfo, options(hcp_icafix_bolds="G1:BOLD_1,BOLD_2"))
-
-    assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
-    assert "multi-run HCP ICAFix can be run" in log.text
+    assert "HCP ICAFix can be run" in log.text
     assert os.path.join("ICAFIX", "hcp_fix_multi_run") in log.text
     assert log.status[1] == "HCP ICAFix: G1 (ICAFix), G1 (PostFix) ready"
     assert log.status[2] == 0
@@ -213,21 +170,12 @@ def bare_fix_session(fix_session, serial_icafix):
     results = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results")
     os.remove(os.path.join(results, "G1", "G1_hp0_clean.nii.gz"))
     for bold in ["BOLD_1", "BOLD_2"]:
-        for name in ["%s_Atlas_hp2000_clean.dtseries.nii", "%s_hp2000_clean.nii.gz"]:
+        for name in ["%s_Atlas_hp0_clean.dtseries.nii", "%s_hp0_clean.nii.gz"]:
             os.remove(os.path.join(results, bold, name % bold))
     return sinfo, options, root
 
 
-@pytest.mark.parametrize(
-    "bolds, units, highpass",
-    [
-        ("BOLD_1,BOLD_2", ["BOLD_1", "BOLD_2"], "2000"),
-        ("G1:BOLD_1,BOLD_2", ["G1"], "0"),
-    ],
-)
-def test_an_icafix_dry_run_says_what_postfix_it_would_chain(
-    bare_fix_session, bolds, units, highpass
-):
+def test_an_icafix_dry_run_says_what_postfix_it_would_chain(bare_fix_session):
     """
     The real run chains PostFix after a successful ICAFix; the dry run stopped
     at ICAFix and never said so. PostFix reads the clean ICA output ICAFix
@@ -236,17 +184,14 @@ def test_an_icafix_dry_run_says_what_postfix_it_would_chain(
     sinfo, options, root = bare_fix_session
     before = _tree(root)
 
-    log = hcp_icafix(sinfo, options(hcp_icafix_bolds=bolds))
+    log = hcp_icafix(sinfo, options())
 
     assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
-    assert log.text.count(os.path.join("ICAFIX", "PostFix.sh")) == len(units)
-    assert log.text.count("HCP PostFix can be run after ICAFix") == len(units)
-    for unit in units:
-        assert '--fmri-name="%s"' % unit in log.text
-        assert "%s_hp%s_clean.nii.gz is written by ICAFix, not checked" % (
-            unit, highpass
-        ) in log.text
-    assert '--high-pass="%s"' % highpass in log.text
+    assert log.text.count(os.path.join("ICAFIX", "PostFix.sh")) == 1
+    assert log.text.count("HCP PostFix can be run after ICAFix") == 1
+    assert '--fmri-name="G1"' in log.text
+    assert "G1_hp0_clean.nii.gz is written by ICAFix, not checked" in log.text
+    assert '--high-pass="0"' in log.text
     assert "missing" not in log.text
     assert log.status[2] == 0
 
@@ -257,7 +202,7 @@ def test_an_icafix_dry_run_without_postfix_chains_none(bare_fix_session):
     log = hcp_icafix(sinfo, options(hcp_icafix_postfix=False))
 
     assert "PostFix" not in log.text
-    assert log.status[1] == "HCP ICAFix: 1, 2 ready"
+    assert log.status[1] == "HCP ICAFix: G1 ready"
 
 
 def test_an_icafix_that_is_not_ready_chains_no_postfix(bare_fix_session):
@@ -268,35 +213,26 @@ def test_an_icafix_that_is_not_ready_chains_no_postfix(bare_fix_session):
 
     log = hcp_icafix(sinfo, options())
 
-    assert log.text.count(os.path.join("ICAFIX", "PostFix.sh")) == 1
-    assert log.status[1] == (
-        "HCP ICAFix: 1 (ICAFix), 1 (PostFix) ready; 2 (ICAFix) not ready"
-    )
+    assert os.path.join("ICAFIX", "PostFix.sh") not in log.text
+    assert log.status[1] == "HCP ICAFix: G1 (ICAFix) not ready"
 
 
 @pytest.mark.parametrize(
-    "bolds, mode, chained",
-    [
-        # single-run ICAFix defaults to octave, and so does its PostFix
-        ("BOLD_1,BOLD_2", None, "2"),
-        ("BOLD_1,BOLD_2", "compiled", "0"),
-        ("G1:BOLD_1,BOLD_2", None, "1"),
-        ("G1:BOLD_1,BOLD_2", "octave", "2"),
-    ],
+    "mode, chained",
+    [(None, "1"), ("compiled", "0"), ("octave", "2")],
 )
 def test_an_icafix_dry_run_leaves_the_environment_alone(
-    bare_fix_session, monkeypatch, bolds, mode, chained
+    bare_fix_session, monkeypatch, mode, chained
 ):
     """
-    --hcp_matlab_mode was put in FSL_FIX_MATLAB_MODE, and single-run ICAFix set
-    it to octave, in this process: a dry run changed the environment, and the
-    next session of the run inherited the value. The pipelines are handed the
-    mode on their command lines instead.
+    --hcp_matlab_mode was put in FSL_FIX_MATLAB_MODE in this process: a dry run
+    changed the environment, and the next session of the run inherited the
+    value. The pipelines are handed the mode on their command lines instead.
     """
     sinfo, options, root = bare_fix_session
     environment = dict(os.environ)
 
-    log = hcp_icafix(sinfo, options(hcp_icafix_bolds=bolds, hcp_matlab_mode=mode))
+    log = hcp_icafix(sinfo, options(hcp_matlab_mode=mode))
 
     assert dict(os.environ) == environment
     assert "FSL_FIX_MATLAB_MODE=%s " % chained in log.text
@@ -314,143 +250,130 @@ def test_the_matlab_mode_of_one_session_does_not_reach_the_next(
     """
     sinfo, options, root = bare_fix_session
     monkeypatch.delenv("FSL_FIX_MATLAB_MODE")
-    multi = {"hcp_icafix_bolds": "G1:BOLD_1,BOLD_2"}
 
-    hcp_icafix(sinfo, options(hcp_matlab_mode="compiled", **multi))
-    log = hcp_icafix(sinfo, options(**multi))
+    hcp_icafix(sinfo, options(hcp_matlab_mode="compiled"))
+    log = hcp_icafix(sinfo, options())
 
     assert "FSL_FIX_MATLAB_MODE not set" in log.text
     assert log.status[2] == 1
 
 
-def test_single_run_icafix_defaults_to_octave_without_an_environment(
-    bare_fix_session, monkeypatch
-):
-    """The documented single-run default was unreachable: it demanded a mode."""
-    sinfo, options, root = bare_fix_session
-    monkeypatch.delenv("FSL_FIX_MATLAB_MODE")
-
-    log = hcp_icafix(sinfo, options())
-
-    assert "FSL_FIX_MATLAB_MODE=2 " in log.text
-    assert log.status[2] == 0
-
-
-@pytest.mark.parametrize(
-    "bolds, summary",
-    [
-        ("BOLD_1,BOLD_2", "HCP ApplyAutoReclean: 1, 2 ready"),
-        ("G1:BOLD_1,BOLD_2", "HCP ApplyAutoReclean: G1 ready"),
-    ],
-)
-def test_apply_auto_reclean_dry_run_says_it_can_be_run(
-    bare_fix_session, bolds, summary
-):
-    """
-    It set FSL_FIX_MATLAB_MODE in this process and its dry run reported
-    nothing; a single-run one was filed under the group `None`.
-    """
+def test_apply_auto_reclean_dry_run_says_it_can_be_run(bare_fix_session):
+    """It set FSL_FIX_MATLAB_MODE in this process and its dry run reported nothing."""
     sinfo, options, root = bare_fix_session
     environment = dict(os.environ)
     before = _tree(root)
 
-    log = hcp_apply_auto_reclean(
-        sinfo, options(hcp_icafix_bolds=bolds, hcp_matlab_mode="octave")
-    )
+    log = hcp_apply_auto_reclean(sinfo, options(hcp_matlab_mode="octave"))
 
     assert dict(os.environ) == environment
     assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
     assert "HCP ApplyAutoReclean can be run" in log.text
     assert '--matlab-run-mode="2"' in log.text
-    assert "None" not in log.text
-    assert log.status[1] == summary
+    assert '--mrfix-concat-name="G1"' in log.text
+    assert log.status[1] == "HCP ApplyAutoReclean: G1 ready"
     assert log.status[2] == 0
 
 
-@pytest.mark.parametrize(
-    "bolds, summary",
-    [
-        ("BOLD_1,BOLD_2", "HCP ApplyAutoReclean: 1, 2 done"),
-        ("G1:BOLD_1,BOLD_2", "HCP ApplyAutoReclean: G1 done"),
-    ],
-)
-def test_apply_auto_reclean_hands_its_call_the_matlab_mode(
-    bare_fix_session, monkeypatch, bolds, summary
-):
-    """
-    A single-run reclean runs ReApplyFixPipeline.sh, which in compiled mode
-    finds the MCR through FIX's settings.sh, and that reads the mode from
-    FSL_FIX_MATLAB_MODE rather than from --matlab-run-mode. The mode was put
-    in this process's environment; once it was not, the call got whatever the
-    environment held (1 outside the container) and failed for want of an MCR.
-    """
+def test_apply_auto_reclean_hands_its_call_the_matlab_mode(bare_fix_session, monkeypatch):
+    """The mode reaches the pipeline on its command line, the environment stays."""
     sinfo, options, root = bare_fix_session
     calls = []
 
     def run_external(checkfile, comm, description, **kwargs):
-        calls.append((comm, kwargs))
+        calls.append(comm)
         return "done.log", "done", 0
 
     monkeypatch.setattr(pc, "run_external_for_file", run_external)
     environment = dict(os.environ)
 
-    log = hcp_apply_auto_reclean(
-        sinfo,
-        dict(options(hcp_icafix_bolds=bolds, hcp_matlab_mode="compiled"), run="run"),
-    )
+    log = hcp_apply_auto_reclean(sinfo, dict(options(hcp_matlab_mode="compiled"), run="run"))
 
     assert dict(os.environ) == environment
-    assert calls
-    for comm, kwargs in calls:
-        assert comm.startswith("FSL_FIX_MATLAB_MODE=0 "), comm
-        assert '--matlab-run-mode="0"' in comm
-        assert kwargs["shell"], "the prefix is read by a shell"
-    assert log.status[1] == summary
+    assert len(calls) == 1
+    assert '--matlab-run-mode="0"' in calls[0]
+    assert log.status[1] == "HCP ApplyAutoReclean: G1 done"
     assert log.status[2] == 0
 
 
-def test_a_single_run_dedrift_hands_reapply_fix_the_matlab_mode(msmall_session):
-    """
-    DeDriftAndResamplePipeline.sh cleans the fix names with
-    ReApplyFixPipeline.sh, which reads the mode from FSL_FIX_MATLAB_MODE.
-    """
+def test_reapply_fix_hands_its_call_the_matlab_mode(msmall_session):
     sinfo, options = msmall_session
 
-    log = hcp_dedrift_and_resample(sinfo, options(hcp_matlab_mode="compiled"))
-
-    assert "FSL_FIX_MATLAB_MODE=0 " in log.text
-    assert "HCP DeDriftAndResample can be run" in log.text
-
-
-def test_a_single_run_reapply_fix_hands_its_call_the_matlab_mode(msmall_session):
-    """ReApplyFixPipeline.sh reads the mode from FSL_FIX_MATLAB_MODE as well."""
-    sinfo, options = msmall_session
+    results = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results")
+    for bold in ["BOLD_1", "BOLD_2"]:
+        open(os.path.join(results, bold, bold + ".nii.gz"), "w").close()
 
     log = hcp_reapply_fix(sinfo, options(hcp_matlab_mode="compiled"))
 
-    assert "FSL_FIX_MATLAB_MODE=0 " in log.text
     assert '--matlab-run-mode="0"' in log.text
+    assert '--fmri-names="BOLD_1@BOLD_2"' in log.text
+    assert log.status[2] == 0
 
 
-@pytest.mark.parametrize(
-    "bolds, summary",
-    [
-        ("BOLD_1,BOLD_2", "HCP PostFix: bolds 1, 2 ready"),
-        ("G1:BOLD_1,BOLD_2", "HCP PostFix: bolds G1 ready"),
-    ],
-)
-def test_post_fix_dry_run_says_it_can_be_run(fix_session, bolds, summary):
-    """It was reported as `bolds 1, 2 skipped`."""
+def test_reapply_fix_does_not_run_a_group_with_a_bold_missing(msmall_session):
+    """The check reported the bold missing, and the group was then declared fine."""
+    sinfo, options = msmall_session
+
+    results = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results")
+    open(os.path.join(results, "BOLD_1", "BOLD_1.nii.gz"), "w").close()
+
+    log = hcp_reapply_fix(sinfo, options(hcp_matlab_mode="compiled"))
+
+    assert "BOLD_2.nii.gz] missing" in log.text
+    assert "ReApplyFixMultiRunPipeline.sh" not in log.text
+    assert log.status[1] == "HCP ReApplyFix: bolds G1 not ready"
+    assert log.status[2] == 1
+
+
+def test_post_fix_dry_run_says_it_can_be_run(fix_session):
+    """It was reported as skipped."""
     sinfo, options, root = fix_session
     before = _tree(root)
 
-    log = hcp_post_fix(sinfo, options(hcp_icafix_bolds=bolds))
+    log = hcp_post_fix(sinfo, options())
 
     assert _tree(root) == before, "a --test run wrote, removed or replaced a file"
     assert "HCP PostFix can be run" in log.text
     assert os.path.join("ICAFIX", "PostFix.sh") in log.text
-    assert log.status[1] == summary
+    assert log.status[1] == "HCP PostFix: bolds G1 ready"
     assert log.status[2] == 0
+
+
+def _write_bold(path, voxel):
+    """A small image with the given voxel size."""
+    os.makedirs(os.path.dirname(path))
+    nib.save(nib.Nifti1Image(np.zeros((2, 2, 2)), np.diag([voxel, voxel, voxel, 1])), path)
+
+
+@pytest.mark.parametrize(
+    "bolds, res",
+    [
+        ({"BOLD_1": 1.6, "BOLD_2": 2.0}, "1.6"),
+        ({"BOLD_1": 2.5}, "2.5"),
+        ({}, "2"),
+    ],
+)
+def test_the_lowres_segmentation_is_resampled_to_the_resolution_of_the_bolds(tmp_path, bolds, res):
+    """
+    hcp_bold_res was read from map_hcp_data's own options: a run of the fMRI
+    pipelines at 1.6 mm, stated for them alone, left a 2 mm segmentation that
+    FC commands could not use with its BOLDs. `hcp_bold_res` answers only when
+    there is no BOLD to read.
+    """
+    results = tmp_path / "Results"
+    results.mkdir()
+    for bold, voxel in bolds.items():
+        _write_bold(str(results / bold / (bold + ".nii.gz")), voxel)
+
+    assert _bold_resolution(str(results), "2") == res
+
+
+def test_a_bold_that_can_not_be_read_says_nothing_of_the_resolution(tmp_path):
+    results = tmp_path / "Results"
+    (results / "BOLD_1").mkdir(parents=True)
+    (results / "BOLD_1" / "BOLD_1.nii.gz").write_text("")
+
+    assert _bold_resolution(str(results), "2") == "2"
 
 
 def test_transmit_bias_group_dry_run_says_it_can_be_run(tmp_path, monkeypatch, no_external):

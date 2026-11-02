@@ -239,7 +239,7 @@ def fake_dedrift(sinfo, options, hcp, run, group):
 @pytest.fixture
 def msmall_study(study, monkeypatch):
     """
-    The study's s1 alone, with two BOLDs and the multi-run ICA-FIX outputs
+    The study's s1 alone, with two BOLDs and the ICA-FIX outputs
     hcp_long_msmall checks for, and dedrift and resample stubbed in this
     process.
     """
@@ -257,7 +257,7 @@ def msmall_study(study, monkeypatch):
 
     DEDRIFT_CALLS.clear()
     monkeypatch.setattr(
-        hcp_long_msmall_module, "execute_hcp_multi_dedrift_and_resample", fake_dedrift
+        hcp_long_msmall_module, "execute_hcp_dedrift_and_resample", fake_dedrift
     )
     monkeypatch.setattr(
         hcp_long_msmall_module, "ProcessPoolExecutor", concurrent.futures.ThreadPoolExecutor
@@ -314,9 +314,9 @@ def test_long_msmall_goes_on_to_dedrift_after_a_good_msmall_call(msmall_study):
 
 def test_long_msmall_refuses_bolds_that_are_not_a_concatenation(msmall_study):
     """
-    Ungrouped (single-run) ICAFix bolds have no concatenation for the
-    longitudinal pipeline to run on: the run ended in a KeyError on the group
-    name, and an UnboundLocalError in the handler that was to report it.
+    Ungrouped ICAFix bolds have no concatenation for the longitudinal pipeline
+    to run on: the run ended in a KeyError on the group name, and an
+    UnboundLocalError in the handler that was to report it.
     """
     options = msmall_options(msmall_study)
     options["hcp_icafix_bolds"] = "BOLD_1,BOLD_2"
@@ -325,7 +325,7 @@ def test_long_msmall_refuses_bolds_that_are_not_a_concatenation(msmall_study):
 
     assert msmall_study.calls == []
     assert log.status[2] == 1
-    assert "needs multi-run ICAFix bolds" in log.text
+    assert "names no group" in log.text
     assert "Traceback" not in log.text
 
 
@@ -340,8 +340,8 @@ def test_long_msmall_dedrifts_the_registration_msmall_named(msmall_study, monkey
 
     monkeypatch.setattr(
         hcp_long_msmall_module,
-        "execute_hcp_multi_dedrift_and_resample",
-        hcp_utils.execute_hcp_multi_dedrift_and_resample,
+        "execute_hcp_dedrift_and_resample",
+        hcp_utils.execute_hcp_dedrift_and_resample,
     )
     results = os.path.join(session_hcp(msmall_study, "s1"), "MNINonLinear", "Results")
     for bold in ("BOLD_1", "BOLD_2"):

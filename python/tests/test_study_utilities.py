@@ -171,7 +171,7 @@ def test_the_sessions_with_an_entry_leave_out_what_is_not_a_session(tmp_path):
         (study / "sessions" / folder / "behavior").mkdir(exist_ok=True)
 
     assert gu._sessions_with(str(study / "sessions"), ["behavior"]) == "OP1"
-    assert gu._sessions_with(str(study / "sessions"), ["session.txt"]) == "OP1|OP2"
+    assert gu._sessions_with(str(study / "sessions"), ["session.txt"]) == "OP1,OP2"
 
 
 # ------------------------------------------------------------------------------

@@ -1512,12 +1512,19 @@ def _run_qc_dwi_dtifit(
 def _run_qc_dwi_bedpostx(
     hcp, dwi_path, working_scene, case_name, base_dir, qc_dir, outpath, timestamp,
     qclog, thread, scenezip, overwrite,  _log):
-    """BedpostX sub-QC: requires a complete Diffusion.bedpostX; renders a variant scene."""
+    """BedpostX sub-QC: requires a complete <dwi_path>.bedpostX; renders a variant scene."""
 
-    bpx = os.path.join(hcp["T1w_folder"], "Diffusion.bedpostX")
+    bpx_name = "%s.bedpostX" % dwi_path
+    bpx = os.path.join(hcp["T1w_folder"], bpx_name)
     f1 = os.path.join(bpx, "merged_f1samples.nii.gz")
     merged = glob.glob(os.path.join(bpx, "merged_*nii.gz"))
-    if not (os.path.exists(f1) and len(merged) == 9 and os.path.getsize(f1) >= 20000000):
+    # th, ph and f per fiber
+    fibers = glob.glob(os.path.join(bpx, "merged_f*samples.nii.gz"))
+    if not (
+        os.path.exists(f1)
+        and len(merged) == 3 * len(fibers)
+        and os.path.getsize(f1) >= 20000000
+    ):
         _log.warning("FSL BedpostX outputs missing or incomplete; skipping BedpostX QC.")
         return
 
@@ -1529,8 +1536,8 @@ def _run_qc_dwi_bedpostx(
         {
             "1st frame": "mean d diffusivity",
             "10th frame": "mean f anisotropy",
-            "%s/data_frame1_brain.nii.gz" % dwi_path: "Diffusion.bedpostX/mean_dsamples.nii.gz",
-            "%s/data_frame10_brain.nii.gz" % dwi_path: "Diffusion.bedpostX/mean_fsumsamples.nii.gz",
+            "%s/data_frame1_brain.nii.gz" % dwi_path: "%s/mean_dsamples.nii.gz" % bpx_name,
+            "%s/data_frame10_brain.nii.gz" % dwi_path: "%s/mean_fsumsamples.nii.gz" % bpx_name,
         },
         bpx_png,
         base_dir,
@@ -1547,14 +1554,20 @@ def _run_qc_dwi_bedpostx(
     return
 
 
-def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, _log):
-    """EDDY QC stats: hard-link qc.pdf into the QC folder and record qc_mot_abs."""
+def _run_qc_dwi_eddy(hcp, dwi_path, case_name, outpath, timestamp, _log):
+    """
+    EDDY QC stats: hard-link qc.pdf into the QC folder and record qc_mot_abs.
+    Returns whether the outputs of dwi_eddy_qc were there to do it with.
+    """
 
-    eddy_qc = os.path.join(hcp["base"], "Diffusion", "eddy", "eddy_unwarped_images.qc")
+    eddy_qc = os.path.join(hcp["base"], dwi_path, "eddy", "eddy_unwarped_images.qc")
     qc_pdf = os.path.join(eddy_qc, "qc.pdf")
     if not os.path.exists(qc_pdf):
-        _log.warning(f"EDDY QC outputs missing ({qc_pdf}); skipping EDDY QC.")
-        return
+        _log.error(
+            f"EDDY QC outputs missing ({qc_pdf}): this QC reads the outputs of "
+            "dwi_eddy_qc, run dwi_eddy_qc before it."
+        )
+        return False
 
     mot_abs = os.path.join(eddy_qc, "%s_qc_mot_abs.txt" % case_name)
     if not os.path.exists(mot_abs):
@@ -1577,7 +1590,7 @@ def _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp, _log):
     with open(report_txt, "a") as f:
         f.write("%s\n" % mot_abs)
     _log.detail(f"EDDY QC linked to {eddy_pdf_dst}; motion recorded in {report_txt}")
-    return
+    return True
 
 
 def _run_qc_custom_scene(sinfo, options, overwrite, hcp, params: dict):
@@ -1792,8 +1805,11 @@ def _run_qc_dwi(sinfo, options, overwrite, hcp, params: dict):
             _run_qc_dwi_bedpostx(
                 hcp, dwi_path, working_scene, case_name, base_dir, qc_dir, outpath,
                 timestamp, qclog, sinfo["id"], scenezip, overwrite,  log)
-        if dwi_eddyqc == "yes":
-            _run_qc_dwi_eddy(hcp, case_name, outpath, timestamp,  log)
+        if dwi_eddyqc == "yes" and not _run_qc_dwi_eddy(
+            hcp, dwi_path, case_name, outpath, timestamp, log
+        ):
+            report["failed"].append("DWI")
+            return {"r": log.text, "report": report}
 
         report["done"].append("DWI")
         return {"r": log.text, "report": report}

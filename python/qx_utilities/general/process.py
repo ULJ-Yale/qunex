@@ -808,8 +808,6 @@ arglist = [
     ["hcp_msmall_topography_roi", "", is_none],
     ["hcp_msmall_topography_target", "", is_none],
     ["hcp_msmall_no_ind_mean", "", flag],
-    ["hcp_msmall_start_frame", "", is_none],
-    ["hcp_msmall_end_frame", "", is_none],
     ["# --- hcp_dedrift_and_resample options"],
     ["hcp_resample_concatregname", "MSMAll", str],
     ["hcp_resample_regname", "", is_none],

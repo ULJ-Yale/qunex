@@ -198,7 +198,7 @@ def import_hcp(
             to "NONE" if onboarding preprocessed data only.
 
         --sessions (str, default detailed below):
-            An optional parameter that specifies a comma or pipe separated list
+            An optional parameter that specifies a comma separated list
             of sessions from the inbox folder to be processed. Regular
             expression patterns can be used. If provided, only packets or
             folders within the inbox that match the list of sessions will be
@@ -367,7 +367,7 @@ def import_hcp(
         Importing only specific sessions:
             If only specific sessions are to be imported, then the `--sessions`
             parameter can be used. Specifically, `--sessions` is an optional
-            parameter that should specify a comma or pipe separated list of
+            parameter that should specify a comma separated list of
             sessions from the inbox folder to be processed. Regular expression
             patterns can be used. If provided, only packets or folders within
             the inbox folder that match the list of sessions will be processed.

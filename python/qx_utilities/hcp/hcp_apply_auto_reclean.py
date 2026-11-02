@@ -82,22 +82,19 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You should specify how to
-            group/concatenate bolds together along with bolds, e.g.
+            Specify how to group/concatenate the bolds for ICAFix, e.g.
             "<group1>:<boldname1>,<boldname2>|
-            <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed, which is the default. Instead of full bold
-            names, you can also  use bold tags from the batch file. If this
-            parameter is not provided ICAFix will bundle all bolds together and
-            execute multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
-            this case single-run HCP ICAFix will be executed over specified
-            bolds. This is a legacy option and not recommended.
+            <group2>:<boldname3>,<boldname4>". Instead of full bold names, you
+            can also use bold tags from the batch file. If this parameter is
+            not provided ICAFix will bundle all bolds together, the
+            concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold
+            named in two groups, or twice, whether by its name or by its tag,
+            is an error. Every entry needs a group name: "<boldname1>,<boldname2>"
+            and "<group1>:<boldname1>|<boldname2>" are errors.
 
         --hcp_icafix_highpass (int, default 0):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix.
+            Value for the highpass filter.
 
         --hcp_bold_res (str, default '2'):
             Resolution of data.
@@ -193,15 +190,10 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
-        single_fix, icafix_bolds, icafix_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
+        icafix_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
 
         # --- Multi threading
-        if single_fix:
-            parelements = max(1, min(options["parelements"], len(icafix_bolds)))
-            reclean_elements = icafix_bolds
-        else:
-            parelements = max(1, min(options["parelements"], len(icafix_groups)))
-            reclean_elements = icafix_groups
+        parelements = max(1, min(options["parelements"], len(icafix_groups)))
 
         log.blank()
         log.action(
@@ -225,16 +217,8 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
         # create a multiprocessing Pool
         ppe = ProcessPoolExecutor(parelements)
         # process
-        f = partial(
-            execute_hcp_apply_auto_reclean,
-            sinfo,
-            options,
-            overwrite,
-            hcp,
-            run,
-            single_fix,
-        )
-        results = ppe.map(f, reclean_elements)
+        f = partial(execute_hcp_apply_auto_reclean, sinfo, options, overwrite, hcp, run)
+        results = ppe.map(f, icafix_groups)
 
         # merge r and report
         for result in results:
@@ -274,20 +258,11 @@ def hcp_apply_auto_reclean(sinfo, options, overwrite=False, thread=0):
     return log.result(report)
 
 
-def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_fix, re):
+def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, group):
     """Execute HCP Apply Auto Reclean"""
-    if single_fix:
-        groupname = None
-        bolds = [re]
-        # a single-run bold has no group, it is reported under its own name
-        unit, _, _ = pc.get_bold_names(re, options)
-        what = f"bold {unit}"
-    else:
-        # get group data
-        groupname = re["name"]
-        bolds = re["bolds"]
-        unit = groupname
-        what = f"group {groupname}"
+    # get group data
+    groupname = group["name"]
+    bolds = group["bolds"]
 
     # prepare return variables
     log = ReportLog()
@@ -302,7 +277,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
 
     try:
         log.rule(before=1)
-        log.action("Processing", what, options["run"])
+        log.action("Processing", f"group {groupname}", options["run"])
         groupok = True
 
         # --- check for bold images and prepare images parameter
@@ -339,32 +314,23 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         subject = sinfo["id"] + options["hcp_suffix"]
 
         # highpass
-        if single_fix:
-            highpass = (
-                2000
-                if options["hcp_icafix_highpass"] is None
-                else options["hcp_icafix_highpass"]
-            )
-        else:
-            highpass = (
-                0
-                if options["hcp_icafix_highpass"] is None
-                else options["hcp_icafix_highpass"]
-            )
+        highpass = (
+            0
+            if options["hcp_icafix_highpass"] is None
+            else options["hcp_icafix_highpass"]
+        )
 
-        # matlab run mode, compiled=0, interpreted=1, octave=2. A single-run
-        # reclean calls ReApplyFixPipeline.sh, which in compiled mode reads
-        # FSL_FIX_MATLAB_MODE through FIX's settings.sh to find the MCR, so
-        # the mode is also set for this call alone
+        # matlab run mode, compiled=0, interpreted=1, octave=2
         matlabrunmode = matlab_run_mode(options)
         if not matlab_run_mode_ok(options, log):
             run = False
 
         comm = (
-            'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
+            '%(script)s \
             --study-folder="%(studyfolder)s" \
             --subject="%(subject)s" \
             --fmri-names="%(boldimgs)s" \
+            --mrfix-concat-name="%(groupname)s" \
             --fix-high-pass="%(highpass)s" \
             --fmrires="%(fmrires)s" \
             --low-res="%(low_res)s" \
@@ -378,6 +344,7 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                 "studyfolder": sinfo["hcp"],
                 "subject": subject,
                 "boldimgs": boldimgs,
+                "groupname": groupname,
                 "highpass": highpass,
                 "fmrires": options["hcp_bold_res"],
                 "low_res": options["hcp_lowresmesh"],
@@ -388,9 +355,6 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
         )
 
         # optional parameters
-        if groupname is not None:
-            comm += '             --mrfix-concat-name="%s"' % groupname
-
         if options["hcp_autoreclean_model_folder"] is not None:
             comm += (
                 '             --model-folder="%s"'
@@ -424,36 +388,36 @@ def execute_hcp_apply_auto_reclean(sinfo, options, overwrite, hcp, run, single_f
                     remove=options["log"] == "remove",
                     task=options["command_ran"],
                     logfolder=options["comlogs"],
-                    logtags=[options["logtag"], unit],
+                    logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
                     _log=log,
                 )
 
                 if failed:
-                    report["failed"].append(unit)
+                    report["failed"].append(groupname)
                 else:
-                    report["done"].append(unit)
+                    report["done"].append(groupname)
 
             # -- just checking: there is no file to check the run against, so
             #    one whose inputs are all present can be run
             else:
                 log.step("HCP ApplyAutoReclean can be run")
-                report["ready"].append(unit)
+                report["ready"].append(groupname)
 
         else:
-            report["not ready"].append(unit)
+            report["not ready"].append(groupname)
             if options["run"] == "run":
                 log.error("something missing, skipping this group!")
             else:
                 log.error("something missing, this group would be skipped!")
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n\n\n --- Failed during processing of {what} with error:\n")
+        log.raw(f"\n\n\n --- Failed during processing of group {groupname} with error:\n")
         log.raw(str(errormessage))
-        report["failed"].append(unit)
+        report["failed"].append(groupname)
     except Exception:
-        log.info(f" --- Failed during processing of {what} with error:\n {traceback.format_exc()}\n")
-        report["failed"].append(unit)
+        log.info(f" --- Failed during processing of group {groupname} with error:\n {traceback.format_exc()}\n")
+        report["failed"].append(groupname)
 
     return {"r": log.text, "report": report}

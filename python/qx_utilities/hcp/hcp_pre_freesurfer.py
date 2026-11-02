@@ -800,7 +800,7 @@ def hcp_pre_freesurfer(sinfo, options, overwrite=False, thread=0):
                 if not options["hcp_echodiff"]:
                     fmfolder = os.path.join(
                         hcp["source"],
-                        "FieldMap%s%s" % (fmnum, options["fctail"]),
+                        "FieldMap%s%s" % (fmnum, options["fmtail"]),
                     )
 
                     fmap_json = glob.glob(os.path.join(fmfolder, "*Phase.json"))

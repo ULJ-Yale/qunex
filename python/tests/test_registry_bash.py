@@ -7,6 +7,14 @@ from pathlib import Path
 import qx_registry_build
 
 
+def test_a_parameter_with_a_hyphen_is_registered():
+    """`--gbc-command` was not read as a parameter, so gmri never handed it on."""
+    for name in ["gbc-command", "mem-limit", "sessions"]:
+        match = qx_registry_build._ENTRY_RE.match("    --%s (str, default ''):" % name)
+        assert match and match.group("name") == name
+    assert not qx_registry_build._ENTRY_RE.match("    ---bad (str):")
+
+
 def test_index_bash_commands_from_usage_heredoc(tmp_path: Path):
     """Index a bash command documented via usage() heredoc."""
 

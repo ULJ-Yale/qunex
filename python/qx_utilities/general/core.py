@@ -72,7 +72,7 @@ def resolve_sessions(
     extension, as a batch file otherwise - and sessions and filter select within
     it. A batch file that is absent or can not be read is always an error.
 
-    If batchfile is not provided, sessions is a comma, space or pipe separated
+    If batchfile is not provided, sessions is a comma or space separated
     list of session ids or globs, matched against the folders in sessionsfolder
     if one is given and taken as plain ids if it is not. The returned header
     parameters are then empty.

@@ -11,7 +11,7 @@
 """
 ``hcp_icafix.py``
 
-The HCP ICAFix pipeline and its single-run / multi-run executors.
+The HCP ICAFix pipeline and its executor.
 """
 
 import os
@@ -29,7 +29,6 @@ from qx_utilities.hcp.hcp_paths import get_hcp_paths
 from qx_utilities.hcp.hcp_utils import (
     _build_skipped_report,
     do_hcp_options_check,
-    MATLAB_RUN_MODES,
     execute_hcp_post_fix,
     matlab_run_mode,
     matlab_run_mode_ok,
@@ -44,7 +43,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_icafix [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [... processing options]``
 
-    Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
+    Run the ICAFix step of HCP Pipeline (hcp_fix_multi_run).
 
     ..  qx_command:
         type: processing.session
@@ -93,47 +92,35 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             if other than default.
 
         --hcp_icafix_bolds (str, default ''):
-            Specify a list of bolds for ICAFix. You should specify how to
-            group/concatenate bolds together along with bolds, e.g.
+            Specify how to group/concatenate the bolds for ICAFix, e.g.
             "<group1>:<boldname1>,<boldname2>|
-            <group2>:<boldname3>,<boldname4>", in this case multi-run HCP
-            ICAFix will be executed, which is the default. Instead of full bold
-            names, you can also  use bold tags from the batch file. If this
-            parameter is not provided ICAFix will bundle all bolds together and
-            execute multi-run HCP ICAFix, the concatenated file will be named
-            fMRI_CONCAT_ALL. Alternatively, you can specify a comma separated
-            list of bolds without groups, e.g. "<boldname1>,<boldname2>", in
-            this case single-run HCP ICAFix will be executed over specified
-            bolds. This is a legacy option and not recommended. A tag names
-            every bold that carries it, and a bold can be named once only:
-            a bold named in two groups, or twice, whether by its name or by
-            its tag, is an error. With groups, every entry needs a group
-            name: "<group1>:<boldname1>|<boldname2>" is an error.
+            <group2>:<boldname3>,<boldname4>". Instead of full bold names, you
+            can also use bold tags from the batch file. If this parameter is
+            not provided ICAFix will bundle all bolds together, the
+            concatenated file will be named fMRI_CONCAT_ALL. A tag names every
+            bold that carries it, and a bold can be named once only: a bold
+            named in two groups, or twice, whether by its name or by its tag,
+            is an error. Every entry needs a group name: "<boldname1>,<boldname2>"
+            and "<group1>:<boldname1>|<boldname2>" are errors.
 
-        --hcp_icafix_highpass (int, default detailed below):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix.
+        --hcp_icafix_highpass (int, default 0):
+            Value for the highpass filter.
 
         --hcp_matlab_mode (str, default default detailed below):
             Specifies the Matlab version, can be 'interpreted', 'compiled' or
             'octave'. Inside the container 'compiled' will be used, outside
-            'interpreted' is the default. For single-run HCP ICAFix the default
-            is 'octave'.
+            'interpreted' is the default.
 
-        --hcp_icafix_domotionreg (str, default detailed below):
-            Whether to regress motion parameters as part of the cleaning. The
-            default value for single-run HCP ICAFix is [TRUE], while the
-            default for multi-run HCP ICAFix is [FALSE].
+        --hcp_icafix_domotionreg (str, default 'FALSE'):
+            Whether to regress motion parameters as part of the cleaning.
 
-        --hcp_icafix_model (str, default detailed below):
+        --hcp_icafix_model (str, default 'HCP_Style_Single_Multirun_Dedrift.RData'):
             Which model to use for classification. Can be one of the pre-trained
             models shipped with FSL or a custom model as `somefile.RData`,
             `somefile.pyfix_model`, or a pyfix built-in model without extension.
             You can provide a path to a file, a relative one taken from the
             study folder, or just a filename if the file is in the FSL
-            training_files folder. [HCP_hp<high-pass>.RData] for
-            single-run HCP ICAFix and [HCP_Style_Single_Multirun_Dedrift.RData]
-            for multi-run HCP ICAFix.
+            training_files folder.
 
         --hcp_icafix_threshold (int, default 10):
             ICAFix threshold that controls the sensitivity/specificity tradeoff.
@@ -172,7 +159,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
         --hcp_icafix_concatenate_only (flag, not set by default):
             When set, the script stops after the concatenation step,
-            e.g., for use in experimental alternative multi-run denoising.
+            e.g., for use in experimental alternative denoising.
             PostFix is then not run, as there is no ICA output for it.
 
         --hcp_reuse_existing_ica (str, default 'FALSE'):
@@ -215,11 +202,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
             MNINonLinear/Results/<boldname>/<boldname>_hp<highpass>_clean.nii.gz,
 
         where highpass is the used value for the highpass filter. The
-        default highpass value is 0 for multi-run HCP ICAFix and 2000 for
-        single-run HCP ICAFix.
+        default highpass value is 0.
 
     Notes:
-        Runs the ICAFix step of HCP Pipeline (hcp_fix_multi_run or hcp_fix).
+        Runs the ICAFix step of HCP Pipeline (hcp_fix_multi_run).
         This step attempts to auto-classify ICA components into good and bad
         components, so that the bad components can be then removed from the 4D
         FMRI data. If ICAFix step finishes successfully PostFix (PostFix.sh)
@@ -228,7 +214,7 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         it would run after ICAFix as well.
 
         If the hcp_icafix_bolds parameter is not provided ICAFix will bundle
-        all bolds together and execute multi-run HCP ICAFix, the
+        all bolds together, the
         concatenated file will be named fMRI_CONCAT_ALL. WARNING: if
         session has many bolds such processing requires a lot of
         computational resources.
@@ -298,15 +284,10 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse icafix_bolds
-        single_fix, icafix_bolds, icafix_groups, pars_ok = parse_icafix_bolds(
-            options, bolds, log
-        )
+        icafix_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
 
         # --- Multi threading
-        if single_fix:
-            parelements = max(1, min(options["parelements"], len(icafix_bolds)))
-        else:
-            parelements = max(1, min(options["parelements"], len(icafix_groups)))
+        parelements = max(1, min(options["parelements"], len(icafix_groups)))
         log.blank()
         log.action(
             "Processing",
@@ -317,42 +298,24 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
 
         # matlab run mode, compiled=0, interpreted=1, octave=2. The executors
         # hand it to the pipelines on their command lines and never set it in
-        # this process, where a session would pass it on to the next one.
-        # Single-run HCP ICAFix defaults to octave
-        if not matlab_run_mode_ok(
-            options, log, default=MATLAB_RUN_MODES["octave"] if single_fix else None
-        ):
+        # this process, where a session would pass it on to the next one
+        if not matlab_run_mode_ok(options, log):
             pars_ok = False
 
         if not pars_ok:
             raise ge.CommandFailed("hcp_icafix", "... invalid input parameters!")
 
         # --- Execute
-        # single fix
-        if single_fix:
-            # create a multiprocessing Pool
-            process_pool_executor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(execute_hcp_single_icafix, sinfo, options, overwrite, hcp, run)
-            results = process_pool_executor.map(f, icafix_bolds)
+        # create a multiprocessing Pool
+        process_pool_executor = ProcessPoolExecutor(parelements)
+        # process
+        f = partial(execute_hcp_icafix, sinfo, options, overwrite, hcp, run)
+        results = process_pool_executor.map(f, icafix_groups)
 
-            # merge r and report, the executor has already named the stages
-            for result in results:
-                log.raw(result["r"])
-                merge_report(report, result["report"])
-
-        # multi fix
-        else:
-            # create a multiprocessing Pool
-            process_pool_executor = ProcessPoolExecutor(parelements)
-            # process
-            f = partial(execute_hcp_multi_icafix, sinfo, options, overwrite, hcp, run)
-            results = process_pool_executor.map(f, icafix_groups)
-
-            # merge r and report, the executor has already named the stages
-            for result in results:
-                log.raw(result["r"])
-                merge_report(report, result["report"])
+        # merge r and report, the executor has already named the stages
+        for result in results:
+            log.raw(result["r"])
+            merge_report(report, result["report"])
 
         # report
         rep = []
@@ -381,14 +344,12 @@ def hcp_icafix(sinfo, options, overwrite=False, thread=0):
     return log.result(report)
 
 
-def _chain_post_fix(
-    sinfo, options, hcp, run, single_fix, unit, matlabrunmode, report, _log
-):
+def _chain_post_fix(sinfo, options, hcp, run, groupname, matlabrunmode, report, _log):
     """
     Run the PostFix chained to an ICAFix that succeeded, or -- in a dry run --
     that can be run, and say what it would run. Returns its report, or None
-    when it is not chained (hcp_icafix_postfix off, ICAFix not through, or a
-    multi-run ICAFix that only concatenates).
+    when it is not chained (hcp_icafix_postfix off, ICAFix not through, or an
+    ICAFix that only concatenates).
 
     The PostFix is handed the matlab run mode its ICAFix ran with.
     """
@@ -396,183 +357,21 @@ def _chain_post_fix(
         return None
     if report["incomplete"] or report["failed"] or report["not ready"]:
         return None
-    if not single_fix and options["hcp_icafix_concatenate_only"]:
+    if options["hcp_icafix_concatenate_only"]:
         # hcp_fix_multi_run stops after the concatenation, before the ICA
         # PostFix reads, so a PostFix chained on could only report it missing
         _log.detail("PostFix not chained: --hcp_icafix_concatenate_only runs no ICA")
         return None
 
     result = execute_hcp_post_fix(
-        sinfo, options, hcp, run, single_fix, unit,
+        sinfo, options, hcp, run, groupname,
         matlabrunmode=matlabrunmode, after_icafix=True,
     )
     _log.raw(result["r"])
     return result["report"]
 
 
-def _single_run_model(model: str | None, bandpass) -> str:
-    """
-    The training data handed to single-run ``hcp_fix``: ``HCP_hp<bandpass>``
-    by default, and a model that names a file from the current folder, the
-    study, made absolute -- ``hcp_fix`` changes into the BOLD's folder before
-    it looks for it, appending ``.RData`` when it is not there, and then in
-    FIX's ``training_files``. A bare name of one of those is left as it is.
-    The multi-run script makes it absolute itself.
-    """
-    if model is None:
-        return f"HCP_hp{bandpass}.RData"
-    if os.path.isabs(model):
-        return model
-    if os.path.isfile(model) or os.path.isfile(model + ".RData"):
-        return os.path.abspath(model)
-    return model
-
-
-def execute_hcp_single_icafix(sinfo, options, overwrite, hcp, run, boldinfo):
-    printbold, boldtarget, _ = pc.get_bold_names(boldinfo, options)
-
-    # prepare return variables
-    log = ReportLog()
-    report = new_report()
-
-    # PostFix is reported separately so the two stages can be told apart
-    postfix_report = None
-
-    try:
-        log.rule(before=1)
-        log.action("Processing", f"BOLD image {printbold}", options["run"])
-        boldok = True
-
-        # --- check for bold image
-        boldimg = os.path.join(
-            hcp["hcp_nonlin"], "Results", boldtarget, "%s.nii.gz" % (boldtarget)
-        )
-        boldok = pc.check_for_file(
-            boldimg,
-            f"bold image {boldtarget} present",
-            f"bold image [{boldimg}] missing!",
-            status=boldok,
-            bad_level="error",
-            _log=log,
-        )
-
-        # bold in input format
-        inputfile = os.path.join(
-            hcp["hcp_nonlin"], "Results", boldtarget, "%s" % (boldtarget)
-        )
-
-        # bandpass value
-        if options["hcp_icafix_highpass"] is None:
-            bandpass = 2000
-        else:
-            bandpass = options["hcp_icafix_highpass"]
-
-        # delete intermediates
-        icafix_threshold = 10
-        if options["hcp_icafix_threshold"] is not None:
-            icafix_threshold = options["hcp_icafix_threshold"]
-
-        # delete intermediates
-        delete_intermediates = "FALSE"
-        if options["hcp_icafix_deleteintermediates"] is not None:
-            delete_intermediates = options["hcp_icafix_deleteintermediates"]
-
-        # the default for single fix is octave. hcp_fix takes no matlab
-        # argument, it reads FSL_FIX_MATLAB_MODE through FIX's settings.sh, so
-        # the mode is set for its call alone
-        matlabrunmode = matlab_run_mode(options, default=MATLAB_RUN_MODES["octave"])
-
-        comm = (
-            'FSL_FIX_MATLAB_MODE=%(matlabrunmode)s %(script)s \
-                "%(inputfile)s" \
-                %(bandpass)s \
-                "%(domot)s" \
-                "%(trainingdata)s" \
-                %(fixthreshold)s \
-                "%(deleteintermediates)s"'
-            % {
-                "matlabrunmode": matlabrunmode,
-                "script": os.path.join(hcp["hcp_base"], "ICAFIX", "hcp_fix"),
-                "inputfile": inputfile,
-                "bandpass": bandpass,
-                "domot": (
-                    "TRUE"
-                    if options["hcp_icafix_domotionreg"] is None
-                    else options["hcp_icafix_domotionreg"]
-                ),
-                "trainingdata": _single_run_model(
-                    options["hcp_icafix_model"], bandpass
-                ),
-                "fixthreshold": icafix_threshold,
-                "deleteintermediates": delete_intermediates,
-            }
-        )
-
-        # -- Report command
-        if boldok:
-            log.pipeline_command(comm)
-
-        # -- Run
-        if run and boldok:
-            if options["run"] == "run":
-                _, _, failed = pc.run_external_for_file(
-                    None,
-                    comm,
-                    "Running single-run HCP ICAFix",
-                    overwrite=overwrite,
-                    thread=sinfo["id"],
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=[options["logtag"], boldtarget],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed:
-                    report["failed"].append(printbold)
-                else:
-                    report["done"].append(printbold)
-
-            # -- just checking: there is no file to check the run against, so
-            #    a bold whose inputs are all present can be run
-            else:
-                log.step("single-run HCP ICAFix can be run")
-                report["ready"].append(printbold)
-
-            postfix_report = _chain_post_fix(
-                sinfo, options, hcp, run, True, boldinfo, matlabrunmode, report, log
-            )
-
-        else:
-            report["not ready"].append(printbold)
-            if options["run"] == "run":
-                log.error("something missing, skipping this BOLD!")
-            else:
-                log.error("something missing, this BOLD would be skipped!")
-
-    except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
-        log.raw(f"\n\n\n --- Failed during processing of bold {printbold}\n")
-        log.raw(str(errormessage))
-        report["failed"].append(printbold)
-    except Exception:
-        log.info(
-            f" --- Failed during processing of bold {printbold} with error:\n {traceback.format_exc()}\n"
-        )
-        report["failed"].append(printbold)
-
-    # with PostFix chained on, both stages report against the same bold, so name
-    # the stage each entry came from
-    if options["hcp_icafix_postfix"]:
-        stage_report(report, "ICAFix")
-        if postfix_report is not None:
-            merge_report(report, postfix_report, stage="PostFix")
-
-    return {"r": log.text, "report": report}
-
-
-def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
+def execute_hcp_icafix(sinfo, options, overwrite, hcp, run, group):
     # get group data
     groupname = group["name"]
     bolds = group["bolds"]
@@ -815,7 +614,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                 _, _, failed = pc.run_external_for_file(
                     None,
                     comm,
-                    "Running multi-run HCP ICAFix",
+                    "Running HCP ICAFix",
                     overwrite=overwrite,
                     thread=sinfo["id"],
                     remove=options["log"] == "remove",
@@ -835,11 +634,11 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
             # -- just checking: there is no file to check the run against, so
             #    a group whose inputs are all present can be run
             else:
-                log.step("multi-run HCP ICAFix can be run")
+                log.step("HCP ICAFix can be run")
                 report["ready"].append(groupname)
 
             postfix_report = _chain_post_fix(
-                sinfo, options, hcp, run, False, groupname, matlabrunmode, report, log
+                sinfo, options, hcp, run, groupname, matlabrunmode, report, log
             )
 
         else:

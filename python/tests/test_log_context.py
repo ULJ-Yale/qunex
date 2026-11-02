@@ -47,6 +47,22 @@ def test_comlog_name_joins_the_parts_and_drops_the_empty_ones():
     )
 
 
+@pytest.mark.parametrize(
+    "sessions, name",
+    [
+        ("S01|S*", "S01,S"),
+        ("S01,S02", "S01,S02"),
+        ("S01 S02", "S01,S02"),
+        ("*", None),
+    ],
+)
+def test_a_session_specification_is_cleaned_for_a_comlog_name(sessions, name):
+    """It reached the file name as it was typed, its pipes and globs with it."""
+    stem = "compute_bold_fc_%s_%s.log" % (name, STAMP) if name else "compute_bold_fc_%s.log" % STAMP
+
+    assert gl.comlog_name("compute_bold_fc", sessions, STAMP) == stem
+
+
 def test_a_very_long_comlog_name_is_truncated():
     name = gl.comlog_name("x" * 300)
 

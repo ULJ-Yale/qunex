@@ -117,18 +117,26 @@ def digest(stati):
     return reported, sum(failed for _, _, failed in reported)
 
 
+def _name_part(part):
+    """One part of a log file name: a session list's spaces and pipes become
+    commas, and what a file name should not hold, its globs among them, is dropped."""
+    return re.sub(r"[^\w.,=+-]", "", re.sub(r"[\s|]+", ",", str(part).strip())).strip("_,")
+
+
 def comlog_name(*parts):
     """
     Build a comlog file name out of its parts.
 
     Parts that are empty or None are dropped, the rest are joined with an
-    underscore and capped at :data:`MAX_STEM` characters.
+    underscore and capped at :data:`MAX_STEM` characters. A part can be a
+    session specification as it was typed, so it is cleaned first.
 
     Returns:
         the file name, without any status prefix and with the ``.log``
         extension.
     """
-    stem = NAME_SEP.join(str(part) for part in parts if part)
+    cleaned = (_name_part(part) for part in parts if part)
+    stem = NAME_SEP.join(part for part in cleaned if part)
     if len(stem) > MAX_STEM:
         stem = stem[:MAX_STEM] + "(...)"
     return stem + ".log"

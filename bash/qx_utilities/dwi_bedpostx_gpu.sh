@@ -268,8 +268,8 @@ checkCompletion() {
         filecount=`ls ${bedpostx_folder}/merged_*nii.gz | wc | awk {'print $1'}`
     fi
 
-    # -- Then check if run is complete based on file count
-    if [ "$filecount" == 9 ]; then > /dev/null 2>&1
+    # -- Then check if run is complete based on file count: th, ph and f per fiber
+    if [ "$filecount" == "$(( fibers * 3 ))" ]; then > /dev/null 2>&1
         echo ""
         echo " ---> $filecount merged samples for $session found."
         # -- Then check if run is complete based on file size

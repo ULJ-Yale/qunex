@@ -456,8 +456,13 @@ def _run_command(command, args, start):
         else:
             # a script run over the sessions of a batch file at once is handed
             # their ids: it cannot read the batch file they came from, which is
-            # a run level parameter it is not passed
-            if sessions and not ({"session", "sessions"} & set(cargs)):
+            # a run level parameter it is not passed. A group run is one call
+            # over the whole list, and it reads ids: not the globs of a stated
+            # specification
+            if sessions and (
+                not ({"session", "sessions"} & set(cargs))
+                or cargs.get("runtype") == "group"
+            ):
                 cargs[gb.session_parameter(qx_command)] = ",".join(
                     session["id"] for session in sessions
                 )

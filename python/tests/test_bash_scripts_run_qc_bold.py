@@ -115,6 +115,20 @@ def run_qc_bold(tmp_path, study, scenes, *args, **extra_env):
     )
 
 
+def test_run_qc_snronly_fails_without_its_report(run_qc_bold_study, tmp_path):
+    """Only the scene branch was checked: a TSNR run that failed reported success."""
+    study, scenes = run_qc_bold_study
+    bold_wb_command_stub(tmp_path)
+    # the report can not be written where a file stands
+    outpath = tmp_path / "taken"
+    outpath.write_text("a file")
+
+    result = run_qc_bold(tmp_path, study, scenes, "--snronly=yes", f"--outpath={outpath}")
+
+    assert "SNR report not found" in result.stdout, result.stdout
+    assert result.returncode != 0
+
+
 def bold_qc(study, pattern):
     return list((study / "sessions" / "QC" / "BOLD").glob(pattern))
 

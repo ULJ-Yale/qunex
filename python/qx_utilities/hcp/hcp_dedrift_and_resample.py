@@ -27,10 +27,7 @@ from qx_utilities.hcp.hcp_utils import (
     do_hcp_options_check,
     merge_report,
 )
-from qx_utilities.hcp.hcp_utils import (
-    execute_hcp_multi_dedrift_and_resample,
-    execute_hcp_single_dedrift_and_resample,
-)
+from qx_utilities.hcp.hcp_utils import execute_hcp_dedrift_and_resample
 
 
 def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
@@ -87,12 +84,12 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_icafix_bolds (str, default ''):
             List of bolds on which ICAFix was applied, with the same format
             as for ICAFix. Typically, this should be identical to the list
-            used in the ICAFix run. If multi-run ICAFix was run with two or
+            used in the ICAFix run. If ICAFix was run with two or
             more groups then HCP DeDriftAndResample is executed for every
             group, in the order listed, and each of these runs applies the
             same MSMAll registration (hcp_resample_regname) to the bolds of
             its group. If not provided DeDriftAndResample will assume
-            multi-run ICAFix was executed with all bolds bundled together in
+            ICAFix was executed with all bolds bundled together in
             a single concatenation called fMRI_CONCAT_ALL (i.e., same
             default behavior as in ICAFix).
 
@@ -125,9 +122,8 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             The method hcp_msmall was run with. Used only to name the MSMAll
             registration to apply (hcp_resample_regname).
 
-        --hcp_icafix_highpass (int, default detailed below):
-            Value for the highpass filter, [0] for multi-run HCP ICAFix and
-            [2000] for single-run HCP ICAFix. Should be identical to the value
+        --hcp_icafix_highpass (int, default 0):
+            Value for the highpass filter. Should be identical to the value
             used for ICAFix.
 
         --hcp_hiresmesh (int, default 164):
@@ -162,15 +158,12 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             'octave'. Inside the container 'compiled' will be used, outside
             'interpreted' is the default.
 
-        --hcp_icafix_domotionreg (bool, default detailed below):
-            Whether to regress motion parameters as part of the cleaning. The
-            default value after a single-run HCP ICAFix is [TRUE], while the
-            default after a multi-run HCP ICAFix is [FALSE].
+        --hcp_icafix_domotionreg (str, default 'FALSE'):
+            Whether to regress motion parameters as part of the cleaning.
 
         --hcp_resample_dontfixnames (str, default 'NONE'):
             A list of comma separated bolds that will not have HCP ICAFix
-            reapplied to them. Only applicable if single-run ICAFix was used.
-            Generally not recommended.
+            reapplied to them. Generally not recommended.
 
         --hcp_resample_inregname (str, default 'NONE'):
             A string to enable multiple fMRI resolutions (e.g._1.6mm).
@@ -182,16 +175,16 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         --hcp_resample_extractnames (str, default 'NONE'):
             List of bolds and concat names provided in the same format as the
             hcp_icafix_bolds parameter. Defines which bolds to extract. Exists
-            to enable extraction of a subset of the runs in a multi-run HCP
+            to enable extraction of a subset of the runs in a HCP
             ICAFix group into a new concatenated series. Extraction works
-            only when there is a single multi-run ICAFix group.
+            only when there is a single ICAFix group.
 
         --hcp_resample_extractextraregnames (str, default 'NONE'):
-            Extract multi-run HCP ICAFix runs for additional surface
+            Extract HCP ICAFix runs for additional surface
             registrations, often MSMSulc
 
         --hcp_resample_extractvolume (str, default 'NONE'):
-            Whether to also extract the specified multi-run HCP ICAFix from the
+            Whether to also extract the specified HCP ICAFix from the
             volume data, requires hcp_resample_extractnames to work.
 
         --hcp_msmall_templates (str, default <HCPPIPEDIR>/global/templates/MSMAll):
@@ -238,15 +231,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             ===================================== =======================================
 
     Examples:
-        HCP DeDriftAndResample after application of single-run ICAFix::
-
-            qunex hcp_dedrift_and_resample \\
-                --studyfolder=. \\
-                --batchfile=processing/batch.txt \\
-                --hcp_icafix_bolds="REST_1,REST_2,TASK_1,TASK_2" \\
-                --hcp_matlab_mode="interpreted"
-
-        HCP DeDriftAndResample after application of multi-run ICAFix::
+        HCP DeDriftAndResample after application of ICAFix::
 
             qunex hcp_dedrift_and_resample \\
                 --studyfolder=. \\
@@ -278,7 +263,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         _build_skipped_report(report, bskip, options)
 
         # --- Parse msmall_bolds
-        single_run, _, dedrift_groups, pars_ok = parse_icafix_bolds(options, bolds, log, True)
+        dedrift_groups, pars_ok = parse_icafix_bolds(options, bolds, log)
 
         if not pars_ok:
             raise ge.CommandFailed(
@@ -288,12 +273,7 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
         # --- Execute
         parelements = max(1, min(options["parelements"], len(dedrift_groups)))
         ppe = ProcessPoolExecutor(parelements)
-        # single-run
-        if single_run:
-            f = partial(execute_hcp_single_dedrift_and_resample, sinfo, options, hcp, run)
-        # multi-run
-        else:
-            f = partial(execute_hcp_multi_dedrift_and_resample, sinfo, options, hcp, run)
+        f = partial(execute_hcp_dedrift_and_resample, sinfo, options, hcp, run)
         results = ppe.map(f, dedrift_groups)
 
         # merge r and report, this command runs DeDriftAndResample as its only

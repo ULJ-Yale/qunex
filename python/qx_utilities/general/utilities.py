@@ -938,7 +938,7 @@ def create_batch(
 
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
-            will be processed. They are to be specified as a pipe or comma
+            will be processed. They are to be specified as a comma
             separated list, glob patterns are valid session specifiers.
 
         --filter (str, default None):
@@ -965,9 +965,9 @@ def create_batch(
         The command combines all the sourcefiles in all session folders in
         sessionsfolder to generate a joint batch file and save it as targetfile.
         If only specific sessions are to be added or appended, "sessions"
-        parameter can be used. This is a pipe, comma or space separated list of
+        parameter can be used. This is a comma or space separated list of
         session ids, in which glob patterns can be used (e.g.
-        sessions="AP*|OR*"), and all matching sessions will be processed. To
+        sessions="AP*,OR*"), and all matching sessions will be processed. To
         take the sessions from an existing batch file or a list file, use the
         "batchfile" parameter; "sessions" and "filter" then select within it.
 
@@ -1202,7 +1202,7 @@ def create_batch(
                 --studyfolder="<path_to_study_folder>" \\
                 --sourcefiles="session_hcp.txt" \\
                 --targetfile="<path_to_study_folder>/processing/batch_hcp.txt" \\
-                --sessions="AP*|OP*" \\
+                --sessions="AP*,OP*" \\
                 --overwrite="append"
     """
 
@@ -1545,7 +1545,7 @@ def create_list(
             sessions from. `sessions` and `filter` then select within it.
 
         --sessions (str, default None):
-            A comma or pipe separated string of session names to include
+            A comma separated string of session names to include
             (can be glob patterns).
 
         --filter (str, default None):
@@ -1644,9 +1644,9 @@ def create_list(
 
         The sessions to list:
             Sessions to include in the list are specified using `sessions`
-            parameter. This can be a pipe, comma or space separated list of
+            parameter. This can be a comma or space separated list of
             session ids, in which glob patterns can be used (e.g.
-            sessions="AP*|OR*"), and all matching sessions will be included.
+            sessions="AP*,OR*"), and all matching sessions will be included.
             To take the sessions from a batch file or a list file, use the
             `batchfile` parameter; `sessions` then selects within it.
 
@@ -1916,7 +1916,7 @@ def create_list(
     else:
         # without a batch file the pool is the session folders that have images
         pool = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
-        pool = "|".join([os.path.basename(os.path.dirname(e)) for e in pool])
+        pool = ",".join([os.path.basename(os.path.dirname(e)) for e in pool])
 
         sessions_list, _ = gc.resolve_sessions(
             sessions=pool,
@@ -2109,7 +2109,7 @@ def create_conc(
             sessions from. `sessions` and `filter` then select within it.
 
         --sessions (str, default None):
-            A comma or pipe separated string of session names to include
+            A comma separated string of session names to include
             (can be glob patterns).
 
         --filter (str, default None):
@@ -2186,9 +2186,9 @@ def create_conc(
 
         The sessions to process:
             Sessions to include in the generation of conc files are specified
-            using `sessions` parameter. This can be a pipe, comma or space
+            using `sessions` parameter. This can be a comma or space
             separated list of session ids, in which glob patterns can be used
-            (e.g. sessions="AP*|OR*"), and all matching sessions will be
+            (e.g. sessions="AP*,OR*"), and all matching sessions will be
             included, or a list file. To take the sessions from a batch file,
             use the `batchfile` parameter; `sessions` then selects within it.
 
@@ -2357,7 +2357,7 @@ def create_conc(
         )
         sessions = glob.glob(os.path.join(sessionsfolder, "*", images_folder))
         sessions = [os.path.basename(os.path.dirname(e)) for e in sessions]
-        sessions = "|".join(sessions)
+        sessions = ",".join(sessions)
 
     sessions, _ = gc.resolve_sessions(
         batchfile=batchfile,
@@ -2573,7 +2573,7 @@ def list_sessions(
             Path to a batch.txt file.
 
         --sessions (str):
-            A string with pipe `|` or comma separated list of sessions
+            A string with a comma separated list of sessions
             (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
             may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
             of session ids may be given instead.
@@ -2628,7 +2628,7 @@ def list_sessions(
 def _sessions_with(sessionsfolder: str, patterns: list) -> str:
     """
     The ids of the sessions in `sessionsfolder` that hold an entry matching
-    one of `patterns`, sorted and joined by `|`, leaving out the folders of
+    one of `patterns`, sorted and joined by `,`, leaving out the folders of
     the sessions folder that hold no session.
     """
     found = set()
@@ -2636,7 +2636,7 @@ def _sessions_with(sessionsfolder: str, patterns: list) -> str:
         for e in glob.glob(os.path.join(sessionsfolder, "*", pattern)):
             found.add(os.path.relpath(e, sessionsfolder).split(os.sep)[0])
     found -= set(_NOT_SESSIONS)
-    return "|".join(sorted(found))
+    return ",".join(sorted(found))
 
 
 def gather_behavior(
@@ -2676,7 +2676,7 @@ def gather_behavior(
             from. `sessions` and `filter` then select within it.
 
         --sessions (str, default None):
-            Either a string with pipe `|` or comma separated list of sessions
+            Either a string with a comma separated list of sessions
             (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
             may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
             of session ids may be given instead.
@@ -2785,7 +2785,7 @@ def gather_behavior(
 
             qunex gather_behavior \\
                 --studyfolder="/data/myStudy" \\
-                --sessions="AP*|OP*" \\
+                --sessions="AP*,OP*" \\
                 --sourcefiles="*test*|*results*" \\
                 --check="warn" \\
                 --overwrite="yes" \\
@@ -3105,7 +3105,7 @@ def pull_sequence_names(
             from. `sessions` and `filter` then select within it.
 
         --sessions (str, default None):
-            Either a string with pipe `|` or comma separated list of sessions
+            Either a string with a comma separated list of sessions
             (sessions ids) to be processed; glob patterns (`*`, `?`, `[abc]`)
             may be used, e.g. `"AP128,OP139,ER*"`. A `*.list` file with a list
             of session ids may be given instead. If neither sessions nor
@@ -3214,7 +3214,7 @@ def pull_sequence_names(
 
             qunex pull_sequence_names \\
                 --studyfolder="/data/myStudy" \\
-                --sessions="AP*|OP*" \\
+                --sessions="AP*,OP*" \\
                 --sourcefiles="session.txt|subject.txt" \\
                 --check="warn" \\
                 --overwrite="yes" \\
@@ -3553,7 +3553,7 @@ def create_session_info(
             Path to a batch file.
 
         --sessions (str, default '*'):
-            Either an explicit list (space, comma or pipe separated) of sessions
+            Either an explicit list (space or comma separated) of sessions
             to process or the path to a list file with sessions to process. If
             left unspecified, '*' will be used and all folders within the
             sessions folder will be processed.
@@ -3747,7 +3747,7 @@ def create_session_info(
 
             qunex create_session_info \\
                 --studyfolder=. \\
-                --sessions="OP*|AP*" \\
+                --sessions="OP*,AP*" \\
                 --mapping=sessions/hcp_mapping.txt
 
         ::

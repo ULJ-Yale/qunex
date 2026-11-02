@@ -47,7 +47,7 @@ _RET_HEADER_RE = re.compile(r"^\s*Returns:\s*$")
 _SECTION_HEADER_RE = re.compile(r"^\s*[A-Z][A-Za-z0-9_ ]+:\s*$")
 _WS_RE = re.compile(r"\s+")
 _GENERATED_AT_RE = re.compile(r'^\s*"?generated_at"?\s*:.*\n', re.M)
-_ENTRY_RE = re.compile(r"^\s*--(?P<name>[A-Za-z_]\w*)\s*\((?P<spec>[^)]*)\)\s*(?P<colon>:?)\s*$")
+_ENTRY_RE = re.compile(r"^\s*--(?P<name>[A-Za-z_][\w-]*)\s*\((?P<spec>[^)]*)\)\s*(?P<colon>:?)\s*$")
 _DEFAULT_RE = re.compile(r"\bdefault\b\s*(?:=|:)?\s*(.+)\s*$", re.IGNORECASE)
 
 _QX_MARKERS = {

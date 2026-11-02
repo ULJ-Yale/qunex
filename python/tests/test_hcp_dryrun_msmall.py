@@ -14,9 +14,12 @@ import os
 
 import pytest
 
+from qx_utilities.hcp.hcp_apply_auto_reclean import hcp_apply_auto_reclean
 from qx_utilities.hcp.hcp_dedrift_and_resample import hcp_dedrift_and_resample
 from qx_utilities.hcp.hcp_icafix import hcp_icafix
 from qx_utilities.hcp.hcp_msmall import hcp_msmall
+from qx_utilities.hcp.hcp_post_fix import hcp_post_fix
+from qx_utilities.hcp.hcp_reapply_fix import hcp_reapply_fix
 
 from .utils import build_hcp_session, default_options
 
@@ -26,8 +29,8 @@ from .utils import build_hcp_session, default_options
 @pytest.fixture
 def msmall_session(tmp_path, monkeypatch):
     """
-    A session with two BOLDs and their single-run ICA-FIX outputs, at the
-    default high-pass of 2000, so a dry run reaches both commands.
+    A session with two BOLDs and the ICA-FIX outputs of their group G1, at the
+    default high-pass of 0, so a dry run reaches both commands.
     """
     monkeypatch.setenv("HCPPIPEDIR", str(tmp_path / "hcppipedir"))
     monkeypatch.setenv("QUNEXPATH", str(tmp_path / "qunexpath"))
@@ -40,11 +43,13 @@ def msmall_session(tmp_path, monkeypatch):
     results = os.path.join(sessionsfolder, "sess-01", "hcp", "sess-01", "MNINonLinear", "Results")
     for bold in ["BOLD_1", "BOLD_2"]:
         os.makedirs(os.path.join(results, bold))
-        for name in ["%s_Atlas_hp2000_clean.dtseries.nii", "%s_hp2000_clean.nii.gz"]:
+        for name in ["%s_Atlas_hp0_clean.dtseries.nii", "%s_hp0_clean.nii.gz"]:
             open(os.path.join(results, bold, name % bold), "w").close()
+    os.makedirs(os.path.join(results, "G1"))
+    open(os.path.join(results, "G1", "G1_hp0_clean.nii.gz"), "w").close()
 
     def _options(**overrides):
-        overrides.setdefault("hcp_icafix_bolds", "BOLD_1,BOLD_2")
+        overrides.setdefault("hcp_icafix_bolds", "G1:BOLD_1,BOLD_2")
         return default_options(
             run="test",
             sessionsfolder=sessionsfolder,
@@ -86,39 +91,31 @@ def test_msmall_bolds_are_named_by_name_number_or_tag(msmall_session, named):
 
     log = hcp_msmall(sinfo, options(hcp_msmall_bolds=named))
 
-    assert '--fmri-names-list="BOLD_1@BOLD_2"' in log.text
+    assert '--multirun-fix-names-to-use="BOLD_1@BOLD_2"' in log.text
     assert "ERROR" not in log.text
 
 
-@pytest.mark.parametrize(
-    "icafix, where",
-    [
-        ("BOLD_1", "hcp_icafix_bolds"),
-        ("G1:BOLD_1|G2:BOLD_2", "the hcp_icafix_bolds group G1"),
-    ],
-)
-def test_msmall_bolds_have_to_be_in_hcp_icafix_bolds(msmall_session, icafix, where):
+def test_msmall_bolds_have_to_be_in_their_icafix_group(msmall_session):
     """
-    The BOLDs were looked up in the whole session, so one ICA-FIX was not run
-    on was accepted, and a multi-run group was handed a BOLD of another
-    group's concatenation.
+    The BOLDs were looked up in the whole session, so a group was handed a
+    BOLD of another group's concatenation.
     """
     sinfo, options = msmall_session
 
     log = hcp_msmall(
-        sinfo, options(hcp_icafix_bolds=icafix, hcp_msmall_bolds="BOLD_2")
+        sinfo, options(hcp_icafix_bolds="G1:BOLD_1|G2:BOLD_2", hcp_msmall_bolds="BOLD_2")
     )
 
-    assert "bold BOLD_2 used in hcp_msmall_bolds but not found in %s!" % where in log.text
-    assert "--fmri-names-list" not in log.text
+    assert (
+        "bold BOLD_2 used in hcp_msmall_bolds but not found in "
+        "the hcp_icafix_bolds group G1!" in log.text
+    )
+    assert "--multirun-fix-names-to-use" not in log.text
     assert log.status[2] == 1
 
 
 def test_msmall_names_the_session_with_its_hcp_suffix(msmall_session):
-    """
-    Single-run MSMAll looked for its inputs in `<id><suffix>` and was then
-    pointed at `<id>`, unlike DeDriftAndResample chained on after it.
-    """
+    """Its inputs are in `<id><suffix>`, and so is what it is pointed at."""
     sinfo, options = msmall_session
     os.rename(
         os.path.join(sinfo["hcp"], "sess-01"), os.path.join(sinfo["hcp"], "sess-01_V1")
@@ -131,21 +128,15 @@ def test_msmall_names_the_session_with_its_hcp_suffix(msmall_session):
     assert log.status[2] == 0
 
 
-def test_msmall_is_reported_under_its_output_name(msmall_session):
-    """It was reported under the number of the last BOLD it checked."""
+def test_msmall_is_reported_under_its_group(msmall_session):
     sinfo, options = msmall_session
 
     log = hcp_msmall(sinfo, options(hcp_msmall_resample=False))
 
-    assert log.status[1] == "HCP MSMAll: bolds rfMRI_REST ready"
+    assert log.status[1] == "HCP MSMAll: bolds G1 ready"
 
 
-def test_single_run_dedrift_checks_its_input_at_the_default_highpass(msmall_session):
-    """
-    The condition was inverted: with the high-pass left at its default, the
-    input it checked for was `<bold>_hpNone_clean.nii.gz`, so single-run
-    DeDriftAndResample never ran; one that was set was replaced by 2000.
-    """
+def test_dedrift_checks_its_input_at_the_default_highpass(msmall_session):
     sinfo, options = msmall_session
 
     log = hcp_msmall(sinfo, options())
@@ -166,7 +157,7 @@ def test_dedrift_and_resample_on_its_own_finds_its_input(msmall_session):
     assert log.status[2] == 0
 
 
-def test_single_run_dedrift_needs_a_matlab_mode(msmall_session, monkeypatch):
+def test_dedrift_needs_a_matlab_mode(msmall_session, monkeypatch):
     """
     Without hcp_matlab_mode or FSL_FIX_MATLAB_MODE it reported the error and
     then passed --matlab-run-mode="None" to a run it called ready.
@@ -191,14 +182,6 @@ MSMALL_SETTINGS = {
 
 @pytest.mark.parametrize("command", [hcp_msmall, hcp_dedrift_and_resample])
 @pytest.mark.parametrize(
-    "icafix",
-    [
-        {},
-        {"hcp_icafix_bolds": "G1:BOLD_1,BOLD_2", "hcp_icafix_highpass": "2000"},
-    ],
-    ids=["single-run", "multi-run"],
-)
-@pytest.mark.parametrize(
     "settings, regname",
     [
         ({}, "MSMAll_InitialReg_2_d40_WRN"),
@@ -208,7 +191,7 @@ MSMALL_SETTINGS = {
     ],
 )
 def test_dedrift_applies_the_registration_msmall_named(
-    msmall_session, command, icafix, settings, regname
+    msmall_session, command, settings, regname
 ):
     """
     The registration was always `<hcp_msmall_outregname>_2_d40_WRN`, the name
@@ -218,13 +201,8 @@ def test_dedrift_applies_the_registration_msmall_named(
     by hand.
     """
     sinfo, options = msmall_session
-    if icafix:
-        # the concatenation multi-run ICA-FIX made of the group
-        concat = os.path.join(sinfo["hcp"], "sess-01", "MNINonLinear", "Results", "G1")
-        os.makedirs(concat)
-        open(os.path.join(concat, "G1_hp2000_clean.nii.gz"), "w").close()
 
-    log = command(sinfo, options(**icafix, **settings))
+    log = command(sinfo, options(**settings))
 
     assert "HCP DeDriftAndResample can be run" in log.text
     assert '--registration-name="%s"' % regname in log.text
@@ -247,7 +225,6 @@ def test_dedrift_applies_the_registration_msmall_named(
             "G1:BOLD_2,rest",
             "the bold [BOLD_2] is specified twice in the hcp_icafix_bolds group G1",
         ),
-        ("BOLD_1,rest", "the bold [BOLD_1] is specified twice"),
     ],
 )
 def test_a_bold_belongs_to_one_icafix_group_only(
@@ -277,8 +254,8 @@ def test_every_icafix_group_entry_needs_a_group_name(
     msmall_session, command, icafix, entry
 ):
     """
-    With groups, an entry without a group name ('G1:BOLD_1|BOLD_2') raised an
-    IndexError, reported as an unknown error with a traceback.
+    An entry without a group name ('G1:BOLD_1|BOLD_2') raised an IndexError,
+    reported as an unknown error with a traceback.
     """
     sinfo, options = msmall_session
 
@@ -288,4 +265,28 @@ def test_every_icafix_group_entry_needs_a_group_name(
     assert "invalid input parameters" in log.text
     assert "Traceback" not in log.text
     assert "Pipeline.sh" not in log.text
+    assert log.status[2] == 1
+
+
+@pytest.mark.parametrize(
+    "command",
+    [
+        hcp_icafix,
+        hcp_post_fix,
+        hcp_reapply_fix,
+        hcp_msmall,
+        hcp_dedrift_and_resample,
+        hcp_apply_auto_reclean,
+    ],
+)
+def test_icafix_bolds_without_a_group_stop_the_command(msmall_session, command):
+    """Single-run HCP ICAFix is gone: a list without groups says so, and runs nothing."""
+    sinfo, options = msmall_session
+
+    log = command(sinfo, options(hcp_icafix_bolds="BOLD_1,BOLD_2"))
+
+    assert "hcp_icafix_bolds [BOLD_1,BOLD_2] names no group" in log.text
+    assert "single-run HCP ICAFix is not supported" in log.text
+    assert "invalid input parameters" in log.text
+    assert "Running HCP Pipelines command" not in log.text
     assert log.status[2] == 1

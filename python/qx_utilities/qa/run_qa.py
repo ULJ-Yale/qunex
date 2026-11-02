@@ -64,7 +64,7 @@ def run_qa(
 
         --sessions (str, default None):
             If provided, only the specified sessions from the sessions folder
-            will be processed. They are to be specified as a pipe or comma
+            will be processed. They are to be specified as a comma
             separated list, glob patterns are valid session specifiers. This
             parameter also accepts session .list files.
 
