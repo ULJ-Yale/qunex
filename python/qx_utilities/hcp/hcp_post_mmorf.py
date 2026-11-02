@@ -38,11 +38,7 @@ def hcp_post_mmorf(sinfo, options, overwrite=False, thread=0):
         of that is rejected.
 
         The HCP script (PostMMORF_generateSurfaceFiles.sh) stops on any file it
-        expects and does not find, which at the time of writing includes the BA
-        labels that hcp_post_freesurfer does not produce and the MSMAll versions
-        of MRcorrThickness. QuNex can not work around this, so on such a session
-        a real run stops partway and reports a failure until the script is
-        changed. The --test run is not affected.
+        expects and does not find.
 
     Parameters:
         --batchfile (str, default ''):

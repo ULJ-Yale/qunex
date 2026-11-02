@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-11-02T11:54:22.108444+00:00'
+generated_at: '2026-11-02T16:17:14.695779+00:00'
 source:
     id: core
 commands:
@@ -4697,8 +4697,10 @@ commands:
             and <file2> is equal to DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii
     -   name: hcp_resample_maps
         type: str
-        default: sulc,curvature,corrThickness,thickness
-        description: Comma separated paths to maps that will have the MSMAll registration applied that are not myelin maps.
+        default: sulc,curvature,corrThickness,thickness,MRcorrThickness
+        description: 'Comma separated paths to maps that will have the MSMAll registration applied that are not myelin maps.
+            Each has to be in MNINonLinear/Native: hcp_post_freesurfer does not write MRcorrThickness with hcp_thickness_regression
+            set to ''OLD'', so leave it out of the list on such a session.'
     -   name: hcp_resample_myelinmaps
         type: str
         default: MyelinMap,SmoothedMyelinMap

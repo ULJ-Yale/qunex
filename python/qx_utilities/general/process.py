@@ -812,7 +812,7 @@ arglist = [
     ["hcp_resample_concatregname", "MSMAll", str],
     ["hcp_resample_regname", "", is_none],
     ["hcp_resample_reg_files", "", is_none],
-    ["hcp_resample_maps", "sulc,curvature,corrThickness,thickness", str],
+    ["hcp_resample_maps", "sulc,curvature,corrThickness,thickness,MRcorrThickness", str],
     ["hcp_resample_myelinmaps", "MyelinMap,SmoothedMyelinMap", str],
     ["hcp_resample_dontfixnames", "", is_none],
     ["hcp_resample_inregname", "", is_none],

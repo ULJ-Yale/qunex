@@ -19,6 +19,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * A group run of `compute_bold_fc` now takes globs, `.list` files and filters in its sessions, keeps their stated order and stays one job under a scheduler.
 * `compute_bold_fc`, `extract_roi` and `run_qc` now fail when a call fails or its result is missing, including `.nii.gz` and list runs of `compute_bold_fc` and `eddyqcstats` without `dwi_eddy_qc`.
 * Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
+* `hcp_msmall` and `hcp_dedrift_and_resample` now also resample `MRcorrThickness` by default.
 
 ## 1.5.4
 

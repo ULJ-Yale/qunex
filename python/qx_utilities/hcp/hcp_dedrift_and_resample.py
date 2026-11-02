@@ -142,9 +142,12 @@ def hcp_dedrift_and_resample(sinfo, options, overwrite=True, thread=0):
             <file2> is equal to
             DeDriftingGroup.R.sphere.DeDriftMSMAll.164k_fs_LR.surf.gii
 
-        --hcp_resample_maps (str, default 'sulc,curvature,corrThickness,thickness'):
+        --hcp_resample_maps (str, default 'sulc,curvature,corrThickness,thickness,MRcorrThickness'):
             Comma separated paths to maps that will have the MSMAll registration
-            applied that are not myelin maps.
+            applied that are not myelin maps. Each has to be in
+            MNINonLinear/Native: hcp_post_freesurfer does not write
+            MRcorrThickness with hcp_thickness_regression set to 'OLD', so leave
+            it out of the list on such a session.
 
         --hcp_resample_myelinmaps (str, default 'MyelinMap,SmoothedMyelinMap'):
             Comma separated paths to myelin maps.

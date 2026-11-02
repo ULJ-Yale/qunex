@@ -158,6 +158,17 @@ def test_dedrift_and_resample_on_its_own_finds_its_input(msmall_session):
     assert log.status[2] == 0
 
 
+def test_dedrift_resamples_mrcorrthickness_by_default(msmall_session):
+    """
+    PostMMORF_generateSurfaceFiles.sh expects its MSMAll version.
+    """
+    sinfo, options = msmall_session
+
+    log = hcp_dedrift_and_resample(sinfo, options())
+
+    assert '--maps="sulc@curvature@corrThickness@thickness@MRcorrThickness"' in log.text
+
+
 def test_dedrift_needs_a_matlab_mode(msmall_session, monkeypatch):
     """
     Without hcp_matlab_mode or FSL_FIX_MATLAB_MODE it reported the error and
