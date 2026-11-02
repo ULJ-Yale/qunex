@@ -472,8 +472,14 @@ def dwi_xtract(sinfo, options, overwrite=False, thread=0):
             report = (sinfo["id"], "Not ready for XTRACT", 1)
             run = False
 
-        # script location
-        xtract_script = os.path.join(os.environ["FSLDIR"], "bin/xtract")
+        # script location. Without FSLDIR the command is still named, so that a
+        # dry run can be read
+        fsldir = os.environ.get("FSLDIR")
+        if not fsldir:
+            log.error("FSLDIR is not set, it names the folder that holds FSL's xtract.")
+            report = (sinfo["id"], "Not ready for XTRACT", 1)
+            run = False
+        xtract_script = os.path.join(fsldir or "$FSLDIR", "bin/xtract")
 
         # set up the core command
         comm = (

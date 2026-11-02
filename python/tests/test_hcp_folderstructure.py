@@ -62,17 +62,43 @@ def test_the_paths_follow_what_setup_hcp_writes(tmp_path, structure, folder, tai
     assert hcp["fieldmap"][1]["phase"] == phase
 
 
-def test_xtract_hands_on_its_tract_list_with_the_flag_xtract_reads(tmp_path):
-    """`-list` is not an option of xtract, it wants `-tract_list`."""
+@pytest.fixture
+def xtract_session(tmp_path):
+    """A session whose bedpostx results are there, and the options of a dry run."""
     sinfo, sessionsfolder = build_hcp_session(str(tmp_path))
+    bedpostx = os.path.join(sinfo["hcp"], "sess-01", "T1w", "Diffusion.bedpostX")
+    os.makedirs(bedpostx)
+    open(os.path.join(bedpostx, "mean_fsumsamples.nii.gz"), "w").close()
     options = default_options(
         run="test",
         sessionsfolder=sessionsfolder,
         comlogs=str(tmp_path / "comlogs"),
         xtract_list="vof_r,vof_l",
     )
+    return sinfo, options
+
+
+def test_xtract_hands_on_its_tract_list_with_the_flag_xtract_reads(xtract_session, monkeypatch):
+    """`-list` is not an option of xtract, it wants `-tract_list`."""
+    monkeypatch.setenv("FSLDIR", "/fsl")
+    sinfo, options = xtract_session
 
     log = dwi_xtract(sinfo, options)
 
+    assert "/fsl/bin/xtract" in log.text
     assert " -tract_list vof_r,vof_l" in log.text
     assert " -list " not in log.text
+    assert "ERROR" not in log.text
+
+
+def test_xtract_says_that_fsldir_is_not_set(xtract_session, monkeypatch):
+    """It was a KeyError, reported with a traceback as an unknown error."""
+    monkeypatch.delenv("FSLDIR", raising=False)
+    sinfo, options = xtract_session
+
+    log = dwi_xtract(sinfo, options)
+
+    assert "FSLDIR is not set" in log.text
+    assert "Traceback" not in log.text
+    assert " -tract_list vof_r,vof_l" in log.text, "a dry run still names the command"
+    assert log.status[2] == 1

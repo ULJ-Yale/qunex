@@ -282,11 +282,12 @@ should be **clean** — the tree is at zero findings; keep it there.
 
 **A development shell has the QuNex environment sourced; `.github/workflows/tests.yml` does
 not.** It runs the suite on a bare checkout, so anything reading `TOOLS`, `QUNEXPATH`,
-`QUNEXREPO` or another suite variable passes locally and fails there. Check with the workflow's
-own command before pushing:
+`QUNEXREPO`, `FSLDIR` or another variable of the environment passes locally and fails there.
+Check with an empty environment before pushing, as unsetting a list of names misses the ones
+not on it:
 
 ```bash
-env -u TOOLS -u QUNEXPATH -u QUNEXREPO pytest --ignore=python/tests/test_fc_functions.py -q
+env -i PATH="$PATH" HOME="$HOME" pytest --ignore=python/tests/test_fc_functions.py -q
 ```
 
 (`test_fc_functions` needs the `qx_library` submodule the workflow does not check out; tests
