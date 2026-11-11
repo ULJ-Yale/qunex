@@ -1,5 +1,5 @@
 version: 1
-generated_at: '2026-11-02T16:17:14.695779+00:00'
+generated_at: '2026-11-11T07:54:23.890538+00:00'
 source:
     id: core
 commands:
@@ -9950,7 +9950,7 @@ commands:
     origin: core
 -   name: map_nii2bids
     aliases: []
-    path: qx_utilities.general.bids.map_nii2bids
+    path: qx_utilities.general.nii2bids.map_nii2bids
     language: python
     call: map_nii2bids [batchfile=''] [studyfolder=<path to study folder>] [sessionsfolder=<studyfolder>/sessions] [sessions='']
         [overwrite='no'] [action='hardlink'] [session_mapping_file=None]

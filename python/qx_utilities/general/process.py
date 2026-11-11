@@ -1463,18 +1463,23 @@ def run(qx_command, args, sessions, options, sources, run_context):
 
     parprocesses = parsubjects if processing_type == "subject" else parsessions
 
+    # a study command processes sessions too; --sessions is empty when the run
+    # takes every session of the batch file
+    units = "subjects" if processing_type == "subject" else "sessions"
+    named = options["sessions"]
+
     # check if there are no sessions
     if not sessions or processing_type == "subject" and not subjects:
-        sout += f"\nERROR: No {processing_type}s specified to process. Please check your batch file, filtering options or sessions parameter!\n"
+        sout += f"\nERROR: No {units} specified to process. Please check your batch file, filtering options or sessions parameter!\n"
         print(sout)
         run_context.write(sout)
         exit()
 
     elif options["run"] == "run":
-        sout += f"\nStarting multiprocessing {processing_type}s in {options['sessions']} with a pool of {parprocesses} concurrent processes\n"
+        sout += f"\nStarting multiprocessing {units}{f' in {named}' if named else ''} with a pool of {parprocesses} concurrent processes\n"
 
     else:
-        sout += "\nRunning test on %s ...\n" % (options["sessions"])
+        sout += f"\nRunning test on {named or f'all {units}'} ...\n"
 
     print(sout)
     run_context.write(sout)
