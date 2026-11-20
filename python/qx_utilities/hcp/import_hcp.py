@@ -751,7 +751,7 @@ def import_hcp(
     else:
         log.step("onboarding preprocessed data only")
         # load the yaml file
-        template_folder = os.environ["NIUTemplateFolder"]
+        template_folder = _template_folder()
         hcp_onboarding = os.path.join(template_folder, "hcp_onboarding.yaml")
         with open(hcp_onboarding, "r", encoding="UTF-8") as f:
             hcp_onboarding_data = yaml.safe_load(f)
@@ -994,6 +994,66 @@ def _get_source_files(archive_folder, sessions, nameformat, processed=False):
     return source_files
 
 
+def _template_folder() -> str:
+    """The template folder the environment names, else the one of this tree."""
+    return os.environ.get("NIUTemplateFolder") or os.path.join(
+        os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "templates"
+    )
+
+
+# the image labels of field maps, and the name tags that mark their files
+FIELDMAP_LABELS = ("SpinEchoFieldMap", "DistortionMap", "FieldMap")
+FIELDMAP_TAGS = ("SpinEchoFieldMap", "DistortionMap", "FieldMap_")
+
+
+def _is_fieldmap(path: str) -> bool:
+    """Whether an image file is a field map."""
+    return any(tag in os.path.basename(path) for tag in FIELDMAP_TAGS)
+
+
+def _folder_images(dfolder: str) -> list:
+    """The images of an HCPLS acquisition folder to consider for mapping.
+
+    These are the images at the folder root. HCP Lifespan releases sometimes
+    keep the field maps of an acquisition in its OTHER_FILES subfolder (the
+    SpinEchoFieldMap pair of Diffusion, for instance), so when the root holds
+    no field map, the field maps in OTHER_FILES are considered as well. The
+    rest of OTHER_FILES (echoes, setters, prenormalized and initial frames) is
+    never mapped. InitialFrames images are excluded.
+    """
+    files = sorted(glob.glob(os.path.join(dfolder, "*.nii.gz")))
+    if not any(_is_fieldmap(e) for e in files):
+        other = sorted(glob.glob(os.path.join(dfolder, "OTHER_FILES", "*.nii.gz")))
+        files += [e for e in other if _is_fieldmap(e)]
+    return [e for e in files if "InitialFrames" not in os.path.basename(e)]
+
+
+def _rank_by_checks(folder_files: list, checks: list, rank: int) -> tuple:
+    """Rank the first file matching each check, in the order of the checks.
+
+    A check is a list of name parts the file has to hold; a part prefixed with
+    '-' is one it must not hold. Returns the last rank given and the checks no
+    file matched.
+    """
+    unmatched = []
+    for fcheck in checks:
+        for file in folder_files:
+            if file["rank"]:
+                continue
+            if all(
+                (citem[1:] not in file["parts"])
+                if citem[0] == "-"
+                else (citem in file["parts"])
+                for citem in fcheck
+            ):
+                rank += 1
+                file["rank"] = rank
+                break
+        else:
+            unmatched.append(fcheck)
+    return rank, unmatched
+
+
 def process_hcpls(sessionfolder, filesort, _log=None):
     """ """
 
@@ -1012,7 +1072,7 @@ def process_hcpls(sessionfolder, filesort, _log=None):
 
     # --- load HCPLS structure
     # template folder
-    niu_template_folder = os.environ["NIUTemplateFolder"]
+    niu_template_folder = _template_folder()
     hcpls_structure = os.path.join(niu_template_folder, "import_hcp.txt")
 
     if not os.path.exists(hcpls_structure):
@@ -1052,13 +1112,7 @@ def process_hcpls(sessionfolder, filesort, _log=None):
                 folder_info[info] = folder_tags.pop(0)
 
         # --- Get files list
-        files = sorted(glob.glob(os.path.join(dfolder, "*")))
-        files = [e for e in files if e.endswith(".nii.gz")]
-
-        # --- Exclude files
-        to_exclude = ["InitialFrames"]
-        for exclude in to_exclude:
-            files = [e for e in files if exclude not in e]
+        files = _folder_images(dfolder)
 
         # --- Proces spin echo files
         sefile = [e for e in files if ("SpinEchoFieldMap" in e or "DistortionMap" in e)]
@@ -1120,6 +1174,13 @@ def process_hcpls(sessionfolder, filesort, _log=None):
         rank = 0
         # diffusion
         if folder_label == "Diffusion":
+            # field maps first, so a pair comes before the images it serves
+            fieldmap_checks = [e for e in check if e[0] in FIELDMAP_LABELS]
+            fieldmaps = [e for e in folder_files if e["parts"][0] in FIELDMAP_LABELS]
+            folder_files = [e for e in folder_files if e not in fieldmaps]
+            rank, _ = _rank_by_checks(fieldmaps, fieldmap_checks, rank)
+            check = [e for e in check if e[0] not in FIELDMAP_LABELS]
+
             # sort folderfiles by dir
             folder_files.sort(
                 key=lambda x: (
@@ -1155,26 +1216,11 @@ def process_hcpls(sessionfolder, filesort, _log=None):
                 if match:
                     rank += 1
                     file["rank"] = rank
+            folder_files = fieldmaps + folder_files
 
         else:
-            for fcheck in check:
-                found = False
-                for file in folder_files:
-                    match = True
-                    for citem in fcheck:
-                        if citem[0] == "-":
-                            if citem[1:] in file["parts"]:
-                                match = False
-                        else:
-                            if citem not in file["parts"]:
-                                match = False
-                    if match:
-                        rank += 1
-                        file["rank"] = rank
-                        found = True
-                        break
-                if not found:
-                    missing_files.append([dfolder, fcheck])
+            rank, unmatched = _rank_by_checks(folder_files, check, rank)
+            missing_files += [[dfolder, e] for e in unmatched]
 
         # --- Order files
         folder_files.sort(key=lambda x: x["rank"])
@@ -1347,6 +1393,12 @@ def map_hcpls2nii(
         compiled in `session.txt` file that is generated in the main
         session folder. For every image all the information present in the
         hcpls filename is listed.
+
+        Images are taken from the root of each acquisition folder. When the
+        root holds no field map, the field maps in the folder's `OTHER_FILES`
+        subfolder are used (HCP Lifespan releases keep the SpinEchoFieldMap
+        pair of the Diffusion acquisition there). Nothing else in
+        `OTHER_FILES` is mapped.
 
         Multiple sessions and scheduling:
             The command can be run for multiple sessions by specifying

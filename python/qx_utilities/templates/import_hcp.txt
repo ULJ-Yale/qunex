@@ -107,6 +107,16 @@
         "Diffusion": {
             "info":  [],
             "check": [
+                        ["SpinEchoFieldMap", "AP"],
+                        ["SpinEchoFieldMap", "PA"],
+                        ["SpinEchoFieldMap", "LR"],
+                        ["SpinEchoFieldMap", "RL"],
+                        ["DistortionMap", "AP"],
+                        ["DistortionMap", "PA"],
+                        ["DistortionMap", "LR"],
+                        ["DistortionMap", "RL"],
+                        ["FieldMap", "Magnitude"],
+                        ["FieldMap", "Phase"],
                         ["dMRI", "dir", "AP", "SBRef"],
                         ["dMRI", "dir", "AP", "-SBRef"],
                         ["dMRI", "dir", "PA", "SBRef"],

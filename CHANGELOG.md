@@ -15,6 +15,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `compute_bold_fc`, `extract_roi` and `run_qc` now fail when a call fails or its result is missing, including `.nii.gz` and list runs of `compute_bold_fc` and `eddyqcstats` without `dwi_eddy_qc`.
 * `hcp_msmall` and `hcp_dedrift_and_resample` now also resample `MRcorrThickness` by default.
 * Fixed some smaller bugs in `map_nii2bids` where `IntendedFor` was not populated and not all fieldmaps were converted.
+* `import_hcp` now onboards field maps kept in an acquisition's `OTHER_FILES` folder, such as the Spin-Echo pair of HCP Lifespan diffusion data.
 * Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
 
 ## 1.5.4
