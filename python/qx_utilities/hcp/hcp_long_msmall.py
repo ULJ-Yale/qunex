@@ -448,6 +448,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 logtags=[options["logtag"], groupname],
                                 full_test=None,
                                 shell=True,
+                                exit_code_only=True,
                                 _log=log,
                             )
 

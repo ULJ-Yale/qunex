@@ -529,6 +529,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

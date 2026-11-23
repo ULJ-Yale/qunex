@@ -889,6 +889,7 @@ def hcp_temporal_ica(sessions, options, overwrite=True, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

@@ -16,17 +16,15 @@ The longitudinal HCP transmit bias field correction pipeline.
 
 import os
 import os.path
-import shutil
-from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
-    _append_sorted_logdir_to_log,
     _check_hcp_info,
     do_hcp_options_check,
+    run_longitudinal_pipeline,
 )
 
 
@@ -408,56 +406,15 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 log.raw(comm.replace("                --", "\n    --"))
                 log.rule(after=1)
 
-            # -- Test file
+            # -- Run, judged by the exit code
             if not run:
                 log.step("Subject cannot be processed.")
                 report = "not ready"
                 failed = 1
-
-            elif options["run"] == "run":
-                if os.path.exists(logdir):
-                    shutil.rmtree(logdir)
-                os.makedirs(logdir)
-
-                endlog, _, failed = pc.run_external_for_file(
-                    None,
-                    comm,
-                    "Running HCP Longitudinal Transmit Bias",
-                    overwrite=overwrite,
-                    thread=subject_id,
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed == 0:
-                    report = "processing completed"
-                else:
-                    report = "processing failed"
-
-                # append the files in logdir to the comlog, if one was kept:
-                # there is none after a clean run with --log=remove
-                if endlog:
-                    with open(endlog, "a", encoding="utf-8") as log_file:
-                        _append_sorted_logdir_to_log(log_file, logdir)
-                        # print succesful completion
-                        if failed == 0:
-                            print(
-                                f"\n---> Successful completion of task at {datetime.now()}",
-                                file=log_file,
-                            )
-
-                # remove the directory and its contents
-                shutil.rmtree(logdir)
-
-            # just checking, there is no test file to check against
             else:
-                log.step("HCP Longitudinal Transmit Bias can be run")
-                report = "ready"
+                report, failed = run_longitudinal_pipeline(
+                    comm, "HCP Longitudinal Transmit Bias", options, overwrite, subject_id, logdir, log
+                )
 
         else:
             log.step("Subject cannot be processed.")

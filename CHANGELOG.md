@@ -17,6 +17,8 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * Fixed some smaller bugs in `map_nii2bids` where `IntendedFor` was not populated and not all fieldmaps were converted.
 * `import_hcp` now onboards field maps kept in an acquisition's `OTHER_FILES` folder, such as the Spin-Echo pair of HCP Lifespan diffusion data.
 * `dwi_probtrackx_dense_gpu` now works with Connectome Workbench 2.2, which the container ships.
+* Longitudinal `hcp_fmri_volume` and `hcp_diffusion` no longer need anything from the sessions' `unprocessed` folders; they check for the cross-sectional outputs they reuse instead.
+* Longitudinal HCP commands are now judged by the pipeline's exit code instead of a test file, which marked successful runs as failed.
 * Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
 
 ## 1.5.4

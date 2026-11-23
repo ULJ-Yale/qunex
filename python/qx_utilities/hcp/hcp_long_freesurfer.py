@@ -17,7 +17,6 @@ The longitudinal HCP FreeSurfer pipeline.
 import os
 import os.path
 import shutil
-from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
@@ -25,9 +24,9 @@ import qx_utilities.general.folders as gf
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
-    _append_sorted_logdir_to_log,
     _check_hcp_info,
     do_hcp_options_check,
+    run_longitudinal_pipeline,
 )
 
 
@@ -264,20 +263,9 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 log.raw(comm.replace("                --", "\n    --"))
                 log.rule(after=1)
 
-            # -- Test file
-            last_session = sinfo[-1]["id"]
-            tfile = os.path.join(
-                study_folder,
-                f"{subject_id}.long.{longitudinal_template}",
-                "T1w",
-                f"{last_session}.long.{longitudinal_template}",
-                "mri",
-                "T1.mgz",
-            )
-
-            if options["run"] == "run":
-                # remove the results of an earlier run
-                if long_dir_exists:
+            # -- Remove the results of an earlier run, just before the run
+            if long_dir_exists:
+                if options["run"] == "run":
                     if os.path.islink(long_dir):
                         long_dir_target = os.path.realpath(long_dir)
                         os.unlink(long_dir)
@@ -285,61 +273,14 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                             shutil.rmtree(long_dir_target)
                     else:
                         shutil.rmtree(long_dir)
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-
-                if os.path.exists(logdir):
-                    shutil.rmtree(logdir)
-                os.makedirs(logdir)
-
-                endlog, _, failed = pc.run_external_for_file(
-                    tfile,
-                    comm,
-                    "Running HCP Longitudinal FS",
-                    overwrite=overwrite,
-                    thread=subject_id,
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed == 0:
-                    report = "processing completed"
                 else:
-                    report = "processing failed"
-
-                # append the files in logdir to the comlog, if one was kept:
-                # there is none after a clean run with --log=remove
-                if endlog:
-                    with open(endlog, "a", encoding="utf-8") as log_file:
-                        _append_sorted_logdir_to_log(log_file, logdir)
-                        # print succesful completion
-                        if failed == 0:
-                            print(
-                                f"\n---> Successful completion of task at {datetime.now()}",
-                                file=log_file,
-                            )
-
-                # remove the directory and its contents
-                shutil.rmtree(logdir)
-
-            # -- just checking
-            else:
-                if long_dir_exists:
                     log.detail(f"test, not removed: {long_dir}")
-                passed, _, _ = pc.check_run(
-                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP Longitudinal FS can be run")
-                    report = "ready"
-                else:
-                    log.step("HCP Longitudinal FS cannot be run")
-                    report = "not ready"
+
+            # -- Run, judged by the exit code: the results' location depends
+            # on the pipeline version and the session naming
+            report, failed = run_longitudinal_pipeline(
+                comm, "HCP Longitudinal FS", options, overwrite, subject_id, logdir, log
+            )
 
         else:
             log.step("Subject cannot be processed.")

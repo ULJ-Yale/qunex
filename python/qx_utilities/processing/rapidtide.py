@@ -624,7 +624,7 @@ def _execute_rapidtide(
             passed, _, failed = pc.check_run(
                 None, None, "rapidtide " + session, overwrite=overwrite, _log=log
             )
-            if passed == "done":
+            if passed is None:
                 log.step("rapidtide can be run")
                 report["ready"].append(boldtarget)
             else:

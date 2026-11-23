@@ -159,7 +159,9 @@ def test_cortical_thickness_dry_run(session):
     log = hcp_cortical_thickness(sinfo, options)
     report, status = log.text, log.status
     _check_contract(report, status)
+    # no test file: a dry run is ready to run, not already finished
     assert status[1] == "HCP CorrThick can be run"
+    assert "HCP CorrThick can be run" in report
     assert "Running HCP Pipelines command via QuNex:" in report
     assert '\n    --subject="sess-01"' in report
 
@@ -295,6 +297,8 @@ def test_longitudinal_diffusion_dry_run_says_it_can_be_run(session, tmp_path):
         hcp_longitudinal_template="TPL",
         studyfolder=str(tmp_path),
     )
+    # the cross-sectional results a longitudinal run reuses
+    os.makedirs(os.path.join(sinfo["hcp"], sinfo["id"], "Diffusion"))
     log = hcp_diffusion(sinfo, options)
 
     assert log.status == ("sess-01", "HCP Diffusion can be run", 0)
@@ -479,7 +483,7 @@ def test_long_freesurfer_dry_run(session):
     log = hcp_long_freesurfer(sinfo, options)
     report, status = log.text, log.status
     _check_contract(report, status, sid="subj-01")
-    assert "Longitudnal FS" in report or "Longitudinal FS" in report
+    assert "Longitudinal FS" in report
 
 
 def test_long_post_freesurfer_dry_run(session):
