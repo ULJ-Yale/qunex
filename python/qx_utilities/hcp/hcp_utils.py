@@ -24,6 +24,7 @@ import json
 import os
 import os.path
 import re
+import shutil
 import traceback
 from datetime import datetime
 
@@ -152,6 +153,63 @@ def _check_hcp_info(sinfo, options):
 
     hcp = get_hcp_paths(sinfo[0], options)
     return hcp
+
+
+def run_longitudinal_pipeline(comm, name, options, overwrite, thread, logdir, _log):
+    """
+    Run a subject level longitudinal HCP pipeline and collect its own logs.
+
+    Where a longitudinal pipeline writes its results depends on the pipeline
+    version and on how the sessions are named, and a test file that does not
+    match has marked successful runs as failed. So no test file is checked: the
+    run is judged by the pipeline's exit code alone. The pipeline also writes
+    logs of its own into `logdir`; once it has finished they are appended to
+    the comlog and removed. When it fails they are kept, and where is reported.
+
+    Parameters:
+        comm: the pipeline command.
+        name: the name of the step in the log, e.g. ``HCP Longitudinal FS``.
+        options: the command options.
+        overwrite: whether to overwrite existing results.
+        thread: the thread the comlog is named after, the subject id.
+        logdir: the folder the pipeline writes its own logs into.
+        _log: the log to report into.
+
+    Returns:
+        ``(report, failed)``.
+    """
+    if options["run"] != "run":
+        _log.step(f"{name} can be run")
+        return "ready", 0
+
+    try:
+        endlog, _, failed = pc.run_external_for_file(
+            None,
+            comm,
+            f"Running {name}",
+            overwrite=overwrite,
+            thread=thread,
+            remove=options["log"] == "remove",
+            task=options["command_ran"],
+            logfolder=options["comlogs"],
+            logtags=options["logtag"],
+            shell=True,
+            exit_code_only=True,
+            _log=_log,
+        )
+    except pc.ExternalFailed:
+        _log.step(f"The pipeline's own logs are kept in {logdir}")
+        raise
+
+    # the comlog is gone when it finished cleanly and --log=remove was given
+    if endlog:
+        with open(endlog, "a", encoding="utf-8") as log_file:
+            _append_sorted_logdir_to_log(log_file, logdir)
+            if failed == 0:
+                print(f"\n---> Successful completion of task at {datetime.now()}", file=log_file)
+    shutil.rmtree(logdir, ignore_errors=True)
+
+    return ("processing completed", 0) if failed == 0 else ("processing failed", failed)
 
 
 def _append_sorted_logdir_to_log(log_file, logdir):
@@ -1669,6 +1727,7 @@ def execute_hcp_multi_dedrift_and_resample(sinfo, options, hcp, run, group):
                     logtags=[options["logtag"], groupname],
                     full_test=None,
                     shell=True,
+                    exit_code_only="long" in sinfo,
                     _log=log,
                 )
 

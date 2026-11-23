@@ -115,6 +115,174 @@ def _check_echospacing(echospacing, _log):
     return False
 
 
+def _find_spin_echo_pairs(hcp, options, _log):
+    """
+    Find the spin echo fieldmap pairs in the session's unprocessed folder.
+
+    Every ``SpinEchoFieldMap[N]`` folder is searched for one image of each
+    phase encoding polarity, named by ``hcp_bold_sephasepos`` and
+    ``hcp_bold_sephaseneg``. Only cross-sectional processing reads these
+    images: a longitudinal run reuses the distortion correction of the
+    cross-sectional one.
+
+    Parameters:
+        hcp: the session's HCP paths.
+        options: the command options.
+        _log: the log to report into.
+
+    Returns:
+        ``(sesettings, sepresent, sepairs)``: whether both polarity labels are
+        set, the numbers of the complete pairs found, and the pair images keyed
+        by number.
+    """
+    sepresent = []
+    sepairs = {}
+
+    sesettings = True
+    for p in ["hcp_bold_sephaseneg", "hcp_bold_sephasepos"]:
+        if not options[p]:
+            _log.error(f"{p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
+            sesettings = False
+
+    if not sesettings:
+        return sesettings, sepresent, sepairs
+
+    _log.step(f"Looking for spin echo fieldmap set images [{options['hcp_bold_sephasepos']}/{options['hcp_bold_sephaseneg']}].")
+
+    for senum in range(50):
+        sepath = glob.glob(os.path.join(hcp["source"], "SpinEchoFieldMap%d*" % (senum)))
+        if not sepath:
+            continue
+
+        sepath = sepath[0]
+        _log.detail(f"identified folder {os.path.basename(sepath)}")
+
+        spinok = True
+        spin_pos, spin_neg = None, None
+        for i in glob.glob(os.path.join(sepath, "*.nii.gz")):
+            if "_" + options["hcp_bold_sephasepos"] in os.path.basename(i):
+                spin_pos = i
+                spinok = pc.check_for_file(spin_pos,
+                    f"phase positive {options['hcp_bold_sephasepos']} spin echo fieldmap image present",
+                    f"{options['hcp_bold_sephasepos']} spin echo fieldmap image missing!",
+                    status=spinok,
+                    bad_level="error",
+                    _log=_log,
+                )
+            elif "_" + options["hcp_bold_sephaseneg"] in os.path.basename(i):
+                spin_neg = i
+                spinok = pc.check_for_file(spin_neg,
+                    f"phase negative {options['hcp_bold_sephaseneg']} spin echo fieldmap image present",
+                    f"{options['hcp_bold_sephaseneg']} spin echo fieldmap image missing!",
+                    status=spinok,
+                    bad_level="error",
+                    _log=_log,
+                )
+
+        if not all([spin_pos, spin_neg]):
+            _log.error(f"Either one of both pairs of SpinEcho images are missing in the {os.path.basename(sepath)} folder! Please check your data or settings!")
+            spinok = False
+
+        if spinok:
+            sepresent.append(senum)
+            sepairs[senum] = {"spinPos": spin_pos, "spinNeg": spin_neg}
+
+    return sesettings, sepresent, sepairs
+
+
+def _resolve_second_spin_echo(hcp, options, _log):
+    """
+    Resolve the second spin echo pair used by NHP processing.
+
+    The labels ``hcp_bold_sephasepos2``/``hcp_bold_sephaseneg2`` are either
+    existing absolute paths, matched against the files in the
+    ``SpinEchoFieldMap[hcp_senum2]`` folder, or resolved relative to the
+    session.
+
+    Parameters:
+        hcp: the session's HCP paths.
+        options: the command options.
+        _log: the log to report into.
+
+    Returns:
+        ``(sepos2, seneg2, ok)``: the two images (empty when not requested)
+        and whether they were found.
+    """
+    if not (options["hcp_bold_sephasepos2"] and options["hcp_bold_sephaseneg2"]):
+        return "", "", True
+
+    if os.path.exists(options["hcp_bold_sephasepos2"]) and os.path.exists(
+        options["hcp_bold_sephaseneg2"]
+    ):
+        sepos2 = options["hcp_bold_sephasepos2"]
+        seneg2 = options["hcp_bold_sephaseneg2"]
+        _log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(sepos2)}, {os.path.basename(seneg2)}]")
+        return sepos2, seneg2, True
+
+    if options["hcp_senum2"]:
+        tufolder2 = os.path.join(
+            hcp["source"],
+            "SpinEchoFieldMap%s%s" % (options["hcp_senum2"], options["fctail"]),
+        )
+        try:
+            sepos2 = glob.glob(
+                os.path.join(tufolder2, "*_" + options["hcp_bold_sephasepos2"] + "*.nii.gz")
+            )[0]
+            seneg2 = glob.glob(
+                os.path.join(tufolder2, "*_" + options["hcp_bold_sephaseneg2"] + "*.nii.gz")
+            )[0]
+        except IndexError:
+            _log.error(f"Could not find the relevant second Spin-Echo files! [{tufolder2}]")
+            return "", "", False
+        _log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(tufolder2)}]")
+        return sepos2, seneg2, True
+
+    sepos2, sepos2_found = resolve_session_relative_image(
+        options["hcp_bold_sephasepos2"], hcp["base"]
+    )
+    seneg2, seneg2_found = resolve_session_relative_image(
+        options["hcp_bold_sephaseneg2"], hcp["base"]
+    )
+    if sepos2_found and seneg2_found:
+        _log.step(f"Second Spin-Echo pair of images present. [{sepos2}, {seneg2}]")
+        return sepos2, seneg2, True
+
+    _log.error("Could not find the relevant second Spin-Echo files for hcp_bold_sephasepos2/hcp_bold_sephaseneg2! "
+        "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
+    return sepos2, seneg2, False
+
+
+def _check_longitudinal_bold(hcp, boldtarget, boldok, _log):
+    """
+    Check for the cross-sectional fMRIVolume output a longitudinal run reads.
+
+    In longitudinal mode GenericfMRIVolumeProcessingPipeline.sh does not read
+    the unprocessed BOLD, SBRef, spin echo or fieldmap images. It links the
+    cross-sectional ``<fMRI>/<fMRI>_orig.nii.gz`` into the longitudinal session
+    and reuses the cross-sectional motion and distortion correction, so that
+    output is what has to be present.
+
+    Parameters:
+        hcp: the session's HCP paths.
+        boldtarget: the name of the BOLD in the HCP folder structure.
+        boldok: the status so far.
+        _log: the log to report into.
+
+    Returns:
+        ``(boldok, boldimg)``: the updated status and the cross-sectional
+        timeseries, which is passed as ``--fmritcs``.
+    """
+    boldimg = os.path.join(hcp["base"], boldtarget, f"{boldtarget}_orig.nii.gz")
+    boldok = pc.check_for_file(boldimg,
+        "cross-sectional fMRIVolume results present",
+        f"cross-sectional fMRIVolume results missing [{boldimg}]! Run hcp_fmri_volume without --longitudinal first.",
+        status=boldok,
+        bad_level="error",
+        _log=_log,
+    )
+    return boldok, boldimg
+
+
 def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_fmri_volume [... processing options]``
@@ -438,7 +606,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         --longitudinal:
             Set this flag if you are running the longitudinal variant of this
-            command.
+            command. A longitudinal run reuses the motion and distortion
+            correction of the cross-sectional run, so it reads the
+            cross-sectional ``<bold>/<bold>_orig.nii.gz`` and none of the
+            unprocessed BOLD, SBRef, spin echo, fieldmap or slice timing files.
+            The movement reference (hcp_bold_movref) is not used.
 
         --hcp_longitudinal_subject (str, default ''):
             The subject id of the longitudinal subject. Mandatory for
@@ -870,72 +1042,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             run = False
 
         if options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"]:
-            # -- spin echo settings
-            sesettings = True
-            for p in [
-                "hcp_bold_sephaseneg",
-                "hcp_bold_sephasepos",
-            ]:
-                if not options[p]:
-                    log.error(f"{p} parameter not set! It needs to be set manually as QuNex cannot infer it from the data in a robust manner.")
-                    boldok = False
-                    sesettings = False
-                    run = False
-
-            if sesettings:
-                log.step(f"Looking for spin echo fieldmap set images [{options['hcp_bold_sephasepos']}/{options['hcp_bold_sephaseneg']}].")
-
-                for senum in range(50):
-                    spinok = False
-
-                    # check if folder exists
-                    sepath = glob.glob(
-                        os.path.join(hcp["source"], "SpinEchoFieldMap%d*" % (senum))
-                    )
-                    if sepath:
-                        sepath = sepath[0]
-                        log.detail(f"identified folder {os.path.basename(sepath)}")
-                        # get all *.nii.gz files in that folder
-                        images = glob.glob(os.path.join(sepath, "*.nii.gz"))
-
-                        # variable for checking se status
-                        spinok = True
-                        spin_pos, spin_neg = None, None
-
-                        # search in images
-                        for i in images:
-                            # look for phase positive
-                            if "_" + options["hcp_bold_sephasepos"] in os.path.basename(
-                                i
-                            ):
-                                spin_pos = i
-                                spinok = pc.check_for_file(spin_pos,
-                                    f"phase positive {options['hcp_bold_sephasepos']} spin echo fieldmap image present",
-                                    f"{options['hcp_bold_sephasepos']} spin echo fieldmap image missing!",
-                                    status=spinok,
-                                    bad_level="error",
-                                    _log=log,
-                                )
-                            # look for phase negative
-                            elif "_" + options[
-                                "hcp_bold_sephaseneg"
-                            ] in os.path.basename(i):
-                                spin_neg = i
-                                spinok = pc.check_for_file(spin_neg,
-                                    f"phase negative {options['hcp_bold_sephaseneg']} spin echo fieldmap image present",
-                                    f"{options['hcp_bold_sephaseneg']} spin echo fieldmap image missing!",
-                                    status=spinok,
-                                    bad_level="error",
-                                    _log=log,
-                                )
-
-                        if not all([spin_pos, spin_neg]):
-                            log.error(f"Either one of both pairs of SpinEcho images are missing in the {os.path.basename(sepath)} folder! Please check your data or settings!")
-                            spinok = False
-
-                    if spinok:
-                        sepresent.append(senum)
-                        sepairs[senum] = {"spinPos": spin_pos, "spinNeg": spin_neg}
+            # -- spin echo images, only read by cross-sectional processing
+            if options["longitudinal"]:
+                log.step("Longitudinal mode: spin echo fieldmap images are not needed, the distortion correction of the cross-sectional run is reused.")
+            else:
+                sesettings, sepresent, sepairs = _find_spin_echo_pairs(hcp, options, log)
+                run = run and sesettings
 
             # ---> check for topupconfig
             if (
@@ -958,53 +1070,9 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 topupconfig = ""
 
             # ---> second spin-echo pair (NHP), resolved through hcp_senum2
-            # the labels hcp_bold_sephasepos2/hcp_bold_sephaseneg2 are matched
-            # against the files in the SpinEchoFieldMap[hcp_senum2] folder, or
-            # existing absolute paths can be provided directly
-            if options["hcp_bold_sephasepos2"] and options["hcp_bold_sephaseneg2"]:
-                if os.path.exists(options["hcp_bold_sephasepos2"]) and os.path.exists(
-                    options["hcp_bold_sephaseneg2"]
-                ):
-                    sepos2 = options["hcp_bold_sephasepos2"]
-                    seneg2 = options["hcp_bold_sephaseneg2"]
-                    log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(sepos2)}, {os.path.basename(seneg2)}]")
-                elif options["hcp_senum2"]:
-                    tufolder2 = os.path.join(
-                        hcp["source"],
-                        "SpinEchoFieldMap%s%s"
-                        % (options["hcp_senum2"], options["fctail"]),
-                    )
-                    try:
-                        sepos2 = glob.glob(
-                            os.path.join(
-                                tufolder2,
-                                "*_" + options["hcp_bold_sephasepos2"] + "*.nii.gz",
-                            )
-                        )[0]
-                        seneg2 = glob.glob(
-                            os.path.join(
-                                tufolder2,
-                                "*_" + options["hcp_bold_sephaseneg2"] + "*.nii.gz",
-                            )
-                        )[0]
-                        log.step(f"Second Spin-Echo pair of images present. [{os.path.basename(tufolder2)}]")
-                    except IndexError:
-                        log.error(f"Could not find the relevant second Spin-Echo files! [{tufolder2}]")
-                        run = False
-                else:
-                    sepos2, sepos2_found = resolve_session_relative_image(
-                        options["hcp_bold_sephasepos2"], hcp["base"]
-                    )
-                    seneg2, seneg2_found = resolve_session_relative_image(
-                        options["hcp_bold_sephaseneg2"], hcp["base"]
-                    )
-
-                    if sepos2_found and seneg2_found:
-                        log.step(f"Second Spin-Echo pair of images present. [{sepos2}, {seneg2}]")
-                    else:
-                        log.error("Could not find the relevant second Spin-Echo files for hcp_bold_sephasepos2/hcp_bold_sephaseneg2! "
-                            "Checked each value as an absolute path, relative to the session's hcp folder, and relative to the T2w folder.")
-                        run = False
+            if not options["longitudinal"]:
+                sepos2, seneg2, seok = _resolve_second_spin_echo(hcp, options, log)
+                run = run and seok
 
         # --- NHP zero-phase SE image (typically the T2w) and its FS brainmask.
         # each value is resolved by checking, in order, an absolute path, a path
@@ -1159,14 +1227,27 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 elif options["hcp_bold_echospacing"]:
                     echospacing = options["hcp_bold_echospacing"]
                     log.detail(f"using study general EchoSpacing: {echospacing} s")
+                elif options["longitudinal"]:
+                    # required to be set, but not used by a longitudinal run
+                    echospacing = "NONE"
+                    log.detail("EchoSpacing is not used in longitudinal mode")
                 else:
                     echospacing = _infer_echospacing(boldinfo, boldimgs[0], log)
                     if not echospacing:
                         log.error("EchoSpacing is not set and could not be inferred! Please set hcp_bold_echospacing or add EchoSpacing to the session file.", depth=1)
                         boldok = False
 
+            # --- longitudinal mode reuses the cross-sectional distortion correction
+            # the pipeline still requires the spin echo arguments to be set for
+            # TOPUP, the fieldmap ones keep their NONE defaults
+            if options["longitudinal"]:
+                log.detail("distortion correction inputs are not used in longitudinal mode")
+                if options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"]:
+                    spin_neg = "NONE"
+                    spin_pos = "NONE"
+
             # --- check for spin-echo-fieldmap image
-            if (
+            elif (
                 options["hcp_bold_dcmethod"].lower() in ["topup", "topup_mismatched"]
                 and sesettings
             ):
@@ -1501,25 +1582,30 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             # --- set reference
             # Need to make sure the right reference is used in relation to LR/RL AP/PA bolds
             # - have to keep track of whether an old topup in the same direction exists
-            if options["hcp_folderstructure"] == "hcpya":
-                boldimgs.append(
-                    os.path.join(
-                        hcp["source"],
-                        "%s%s" % (boldroot, options["fctail"]),
-                        "%s%s_%s.nii.gz" % (sinfo["id"], options["fctail"], boldroot),
+            if options["longitudinal"]:
+                boldok, boldimg = _check_longitudinal_bold(hcp, boldtarget, boldok, log)
+            else:
+                if options["hcp_folderstructure"] == "hcpya":
+                    boldimgs.append(
+                        os.path.join(
+                            hcp["source"],
+                            "%s%s" % (boldroot, options["fctail"]),
+                            "%s%s_%s.nii.gz" % (sinfo["id"], options["fctail"], boldroot),
+                        )
                     )
+
+                boldok, boldimg = pc.check_for_files(boldimgs,
+                    "bold image present",
+                    f"bold image missing, searched for {boldimgs}!",
+                    status=boldok,
+                    bad_level="error",
+                    _log=log,
                 )
 
-            boldok, boldimg = pc.check_for_files(boldimgs,
-                "bold image present",
-                f"bold image missing, searched for {boldimgs}!",
-                status=boldok,
-                bad_level="error",
-                _log=log,
-            )
-
             # --- check for ref image
-            if options["hcp_bold_sbref"].lower() == "use":
+            if options["longitudinal"]:
+                log.detail("reference image is not used in longitudinal mode")
+            elif options["hcp_bold_sbref"].lower() == "use":
                 refimg = os.path.join(
                     hcp["source"],
                     "%s_SBRef%s" % (boldroot, options["fctail"]),
@@ -1549,8 +1635,10 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 log.detail("using the HCPpipelines default BOLD mask")
 
             # --- set movement reference image
+            # a longitudinal run takes the motion correction of the cross-sectional
+            # one, the pipeline ignores --fmriref there
             fmriref = futureref
-            if options["hcp_bold_movref"] == "first":
+            if options["hcp_bold_movref"] == "first" and not options["longitudinal"]:
                 if futureref == "NONE":
                     futureref = boldtarget
 
@@ -1565,8 +1653,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                     log.error("The requested HCP processing mode is 'HCPStyleData', however, a nonlinear registration to an external BOLD was specified!\n                 Consider using LegacyStyleData processing mode.", depth=1)
                     run = False
 
-            # --- Check for slice timing file
-            if options["hcp_bold_doslicetime"] and options["hcp_bold_slicetimingfile"]:
+            # --- Check for slice timing file, slice timing is done cross-sectionally
+            if (
+                options["hcp_bold_doslicetime"]
+                and options["hcp_bold_slicetimingfile"]
+                and not options["longitudinal"]
+            ):
                 stfile = os.path.join(
                     hcp["source"],
                     "%s%s" % (boldroot, options["fctail"]),
@@ -1582,6 +1674,12 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             else:
                 stfile = None
 
+            # --- echo time difference, the fieldmap methods require it to be set
+            # even in longitudinal mode, where it is not used
+            echodiff = options["hcp_bold_echodiff"]
+            if options["longitudinal"] and not echodiff:
+                echodiff = "NONE"
+
             # store required data
             b = {
                 "boldsource": boldsource,
@@ -1595,6 +1693,7 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
                 "gdcfile": gdcfile,
                 "unwarpdir": unwarpdir,
                 "echospacing": echospacing,
+                "echodiff": echodiff,
                 "spinNeg": spin_neg,
                 "spinPos": spin_pos,
                 "sepos2": sepos2,
@@ -1641,7 +1740,11 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
 
         else:
             # if moveref equals first then process first one in serial
-            if not options["longitudinal"] and options["hcp_bold_movref"] == "first":
+            if (
+                not options["longitudinal"]
+                and options["hcp_bold_movref"] == "first"
+                and bolds_data
+            ):
                 # process first one
                 b = bolds_data[0]
                 report = execute_single_hcp_fmri_volume(
@@ -1659,11 +1762,13 @@ def hcp_fmri_volume(sinfo, options, overwrite=False, thread=0):
             if len(report[k]) > 0:
                 rep.append("%s %s" % (", ".join(report[k]), k))
 
-        report = (
-            sinfo["id"],
-            "HCP fMRI Volume: bolds " + "; ".join(rep),
-            len(report["failed"] + report["incomplete"] + report["not ready"]),
-        )
+        # a session without any BOLD to process has failed, not succeeded
+        failed = len(report["failed"] + report["incomplete"] + report["not ready"])
+        if not bolds:
+            rep = ["none found"]
+            failed = 1
+
+        report = (sinfo["id"], "HCP fMRI Volume: bolds " + "; ".join(rep), failed)
 
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:
         log.raw(str(errormessage))
@@ -1733,6 +1838,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
     stfile = b["stfile"]
     unwarpdir = b["unwarpdir"]
     echospacing = b["echospacing"]
+    echodiff = b["echodiff"]
     spin_neg = b["spinNeg"]
     spin_pos = b["spinPos"]
     sepos2 = b["sepos2"]
@@ -1782,7 +1888,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                 and options["hcp_bold_stcorrint"] not in slicetimerparams
             ):
                 slicetimerparams.append(options["hcp_bold_stcorrint"])
-            if options["hcp_bold_slicetimingfile"]:
+            if options["hcp_bold_slicetimingfile"] and stfile:
                 slicetimingfile = f"--tcustom={stfile}"
                 if slicetimingfile not in slicetimerparams:
                     slicetimerparams.append(slicetimingfile)
@@ -1821,7 +1927,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
             ("precomputedfmap", fmprecomputed),
             ("precomputedfmapmag", fmprecomputedmag),
             ("echospacing", echospacing),
-            ("echodiff", options["hcp_bold_echodiff"]),
+            ("echodiff", echodiff),
             ("unwarpdir", unwarpdir),
             ("fmrires", options["hcp_bold_res"]),
             ("dcmethod", options["hcp_bold_dcmethod"]),
@@ -2018,6 +2124,7 @@ def execute_hcp_fmri_volume(sinfo, options, overwrite, hcp, b):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

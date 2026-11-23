@@ -334,7 +334,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
             if not os.path.exists(fmap_ap_file):
                 log.error(f"AP fieldmap not found [{fmap_ap_file}]")
                 run = False
-            if not os.path.exists(fmap_ap_file):
+            if not os.path.exists(fmap_pa_file):
                 log.error(f"PA fieldmap not found [{fmap_pa_file}]")
                 run = False
 
@@ -531,6 +531,7 @@ def hcp_asl(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=None,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

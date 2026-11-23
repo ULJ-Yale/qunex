@@ -836,7 +836,7 @@ def execute_hcp_multi_icafix(sinfo, options, overwrite, hcp, run, group):
                     overwrite=overwrite,
                     _log=log,
                 )
-                if passed == "done":
+                if passed is None:
                     log.step("multi-run HCP ICAFix can be run")
                     report["ready"].append(groupname)
                 else:

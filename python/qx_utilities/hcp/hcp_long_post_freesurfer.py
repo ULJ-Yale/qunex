@@ -17,16 +17,15 @@ The longitudinal HCP PostFreeSurfer pipeline.
 import os
 import os.path
 import shutil
-from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
-    _append_sorted_logdir_to_log,
     _check_hcp_info,
     _set_hcp_prefs_template_res,
     do_hcp_options_check,
+    run_longitudinal_pipeline,
 )
 
 
@@ -231,7 +230,7 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal Post FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal Post FS Pipeline", label="Subject")
 
     run = True
     report = {"done": [], "failed": [], "ready": [], "not ready": []}
@@ -388,9 +387,10 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
             "comlogs",
             f"extra_logs_hcp_long_post_freesurfer_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
+        if options["run"] == "run":
+            if os.path.exists(logdir):
+                shutil.rmtree(logdir)
+            os.makedirs(logdir)
 
         # subject folder
         studyfolder = os.path.join(
@@ -477,45 +477,15 @@ def hcp_long_post_freesurfer(sinfo, options, overwrite=False, thread=0):
                 log.raw(comm.replace("                --", "\n    --"))
                 log.rule(after=1)
 
-            # -- Test file
-            tfile = None
-
-            if options["run"] == "run":
-                endlog, _, failed = pc.run_external_for_file(
-                    tfile,
-                    comm,
-                    "Running HCP Longitudinal Post FS",
-                    overwrite=overwrite,
-                    thread=subject_id,
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed == 0:
-                    report = "processing completed"
-                else:
-                    report = "processing failed"
-
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
-
-                # remove the directory and its contents
-                shutil.rmtree(logdir)
+            # -- Run, judged by the exit code
+            report, failed = run_longitudinal_pipeline(
+                comm, "HCP Longitudinal Post FS", options, overwrite, subject_id, logdir, log
+            )
 
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_long_post_freesurfer", e))

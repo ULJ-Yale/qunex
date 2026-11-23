@@ -832,13 +832,13 @@ def check_run(
 
     What was checked is noted in `_log`, when one is given and `verbose` is set.
     `comlog` is the ``ComContext`` of the call being checked, when the caller
-    holds one: the full file check writes its report into it, and a call with
-    no test file is judged by what it left in it.
+    holds one: the full file check writes its report into it.
 
     Returns:
         tuple: ``(passed, report, failed)``, where `passed` is
 
-        --None        test file is missing
+        --None        test file is missing, or there is no test file, so the
+                      call is ready to run
         --incomplete  test file is present, but full test was incomplete
         --done        test file is present, and if full test was specified, all
                       files were present as well
@@ -893,19 +893,13 @@ def check_run(
                 failed = 1
 
     elif tfile is None:
-        report = "%s finished" % (command)
-        passed = "done"
+        # nothing on disk records that a call without a test file has run, and
+        # `run_external_for_file` always runs one, so checked on its own (a
+        # dry run) it is ready to run. the outcome of an actual call is judged
+        # where it is made, by `_judge_untested_call`
+        report = "%s can be run" % (command)
+        passed = None
         failed = 0
-
-        # nothing to check against, so the comlog's contents are the evidence.
-        # a comlog shared by a whole command (`combined_comlog`) holds
-        # the calls before this one too, so an earlier error would fail this
-        # call as well -- no caller combines the two today, and one that wants
-        # to would have to scan from where its own call started
-        if comlog is not None and log_has_errors(comlog.path):
-            report = "%s not finished" % (command)
-            passed = None
-            failed = 1
 
     else:
         if verbose and tfile is not None:
@@ -1111,6 +1105,30 @@ def combined_comlog(_log, options, command, thread=None):
             _log,
         )
 
+def _judge_untested_call(comlog, exit_code_only):
+    """
+    Judge a call that exited cleanly and has no test file to check.
+
+    Unless `exit_code_only` is set, the comlog's contents are the evidence: a
+    call that wrote an error line has failed. A comlog shared by a whole
+    command (`combined_comlog`) holds the calls before this one too, so an
+    earlier error would fail this call as well -- no caller combines the two
+    today, and one that wants to would have to scan from where its own call
+    started.
+
+    Parameters:
+        comlog (ComContext): the comlog the call wrote into.
+        exit_code_only (bool): judge by the exit code alone, which has already
+            been found to be 0.
+
+    Returns:
+        tuple: ``(passed, failed)``, ``passed`` being ``"done"`` or None.
+    """
+    if not exit_code_only and log_has_errors(comlog.path):
+        return None, 1
+    return "done", 0
+
+
 def run_external_for_file(
     checkfile,
     run,
@@ -1126,10 +1144,11 @@ def run_external_for_file(
     verbose=True,
     comlog=None,
     *,
+    exit_code_only=False,
     _log=None,
 ):
     """
-    ``run_external_for_file(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True, comlog=None, *, _log=None)``
+    ``run_external_for_file(checkfile, run, description, overwrite=False, thread="0", remove=True, task=None, logfolder="", logtags="", full_test=None, shell=True, verbose=True, comlog=None, *, exit_code_only=False, _log=None)``
 
     Runs the specified command and checks whether it was executed against a
     checkfile, and if provided a full list of files as specified in full_test.
@@ -1176,6 +1195,11 @@ def run_external_for_file(
                        unused, and `endlog` comes back as None because the file
                        is not finished here. Attached by `combined_comlog`,
                        which owns the comlog for the whole command.
+    --exit_code_only   Judge a call without a checkfile by its exit code alone,
+                       keyword-only. By default such a call has also failed
+                       when it wrote an error line into its comlog, which some
+                       pipelines do on success. Used where no test file can be
+                       named reliably, such as the longitudinal HCP pipelines.
 
     OUTPUTS
     =======
@@ -1282,14 +1306,17 @@ def run_external_for_file(
                 finish_comlog("error")
                 raise ExternalFailed(message)
 
-            status, _, failed = check_run(
-                checkfile,
-                full_test=full_test,
-                command=task,
-                _log=_log,
-                comlog=comlog,
-                verbose=verbose,
-            )
+            if checkfile is None:
+                status, failed = _judge_untested_call(comlog, exit_code_only)
+            else:
+                status, _, failed = check_run(
+                    checkfile,
+                    full_test=full_test,
+                    command=task,
+                    _log=_log,
+                    comlog=comlog,
+                    verbose=verbose,
+                )
 
             if status is None:
                 _note(
@@ -1328,6 +1355,7 @@ def run_external_for_file(
                 shell=shell,
                 verbose=verbose,
                 comlog=comlog,
+                exit_code_only=exit_code_only,
                 _log=_log,
             )
         else:

@@ -6,6 +6,11 @@ SPDX-License-Identifier: GPL-3.0-or-later
 
 # Change Log
 
+## 1.5.5
+
+* Longitudinal `hcp_fmri_volume` and `hcp_diffusion` no longer need anything from the sessions' `unprocessed` folders; they check for the cross-sectional outputs they reuse instead.
+* Longitudinal HCP commands are now judged by the pipeline's exit code instead of a test file, which marked successful runs as failed.
+
 ## 1.5.4
 
 * Integrated the HCP Pipelines `ROI_to_DICOM.sh` command into QuNex as `hcp_roi_to_dicom`.

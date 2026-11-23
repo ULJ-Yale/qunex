@@ -17,15 +17,14 @@ The longitudinal HCP transmit bias field correction pipeline.
 import os
 import os.path
 import shutil
-from datetime import datetime
 
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
-    _append_sorted_logdir_to_log,
     _check_hcp_info,
     do_hcp_options_check,
+    run_longitudinal_pipeline,
 )
 
 
@@ -206,7 +205,7 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal Transmit Bias Pipeline", label="Subject")
 
     run = True
     report = ""
@@ -221,11 +220,9 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
         # sort out the folder structure
         sessionsfolder = options["sessionsfolder"]
         subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
         study_folder = os.path.join(subjectsfolder, subject_id)
-        if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+        if options["run"] == "run":
+            os.makedirs(study_folder, exist_ok=True)
 
         # logdir
         logdir = os.path.join(
@@ -233,9 +230,10 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
             "comlogs",
             f"extra_logs_hcp_long_transmit_bias_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
+        if options["run"] == "run":
+            if os.path.exists(logdir):
+                shutil.rmtree(logdir)
+            os.makedirs(logdir)
 
         if options["hcp_transmit_mode"] is None:
             log.error("the hcp_transmit_mode parameter is mandatory!")
@@ -415,55 +413,15 @@ def hcp_long_transmit_bias(sinfo, options, overwrite=False, thread=0):
                 log.raw(comm.replace("                --", "\n    --"))
                 log.rule(after=1)
 
-            # -- Test file
-            if options["run"] == "run":
-                endlog, _, failed = pc.run_external_for_file(
-                    None,
-                    comm,
-                    "Running HCP Longitudinal Transmit Bias",
-                    overwrite=overwrite,
-                    thread=subject_id,
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed == 0:
-                    report = "processing completed"
-                else:
-                    report = "processing failed"
-
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
-
-                # remove the directory and its contents
-                shutil.rmtree(logdir)
-
-            # -- just checking
-            else:
-                passed, _, _ = pc.check_run(
-                    None, None, "HCP Longitudinal Transmit Bias", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP Longitudinal Transmit Bias can be run")
-                    report = "ready"
-                else:
-                    log.step("HCP Longitudinal Transmit Bias cannot be run")
-                    report = "not ready"
+            # -- Run, judged by the exit code
+            report, failed = run_longitudinal_pipeline(
+                comm, "HCP Longitudinal Transmit Bias", options, overwrite, subject_id, logdir, log
+            )
 
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_long_transmit_bias", e))

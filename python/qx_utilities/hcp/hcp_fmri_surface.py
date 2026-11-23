@@ -416,6 +416,7 @@ def execute_hcp_fmri_surface(sinfo, options, overwrite, hcp, run, boldinfo):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

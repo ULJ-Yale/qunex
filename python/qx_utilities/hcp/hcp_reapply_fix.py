@@ -583,8 +583,8 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                 if not studyfolder:
                     log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                     groupok = False
-                # replace path
-                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+                else:
+                    path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
             comm = (
                 '%(script)s \
@@ -677,7 +677,11 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                     highpass,
                 )
 
-            tfile = os.path.join(hcp["hcp_nonlin"], "Results", groupname, postfix)
+            # a longitudinal run writes into the longitudinal session and is
+            # judged by its exit code
+            tfile = None
+            if not options["longitudinal"]:
+                tfile = os.path.join(hcp["hcp_nonlin"], "Results", groupname, postfix)
             full_test = None
 
             # -- Run
@@ -699,6 +703,7 @@ def execute_hcp_multi_reapply_fix(sinfo, options, hcp, run, group):
                         logtags=logtags,
                         full_test=full_test,
                         shell=True,
+                        exit_code_only=options["longitudinal"],
                         _log=log,
                     )
 

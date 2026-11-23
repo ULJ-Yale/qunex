@@ -198,7 +198,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal MSMAll Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal MSMAll Pipeline", label="Subject")
 
     run = True
     report = {"done": [], "failed": [], "skipped": [], "ready": [], "not ready": []}
@@ -412,9 +412,9 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 logtags=[options["logtag"], groupname],
                                 full_test=None,
                                 shell=True,
+                                exit_code_only=True,
                                 _log=log,
                             )
-                            failed = False
 
                             if failed:
                                 report["failed"].append(
@@ -510,7 +510,7 @@ def hcp_long_msmall(sinfo, options, overwrite=False, thread=0):
                                 overwrite=True,
                                 _log=log,
                             )
-                            if failed == 0:
+                            if passed is None:
                                 log.step("HCP MSMAll can be run")
                                 report["ready"].append(f"{subject_id}_{groupname}")
                             else:

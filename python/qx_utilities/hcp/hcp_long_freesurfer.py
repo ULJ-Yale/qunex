@@ -17,16 +17,15 @@ The longitudinal HCP FreeSurfer pipeline.
 import os
 import os.path
 import shutil
-from datetime import datetime
 
 import qx_utilities.general.core as gc
 import qx_utilities.general.exceptions as ge
 import qx_utilities.processing.core as pc
 from qx_utilities.general.log import SessionLog
 from qx_utilities.hcp.hcp_utils import (
-    _append_sorted_logdir_to_log,
     _check_hcp_info,
     do_hcp_options_check,
+    run_longitudinal_pipeline,
 )
 
 
@@ -133,7 +132,7 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
 
     subject_id = sinfo[0]["subject"]
 
-    log = SessionLog({"id": subject_id}, options, "HCP Longitudnal FS Pipeline", label="Subject")
+    log = SessionLog({"id": subject_id}, options, "HCP Longitudinal FS Pipeline", label="Subject")
 
     run = True
     report = ""
@@ -148,11 +147,10 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         # sort out the folder structure
         sessionsfolder = options["sessionsfolder"]
         subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
         study_folder = os.path.join(subjectsfolder, subject_id)
-        if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+        dry = options["run"] != "run"
+        if not dry:
+            os.makedirs(study_folder, exist_ok=True)
 
         longitudinal_template = options["hcp_longitudinal_template"]
         long_dir = os.path.join(
@@ -164,6 +162,8 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
         if not overwrite and long_dir_exists:
             log.error(f"{long_dir} already exists and overwrite is set to no!")
             run = False
+        elif long_dir_exists and dry:
+            log.step(f"test, not removed: {long_dir}")
         else:
             if long_dir_exists:
                 if os.path.islink(long_dir):
@@ -179,11 +179,17 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             source_dir = os.path.join(session["hcp"], session["id"])
             # check that source exists
             if not os.path.exists(source_dir):
-                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
+                log.error(f"{source_dir} does not exists, cannot map into longitudinal folder structure!")
                 run = False
+                continue
 
             target_dir = os.path.join(study_folder, session["id"])
-            gc.link_or_copy(source_dir, target_dir, symlink=True)
+            if dry:
+                log.step(f"test, not linked: {source_dir} -> {target_dir}")
+            elif not gc.link_or_copy(
+                source_dir, target_dir, name=session["id"], symlink=True, _log=log
+            ):
+                run = False
 
         # logdir
         logdir = os.path.join(
@@ -191,9 +197,10 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
             "comlogs",
             f"extra_logs_hcp_long_freesurfer_{subject_id}",
         )
-        if os.path.exists(logdir):
-            shutil.rmtree(logdir)
-        os.makedirs(logdir)
+        if not dry:
+            if os.path.exists(logdir):
+                shutil.rmtree(logdir)
+            os.makedirs(logdir)
 
         # build the command
         if run:
@@ -251,74 +258,23 @@ def hcp_long_freesurfer(sinfo, options, overwrite=False, thread=0):
                 log.raw(comm.replace("                --", "\n    --"))
                 log.rule(after=1)
 
-            # -- Test file
-            last_session = sinfo[-1]["id"]
-            tfile = os.path.join(
-                study_folder,
-                f"{subject_id}.long.{longitudinal_template}",
-                "T1w",
-                f"{last_session}.long.{longitudinal_template}",
-                "mri",
-                "T1.mgz",
+            # -- Run, judged by the exit code: the results' location depends
+            # on the pipeline version and the session naming
+            report, failed = run_longitudinal_pipeline(
+                comm, "HCP Longitudinal FS", options, overwrite, subject_id, logdir, log
             )
-
-            if options["run"] == "run":
-                if overwrite and os.path.exists(tfile):
-                    os.remove(tfile)
-                endlog, _, failed = pc.run_external_for_file(
-                    tfile,
-                    comm,
-                    "Running HCP Longitudinal FS",
-                    overwrite=overwrite,
-                    thread=subject_id,
-                    remove=options["log"] == "remove",
-                    task=options["command_ran"],
-                    logfolder=options["comlogs"],
-                    logtags=options["logtag"],
-                    full_test=None,
-                    shell=True,
-                    _log=log,
-                )
-
-                if failed == 0:
-                    report = "processing completed"
-                else:
-                    report = "processing failed"
-
-                # read and print all files in logdir
-                with open(endlog, "a", encoding="utf-8") as log_file:
-                    _append_sorted_logdir_to_log(log_file, logdir)
-                    # print succesful completion
-                    print(
-                        f"\n---> Successful completion of task at {datetime.now()}",
-                        file=log_file,
-                    )
-
-                # remove the directory and its contents
-                shutil.rmtree(logdir)
-
-            # -- just checking
-            else:
-                passed, _, _ = pc.check_run(
-                    tfile, None, "HCP Longitudinal FS", overwrite=overwrite, _log=log
-                )
-                if passed is None:
-                    log.step("HCP Longitudinal FS can be run")
-                    report = "ready"
-                else:
-                    log.step("HCP Longitudinal FS cannot be run")
-                    report = "not ready"
 
         else:
             log.step("Subject cannot be processed.")
             report = "not ready"
+            failed = 1
 
     except ge.CommandFailed as e:
-        log.raw("\n" + ge.report_command_failed("hcp_long_freesurer", e))
+        log.raw("\n" + ge.report_command_failed("hcp_long_freesurfer", e))
         report = "processing failed"
         failed += 1
     except ge.CommandError as e:
-        log.raw("\n" + ge.report_command_error("hcp_long_freesurer", e))
+        log.raw("\n" + ge.report_command_error("hcp_long_freesurfer", e))
         report = "processing failed"
         failed += 1
     except (pc.ExternalFailed, pc.NoSourceFolder) as errormessage:

@@ -586,6 +586,43 @@ def test_check_run_judges_a_call_with_no_test_file_by_the_same_scan(tmp_path, lo
     assert os.path.basename(endlog).startswith("error_")
 
 
+def test_exit_code_only_ignores_error_lines_of_a_clean_exit(tmp_path, log):
+    """Pipelines that print error lines on success are judged by the exit code."""
+    endlog, status, failed = pc.run_external_for_file(
+        None,
+        "echo 'ERROR: harmless'",
+        "... running a noisy command",
+        task="noop",
+        logfolder=str(tmp_path / "comlogs"),
+        remove=False,
+        exit_code_only=True,
+        _log=log,
+    )
+
+    assert (status, failed) == ("noop done", 0)
+    assert os.path.basename(endlog).startswith("done_")
+
+
+def test_exit_code_only_still_fails_a_failing_exit(tmp_path, log):
+    with pytest.raises(pc.ExternalFailed):
+        pc.run_external_for_file(
+            None,
+            "exit 3",
+            "... running a failing command",
+            task="noop",
+            logfolder=str(tmp_path / "comlogs"),
+            exit_code_only=True,
+            _log=log,
+        )
+
+
+def test_check_run_without_a_test_file_is_ready_to_run(log):
+    """A dry run of a call with no test file would run it, so it is not done."""
+    passed, report, failed = pc.check_run(None, None, "HCP Test", _log=log)
+
+    assert (passed, report, failed) == (None, "HCP Test can be run", 0)
+
+
 # --------------------------------------------------- comlog destinations
 
 

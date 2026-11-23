@@ -30,6 +30,250 @@ from qx_utilities.hcp.hcp_utils import (
 )
 
 
+def _find_dwi_files(dwis, direction, hcp):
+    """
+    Match the batch file DWI names to the images in the unprocessed folder.
+
+    Parameters:
+        dwis: the batch file DWI names keyed by their sequence number.
+        direction: the phase encoding labels keyed by ``pos``/``neg``.
+        hcp: the session's HCP paths.
+
+    Returns:
+        ``(dwi_data, has_pair)``: each image's direction and file (``EMPTY``
+        for a missing opposite pair) keyed by name, and whether any image has
+        its opposite pair.
+    """
+    has_pair = False
+    # get dwi files
+    dwi_data = dict()
+    # sort by temporal order as specified in batch
+    for dwi in sorted(dwis):
+        for ddir, dext in direction.items():
+            dwi_files = glob.glob(
+                os.path.join(hcp["DWI_source"], "*_%s.nii.gz" % (dext))
+            )
+
+            for dwi_file in dwi_files:
+                if dwis[dwi] in dwi_file:
+                    dwi_dict = {"dir": ddir, "ext": dext, "file": dwi_file}
+                    dwi_data[dwis[dwi]] = dwi_dict
+
+                    # add matching pair if it does not exist
+                    opposite_dir = "pos"
+                    if ddir == "pos":
+                        opposite_dir = "neg"
+                    opposite_exp = direction[opposite_dir]
+
+                    dwi_matching = dwis[dwi].replace(dext, opposite_exp)
+
+                    if dwi_matching not in dwi_data:
+                        dwi_dict = {
+                            "dir": opposite_dir,
+                            "ext": opposite_exp,
+                            "file": "EMPTY",
+                        }
+                        dwi_data[dwi_matching] = dwi_dict
+                    else:
+                        has_pair = True
+
+    return dwi_data, has_pair
+
+
+def _resolve_dwi_data(dwis, direction, hcp, options, _log):
+    """
+    Set up the posData and negData inputs from the unprocessed DWI images.
+
+    Unless ``hcp_dwi_posdata``/``hcp_dwi_negdata`` name the images, the
+    session's unprocessed Diffusion folder is searched for the DWI images in
+    the batch file, in their temporal order. Only cross-sectional processing
+    reads these images.
+
+    Parameters:
+        dwis: the batch file DWI names keyed by their sequence number.
+        direction: the phase encoding labels keyed by ``pos``/``neg``.
+        hcp: the session's HCP paths.
+        options: the command options.
+        _log: the log to report into.
+
+    Returns:
+        ``(pos_data, neg_data, has_pair, run)``: the ``@`` separated images of
+        each direction, whether any image has its opposite pair, and whether
+        the data was found.
+    """
+    run = True
+    pos_data, neg_data = None, None
+
+    # QuNex's automatic posData and negData setup
+    has_pair = False
+    if (
+        options["hcp_dwi_posdata"] is None
+        and options["hcp_dwi_negdata"] is None
+    ):
+        dwi_data, has_pair = _find_dwi_files(dwis, direction, hcp)
+
+        # prepare pos and neg files
+        dwi_files = dict()
+        for _, dwi in dwi_data.items():
+            if not has_pair and dwi["file"] == "EMPTY":
+                continue
+
+            if dwi["dir"] in dwi_files:
+                dwi_files[dwi["dir"]] = (
+                    dwi_files[dwi["dir"]] + "@" + dwi["file"]
+                )
+            else:
+                dwi_files[dwi["dir"]] = dwi["file"]
+
+        for ddir in ["pos", "neg"]:
+            if ddir not in dwi_files:
+                break
+
+            dfiles = dwi_files[ddir].split("@")
+
+            if dfiles and dfiles != [""] and dfiles != "EMPTY":
+                _log.step(f"The following {ddir} direction files were found:")
+                for dfile in dfiles:
+                    _log.info(f"     {os.path.basename(dfile)}")
+            else:
+                _log.error(f"No {ddir} direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu.")
+                run = False
+                break
+
+        # if both dirs are missing
+        if "pos" not in dwi_files and "neg" not in dwi_files:
+            _log.error(
+                "No DWI data found, check your batchfile and command parameters!"
+            )
+            run = False
+        elif "pos" not in dwi_files:
+            pos_data = "EMPTY"
+            neg_data = dwi_files["neg"]
+        elif "neg" not in dwi_files:
+            pos_data = dwi_files["pos"]
+            neg_data = "EMPTY"
+        else:
+            pos_data = dwi_files["pos"]
+            neg_data = dwi_files["neg"]
+
+    # if both are None something is wrong
+    elif (
+        options["hcp_dwi_posdata"] is not None
+        and options["hcp_dwi_negdata"] is None
+    ) or (
+        options["hcp_dwi_posdata"] is None
+        and options["hcp_dwi_negdata"] is not None
+    ):
+        _log.error(
+            "When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag."
+        )
+        run = False
+    else:
+        pos_data = _dwi_paths_from_option(options["hcp_dwi_posdata"], hcp)
+        neg_data = _dwi_paths_from_option(options["hcp_dwi_negdata"], hcp)
+
+    return pos_data, neg_data, has_pair, run
+
+
+def _dwi_paths_from_option(images, hcp):
+    """
+    Turn a comma separated hcp_dwi_posdata/negdata value into posData/negData.
+
+    Parameters:
+        images: the comma separated image names, ``EMPTY`` for none.
+        hcp: the session's HCP paths.
+
+    Returns:
+        the ``@`` separated images, each in the unprocessed Diffusion folder.
+    """
+    paths = []
+    for image in images.split(","):
+        if image != "EMPTY":
+            paths.append(hcp["DWI_source"] + "/" + image)
+        else:
+            paths.append(image)
+    return "@".join(paths)
+
+
+def _dwi_batch_has_pair(dwis, direction):
+    """
+    Whether any DWI in the batch file has its opposite phase encoding pair.
+
+    Cross-sectional processing works this out from the unprocessed images, a
+    longitudinal run has to do without them. The pairing decides the default
+    ``--combine-data-flag``, which the longitudinal Post-Eddy step still uses,
+    so it is worked out from the names the batch file declares.
+
+    Parameters:
+        dwis: the batch file DWI names keyed by their sequence number.
+        direction: the phase encoding labels keyed by ``pos``/``neg``.
+
+    Returns:
+        whether a pos/neg pair is declared.
+    """
+    names = set(dwis.values())
+    for name in names:
+        for ddir, dext in direction.items():
+            opposite = direction["neg" if ddir == "pos" else "pos"]
+            if name.endswith("_" + dext) and name[: -len(dext)] + opposite in names:
+                return True
+    return False
+
+
+def _check_longitudinal_dwi(hcp, options, _log):
+    """
+    Check for the cross-sectional output a longitudinal diffusion run reads.
+
+    In longitudinal mode DiffPreprocPipeline.sh does not read the unprocessed
+    DWI images: it copies the cross-sectional Pre-Eddy and Eddy outputs into
+    the longitudinal session and runs only the Post-Eddy step there.
+
+    Parameters:
+        hcp: the session's HCP paths.
+        options: the command options.
+        _log: the log to report into.
+
+    Returns:
+        whether the cross-sectional output is present.
+    """
+    _log.step("Longitudinal mode: DWI images are not needed, the cross-sectional Pre-Eddy and Eddy outputs are reused.")
+    if options["hcp_dwi_posdata"] is not None or options["hcp_dwi_negdata"] is not None:
+        _log.detail("hcp_dwi_posdata and hcp_dwi_negdata are not used in longitudinal mode")
+
+    dwifolder = os.path.join(hcp["base"], options["hcp_dwi_name"] or "Diffusion")
+    if os.path.isdir(dwifolder):
+        _log.step("Cross-sectional hcp_diffusion results present.")
+        return True
+
+    _log.error(f"Cross-sectional hcp_diffusion results missing [{dwifolder}]! Run hcp_diffusion without --longitudinal first.")
+    return False
+
+
+def _create_dummy_bval_bvec(pos_data, neg_data, options, _log):
+    """
+    Create dummy bval and bvec files beside the DWI images missing them.
+
+    Parameters:
+        pos_data: the ``@`` separated pos direction images.
+        neg_data: the ``@`` separated neg direction images.
+        options: the command options.
+        _log: the log to report into.
+    """
+    for image in pos_data.split("@") + neg_data.split("@"):
+        if image == "EMPTY":
+            continue
+        for ext, content in [(".bval", "0\n"), (".bvec", "0\n0\n0\n")]:
+            target = image.replace(".nii.gz", ext)
+            if os.path.isfile(target):
+                continue
+            if options["run"] != "run":
+                _log.step(f"test, not created: dummy {ext[1:]} file for [{image}].")
+                continue
+            _log.step(f"Creating dummy {ext[1:]} file for [{image}].")
+            with open(target, "w") as f:
+                f.write(content)
+
+
 def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
     """
     ``hcp_diffusion [... processing options]``
@@ -214,7 +458,12 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
 
         --longitudinal:
             Set this flag if you are running the longitudinal variant of this
-            command.
+            command. A longitudinal run copies the cross-sectional Pre-Eddy and
+            Eddy outputs and runs only the Post-Eddy step, so it reads the
+            cross-sectional Diffusion folder and none of the unprocessed DWI
+            images. hcp_dwi_posdata, hcp_dwi_negdata and hcp_dwi_echospacing
+            are not used. Unless hcp_dwi_combinedata is set, its default is
+            worked out from the DWI pairs declared in the batch file.
 
     Output files:
         The results of this command will be present in the Diffusion folder
@@ -371,119 +620,15 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 if k.isdigit() and v["name"] == "DWI":
                     dwis[int(k)] = v["task"]
 
-            # QuNex's automatic posData and negData setup
-            has_pair = False
-            if (
-                options["hcp_dwi_posdata"] is None
-                and options["hcp_dwi_negdata"] is None
-            ):
-                # get dwi files
-                dwi_data = dict()
-                # sort by temporal order as specified in batch
-                for dwi in sorted(dwis):
-                    for ddir, dext in direction.items():
-                        dwi_files = glob.glob(
-                            os.path.join(hcp["DWI_source"], "*_%s.nii.gz" % (dext))
-                        )
-
-                        for dwi_file in dwi_files:
-                            if dwis[dwi] in dwi_file:
-                                dwi_dict = {"dir": ddir, "ext": dext, "file": dwi_file}
-                                dwi_data[dwis[dwi]] = dwi_dict
-
-                                # add matching pair if it does not exist
-                                opposite_dir = "pos"
-                                if ddir == "pos":
-                                    opposite_dir = "neg"
-                                opposite_exp = direction[opposite_dir]
-
-                                dwi_matching = dwis[dwi].replace(dext, opposite_exp)
-
-                                if dwi_matching not in dwi_data:
-                                    dwi_dict = {
-                                        "dir": opposite_dir,
-                                        "ext": opposite_exp,
-                                        "file": "EMPTY",
-                                    }
-                                    dwi_data[dwi_matching] = dwi_dict
-                                else:
-                                    has_pair = True
-
-                # prepare pos and neg files
-                dwi_files = dict()
-                for _, dwi in dwi_data.items():
-                    if not has_pair and dwi["file"] == "EMPTY":
-                        continue
-
-                    if dwi["dir"] in dwi_files:
-                        dwi_files[dwi["dir"]] = (
-                            dwi_files[dwi["dir"]] + "@" + dwi["file"]
-                        )
-                    else:
-                        dwi_files[dwi["dir"]] = dwi["file"]
-
-                for ddir in ["pos", "neg"]:
-                    if ddir not in dwi_files:
-                        break
-
-                    dfiles = dwi_files[ddir].split("@")
-
-                    if dfiles and dfiles != [""] and dfiles != "EMPTY":
-                        log.step(f"The following {ddir} direction files were found:")
-                        for dfile in dfiles:
-                            log.info(f"     {os.path.basename(dfile)}")
-                    else:
-                        log.error(f"No {ddir} direction files were found! Both images with pos and neg directions are required for hcp_diffusion. If you have data with only one direction, you can use dwi_legacy_gpu.")
-                        run = False
-                        break
-
-                # if both dirs are missing
-                if "pos" not in dwi_files and "neg" not in dwi_files:
-                    log.error(
-                        "No DWI data found, check your batchfile and command parameters!"
-                    )
-                    run = False
-                elif "pos" not in dwi_files:
-                    pos_data = "EMPTY"
-                    neg_data = dwi_files["neg"]
-                elif "neg" not in dwi_files:
-                    pos_data = dwi_files["pos"]
-                    neg_data = "EMPTY"
-                else:
-                    pos_data = dwi_files["pos"]
-                    neg_data = dwi_files["neg"]
-
-            # if both are None something is wrong
-            elif (
-                options["hcp_dwi_posdata"] is not None
-                and options["hcp_dwi_negdata"] is None
-            ) or (
-                options["hcp_dwi_posdata"] is None
-                and options["hcp_dwi_negdata"] is not None
-            ):
-                log.error(
-                    "When manually overriding posData and negData, you need to set both hcp_dwi_posdata and hcp_dwi_negdata parameters. Set to EMPTY if you do not have data for one of the directions. If there are no pos/neg pairs, also set the --hcp_dwi_combinedata flag."
-                )
-                run = False
+            if options["longitudinal"]:
+                pos_data, neg_data = None, None
+                has_pair = _dwi_batch_has_pair(dwis, direction)
+                run = _check_longitudinal_dwi(hcp, options, log) and run
             else:
-                # pos
-                pos_list = options["hcp_dwi_posdata"].split(",")
-                pos_paths = []
-                for image in pos_list:
-                    if image != "EMPTY":
-                        pos_paths.append(hcp["DWI_source"] + "/" + image)
-                    else:
-                        pos_paths.append(image)
-                pos_data = "@".join(pos_paths)
-                # neg
-                neg_list = options["hcp_dwi_negdata"].split(",")
-                neg_paths = []
-                for image in neg_list:
-                    if image != "EMPTY":
-                        neg_paths.append(hcp["DWI_source"] + "/" + image)
-                    else:
-                        neg_paths.append(image)
-                neg_data = "@".join(neg_paths)
+                pos_data, neg_data, has_pair, dwiok = _resolve_dwi_data(
+                    dwis, direction, hcp, options, log
+                )
+                run = run and dwiok
 
         # --- lookup gdcoeffs file if needed
         gdcfile, run = check_gdc_coeff_file(
@@ -518,7 +663,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 log.raw(message)
 
             # if echospacing is none, set from parameter
-            if not echospacing and "hcp_dwi_echospacing" in options:
+            if not echospacing and options["hcp_dwi_echospacing"]:
                 echospacing = options["hcp_dwi_echospacing"]
                 log.step(f"Using study general EchoSpacing: {echospacing} s")
 
@@ -526,8 +671,10 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                 echospacing, message = _check_dwi_echospacing(echospacing)
                 log.raw(message)
 
-            # -- check echospacing
-            if not echospacing:
+            # -- check echospacing, a longitudinal run does not use it
+            if not echospacing and options["longitudinal"]:
+                log.detail("EchoSpacing is not used in longitudinal mode")
+            elif not echospacing:
                 log.error(
                     "QuNex was unable to acquire echospacing from the data and the parameter is not set!"
                 )
@@ -542,37 +689,32 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
             if not studyfolder:
                 log.error("cannot deduce the QuNex study folder from provided parameters! Please provide the sessionsfolder or the studyfolder parameter.")
                 run = False
-            # replace path
-            path = os.path.join(studyfolder, "subjects", sinfo["subject"])
+            else:
+                path = os.path.join(studyfolder, "subjects", sinfo["subject"])
 
         # --- build the command
         if run:
-            comm = (
-                '%(script)s \
-                --path="%(path)s" \
-                --session="%(session)s" \
-                --PEdir=%(pe_dir)s \
-                --posData="%(pos_data)s" \
-                --negData="%(neg_data)s" \
-                --echospacing-seconds="%(echospacing)s" \
-                --gdcoeffs="%(gdcoeffs)s" \
-                --printcom="%(printcom)s"'
-                % {
-                    "script": os.path.join(
-                        hcp["hcp_base"],
-                        "DiffusionPreprocessing",
-                        "DiffPreprocPipeline.sh",
-                    ),
-                    "pos_data": pos_data,
-                    "neg_data": neg_data,
-                    "path": path,
-                    "session": sinfo["id"] + options["hcp_suffix"],
-                    "echospacing": echospacing,
-                    "pe_dir": pe_dir,
-                    "gdcoeffs": gdcfile,
-                    "printcom": options["hcp_printcom"],
-                }
+            # the raw inputs are only read cross-sectionally, a longitudinal run
+            # reuses the cross-sectional Pre-Eddy and Eddy outputs
+            args = [
+                f'--path="{path}"',
+                f'--session="{sinfo["id"] + options["hcp_suffix"]}"',
+            ]
+            if not options["longitudinal"]:
+                args += [
+                    f"--PEdir={pe_dir}",
+                    f'--posData="{pos_data}"',
+                    f'--negData="{neg_data}"',
+                    f'--echospacing-seconds="{echospacing}"',
+                ]
+            args += [
+                f'--gdcoeffs="{gdcfile}"',
+                f'--printcom="{options["hcp_printcom"]}"',
+            ]
+            script = os.path.join(
+                hcp["hcp_base"], "DiffusionPreprocessing", "DiffPreprocPipeline.sh"
             )
+            comm = "                 ".join([script] + args)
 
             # -- Longitudinal parameters
             if options["longitudinal"]:
@@ -657,40 +799,8 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     )
 
             # create dummy bvals and bvecs if demanded
-            if options["hcp_dwi_dummy_bval_bvec"]:
-                # iterate over pos_data
-                pos_array = pos_data.split("@")
-                for pos in pos_array:
-                    # bval
-                    bval = pos.replace(".nii.gz", ".bval")
-                    if not os.path.isfile(bval):
-                        log.step(f"Creating dummy bval file for [{pos}].")
-                        with open(bval, "w") as f:
-                            f.write("0\n")
-
-                    # bvec
-                    bvec = pos.replace(".nii.gz", ".bvec")
-                    if not os.path.isfile(bvec):
-                        log.step(f"Creating dummy bvec file for [{pos}].")
-                        with open(bvec, "w") as f:
-                            f.write("0\n0\n0\n")
-
-                # iterate over neg_data
-                neg_array = neg_data.split("@")
-                for neg in neg_array:
-                    # bval
-                    bval = neg.replace(".nii.gz", ".bval")
-                    if not os.path.isfile(bval):
-                        log.step(f"Creating dummy bval file for [{pos}].")
-                        with open(bval, "w") as f:
-                            f.write("0\n")
-
-                    # bvec
-                    bvec = neg.replace(".nii.gz", ".bvec")
-                    if not os.path.isfile(bvec):
-                        log.step(f"Creating dummy bvec file for [{pos}].")
-                        with open(bvec, "w") as f:
-                            f.write("0\n0\n0\n")
+            if options["hcp_dwi_dummy_bval_bvec"] and not options["longitudinal"]:
+                _create_dummy_bval_bvec(pos_data, neg_data, options, log)
 
             # -- Report command
             if run:
@@ -735,6 +845,7 @@ def hcp_diffusion(sinfo, options, overwrite=False, thread=0):
                     logtags=logtags,
                     full_test=full_test,
                     shell=True,
+                    exit_code_only=options["longitudinal"],
                     _log=log,
                 )
 

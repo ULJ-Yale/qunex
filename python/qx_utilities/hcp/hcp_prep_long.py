@@ -98,22 +98,28 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
         # sort out the folder structure
         sessionsfolder = options["sessionsfolder"]
         subjectsfolder = sessionsfolder.replace("sessions", "subjects")
-        if not os.path.exists(subjectsfolder):
-            os.makedirs(subjectsfolder)
         study_folder = os.path.join(subjectsfolder, subject_id)
-        if not os.path.exists(study_folder):
-            os.makedirs(study_folder)
+        if options["run"] == "run":
+            os.makedirs(study_folder, exist_ok=True)
 
         # symlink sessions
         for session in sinfo:
             source_dir = os.path.join(session["hcp"], session["id"])
             if not os.path.exists(source_dir):
-                log.error(f"{source_dir} does not exists, cannot map into longutidinal folder structure!")
-                result["failed"] = session["id"]
+                log.error(f"{source_dir} does not exists, cannot map into longitudinal folder structure!")
+                result["failed"].append(session["id"])
+                continue
 
             target_dir = os.path.join(study_folder, session["id"])
-            gc.link_or_copy(source_dir, target_dir, symlink=True)
-            result["done"] = session["id"]
+            if options["run"] == "run":
+                if not gc.link_or_copy(
+                    source_dir, target_dir, name=session["id"], symlink=True, _log=log
+                ):
+                    result["failed"].append(session["id"])
+                    continue
+            else:
+                log.step(f"test, not linked: {source_dir} -> {target_dir}")
+            result["done"].append(session["id"])
 
     except ge.CommandFailed as e:
         log.raw("\n" + ge.report_command_failed("hcp_prep_long", e))
@@ -134,6 +140,6 @@ def hcp_prep_long(sinfo, options, overwrite=False, thread=0):
 
     log.close(pipeline="HCP prep long")
 
-    report = f"sessions: {len(result['done'])} done [{result['done']}], {len(result['failed'])} failed [{result['failed']}] => {status}"
+    report = f"sessions: {len(result['done'])} done [{', '.join(result['done'])}], {len(result['failed'])} failed [{', '.join(result['failed'])}] => {status}"
     failed = len(result["failed"]) if len(result["failed"]) > 0 else failed
     return log.result((subject_id, report, failed))
