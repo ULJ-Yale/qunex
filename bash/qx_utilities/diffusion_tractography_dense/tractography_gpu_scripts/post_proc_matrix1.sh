@@ -20,7 +20,7 @@ OutFileName=$4
 
 ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
 
-${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1.dot ${ResultsFolder}/Mat1.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
+${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1.dot CIFTI ${ResultsFolder}/Mat1.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
 ${Caret7_command} -cifti-transpose ${ResultsFolder}/Mat1.dconn.nii ${ResultsFolder}/Mat1_transp.dconn.nii
 ${Caret7_command} -cifti-average ${ResultsFolder}/${OutFileName} -cifti ${ResultsFolder}/Mat1.dconn.nii -cifti ${ResultsFolder}/Mat1_transp.dconn.nii
 
@@ -42,7 +42,7 @@ gzip --force $ResultsFolder/Mat1_transp.dconn.nii --fast
 gzip --force ${ResultsFolder}/fdt_matrix1.dot --fast
 
 if [ -f ${ResultsFolder}/fdt_matrix1_lengths.dot ]; then
-    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1_lengths.dot ${ResultsFolder}/Mat1_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
+    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix1_lengths.dot CIFTI ${ResultsFolder}/Mat1_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN
 
     ${Caret7_command} -cifti-transpose ${ResultsFolder}/Mat1_lengths.dconn.nii ${ResultsFolder}/Mat1_lengths_transp.dconn.nii
 

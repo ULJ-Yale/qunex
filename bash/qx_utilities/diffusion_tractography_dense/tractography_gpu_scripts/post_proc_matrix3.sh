@@ -20,7 +20,7 @@ OutFileName=$4
 
 ResultsFolder="$SessionsFolder"/"$Session"/hcp/"$Session"/MNINonLinear/Results/Tractography
 
-${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3.dot ${ResultsFolder}/${OutFileName} -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
+${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3.dot CIFTI ${ResultsFolder}/${OutFileName} -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 
 # Create RowSum of dconn to check gyral bias
 OutFileTemp=`echo ${OutFileName//".dconn.nii"/""}`
@@ -41,7 +41,7 @@ if [ -f ${ResultsFolder}/fdt_matrix3_lengths.dot ]; then
     grep -v ' 0\(\.0*\)\?$' ${ResultsFolder}/fdt_matrix3_lengths.dot > ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
     echo 91282 91282 0 >> ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
 
-    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths_temp.dot ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
+    ${Caret7_command} -probtrackx-dot-convert ${ResultsFolder}/fdt_matrix3_lengths_temp.dot CIFTI ${ResultsFolder}/${OutFileTemp}_lengths.dconn.nii -row-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -col-cifti ${TemplateFolder}/91282_Greyordinates.dscalar.nii COLUMN -make-symmetric
 
     rm ${ResultsFolder}/fdt_matrix3_lengths_temp.dot
 

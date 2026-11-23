@@ -16,6 +16,7 @@ SPDX-License-Identifier: GPL-3.0-or-later
 * `hcp_msmall` and `hcp_dedrift_and_resample` now also resample `MRcorrThickness` by default.
 * Fixed some smaller bugs in `map_nii2bids` where `IntendedFor` was not populated and not all fieldmaps were converted.
 * `import_hcp` now onboards field maps kept in an acquisition's `OTHER_FILES` folder, such as the Spin-Echo pair of HCP Lifespan diffusion data.
+* `dwi_probtrackx_dense_gpu` now works with Connectome Workbench 2.2, which the container ships.
 * Fixed several smaller bugs and made many optimizations that should make QuNex more stable and faster.
 
 ## 1.5.4

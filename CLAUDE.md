@@ -54,9 +54,9 @@ pragmatic, focused improvements over strict rewrites.**
 
 ## Sister repos
 
-- ../qunex.wiki - Core QuNex Wiki (documentation and tutorials).
-- ../qunexsdk - QuNex SDK with additional dev related code (acceptance testing, container building, devops).
-- ../qunexsdk.wiki - QuNex SDK Wiki (SDK Wiki).
+- ../qunex.wiki or ../../qunex.wiki - Core QuNex Wiki (documentation and tutorials).
+- ../qunexsdk or ../../qunexsdk - QuNex SDK with additional dev related code (acceptance testing, container building, devops).
+- ../qunexsdk.wiki or ../../qunexsdk.wiki - QuNex SDK Wiki (SDK Wiki).
 
 Assure that relevant content in sister repos is always updated and brought up to speed when making code changes. This is especially important with larger/architectural changes.
 
